@@ -1,0 +1,45 @@
+{
+  "FISHUT.Module.Name": "Substances and Paraphernalia",
+
+  "FISHUT.Kind.Substance": "Substance",
+  "FISHUT.Kind.Paraphernalia": "Paraphernalia",
+
+  "FISHUT.Category.Stimulant": "Stimulant",
+  "FISHUT.Category.MindAltering": "Mind-Altering",
+  "FISHUT.Category.PerformanceEnhancing": "Performance-Enhancing",
+
+  "FISHUT.Setting.Fantasy": "Fantasy",
+  "FISHUT.Setting.SciFi": "Sci-Fi",
+  "FISHUT.Setting.Modern": "Modern",
+
+  "FISHUT.Settings.EnforceParaphernalia.Name": "Enforce paraphernalia requirements",
+  "FISHUT.Settings.EnforceParaphernalia.Hint": "When on, substances with required paraphernalia cannot be consumed unless the actor possesses the required gear. When off, all substances consume freely.",
+
+  "FISHUT.Settings.StrictDaeRequirement.Name": "Block substances that require DAE when DAE is missing",
+  "FISHUT.Settings.StrictDaeRequirement.Hint": "When on, a substance whose Active Effects are flagged as requiring DAE cannot be consumed unless the DAE module is active. When off (default), the substance is consumed but a warning is shown — its DAE-mode effects may silently fail to apply.",
+
+  "FISHUT.Settings.SuppressIntegrationWarnings.Name": "Suppress integration warnings",
+  "FISHUT.Settings.SuppressIntegrationWarnings.Hint": "When on, the ready-time notification listing recommended-but-missing modules is suppressed. Per-substance DAE warnings are unaffected.",
+
+  "FISHUT.Settings.Debug.Name": "Debug logging",
+  "FISHUT.Settings.Debug.Hint": "Print module-prefixed debug messages to the browser console. Warnings and errors are always shown.",
+
+  "FISHUT.Gating.Group.Joiner": " or ",
+  "FISHUT.Gating.Group.Separator": "; ",
+  "FISHUT.Gating.Group.Annotated": "{candidates} ({reason})",
+  "FISHUT.Gating.Reason.Unequipped": "not equipped",
+  "FISHUT.Gating.Reason.Unattuned": "not attuned",
+
+  "FISHUT.Gating.Blocked.Title": "Missing paraphernalia",
+  "FISHUT.Gating.Blocked.Body": "<p><strong>{item}</strong> requires paraphernalia that isn't ready.</p><p>Missing: {missing}</p>",
+  "FISHUT.Gating.Blocked.Override": "Use anyway",
+  "FISHUT.Gating.Blocked.Cancel": "Cancel",
+
+  "FISHUT.Integrations.Module.Dae": "Dynamic Active Effects (dae)",
+  "FISHUT.Integrations.Module.MidiQol": "Midi-QoL (midi-qol)",
+  "FISHUT.Integrations.Module.TimesUp": "Times Up (times-up)",
+  "FISHUT.Integrations.Module.Tokenmagic": "Token Magic FX (tokenmagic)",
+  "FISHUT.Integrations.Missing.Notice": "Substances and Paraphernalia recommends modules that aren't active: {missing}. Disable this notice in the module settings.",
+  "FISHUT.Integrations.RequiresDae.Warn": "{item}: this substance has effects that require DAE. DAE isn't active — those effect modes may silently fail to apply.",
+  "FISHUT.Integrations.RequiresDae.Block": "{item}: requires DAE, and DAE isn't active. Consumption blocked."
+}

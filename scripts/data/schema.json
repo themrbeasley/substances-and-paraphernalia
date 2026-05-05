@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Substances and Paraphernalia — module schema",
+  "schemaVersion": 1,
+  "moduleId": "substances-and-paraphernalia",
+  "flagScope": "substances-and-paraphernalia",
+  "kinds": [
+    { "id": "substance", "labelKey": "FISHUT.Kind.Substance" },
+    { "id": "paraphernalia", "labelKey": "FISHUT.Kind.Paraphernalia" }
+  ],
+  "categories": [
+    { "id": "stimulant", "labelKey": "FISHUT.Category.Stimulant" },
+    { "id": "mindAltering", "labelKey": "FISHUT.Category.MindAltering" },
+    { "id": "performanceEnhancing", "labelKey": "FISHUT.Category.PerformanceEnhancing" }
+  ],
+  "settings": [
+    { "id": "fantasy", "labelKey": "FISHUT.Setting.Fantasy" },
+    { "id": "sciFi", "labelKey": "FISHUT.Setting.SciFi" },
+    { "id": "modern", "labelKey": "FISHUT.Setting.Modern" }
+  ],
+  "worldSettings": [
+    {
+      "key": "enforceParaphernalia",
+      "scope": "world",
+      "type": "Boolean",
+      "default": true,
+      "nameKey": "FISHUT.Settings.EnforceParaphernalia.Name",
+      "hintKey": "FISHUT.Settings.EnforceParaphernalia.Hint"
+    },
+    {
+      "key": "gmOverrideAllowed",
+      "scope": "world",
+      "type": "Boolean",
+      "default": true,
+      "nameKey": "FISHUT.Settings.GmOverrideAllowed.Name",
+      "hintKey": "FISHUT.Settings.GmOverrideAllowed.Hint"
+    },
+    {
+      "key": "playerSelfConsume",
+      "scope": "world",
+      "type": "Boolean",
+      "default": true,
+      "nameKey": "FISHUT.Settings.PlayerSelfConsume.Name",
+      "hintKey": "FISHUT.Settings.PlayerSelfConsume.Hint"
+    },
+    {
+      "key": "strictDaeRequirement",
+      "scope": "world",
+      "type": "Boolean",
+      "default": false,
+      "nameKey": "FISHUT.Settings.StrictDaeRequirement.Name",
+      "hintKey": "FISHUT.Settings.StrictDaeRequirement.Hint"
+    },
+    {
+      "key": "userCompendium",
+      "scope": "world",
+      "type": "String",
+      "default": "",
+      "nameKey": "FISHUT.Settings.UserCompendium.Name",
+      "hintKey": "FISHUT.Settings.UserCompendium.Hint"
+    }
+  ],
+  "clientSettings": [
+    {
+      "key": "tmfxEnabled",
+      "scope": "client",
+      "type": "Boolean",
+      "default": true,
+      "nameKey": "FISHUT.Settings.TmfxEnabled.Name",
+      "hintKey": "FISHUT.Settings.TmfxEnabled.Hint"
+    },
+    {
+      "key": "debug",
+      "scope": "client",
+      "type": "Boolean",
+      "default": false,
+      "nameKey": "FISHUT.Settings.Debug.Name",
+      "hintKey": "FISHUT.Settings.Debug.Hint"
+    }
+  ],
+  "flagKeys": {
+    "kind": "kind",
+    "category": "category",
+    "setting": "setting",
+    "tags": "tags",
+    "paraphernaliaId": "paraphernaliaId",
+    "requiredParaphernalia": "requiredParaphernalia",
+    "requiresDae": "requiresDae",
+    "schemaVersion": "schemaVersion"
+  }
+}

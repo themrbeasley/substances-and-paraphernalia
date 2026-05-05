@@ -1,0 +1,4 @@
+node_modules/
+packs/
+dist/
+_source/**/_folders.json

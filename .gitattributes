@@ -1,0 +1,4 @@
+* text=auto eol=lf
+_source/**/*.json text eol=lf
+*.{md,js,mjs,css,json,html,hbs,yml,yaml} text eol=lf
+packs/** binary

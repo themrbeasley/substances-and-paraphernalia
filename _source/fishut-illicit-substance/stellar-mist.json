@@ -1,0 +1,72 @@
+{
+  "_id": "fhSubStellarMist",
+  "_key": "!items!fhSubStellarMist",
+  "name": "Stellar Mist",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhSubSciFi000001",
+  "system": {
+    "description": {
+      "value": "<p>A pearlescent suspension that dissolves in air. The user experiences sensations from elsewhere — sometimes elsewhen — for the duration. Operators learn not to trust the visions, but everyone tries them once.</p><p><em>Requires: Neural Diffuser or Vapor Mask.</em></p>"
+    },
+    "type": { "value": "poison", "subtype": "" },
+    "rarity": "rare",
+    "weight": { "value": 0.1, "units": "lb" },
+    "price": { "value": 800, "denomination": "gp" },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": true
+    },
+    "activities": {
+      "fhActStellarMist": {
+        "type": "utility",
+        "_id": "fhActStellarMist",
+        "sort": 0,
+        "activation": { "type": "action", "override": false, "condition": "" },
+        "consumption": {
+          "scaling": { "allowed": false },
+          "spellSlot": true,
+          "targets": [
+            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+          ]
+        },
+        "description": { "chatFlavor": "" },
+        "duration": { "units": "inst", "concentration": false, "override": false },
+        "effects": [],
+        "flags": {},
+        "range": { "units": "self", "override": false, "special": "" },
+        "target": {
+          "template": { "contiguous": false, "units": "ft", "type": "" },
+          "affects": { "choice": false, "type": "self" },
+          "override": false,
+          "prompt": true
+        },
+        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "visibility": {
+          "level": { "min": null, "max": null },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "name": ""
+      }
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "substance",
+      "category": "mindAltering",
+      "setting": "sciFi",
+      "tags": ["mist", "synthetic"],
+      "requiredParaphernalia": [
+        { "anyOf": ["neural-diffuser", "vapor-mask"] }
+      ],
+      "schemaVersion": 1
+    }
+  },
+  "effects": [],
+  "ownership": { "default": 0 }
+}

@@ -1,0 +1,105 @@
+{
+  "id": "substances-and-paraphernalia",
+  "title": "Substances and Paraphernalia",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "description": "<p>AKA Fantastic Illicit Substances and How to Use Them<br /><br />This module aims to add illicit substances and paraphernalia to your DND games. Split into Fantasy, Sci-Fi, and Modern options. Includes Macros and Journal entries. You can easily create and codify your own substances and paraphernalia.<br /><br />Features<br />- Drugs (3 categories, Stimulant, Mind-Altering, and Performance-Enhancing, actual names of categories TBD)<br />- Drug related accessories<br />- Drugs add active effects<br />- Drugs can have required paraphernalia, which means they can't be consumed without the right gear, or the right range of gear<br />- If you have Dynamic Active Effects (DAE), Midi-QoL, Times Up, and Token Magic Effects, expanded automation and effects apply/can be addded</p>",
+  "authors": [
+    {
+      "name": "Mr. Beasley",
+      "url": "https://www.patreon.com/themrbeasley",
+      "discord": "gamemasterbeas",
+      "flags": {}
+    }
+  ],
+  "esmodules": ["scripts/module.mjs"],
+  "styles": ["styles/module.css"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "4.0.0"
+        }
+      }
+    ],
+    "recommends": [
+      { "id": "dae", "type": "module", "reason": "Custom Active Effect modes used by some substances." },
+      { "id": "midi-qol", "type": "module", "reason": "Automated saves and chained workflow effects." },
+      { "id": "times-up", "type": "module", "reason": "Reliable Active Effect expiration." },
+      { "id": "tokenmagic", "type": "module", "reason": "Visual filters tied to substance effects." }
+    ]
+  },
+  "flags": {},
+  "packFolders": [
+    {
+      "name": "Illicit Compendia",
+      "sorting": "a",
+      "packs": [
+        "fishut-illicit-substance",
+        "fishut-illicit-paraphernalia",
+        "fishut-journals",
+        "fishut-illicit-macros"
+      ]
+    }
+  ],
+  "packs": [
+    {
+      "name": "fishut-journals",
+      "label": "Illicit Substances and Paraphernalia",
+      "path": "packs/fishut-journals",
+      "type": "JournalEntry",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "fishut-illicit-macros",
+      "label": "Illicit Macros",
+      "path": "packs/fishut-illicit-macros",
+      "type": "Macro",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "fishut-illicit-substance",
+      "label": "Illicit Substances",
+      "path": "packs/fishut-illicit-substance",
+      "type": "Item",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "dnd5e",
+      "flags": {}
+    },
+    {
+      "name": "fishut-illicit-paraphernalia",
+      "label": "Illicit Paraphernalia",
+      "path": "packs/fishut-illicit-paraphernalia",
+      "type": "Item",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "dnd5e",
+      "flags": {}
+    }
+  ]
+}

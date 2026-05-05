@@ -1,0 +1,28 @@
+{
+  "name": "substances-and-paraphernalia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tooling for the Substances and Paraphernalia FoundryVTT module.",
+  "type": "module",
+  "scripts": {
+    "pack": "node tools/build-packs.mjs pack",
+    "unpack": "node tools/build-packs.mjs unpack",
+    "lint": "eslint --no-error-on-unmatched-pattern \"scripts/**/*.{js,mjs}\" \"tools/**/*.{js,mjs}\" \"test/**/*.{js,mjs}\"",
+    "format": "prettier --write \"**/*.{js,mjs,json,md,css}\"",
+    "validate": "node tools/validate-manifest.mjs",
+    "release": "echo \"release is driven by .github/workflows/release.yml\" && exit 0"
+  },
+  "devDependencies": {
+    "@foundryvtt/foundryvtt-cli": "^1.0.4",
+    "ajv": "^8.17.1",
+    "ajv-cli": "^5.0.0",
+    "ajv-formats": "^3.0.1",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
