@@ -2,6 +2,8 @@
   "id": "substances-and-paraphernalia",
   "title": "Substances and Paraphernalia",
   "version": "0.2.0",
+  "manifest": "https://github.com/themrbeasley/substances-and-paraphernalia/releases/latest/download/module.json",
+  "download": "https://github.com/themrbeasley/substances-and-paraphernalia/releases/latest/download/module.zip",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -15,8 +17,12 @@
       "flags": {}
     }
   ],
-  "esmodules": ["scripts/module.mjs"],
-  "styles": ["styles/module.css"],
+  "esmodules": [
+    "scripts/module.mjs"
+  ],
+  "styles": [
+    "styles/module.css"
+  ],
   "languages": [
     {
       "lang": "en",
@@ -35,10 +41,26 @@
       }
     ],
     "recommends": [
-      { "id": "dae", "type": "module", "reason": "Custom Active Effect modes used by some substances." },
-      { "id": "midi-qol", "type": "module", "reason": "Automated saves and chained workflow effects." },
-      { "id": "times-up", "type": "module", "reason": "Reliable Active Effect expiration." },
-      { "id": "tokenmagic", "type": "module", "reason": "Visual filters tied to substance effects." }
+      {
+        "id": "dae",
+        "type": "module",
+        "reason": "Custom Active Effect modes used by some substances."
+      },
+      {
+        "id": "midi-qol",
+        "type": "module",
+        "reason": "Automated saves and chained workflow effects."
+      },
+      {
+        "id": "times-up",
+        "type": "module",
+        "reason": "Reliable Active Effect expiration."
+      },
+      {
+        "id": "tokenmagic",
+        "type": "module",
+        "reason": "Visual filters tied to substance effects."
+      }
     ]
   },
   "flags": {},
