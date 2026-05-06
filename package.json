@@ -12,7 +12,7 @@
     "validate:manifest": "node tools/validate-manifest.mjs",
     "validate:content": "node tools/validate-content.mjs",
     "validate": "npm run validate:manifest && npm run validate:content",
-    "test:unit": "node --test \"test/unit/*.test.mjs\"",
+    "test:unit": "node --test test/unit/bypass-match.test.mjs test/unit/requirements-eval.test.mjs test/unit/slug-parsing.test.mjs test/unit/withdrawal-formula.test.mjs",
     "release": "echo \"release is driven by .github/workflows/release.yml\" && exit 0"
   },
   "devDependencies": {
