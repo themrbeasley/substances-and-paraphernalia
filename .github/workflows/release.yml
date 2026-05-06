@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Validate (manifest + content)
+        run: npm run validate
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Pack compendia
+        run: npm run pack
+
+      - name: Patch module.json (version + download URL)
+        run: node tools/prepare-release.mjs
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+
+      - name: Build module.zip
+        run: |
+          zip -r module.zip \
+            module.json \
+            LICENSE \
+            README.md \
+            CHANGELOG.md \
+            scripts \
+            styles \
+            lang \
+            templates \
+            packs \
+            docs
+
+      - name: Create release and attach assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            module.json
+            module.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
