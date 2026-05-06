@@ -1,1 +1,125 @@
-/* Substances and Paraphernalia — module styles. Populated as UI lands. */
+/* Substances and Paraphernalia — module styles. */
+
+.fishut.fishut-item-settings .fishut-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fishut.fishut-item-settings .fishut-section {
+  border: 1px solid var(--color-border-light-tertiary, #999);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+}
+
+.fishut.fishut-item-settings .fishut-section > legend {
+  font-weight: 600;
+  padding: 0 0.35rem;
+}
+
+.fishut.fishut-item-settings .form-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.fishut.fishut-item-settings .form-group > label {
+  flex: 0 0 12rem;
+  font-weight: 500;
+}
+
+.fishut.fishut-item-settings .form-group > input[type="text"],
+.fishut.fishut-item-settings .form-group > input[type="number"],
+.fishut.fishut-item-settings .form-group > select {
+  flex: 1 1 auto;
+}
+
+.fishut.fishut-item-settings .form-group > label.checkbox {
+  flex: 0 0 auto;
+  font-weight: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.fishut.fishut-item-settings .fishut-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 0.75rem;
+  flex: 1 1 auto;
+}
+
+.fishut.fishut-item-settings .fishut-required-group {
+  border: 1px dashed var(--color-border-light-tertiary, #aaa);
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fishut.fishut-item-settings .fishut-required-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.fishut.fishut-item-settings .fishut-required-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0;
+}
+
+.fishut.fishut-item-settings .fishut-required-row > input {
+  flex: 1 1 auto;
+}
+
+.fishut.fishut-item-settings .fishut-effect-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px dotted var(--color-border-light-tertiary, #ccc);
+}
+
+.fishut.fishut-item-settings .fishut-effect-row:last-child {
+  border-bottom: none;
+}
+
+.fishut.fishut-item-settings .fishut-btn-icon {
+  flex: 0 0 auto;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.fishut.fishut-item-settings .fishut-btn-icon:hover {
+  border-color: var(--color-border-light-primary, #888);
+}
+
+.fishut.fishut-item-settings .fishut-btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--font-size-12, 12px);
+}
+
+.fishut.fishut-item-settings .fishut-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.fishut.fishut-item-settings .notes {
+  flex: 1 1 100%;
+  font-size: var(--font-size-11, 11px);
+  font-style: italic;
+  color: var(--color-text-dark-secondary, #666);
+  margin: 0.15rem 0 0 12rem;
+}

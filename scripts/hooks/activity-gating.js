@@ -2,6 +2,7 @@ import { MODULE_ID } from "../config.js";
 import { isSubstance, getRequiredParaphernalia } from "../data/flag-schema.js";
 import { evaluateRequirements } from "../data/required-paraphernalia.js";
 import { isActive } from "../integrations/index.js";
+import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
 
 // preUseActivity is synchronous, so the override flow cancels the current
@@ -37,7 +38,7 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
     return false;
   }
 
-  if (itemHasDaeRequiringEffect(item) && !isActive("dae")) {
+  if (itemDaeRequiringEffects(item).length > 0 && !isActive("dae")) {
     if (game.settings.get(MODULE_ID, "strictDaeRequirement")) {
       ui.notifications.warn(
         game.i18n.format("FISHUT.Integrations.RequiresDae.Block", { item: item.name }),
@@ -50,15 +51,6 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
   }
 
   return true;
-}
-
-function itemHasDaeRequiringEffect(item) {
-  const effects = item?.effects;
-  if (!effects) return false;
-  for (const effect of effects) {
-    if (effect.flags?.[MODULE_ID]?.requiresDae === true) return true;
-  }
-  return false;
 }
 
 async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig, missing) {

@@ -1,8 +1,13 @@
 # Flag Schema — authoring reference
 
-This document is the canonical reference for the flags this module reads on
-items. It is the source of truth for anyone authoring substances or
-paraphernalia by hand at v0.1.
+Canonical reference for the flags this module reads on items at v0.2. The
+schema is at version 2; v0.2 is a clean break from v0.1 (see
+[CHANGELOG.md](../CHANGELOG.md)).
+
+The recommended authoring path is the **Substance/Paraphernalia** entry in
+the item sheet's 3-dot context menu (next to the close button). It opens a
+form rooted at the item that writes every field documented here. Hand-editing
+JSON is still supported for shipped content; the form is just faster.
 
 All flags live under the namespace `flags["substances-and-paraphernalia"]` on
 each item.
@@ -14,21 +19,41 @@ each item.
 | `kind`          | string   | yes      | `"substance"` or `"paraphernalia"`.               |
 | `setting`       | string   | yes      | `"fantasy"`, `"sciFi"`, or `"modern"`.            |
 | `tags`          | string[] | no       | Free-form tags for search/filter.                 |
-| `schemaVersion` | number   | yes      | Always `1` at v0.1. Migrations bump this.         |
+| `schemaVersion` | number   | yes      | Always `2` at v0.2. Migrations bump this.         |
 
 The legal values of `kind` and `setting` are mirrored in
 `scripts/data/schema.json` so the same list drives the lang file, settings,
-and any future builder.
+and the item-settings form.
 
 ## Substance (`kind: "substance"`)
 
 Used on a `consumable` Item. Apply effects to the actor when consumed; gating
-runs on the dnd5e Activity path (`dnd5e.preUseActivity`).
+runs on `dnd5e.preUseActivity`; addiction save runs on `dnd5e.postUseActivity`.
 
 | Key                     | Type                       | Required | Notes                                          |
 | ----------------------- | -------------------------- | -------- | ---------------------------------------------- |
 | `category`              | string                     | yes      | `"stimulant"`, `"mindAltering"`, `"performanceEnhancing"`. |
+| `administration`        | string                     | yes      | `"inhaled"` \| `"ingested"` \| `"injected"` \| `"sublingual"` \| `"topical"`. Drives bypass matching. |
+| `addiction`             | object                     | yes      | See [Addiction block](#addiction-block) below. |
 | `requiredParaphernalia` | `{ anyOf: string[] }[]`    | no       | AND-of-OR. See below. Empty/missing = no gate. |
+
+### Addiction block
+
+```js
+addiction = {
+  save: { ability: "con", dc: 13 },   // ability defaults to "con"
+  withdrawalMod: 4,                   // positive integer
+  addictionEffectId: "fhAECoalshAdc"  // _id of the {Substance} Addiction AE on this item
+};
+```
+
+- `save.dc` is a finite number; `save.ability` is the dnd5e ability key
+  (`"con"` by default; future content may use other abilities).
+- `withdrawalMod` is the integer `Y` in
+  `restsRemaining = max(Y − ConMod, ⌈Y/2⌉)`, minimum 1.
+- `addictionEffectId` is the `_id` of an Active Effect on the same item. The
+  effect's `name` must contain the substring `addict` (case-insensitive). It
+  is the **template** AE — applied to the actor on a failed save.
 
 ### `requiredParaphernalia` semantics
 
@@ -46,6 +71,8 @@ Each entry in `anyOf` is a **reference string**, resolved by
 - Any other string is treated as a slug, matched against the
   `paraphernaliaId` flag on the actor's items. The author-friendly path for
   user-built content.
+
+Slugs and UUIDs may coexist in the same `anyOf` — the resolver tries each.
 
 ### Examples
 
@@ -83,18 +110,47 @@ AND-of-OR — actor needs one from each group:
 ]
 ```
 
+UUID into another compendium:
+
+```json
+"requiredParaphernalia": [
+  { "anyOf": ["Compendium.substances-and-paraphernalia.fishut-illicit-paraphernalia.fhParaDubiousPip"] }
+]
+```
+
 ## Paraphernalia (`kind: "paraphernalia"`)
 
 Used on `equipment` (durable, e.g. a pipe) or `consumable` (one-shot, e.g.
 rolling papers). The Item's dnd5e type drives the readiness rules below; we
 otherwise only check the flag.
 
-| Key               | Type   | Required | Notes                                            |
-| ----------------- | ------ | -------- | ------------------------------------------------ |
-| `paraphernaliaId` | string | yes      | Stable slug. Substances reference this string.   |
+| Key                    | Type   | Required | Notes                                             |
+| ---------------------- | ------ | -------- | ------------------------------------------------- |
+| `paraphernaliaId`      | string | yes      | Stable kebab-case slug. Substances reference this string. |
+| `addictionSaveBypass`  | object | no       | See [Save bypass block](#save-bypass-block) below. |
 
 Slugs should be kebab-case, lowercase, ASCII. They are a contract: once a
 substance ships pointing at `snuff-horn`, that slug is permanent.
+
+### Save bypass block
+
+```js
+addictionSaveBypass = {
+  type: "auto-pass",        // v2 supports only "auto-pass"; "advantage" / "+N" reserved
+  appliesTo: ["inhaled"],   // matches substance.administration; non-empty array
+  usesPerDay: "@prof"       // numeric or formula; cosmetic — see below
+};
+```
+
+When the substance's administration matches this paraphernalia's `appliesTo`
+**and** the paraphernalia is one of the gate-satisfying items for that
+substance (its slug or UUID appears in the substance's `requiredParaphernalia`),
+the addiction save is auto-passed and the paraphernalia's
+`system.uses.spent` increments by 1. Per-day refresh rides on dnd5e's
+native item recovery — bypass-granting paraphernalia ship with
+`system.uses.recovery: [{ period: "day", type: "recoverAll" }]` so a long
+rest refreshes `spent` to 0. The module does **not** implement a custom
+recovery hook for paraphernalia.
 
 ### Readiness rules
 
@@ -107,31 +163,57 @@ to use:
   must have `system.quantity > 0`. dnd5e consumables have no equipped
   slot, so quantity is the analogue.
 - **Attunement-required paraphernalia** (`system.attunement === "required"`)
-  must have `system.attuned === true` on the actor's copy. dnd5e tracks
-  attunement state on the actor; the gate honours it.
+  must have `system.attuned === true` on the actor's copy.
 
 When the gate fires, every user (GM or player) sees the same dialog naming
 the substance and the missing groups, with reasons annotated — "(not
 equipped)" or "(not attuned)" — when at least one candidate is on the
 actor but unready. If no candidate is on the actor, the group is reported
 as plain "missing". The dialog offers "Use anyway" and "Cancel"; this
-mirrors how dnd5e surfaces missing-resource overrides (no spell slot, no
-Lay on Hands points). Player override is intentional — abuse is a social
-problem the GM handles at the table, not one the module enforces.
+mirrors how dnd5e surfaces missing-resource overrides. Player override is
+intentional.
 
-## Effect-level flags (`requiresDae`)
+## Active Effect conventions
 
-Some substances ship Active Effects that rely on DAE-only modes (e.g. custom
-formulas, override scripts). Without DAE, those modes silently no-op — the
-effect appears applied but the mechanical change never lands. To make the
-failure mode visible, the module reads a per-effect flag.
+### Addiction template AE
 
-Set the flag on the Active Effect itself (not the item):
+Every substance ships a template Addiction AE on the item itself. On a
+failed save the module clones it onto the actor. Conventions:
+
+- Name format: `{Substance} Addiction` — e.g. *Coalshade Powder Addiction*.
+- The substring `addict` must appear in the name (case-insensitive). The
+  Remove Addiction macro and contract validators rely on this.
+- The substance's `addiction.addictionEffectId` flag points to the
+  template's `_id`.
+
+### Applied AE on the actor
+
+The cloned AE on the actor carries:
+
+```js
+effect.flags["substances-and-paraphernalia"].sourceSubstanceId = "<item._id>";
+```
+
+This lets the long-rest tick match an applied AE back to its actor-flag
+withdrawal entry.
+
+### Benefit AE
+
+Auto-applied on use. Naming convention: `Altered by {Substance}`.
+DAE-required variants append a parenthetical: e.g.
+*Altered by Stellar Mist (Insight)*. Neutral phrasing, easy to spot in the
+actor's effect list.
+
+### `requiresDae` per-effect flag
+
+Some substances ship Active Effects that rely on DAE-only modes. Without DAE,
+those modes silently no-op. The module detects DAE-only modes implicitly;
+authors can also set the flag explicitly:
 
 ```json
 "effects": [
   {
-    "name": "Coalshade Rush",
+    "name": "Altered by Stellar Mist (Insight)",
     "changes": [{ "...": "..." }],
     "flags": {
       "substances-and-paraphernalia": {
@@ -142,25 +224,31 @@ Set the flag on the Active Effect itself (not the item):
 ]
 ```
 
-When **any** effect on a substance has `requiresDae: true` and the DAE module
-is not active, the gate's behaviour depends on the world setting
-`strictDaeRequirement`:
+When **any** effect on a substance is detected as DAE-required and DAE is not
+active, behaviour depends on `strictDaeRequirement`:
 
-- **Off** (default): the substance still consumes; a warning toast tells the
-  user that DAE-mode effects may silently fail.
-- **On**: consumption is blocked with a clear message.
+- **Off** (default): a warning toast tells the user that DAE-mode effects may
+  silently fail.
+- **On**: consumption is blocked.
 
-The check fires only after the paraphernalia gate has passed, so missing
-paraphernalia takes priority over DAE warnings.
+## Actor-side state (canonical)
 
-## Optional integrations
+Withdrawal state lives on the actor, keyed by substance `_id`:
 
-The module knows about four optional Foundry modules: **dae**, **midi-qol**,
-**times-up**, **tokenmagic**. None are required. At ready, the module logs a
-single info notification listing any that are recommended-but-missing (the
-notice can be hidden via the client setting `suppressIntegrationWarnings`).
-Authoring substances does not require any of them; the only effect-level
-integration today is the DAE flag above.
+```js
+actor.flags["substances-and-paraphernalia"].withdrawal = {
+  "fhSubCoalshade01": {
+    restsRemaining: 4,
+    appliedAt: "2026-05-05T12:00:00.000Z"
+  }
+};
+```
+
+The flag is the source of truth. The Active Effect on the actor is a UI
+mirror; the long-rest tick uses the AE's `sourceSubstanceId` flag to match
+back to the flag entry, decrements, and removes the AE when
+`restsRemaining` reaches zero. The tick is GM-arbitrated (only the active
+GM client decrements, to prevent double-ticks in a multi-client session).
 
 ## Worked example — substance source JSON
 
@@ -172,38 +260,65 @@ integration today is the DAE flag above.
   "type": "consumable",
   "folder": "fhSubFantasy0001",
   "system": { "...": "..." },
+  "effects": [
+    {
+      "_id": "fhAECoalshadeAdc",
+      "_key": "!items.effects!fhSubCoalshade01.fhAECoalshadeAdc",
+      "name": "Coalshade Powder Addiction",
+      "changes": [{ "...": "..." }]
+    }
+  ],
   "flags": {
     "substances-and-paraphernalia": {
       "kind": "substance",
       "category": "stimulant",
       "setting": "fantasy",
+      "administration": "inhaled",
       "tags": ["snuff", "alchemical"],
       "requiredParaphernalia": [
         { "anyOf": ["snuff-horn"] }
       ],
-      "schemaVersion": 1
+      "addiction": {
+        "save": { "ability": "con", "dc": 13 },
+        "withdrawalMod": 4,
+        "addictionEffectId": "fhAECoalshadeAdc"
+      },
+      "schemaVersion": 2
     }
   }
 }
 ```
 
-## Worked example — paraphernalia source JSON
+## Worked example — paraphernalia source JSON (with bypass)
 
 ```json
 {
-  "_id": "fhParaSnuffHorn1",
-  "_key": "!items!fhParaSnuffHorn1",
-  "name": "Snuff Horn",
+  "_id": "fhParaDubiousPip",
+  "_key": "!items!fhParaDubiousPip",
+  "name": "Shen Feng Wa's Dubious Pipe",
   "type": "equipment",
   "folder": "fhParaFantasy001",
-  "system": { "...": "..." },
+  "system": {
+    "rarity": "legendary",
+    "attunement": "required",
+    "uses": {
+      "max": "@prof",
+      "spent": 0,
+      "recovery": [{ "period": "day", "type": "recoverAll" }]
+    }
+  },
   "flags": {
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "fantasy",
-      "paraphernaliaId": "snuff-horn",
-      "tags": ["snuff", "horn", "inhalation"],
-      "schemaVersion": 1
+      "paraphernaliaId": "dubious-pipe",
+      "tags": ["pipe", "dragon", "legendary"],
+      "addictionSaveBypass": {
+        "type": "auto-pass",
+        "appliesTo": ["inhaled"],
+        "usesPerDay": "@prof"
+      },
+      "schemaVersion": 2
     }
   }
 }
@@ -216,6 +331,7 @@ The `@foundryvtt/foundryvtt-cli` compiler skips any source JSON without a
 
 - `"!folders!<id>"` for folder entries.
 - `"!items!<id>"` for items (both substances and paraphernalia packs).
+- `"!items.effects!<itemId>.<effectId>"` for embedded Active Effects.
 
 All document IDs (`_id`) are 16-character alphanumeric. Folders use a
 parent-less structure (`"folder": null`); items reference their parent folder
@@ -229,25 +345,49 @@ authors and integrators:
 ```js
 const api = game.modules.get("substances-and-paraphernalia").api;
 
+// Flag accessors
 api.flagSchema.getKind(item);                      // "substance" | "paraphernalia" | null
 api.flagSchema.getCategory(substance);             // "stimulant" | ...
+api.flagSchema.getAdministration(substance);       // "inhaled" | ...
+api.flagSchema.getAddiction(substance);            // { save, withdrawalMod, addictionEffectId }
 api.flagSchema.getRequiredParaphernalia(substance); // [{ anyOf: [...] }, ...]
+api.flagSchema.getAddictionSaveBypass(paraphernalia); // { type, appliesTo, usesPerDay } | null
+api.flagSchema.getActorWithdrawalEntry(actor, substanceId); // { restsRemaining, appliedAt } | null
+api.flagSchema.getSourceSubstanceId(effect);       // "<itemId>" | null
 
+// References
 api.references.actorHasParaphernalia(actor, "snuff-horn");
 api.references.inspectParaphernalia(actor, "snuff-horn");
 // → { item, ready, reason }   reason ∈ "missing"|"unequipped"|"unattuned"|null
 
+// Requirements
 api.requirements.evaluateSubstance(substance, actor);
 // → { ok: boolean, missing: [{ anyOf: [...], reason }, ...] }
 
+// Addiction
+api.addiction.rollSaveAndApply(actor, substance);
+api.addiction.applyOutcome(actor, substance, { saveResult: "fail", saveTotal: 7 });
+//   alternative outcome shapes:
+//   { alreadyAddicted: true }
+//   { bypass: { bypassed: true, paraphernalia, type } }
+
+// Save bypass
+api.saveBypass.consumeBypassIfAvailable(actor, substance);
+// → { bypassed: true, paraphernalia, type } | { bypassed: false }
+
+// Integrations
 api.integrations.isActive("dae");                  // boolean
 api.integrations.listMissingIntegrations();        // [{ id, labelKey }, ...]
+
+// UI
+api.ui.openItemSettings(item);                     // open the form programmatically
 ```
 
 ## Limitations of gating (read this before authoring)
 
-The cancellation hook (`dnd5e.preUseActivity`, wired up in Phase 4) only
-fires for the dnd5e Activity path. RP-style direct inventory edits, custom
-macros that bypass Activities, or right-click → "Use" outside the Activity
-flow will **bypass paraphernalia gating**. This is acceptable at v0.1 and
-documented in the GM journal; it is not a bug.
+The cancellation hook (`dnd5e.preUseActivity`) only fires for the dnd5e
+Activity path. RP-style direct inventory edits, custom macros that bypass
+Activities, or right-click → "Use" outside the Activity flow will **bypass
+paraphernalia gating** and the addiction save. This is intentional — a
+player who routes around the Activity flow has implicitly opted into "GM
+handles this at the table".

@@ -20,7 +20,7 @@
       "setting": "sciFi",
       "paraphernaliaId": "vapor-mask",
       "tags": ["mask", "vapor", "inhalation"],
-      "schemaVersion": 1
+      "schemaVersion": 2
     }
   },
   "effects": [],

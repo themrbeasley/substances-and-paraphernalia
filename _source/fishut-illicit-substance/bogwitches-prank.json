@@ -1,0 +1,104 @@
+{
+  "_id": "fhSubBogwitch001",
+  "_key": "!items!fhSubBogwitch001",
+  "name": "Bogwitch's Prank",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhSubFantasy0001",
+  "system": {
+    "description": {
+      "value": "<p>A small purple-capped fungus that grows on rotting logs in marshlands, visually identical to a popular edible variety. Foragers learn to tell the difference; their friends usually don't. Eaten unwittingly more often than not.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour your sense of color is heightened and faintly synesthetic: you have advantage on Charisma (Performance) checks and disadvantage on Wisdom (Perception) checks that rely on sight.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 11 Constitution saving throw. On a failed save, you gain the Addicted condition from Bogwitch's Prank (see below).</p><p><strong><em>Addicted from Bogwitch's Prank.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom (Perception) checks.</p><p><strong><em>Withdrawal Modifier: 2.</em></strong> Withdrawal lasts max(2 &minus; your Constitution modifier, 1) long rests, minimum 1.</p>"
+    },
+    "type": { "value": "poison", "subtype": "" },
+    "rarity": "common",
+    "weight": { "value": 0.05, "units": "lb" },
+    "price": { "value": 0, "denomination": "gp" },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": true
+    },
+    "activities": {
+      "fhActBogwitch001": {
+        "type": "utility",
+        "_id": "fhActBogwitch001",
+        "sort": 0,
+        "activation": { "type": "action", "override": false, "condition": "" },
+        "consumption": {
+          "scaling": { "allowed": false },
+          "spellSlot": true,
+          "targets": [
+            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+          ]
+        },
+        "description": { "chatFlavor": "" },
+        "duration": { "units": "hour", "value": "1", "concentration": false, "override": false },
+        "effects": [
+          { "_id": "fhAEBogwitchBen1" }
+        ],
+        "flags": {},
+        "range": { "units": "self", "override": false, "special": "" },
+        "target": {
+          "template": { "contiguous": false, "units": "ft", "type": "" },
+          "affects": { "choice": false, "type": "self" },
+          "override": false,
+          "prompt": true
+        },
+        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "visibility": {
+          "level": { "min": null, "max": null },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "name": ""
+      }
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "substance",
+      "category": "mindAltering",
+      "setting": "fantasy",
+      "tags": ["fungus", "natural"],
+      "administration": "ingested",
+      "requiredParaphernalia": [],
+      "addiction": {
+        "save": { "ability": "con", "dc": 11 },
+        "withdrawalMod": 2,
+        "addictionEffectId": "fhAEBogwitchAdc1"
+      },
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAEBogwitchBen1",
+      "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchBen1",
+      "name": "Altered by Bogwitch's Prank",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": { "seconds": 3600 },
+      "description": "<p>Advantage on Charisma (Performance) checks. Disadvantage on sight-based Wisdom (Perception) checks.</p>",
+      "changes": [],
+      "flags": {}
+    },
+    {
+      "_id": "fhAEBogwitchAdc1",
+      "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchAdc1",
+      "name": "Bogwitch's Prank Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": ["poisoned"],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on Wisdom (Perception) checks until withdrawal completes.</p>",
+      "changes": [],
+      "flags": {}
+    }
+  ],
+  "ownership": { "default": 0 }
+}

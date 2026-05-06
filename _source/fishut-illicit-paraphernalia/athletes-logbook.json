@@ -20,7 +20,7 @@
       "setting": "modern",
       "paraphernaliaId": "athletes-logbook",
       "tags": ["protocol", "schedule", "knowledge"],
-      "schemaVersion": 1
+      "schemaVersion": 2
     }
   },
   "effects": [],
