@@ -19,6 +19,17 @@ workflow.
 - **Foundry package registry submission.** Defer until the module is
   shipped, stable, and in real worlds. Foundry's own guidance prefers
   proven modules at submission time.
+- **Schema migration framework.** Sheet-level rendering with
+  default-on-missing flag reads is the right "migration" path for
+  this module — when we change how items render, the new code reads
+  whatever's there and falls back to defaults. Documents aren't
+  touched. World items GMs have edited stay edited. GM-from-scratch
+  items are unaffected. Module-shipped compendium items get replaced
+  wholesale by Foundry's normal update flow. The only case where a
+  framework would matter is a semantic-rewrite of an existing flag
+  meaning, and even there, handling it at the read site is cheaper
+  than a framework. The empty `MIGRATORS` skeleton in
+  `scripts/migrations.js` stays as-is in case that case ever arises.
 
 ---
 
@@ -33,9 +44,9 @@ in-world re-import for users on existing worlds.
 **Direction.** Move the GM Guide to a GitHub wiki. Replace the
 in-world journal with a single short page that:
 
-- Names what the module adds to the UI (3-dot menu entry, gating
-  dialog, addiction chat lines, withdrawal AE, `Toggle Paraphernalia
-  Enforcement` macro).
+- Names what the module adds to the UI (Details-tab checkboxes and
+  fields, gating dialog, addiction chat lines, withdrawal AE,
+  `Toggle Paraphernalia Enforcement` macro).
 - Links to the wiki page that mirrors that scope, with screenshots.
 - Lists the key world settings that change behavior, with one-line
   guidance per setting.
@@ -57,69 +68,85 @@ in-world journal with a single short page that:
 
 ---
 
-## Theme 2 — Schema migration framework
+## Theme 2 — Sheet-level Details-tab integration (replaces the 3-dot form)
 
-**Why this matters (justification).**
+**Status today.** v0.2 ships
+`scripts/ui/item-settings-form.js` + `templates/item-settings-form.hbs`,
+an ApplicationV2 form launched from the dnd5e item sheet's 3-dot
+header menu. It works, but it has three structural problems that won't
+age well:
 
-The v0.2 schema bump was a clean break — users re-import substances
-and paraphernalia from compendium and lose any per-actor or
-per-world customization they layered on top. That's defensible at
-v0.2 because (a) the module is pre-1.0, (b) there were ~no real-world
-installations, and (c) the breaking-change CHANGELOG entry was loud.
+- It's hidden out of the natural left-to-right authoring flow
+  (Description → Details → Activities → Effects). Authors don't think
+  to look there.
+- It's a separate surface that has to mirror item state — every field
+  is a round-trip through `flags["substances-and-paraphernalia"]`
+  rather than living where dnd5e already persists item data.
+- The shipped `FISHUT.ItemSettings.*` localization keys never resolved
+  in the v0.2 build — the form currently displays raw key strings to
+  anyone who opens it. (Cosmetic, but representative of the form
+  living off to the side of the rest of the module's UI.)
 
-After 1.0, that posture stops working. A user who has authored ten
-of their own substances in their world's items directory cannot lose
-that work to a flag-shape revision. Even if their world copies of our
-shipped substances are re-importable from compendium, **their own**
-items are not — those live in `world.items`, not in `packs/*`.
+**Direction.** Replace the form with native injection into the dnd5e
+item sheet's **Details** tab, mirroring how dnd5e exposes its own
+optional behaviors (e.g. the *Magical* checkbox under Consumable
+Properties).
 
-The existing `scripts/migrations.js` carries an empty `MIGRATORS`
-array and a `dataVersion` world setting that tracks the last applied
-schema version. The skeleton is right; what's missing is:
+- On `consumable` items: add an **Illicit Substance** checkbox under
+  the existing Consumable Properties section. Toggling it on reveals
+  a new section above Usage with the substance fields (Setting,
+  Category, Administration, Save Ability, Save DC, Withdrawal Mod,
+  Addiction Effect picker, Required Paraphernalia editor).
+- On `equipment` items: add a **Paraphernalia** checkbox under the
+  equivalent Properties section. Toggling it on reveals
+  paraphernalia fields (Setting, Paraphernalia ID, Save Bypass
+  subform — type, appliesTo, usesPerDay).
+- All persistence flows through the sheet's existing form-submit
+  pipeline — same path the *Magical* checkbox uses. No bespoke
+  ApplicationV2.
 
-- **Per-document version stamps.** Every substance / paraphernalia
-  flag block already carries `schemaVersion`. The framework needs to
-  read each document's stamp, run only the migrators that bridge
-  *that document's* stamp to the world target, and rewrite the
-  stamp atomically. World-level `dataVersion` is necessary but not
-  sufficient.
-- **Idempotent, chainable migrators.** Each migrator is a pure
-  `(flagBlock) → flagBlock` function. Running migrator N twice on the
-  same document is a no-op. Migrator N-then-N+1 produces the same
-  output regardless of intermediate persistence.
-- **Read everywhere, write only the GM client.** The migration runs
-  during the world's first `ready` after the module updates, on the
-  active GM client only (mirroring the addiction long-rest tick's
-  `game.users.activeGM === game.user` guard). All other clients see
-  the migrated state on their next refresh.
-- **Per-document logging + a JSON dump of pre-migration state.**
-  Mirror the Remove Addiction macro pattern: whisper the pre-migration
-  flag block to the GM as JSON before mutating, so a botched migration
-  is recoverable by hand.
-- **Unit-testable migrators.** Each migrator imports cleanly under
-  Node `node --test` with no Foundry globals. Fixtures live under
-  `test/fixtures/migrations/`.
-- **The "no document found" path.** First migrator post-1.0 will
-  almost certainly need to seed defaults (e.g. add `administration`
-  to substances that pre-date it). Framework needs to distinguish
-  "missing field" from "explicitly null" and apply defaults only to
-  the former.
+**Mechanism.** Hook `renderItemSheet5e2` (or whatever the dnd5e 4.x
+class hook turns out to be — confirm at implementation time) and
+inject the new fields into the rendered DOM. Field names use the
+flag-path convention (`flags.substances-and-paraphernalia.kind`,
+etc.) so dnd5e's form-submit picks them up natively.
 
-**Pre-1.0 implication.** We can still break flag shapes pre-1.0
-without writing migrators — but each break should land *with* a
-migrator that bridges the prior shape, even if MIGRATORS is empty
-in the merged version of that PR. That builds the framework
-incrementally rather than as a single "migration framework" PR
-with no real bridges to test against.
+**Why this is bigger than it looks.**
+
+- The form's localization-key resolution bug needs to be properly
+  cleared (the new fields' `FISHUT.*` keys must exist in
+  `lang/en.json` and be registered through whatever path Foundry's
+  template renderer expects). The lesson from the v0.2 form is that
+  this is easy to miss; the new injection should be tested in a
+  fresh world before merge.
+- The "Required Paraphernalia editor" sub-widget (groups of
+  `anyOf` rows, each row a slug-or-UUID) is the one piece that
+  doesn't map cleanly onto dnd5e's existing form patterns. Likely
+  needs a small Handlebars partial + a delegated event handler for
+  add/remove.
+- The save-bypass subform is small but conditionally visible. The
+  toggle UX should match dnd5e's existing "checkbox reveals a sub-
+  section" pattern (Limited Uses → Recovery shows/hides similarly).
+
+**Cleanup at the same time.**
+
+- Delete `scripts/ui/item-settings-form.js` and
+  `templates/item-settings-form.hbs`.
+- Delete the `FISHUT.ItemSettings.*` lang keys (they're broken
+  anyway) and replace them with `FISHUT.Details.*` keys for the new
+  fields.
+- Remove the 3-dot header-control hook in
+  `scripts/module.mjs` (or wherever it's registered).
 
 **Open questions for spec.**
 
-- Migrate compendium documents in `packs/*` too, or only world
-  documents? (Compendium content is shipped — re-import should be
-  the answer; framework probably skips compendium-locked items.)
-- AE-flag and actor-flag migration (e.g. `sourceSubstanceId`
-  rename if it ever happens) — does the framework own these, or
-  do those live in their own migrator class?
+- For the *Required Paraphernalia* editor specifically — keep it
+  inside the Details tab section, or move it to a small floating
+  sub-dialog launched from a button in that section? The full editor
+  may be too tall for the Details tab.
+- Do we want the substance fields visible-but-disabled when "Illicit
+  Substance" is unchecked, or hidden-until-checked? dnd5e's pattern
+  is hidden-until-checked.
 
 ---
 
@@ -178,15 +205,16 @@ token; on AE removal, pop the filter.
 keyed by `flags.substances-and-paraphernalia.kind === "substance"`
 or by AE-name pattern (`Altered by *`). Filter parameters live on
 the substance flag block (`tmfx.filterParams`). Defaults are baked
-in per substance; authors can override via the 3-dot-menu form.
+in per substance; authors can override via the new Details-tab
+section (Theme 2).
 
 **Why this is bigger than it looks.**
 
 - TMFX filter parameters are a non-trivial config surface — a
   full filter is a `params` object with dozens of fields.
-- The 3-dot menu form needs a TMFX subform that doesn't drown new
-  authors. Probably "preset name" with a free-text "raw JSON
-  override" escape hatch.
+- The Details-tab substance section needs a TMFX subform that
+  doesn't drown new authors. Probably "preset name" with a
+  free-text "raw JSON override" escape hatch.
 - TMFX may not be active. Hook registration must be guarded by
   `isActive("tokenmagic")`; missing-module path should be a no-op,
   not a warning storm.
@@ -224,7 +252,7 @@ don't take:
 
 **Why this is theme 5, not theme 1.** Each midi feature ships a
 new substance-flag knob and a new conditional path through the
-post-hook. The authoring form (3-dot menu) needs new sections. The
+post-hook. The Details-tab substance section needs new fields. The
 content invariants validator needs new assertions. None of it is
 load-bearing for the core loop — the v0.2 loop already works with
 midi active or absent.
@@ -280,17 +308,16 @@ worlds before the next lands.
 
 ## What ships when (rough)
 
-- **0.3** — Theme 1 (wiki refactor) + Theme 6 round 1 (matrix
-  fill). Both are content-shaped, not framework-shaped, and can
-  ship together.
+- **0.3** — Theme 2 (Details-tab integration; deletes the 3-dot
+  form) + Theme 1 (wiki refactor) + Theme 6 round 1 (matrix fill).
+  Theme 2 anchors the release; the other two are content-shaped
+  and ride along.
 - **0.4** — Theme 3 (bypass types: `advantage` + `+N`) + Theme 6
   round 2.
 - **0.5** — Theme 4 (TokenMagic FX) + Theme 6 round 3.
 - **0.6** — Theme 3 finish (`reroll-on-fail`) + Theme 5 first
   cut (on-use macro hook).
-- **1.0** — Theme 2 (migration framework) lands on the first
-  flag-shape change after 1.0 is set as the stability goal.
-  Foundry package registry submission lands here too.
+- **1.0** — stability pass + Foundry package registry submission.
 
 This ordering is editable. Pin nothing in this doc that should be
 pinned in a spec.
