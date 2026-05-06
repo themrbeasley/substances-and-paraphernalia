@@ -1,4 +1,5 @@
 import { MODULE_ID, FLAGS } from "../config.js";
+import { isCompendiumRef } from "./ref-kind.js";
 
 /**
  * @typedef {Object} ParaphernaliaInspection
@@ -37,7 +38,7 @@ export function inspectParaphernalia(actor, ref) {
   const items = actor.items;
   if (!items) return { item: null, ready: false, reason: "missing" };
 
-  const isUuidRef = ref.startsWith("Compendium.");
+  const isUuidRef = isCompendiumRef(ref);
   let candidate = null;
   for (const item of items) {
     if (isUuidRef) {

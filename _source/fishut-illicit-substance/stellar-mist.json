@@ -7,7 +7,7 @@
   "folder": "fhSubSciFi000001",
   "system": {
     "description": {
-      "value": "<p>A pearlescent suspension that dissolves in air. The user experiences sensations from elsewhere — sometimes elsewhen — for the duration. Operators learn not to trust the visions, but everyone tries them once.</p><p><em>Requires: Neural Diffuser or Vapor Mask.</em></p>"
+      "value": "<p>A pearlescent suspension that dissolves in air. The user experiences sensations from elsewhere — sometimes elsewhen — for the duration. Operators learn not to trust the visions, but everyone tries them once.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have advantage on Intelligence (Investigation) checks but disadvantage on Wisdom saving throws. If the Dynamic Active Effects module is active, you also gain a +1d4 bonus to all saving throws for the duration (the &ldquo;Insight&rdquo; layer).</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 12 Constitution saving throw. On a failed save, you gain the Addicted condition from Stellar Mist (see below).</p><p><strong><em>Addicted from Stellar Mist.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom (Insight) and Wisdom (Perception) checks.</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Neural Diffuser or Vapor Mask.</em></p>"
     },
     "type": { "value": "poison", "subtype": "" },
     "rarity": "rare",
@@ -32,8 +32,11 @@
           ]
         },
         "description": { "chatFlavor": "" },
-        "duration": { "units": "inst", "concentration": false, "override": false },
-        "effects": [],
+        "duration": { "units": "hour", "value": "1", "concentration": false, "override": false },
+        "effects": [
+          { "_id": "fhAEStellMistBen" },
+          { "_id": "fhAEStellMistIns" }
+        ],
         "flags": {},
         "range": { "units": "self", "override": false, "special": "" },
         "target": {
@@ -61,12 +64,60 @@
       "category": "mindAltering",
       "setting": "sciFi",
       "tags": ["mist", "synthetic"],
+      "administration": "inhaled",
       "requiredParaphernalia": [
         { "anyOf": ["neural-diffuser", "vapor-mask"] }
       ],
-      "schemaVersion": 1
+      "addiction": {
+        "save": { "ability": "con", "dc": 12 },
+        "withdrawalMod": 3,
+        "addictionEffectId": "fhAEStellMistAdc"
+      },
+      "schemaVersion": 2
     }
   },
-  "effects": [],
+  "effects": [
+    {
+      "_id": "fhAEStellMistBen",
+      "_key": "!items.effects!fhSubStellarMist.fhAEStellMistBen",
+      "name": "Altered by Stellar Mist",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": { "seconds": 3600 },
+      "description": "<p>Advantage on Intelligence (Investigation) checks. Disadvantage on Wisdom saving throws.</p>",
+      "changes": [],
+      "flags": {}
+    },
+    {
+      "_id": "fhAEStellMistIns",
+      "_key": "!items.effects!fhSubStellarMist.fhAEStellMistIns",
+      "name": "Altered by Stellar Mist (Insight)",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": { "seconds": 3600 },
+      "description": "<p>+1d4 to all saving throws (DAE-required layer).</p>",
+      "changes": [
+        { "key": "system.bonuses.abilities.save", "mode": 0, "value": "+1d4", "priority": 20 }
+      ],
+      "flags": {
+        "substances-and-paraphernalia": { "requiresDae": true }
+      }
+    },
+    {
+      "_id": "fhAEStellMistAdc",
+      "_key": "!items.effects!fhSubStellarMist.fhAEStellMistAdc",
+      "name": "Stellar Mist Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": ["poisoned"],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on Wisdom (Insight) and Wisdom (Perception) checks until withdrawal completes.</p>",
+      "changes": [],
+      "flags": {}
+    }
+  ],
   "ownership": { "default": 0 }
 }

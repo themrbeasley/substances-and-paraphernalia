@@ -1,6 +1,7 @@
 {
   "FISHUT.Module.Name": "Substances and Paraphernalia",
 
+  "FISHUT.Kind.None": "None",
   "FISHUT.Kind.Substance": "Substance",
   "FISHUT.Kind.Paraphernalia": "Paraphernalia",
 
@@ -11,6 +12,12 @@
   "FISHUT.Setting.Fantasy": "Fantasy",
   "FISHUT.Setting.SciFi": "Sci-Fi",
   "FISHUT.Setting.Modern": "Modern",
+
+  "FISHUT.Administration.Inhaled": "Inhaled",
+  "FISHUT.Administration.Ingested": "Ingested",
+  "FISHUT.Administration.Injected": "Injected",
+  "FISHUT.Administration.Sublingual": "Sublingual",
+  "FISHUT.Administration.Topical": "Topical",
 
   "FISHUT.Settings.EnforceParaphernalia.Name": "Enforce paraphernalia requirements",
   "FISHUT.Settings.EnforceParaphernalia.Hint": "When on, substances with required paraphernalia cannot be consumed unless the actor possesses the required gear. When off, all substances consume freely.",
@@ -41,5 +48,60 @@
   "FISHUT.Integrations.Module.Tokenmagic": "Token Magic FX (tokenmagic)",
   "FISHUT.Integrations.Missing.Notice": "Substances and Paraphernalia recommends modules that aren't active: {missing}. Disable this notice in the module settings.",
   "FISHUT.Integrations.RequiresDae.Warn": "{item}: this substance has effects that require DAE. DAE isn't active — those effect modes may silently fail to apply.",
-  "FISHUT.Integrations.RequiresDae.Block": "{item}: requires DAE, and DAE isn't active. Consumption blocked."
+  "FISHUT.Integrations.RequiresDae.Block": "{item}: requires DAE, and DAE isn't active. Consumption blocked.",
+
+  "FISHUT.Addiction.SaveDialog.Title": "Resist addiction to {item}",
+  "FISHUT.Addiction.SaveDialog.Flavor": "DC {dc} {ability} save against addiction to {item}.",
+  "FISHUT.Addiction.Save.Pass": "{actor} resisted the addictive pull of <strong>{item}</strong>.",
+  "FISHUT.Addiction.Save.Fail": "{actor} failed to resist <strong>{item}</strong> and gained the Addicted condition for {rests} long rest(s).",
+  "FISHUT.Addiction.Save.Bypass": "{actor}'s save against <strong>{item}</strong> addiction was bypassed by <strong>{paraphernalia}</strong>.",
+  "FISHUT.Addiction.Already.Extended": "{actor} is already addicted to <strong>{item}</strong>; withdrawal extended to {rests} long rest(s).",
+  "FISHUT.Addiction.Already.Maintained": "{actor} is already addicted to <strong>{item}</strong>; withdrawal remains at {rests} long rest(s).",
+
+  "FISHUT.Withdrawal.Tick.Remaining": "{actor}'s withdrawal from <strong>{effect}</strong>: {rests} long rest(s) remaining.",
+  "FISHUT.Withdrawal.Tick.Cleared": "{actor}'s withdrawal from <strong>{effect}</strong> ended.",
+
+  "FISHUT.RemoveAddiction.Title": "Remove Addiction",
+  "FISHUT.RemoveAddiction.NoActor": "Select a token first.",
+  "FISHUT.RemoveAddiction.NoCandidates": "{actor} has no addiction effects or withdrawal entries to remove.",
+  "FISHUT.RemoveAddiction.Confirm": "Remove",
+  "FISHUT.RemoveAddiction.Cancel": "Cancel",
+  "FISHUT.RemoveAddiction.PreviewIntro": "<p>Choose addiction effects to remove from <strong>{actor}</strong>.</p>",
+  "FISHUT.RemoveAddiction.RowDetail": "{name} — source: {sourceId}, withdrawal: {rests} LR",
+  "FISHUT.RemoveAddiction.Removed": "Removed <strong>{count}</strong> addiction effect(s) from <strong>{actor}</strong>.",
+  "FISHUT.RemoveAddiction.LogTitle": "Removed addiction (paste-restore JSON)",
+
+  "FISHUT.ItemSettings.MenuLabel": "Substance/Paraphernalia",
+  "FISHUT.ItemSettings.MenuTooltip": "Edit Substances and Paraphernalia flags on this item.",
+  "FISHUT.ItemSettings.Title": "Substance/Paraphernalia — {item}",
+  "FISHUT.ItemSettings.Section.Common": "Common",
+  "FISHUT.ItemSettings.Section.Substance": "Substance",
+  "FISHUT.ItemSettings.Section.Paraphernalia": "Paraphernalia",
+  "FISHUT.ItemSettings.Section.Addiction": "Addiction",
+  "FISHUT.ItemSettings.Section.SaveBypass": "Addiction-Save Bypass",
+  "FISHUT.ItemSettings.Section.Effects": "Active Effects",
+  "FISHUT.ItemSettings.Field.Kind": "Kind",
+  "FISHUT.ItemSettings.Field.Setting": "Setting",
+  "FISHUT.ItemSettings.Field.Category": "Category",
+  "FISHUT.ItemSettings.Field.Administration": "Administration",
+  "FISHUT.ItemSettings.Field.ParaphernaliaId": "Paraphernalia ID (kebab-case)",
+  "FISHUT.ItemSettings.Field.Tags": "Tags (comma-separated)",
+  "FISHUT.ItemSettings.Field.SaveAbility": "Save Ability",
+  "FISHUT.ItemSettings.Field.SaveDc": "Addictiveness DC",
+  "FISHUT.ItemSettings.Field.WithdrawalMod": "Withdrawal Modifier",
+  "FISHUT.ItemSettings.Field.AddictionEffect": "Addiction Effect",
+  "FISHUT.ItemSettings.Field.AddictionEffect.None": "(none)",
+  "FISHUT.ItemSettings.Field.RequiredParaphernalia": "Required Paraphernalia",
+  "FISHUT.ItemSettings.Field.RequiredParaphernalia.AddGroup": "Add Group (AND)",
+  "FISHUT.ItemSettings.Field.RequiredParaphernalia.AddRow": "Add Reference (OR)",
+  "FISHUT.ItemSettings.Field.RequiredParaphernalia.Placeholder": "slug or Compendium UUID",
+  "FISHUT.ItemSettings.Field.SaveBypassEnabled": "Grants addiction-save bypass",
+  "FISHUT.ItemSettings.Field.SaveBypassType": "Bypass type",
+  "FISHUT.ItemSettings.Field.SaveBypassAppliesTo": "Applies to administrations",
+  "FISHUT.ItemSettings.Field.SaveBypassUsesPerDay": "Uses per day",
+  "FISHUT.ItemSettings.Field.SaveBypassUsesNote": "Uses ride on the item's standard Uses configuration — set max + per-day recovery on the Details tab.",
+  "FISHUT.ItemSettings.Field.RequiresDae": "Force \"requires DAE\"",
+  "FISHUT.ItemSettings.Submit": "Save",
+
+  "FISHUT.SaveBypass.Type.AutoPass": "Auto-pass"
 }

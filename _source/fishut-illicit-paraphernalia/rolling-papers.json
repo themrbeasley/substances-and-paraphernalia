@@ -1,13 +1,13 @@
 {
-  "_id": "fhParaTinctDrop1",
-  "_key": "!items!fhParaTinctDrop1",
-  "name": "Tincture Dropper",
+  "_id": "fhParaRollPaper1",
+  "_key": "!items!fhParaRollPaper1",
+  "name": "Rolling Papers",
   "type": "consumable",
   "img": "icons/svg/item-bag.svg",
   "folder": "fhParaModern0001",
   "system": {
     "description": {
-      "value": "<p>A graduated glass dropper, single-use after exposure to oil-based suspensions. Lets you measure a sublingual dose without contaminating the rest of the bottle.</p>"
+      "value": "<p>A pack of fifty thin, gummed papers. One is consumed per smoked dose; the gate checks remaining count but does not itself decrement (track burn at the table).</p>"
     },
     "type": { "value": "trinket" },
     "rarity": "common",
@@ -15,16 +15,16 @@
     "price": { "value": 1, "denomination": "gp" },
     "uses": {
       "spent": 0,
-      "max": "1",
-      "autoDestroy": true
+      "max": "50",
+      "autoDestroy": false
     }
   },
   "flags": {
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "modern",
-      "paraphernaliaId": "tincture-dropper",
-      "tags": ["dropper", "measurement", "single-use"],
+      "paraphernaliaId": "rolling-papers",
+      "tags": ["paper", "consumable", "pack-of-50"],
       "schemaVersion": 2
     }
   },

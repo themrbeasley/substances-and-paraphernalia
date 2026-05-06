@@ -1,0 +1,212 @@
+<section class="fishut-form">
+  {{!-- Common section --}}
+  <fieldset class="fishut-section fishut-section-common">
+    <legend>{{localize "FISHUT.ItemSettings.Section.Common"}}</legend>
+
+    <div class="form-group">
+      <label for="fishut-kind">{{localize "FISHUT.ItemSettings.Field.Kind"}}</label>
+      <select id="fishut-kind" name="kind" data-fishut-rerender="kind">
+        <option value="">{{localize "FISHUT.Kind.None"}}</option>
+        {{#each kinds}}
+          <option value="{{this.id}}" {{#if (eq this.id ../draft.kind)}}selected{{/if}}>{{localize this.labelKey}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    {{#if showKindSpecific}}
+      <div class="form-group">
+        <label for="fishut-setting">{{localize "FISHUT.ItemSettings.Field.Setting"}}</label>
+        <select id="fishut-setting" name="setting">
+          <option value="">—</option>
+          {{#each settings}}
+            <option value="{{this.id}}" {{#if (eq this.id ../draft.setting)}}selected{{/if}}>{{localize this.labelKey}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fishut-tags">{{localize "FISHUT.ItemSettings.Field.Tags"}}</label>
+        <input type="text" id="fishut-tags" name="tags" value="{{draft.tagsText}}" />
+      </div>
+    {{/if}}
+  </fieldset>
+
+  {{!-- Substance section --}}
+  {{#if isSubstance}}
+    <fieldset class="fishut-section fishut-section-substance">
+      <legend>{{localize "FISHUT.ItemSettings.Section.Substance"}}</legend>
+
+      <div class="form-group">
+        <label for="fishut-category">{{localize "FISHUT.ItemSettings.Field.Category"}}</label>
+        <select id="fishut-category" name="category">
+          <option value="">—</option>
+          {{#each categories}}
+            <option value="{{this.id}}" {{#if (eq this.id ../draft.category)}}selected{{/if}}>{{localize this.labelKey}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fishut-administration">{{localize "FISHUT.ItemSettings.Field.Administration"}}</label>
+        <select id="fishut-administration" name="administration">
+          <option value="">—</option>
+          {{#each administrations}}
+            <option value="{{this.id}}" {{#if (eq this.id ../draft.administration)}}selected{{/if}}>{{localize this.labelKey}}</option>
+          {{/each}}
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset class="fishut-section fishut-section-addiction">
+      <legend>{{localize "FISHUT.ItemSettings.Section.Addiction"}}</legend>
+
+      <div class="form-group">
+        <label for="fishut-save-ability">{{localize "FISHUT.ItemSettings.Field.SaveAbility"}}</label>
+        <input type="text" id="fishut-save-ability" name="addiction.save.ability"
+               value="{{draft.addiction.save.ability}}" placeholder="con" />
+      </div>
+
+      <div class="form-group">
+        <label for="fishut-save-dc">{{localize "FISHUT.ItemSettings.Field.SaveDc"}}</label>
+        <input type="number" id="fishut-save-dc" name="addiction.save.dc"
+               value="{{draft.addiction.save.dc}}" min="1" step="1" />
+      </div>
+
+      <div class="form-group">
+        <label for="fishut-withdrawal-mod">{{localize "FISHUT.ItemSettings.Field.WithdrawalMod"}}</label>
+        <input type="number" id="fishut-withdrawal-mod" name="addiction.withdrawalMod"
+               value="{{draft.addiction.withdrawalMod}}" min="0" step="1" />
+      </div>
+
+      <div class="form-group">
+        <label for="fishut-addiction-effect">{{localize "FISHUT.ItemSettings.Field.AddictionEffect"}}</label>
+        <select id="fishut-addiction-effect" name="addiction.addictionEffectId">
+          <option value="">{{localize "FISHUT.ItemSettings.Field.AddictionEffect.None"}}</option>
+          {{#each effects}}
+            <option value="{{this.id}}" {{#if (eq this.id ../draft.addiction.addictionEffectId)}}selected{{/if}}>{{this.name}}</option>
+          {{/each}}
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset class="fishut-section fishut-section-required">
+      <legend>{{localize "FISHUT.ItemSettings.Field.RequiredParaphernalia"}}</legend>
+
+      {{#each draft.requiredParaphernalia as |group groupIdx|}}
+        <div class="fishut-required-group" data-group-index="{{groupIdx}}">
+          <header class="fishut-required-group-header">
+            <strong>OR group #{{add groupIdx 1}}</strong>
+            <button type="button" class="fishut-btn-icon" data-action="remove-required-group"
+                    data-group="{{groupIdx}}" title="Remove group">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </header>
+          {{#each group.anyOf as |ref refIdx|}}
+            <div class="fishut-required-row" data-row-index="{{refIdx}}">
+              <input type="text" name="requiredParaphernalia.{{groupIdx}}.{{refIdx}}"
+                     value="{{ref}}"
+                     placeholder="{{localize "FISHUT.ItemSettings.Field.RequiredParaphernalia.Placeholder"}}" />
+              <button type="button" class="fishut-btn-icon" data-action="remove-required-row"
+                      data-group="{{groupIdx}}" data-row="{{refIdx}}" title="Remove row">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          {{/each}}
+          <button type="button" class="fishut-btn-text" data-action="add-required-row"
+                  data-group="{{groupIdx}}">
+            <i class="fa-solid fa-plus"></i>
+            {{localize "FISHUT.ItemSettings.Field.RequiredParaphernalia.AddRow"}}
+          </button>
+        </div>
+      {{/each}}
+
+      <button type="button" class="fishut-btn-text" data-action="add-required-group">
+        <i class="fa-solid fa-plus"></i>
+        {{localize "FISHUT.ItemSettings.Field.RequiredParaphernalia.AddGroup"}}
+      </button>
+    </fieldset>
+  {{/if}}
+
+  {{!-- Paraphernalia section --}}
+  {{#if isParaphernalia}}
+    <fieldset class="fishut-section fishut-section-paraphernalia">
+      <legend>{{localize "FISHUT.ItemSettings.Section.Paraphernalia"}}</legend>
+
+      <div class="form-group">
+        <label for="fishut-paraphernalia-id">{{localize "FISHUT.ItemSettings.Field.ParaphernaliaId"}}</label>
+        <input type="text" id="fishut-paraphernalia-id" name="paraphernaliaId"
+               value="{{draft.paraphernaliaId}}" placeholder="kebab-case-slug" />
+      </div>
+    </fieldset>
+
+    <fieldset class="fishut-section fishut-section-bypass">
+      <legend>{{localize "FISHUT.ItemSettings.Section.SaveBypass"}}</legend>
+
+      <div class="form-group">
+        <label class="checkbox">
+          <input type="checkbox" name="addictionSaveBypass.enabled"
+                 data-fishut-rerender="bypass-enabled"
+                 {{#if draft.addictionSaveBypass.enabled}}checked{{/if}} />
+          {{localize "FISHUT.ItemSettings.Field.SaveBypassEnabled"}}
+        </label>
+      </div>
+
+      {{#if draft.addictionSaveBypass.enabled}}
+        <div class="form-group">
+          <label for="fishut-bypass-type">{{localize "FISHUT.ItemSettings.Field.SaveBypassType"}}</label>
+          <select id="fishut-bypass-type" name="addictionSaveBypass.type">
+            {{#each addictionSaveBypassTypes}}
+              <option value="{{this.id}}" {{#if (eq this.id ../draft.addictionSaveBypass.type)}}selected{{/if}}>{{localize this.labelKey}}</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>{{localize "FISHUT.ItemSettings.Field.SaveBypassAppliesTo"}}</label>
+          <div class="fishut-checkbox-grid">
+            {{#each administrations}}
+              <label class="checkbox">
+                <input type="checkbox" name="addictionSaveBypass.appliesTo.{{this.id}}"
+                       {{#if (includes ../draft.addictionSaveBypass.appliesTo this.id)}}checked{{/if}} />
+                {{localize this.labelKey}}
+              </label>
+            {{/each}}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="fishut-bypass-uses">{{localize "FISHUT.ItemSettings.Field.SaveBypassUsesPerDay"}}</label>
+          <input type="text" id="fishut-bypass-uses" name="addictionSaveBypass.usesPerDay"
+                 value="{{draft.addictionSaveBypass.usesPerDay}}" placeholder="@prof" />
+          <p class="notes">{{localize "FISHUT.ItemSettings.Field.SaveBypassUsesNote"}}</p>
+        </div>
+      {{/if}}
+    </fieldset>
+  {{/if}}
+
+  {{!-- Active Effects section (per-AE Force-DAE checkbox) --}}
+  {{#if showKindSpecific}}
+    {{#if effects.length}}
+      <fieldset class="fishut-section fishut-section-effects">
+        <legend>{{localize "FISHUT.ItemSettings.Section.Effects"}}</legend>
+        {{#each effects}}
+          <div class="fishut-effect-row">
+            <span class="fishut-effect-name">{{this.name}}</span>
+            <label class="checkbox">
+              <input type="checkbox" name="effectRequiresDae.{{this.id}}"
+                     {{#if this.requiresDae}}checked{{/if}} />
+              {{localize "FISHUT.ItemSettings.Field.RequiresDae"}}
+            </label>
+          </div>
+        {{/each}}
+      </fieldset>
+    {{/if}}
+  {{/if}}
+
+  <footer class="fishut-form-footer">
+    <button type="submit" class="fishut-btn-primary">
+      <i class="fa-solid fa-save"></i>
+      {{localize "FISHUT.ItemSettings.Submit"}}
+    </button>
+  </footer>
+</section>

@@ -7,7 +7,7 @@
   "folder": "fhSubModern00001",
   "system": {
     "description": {
-      "value": "<p>An oil-based stack of underground origin. Used responsibly it produces a measurable strength gain; used carelessly it produces a coroner's report. Discipline is the difference, and discipline is written down.</p><p><em>Requires: Tincture Dropper AND Athlete's Logbook.</em></p>"
+      "value": "<p>An oil-based stack of underground origin. Used responsibly it produces a measurable strength gain; used carelessly it produces a coroner's report. Discipline is the difference, and discipline is written down.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +2 bonus to Strength (Athletics) checks, a +1 bonus to Strength-based weapon attack rolls, and your walking speed increases by 5 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Black Lift (see below).</p><p><strong><em>Addicted from Black Lift.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on Constitution saving throws, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal Modifier: 6.</em></strong> Withdrawal lasts max(6 − your Constitution modifier, 3) long rests, minimum 1.</p><p><em>Requires: Tincture Dropper AND Athlete's Logbook.</em></p>"
     },
     "type": { "value": "poison", "subtype": "" },
     "rarity": "rare",
@@ -32,8 +32,10 @@
           ]
         },
         "description": { "chatFlavor": "" },
-        "duration": { "units": "inst", "concentration": false, "override": false },
-        "effects": [],
+        "duration": { "units": "minute", "value": "10", "concentration": false, "override": false },
+        "effects": [
+          { "_id": "fhAEBlackLiftBen" }
+        ],
         "flags": {},
         "range": { "units": "self", "override": false, "special": "" },
         "target": {
@@ -61,13 +63,51 @@
       "category": "performanceEnhancing",
       "setting": "modern",
       "tags": ["oil", "stack"],
+      "administration": "sublingual",
       "requiredParaphernalia": [
         { "anyOf": ["tincture-dropper"] },
         { "anyOf": ["athletes-logbook"] }
       ],
-      "schemaVersion": 1
+      "addiction": {
+        "save": { "ability": "con", "dc": 15 },
+        "withdrawalMod": 6,
+        "addictionEffectId": "fhAEBlackLiftAdc"
+      },
+      "schemaVersion": 2
     }
   },
-  "effects": [],
+  "effects": [
+    {
+      "_id": "fhAEBlackLiftBen",
+      "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftBen",
+      "name": "Altered by Black Lift",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": { "seconds": 600 },
+      "description": "<p>+2 to Strength (Athletics) checks. +1 to Strength-based weapon attack rolls. Walking speed +5 ft.</p>",
+      "changes": [
+        { "key": "system.skills.ath.bonuses.check", "mode": 2, "value": "+2", "priority": 20 },
+        { "key": "system.bonuses.mwak.attack", "mode": 2, "value": "+1", "priority": 20 },
+        { "key": "system.attributes.movement.walk", "mode": 2, "value": "+5", "priority": 20 }
+      ],
+      "flags": {}
+    },
+    {
+      "_id": "fhAEBlackLiftAdc",
+      "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftAdc",
+      "name": "Black Lift Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": ["poisoned"],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on Constitution saving throws. Walking speed −5 ft. until withdrawal completes.</p>",
+      "changes": [
+        { "key": "system.attributes.movement.walk", "mode": 2, "value": "-5", "priority": 20 }
+      ],
+      "flags": {}
+    }
+  ],
   "ownership": { "default": 0 }
 }

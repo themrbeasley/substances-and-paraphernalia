@@ -20,7 +20,7 @@
       "setting": "sciFi",
       "paraphernaliaId": "neural-diffuser",
       "tags": ["mist", "implant", "cortical"],
-      "schemaVersion": 1
+      "schemaVersion": 2
     }
   },
   "effects": [],
