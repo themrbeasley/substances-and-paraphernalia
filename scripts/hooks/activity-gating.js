@@ -1,6 +1,6 @@
-import { MODULE_ID } from "../config.js";
-import { isSubstance, getRequiredParaphernalia } from "../data/flag-schema.js";
-import { evaluateRequirements } from "../data/required-paraphernalia.js";
+import { MODULE_ID, SCHEMA } from "../config.js";
+import { isSubstance, getRequiredSubtypes } from "../data/flag-schema.js";
+import { evaluateSubtypeRequirements } from "../data/subtype-requirements.js";
 import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
@@ -27,10 +27,10 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
     return true;
   }
 
-  const groups = getRequiredParaphernalia(item);
-  if (!Array.isArray(groups) || groups.length === 0) return true;
+  const subtypes = getRequiredSubtypes(item);
+  if (!Array.isArray(subtypes) || subtypes.length === 0) return true;
 
-  const { ok, missing } = evaluateRequirements(actor, groups);
+  const { ok, missing } = evaluateSubtypeRequirements(actor, subtypes);
   if (!ok) {
     promptBlocked(activity, usageConfig, dialogConfig, messageConfig, missing).catch((err) =>
       logger.error("blocked prompt failed", err),
@@ -57,7 +57,7 @@ async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig,
   const item = activity.item;
   const body = game.i18n.format("FISHUT.Gating.Blocked.Body", {
     item: item.name,
-    missing: formatMissingGroups(missing),
+    missing: formatMissingSubtypes(missing),
   });
 
   const result = await foundry.applications.api.DialogV2.wait({
@@ -90,18 +90,16 @@ async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig,
   }
 }
 
-function formatMissingGroups(missing) {
+function formatMissingSubtypes(missing) {
   const sep = game.i18n.localize("FISHUT.Gating.Group.Separator");
-  return missing.map(formatGroup).join(sep);
+  return missing.map(formatMissingEntry).join(sep);
 }
 
-function formatGroup(group) {
-  const refs = Array.isArray(group?.anyOf) ? group.anyOf : [];
-  const joiner = game.i18n.localize("FISHUT.Gating.Group.Joiner");
-  const candidates = refs.map(formatRef).join(joiner);
-  const reason = formatReason(group?.reason);
-  if (!reason) return candidates;
-  return game.i18n.format("FISHUT.Gating.Group.Annotated", { candidates, reason });
+function formatMissingEntry({ subtype, reason }) {
+  const candidates = subtypeLabel(subtype);
+  const reasonText = formatReason(reason);
+  if (!reasonText) return candidates;
+  return game.i18n.format("FISHUT.Gating.Group.Annotated", { candidates, reason: reasonText });
 }
 
 function formatReason(reason) {
@@ -110,13 +108,8 @@ function formatReason(reason) {
   return null;
 }
 
-function formatRef(ref) {
-  if (typeof ref !== "string" || ref.length === 0) return String(ref);
-  if (!ref.startsWith("Compendium.")) return ref;
-  try {
-    const doc = fromUuidSync(ref);
-    return doc?.name ?? ref;
-  } catch {
-    return ref;
-  }
+function subtypeLabel(subtype) {
+  const entry = SCHEMA?.paraphernaliaSubtypes?.find?.((e) => e.id === subtype);
+  if (!entry) return subtype;
+  return game.i18n.localize(entry.labelKey);
 }

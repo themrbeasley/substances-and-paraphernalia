@@ -18,8 +18,7 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "sciFi",
-      "paraphernaliaId": "neural-diffuser",
-      "tags": ["mist", "implant", "cortical"],
+      "subtype": "inhaler",
       "schemaVersion": 2
     }
   },

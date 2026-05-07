@@ -18,8 +18,7 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "sciFi",
-      "paraphernaliaId": "vapor-mask",
-      "tags": ["mask", "vapor", "inhalation"],
+      "subtype": "inhaler",
       "schemaVersion": 2
     }
   },

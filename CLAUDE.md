@@ -47,7 +47,7 @@ CI (`.github/workflows/ci.yml`) runs lint + validate + unit tests + pack on ever
 
 `scripts/module.mjs` is the entry point. The flow is:
 
-- `init` hook: register settings, register the `preUseActivity` gate, register the addiction hooks (`postUseActivity` + `restCompleted`), register the item-settings 3-dot-menu form, conditionally register the Quench suite.
+- `init` hook: register settings, register the `preUseActivity` gate, register the addiction hooks (`postUseActivity` + `restCompleted`), register the dnd5e Details-tab item-sheet injection, conditionally register the Quench suite.
 - `ready` hook: run migrations (currently a no-op — empty `MIGRATORS` array), publish `game.modules.get(MODULE_ID).api`, notify GMs of missing optional integrations.
 
 Adding a new hook means adding a `register*` call in `module.mjs` and a corresponding `Hooks.on(...)` inside the new module.
@@ -105,7 +105,7 @@ The `restCompleted` handler in `addiction.js` early-returns unless `game.users.a
 
 ### Public API surface
 
-`game.modules.get("substances-and-paraphernalia").api` exposes `schema`, `flagSchema`, `references`, `requirements`, `addiction`, `saveBypass`, `integrations`, `ui`. The Quench tests are the canonical consumer — when adding a new public capability, add it here and exercise it from a Quench test.
+`game.modules.get("substances-and-paraphernalia").api` exposes `schema`, `flagSchema`, `references`, `requirements`, `addiction`, `saveBypass`, `integrations`. The Quench tests are the canonical consumer — when adding a new public capability, add it here and exercise it from a Quench test.
 
 ### Pure-function discipline
 
@@ -118,7 +118,7 @@ All user-facing strings go through `game.i18n.localize(key)` / `format(key, args
 ## Memory + roadmap context
 
 - `ROADMAP.md` is the post-v0.2 backlog. **Schema migration framework is explicitly out of scope** — sheet-level rendering with default-on-missing flag reads is the migration path. Don't propose document-level migrators without an explicit ask.
-- The 3-dot-menu item-settings form (`scripts/ui/item-settings-form.js` + `templates/item-settings-form.hbs`) is **scheduled for deletion** in v0.3, replaced by native dnd5e Details-tab injection (Theme 2 in `ROADMAP.md`). Don't extend the form; new authoring fields should land in the planned sheet integration.
+- Authoring lives on the dnd5e item-sheet **Details tab** (`scripts/ui/details-tab.js` + `templates/details-tab/*.hbs`). The legacy 3-dot-menu form was deleted in v0.3; don't reintroduce it.
 - Module compendium pack ownership ships as `PLAYER: OBSERVER, ASSISTANT: OWNER` intentionally. Don't propose downgrading.
 - Gating dialogs and override buttons are visible to all users (no GM-only paths).
 - Prefer baked-in behavior over world settings — don't ship a setting whose off-state nobody actually wants.

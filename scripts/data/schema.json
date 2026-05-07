@@ -19,15 +19,31 @@
     { "id": "modern", "labelKey": "FISHUT.Setting.Modern" }
   ],
   "administrations": [
-    { "id": "inhaled", "labelKey": "FISHUT.Administration.Inhaled" },
+    { "id": "contact", "labelKey": "FISHUT.Administration.Contact" },
     { "id": "ingested", "labelKey": "FISHUT.Administration.Ingested" },
-    { "id": "injected", "labelKey": "FISHUT.Administration.Injected" },
-    { "id": "sublingual", "labelKey": "FISHUT.Administration.Sublingual" },
-    { "id": "topical", "labelKey": "FISHUT.Administration.Topical" }
+    { "id": "inhaled", "labelKey": "FISHUT.Administration.Inhaled" },
+    { "id": "injury", "labelKey": "FISHUT.Administration.Injury" }
+  ],
+  "paraphernaliaSubtypes": [
+    { "id": "pipe", "labelKey": "FISHUT.ParaphernaliaSubtype.Pipe" },
+    { "id": "snuff-horn", "labelKey": "FISHUT.ParaphernaliaSubtype.SnuffHorn" },
+    { "id": "syringe", "labelKey": "FISHUT.ParaphernaliaSubtype.Syringe" },
+    { "id": "vial", "labelKey": "FISHUT.ParaphernaliaSubtype.Vial" },
+    { "id": "papers", "labelKey": "FISHUT.ParaphernaliaSubtype.Papers" },
+    { "id": "inhaler", "labelKey": "FISHUT.ParaphernaliaSubtype.Inhaler" }
   ],
   "addictionSaveBypassTypes": [
     { "id": "auto-pass", "labelKey": "FISHUT.SaveBypass.Type.AutoPass" }
   ],
+  "modifier": {
+    "kinds": [
+      { "id": "bypass", "labelKey": "FISHUT.Modifier.Kind.Bypass" }
+    ],
+    "types": [
+      { "id": "auto-pass", "labelKey": "FISHUT.Modifier.Type.AutoPass" },
+      { "id": "advantage", "labelKey": "FISHUT.Modifier.Type.Advantage" }
+    ]
+  },
   "worldSettings": [
     {
       "key": "enforceParaphernalia",
@@ -68,15 +84,14 @@
     "kind": "kind",
     "category": "category",
     "setting": "setting",
-    "tags": "tags",
-    "paraphernaliaId": "paraphernaliaId",
-    "requiredParaphernalia": "requiredParaphernalia",
+    "subtype": "subtype",
+    "requiredSubtypes": "requiredSubtypes",
     "requiresDae": "requiresDae",
-    "administration": "administration",
     "addiction": "addiction",
     "addictionSaveBypass": "addictionSaveBypass",
     "sourceSubstanceId": "sourceSubstanceId",
     "withdrawal": "withdrawal",
-    "schemaVersion": "schemaVersion"
+    "schemaVersion": "schemaVersion",
+    "modifier": "modifier"
   }
 }

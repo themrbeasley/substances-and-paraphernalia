@@ -9,6 +9,12 @@ v0.2 is shipped: addiction loop, paraphernalia-granted save bypass,
 3-dot-menu authoring form, content invariants, CI, tag-driven release
 workflow.
 
+v0.3 is shipped: native dnd5e Details-tab authoring (replaces and
+deletes the 3-dot form), AE-flag modifier pipeline (`auto-pass` +
+`advantage` types), drag-to-inventory state-injection dialog for
+GM/ASSISTANT, subtype-based paraphernalia model (open kebab-case
+enum), and Theme 6 round 1 matrix fill (one substance per cell).
+
 ---
 
 ## Explicitly out of scope
@@ -68,7 +74,7 @@ in-world journal with a single short page that:
 
 ---
 
-## Theme 2 — Sheet-level Details-tab integration (replaces the 3-dot form)
+## Theme 2 — Sheet-level Details-tab integration (replaces the 3-dot form) — **shipped v0.3**
 
 **Status today.** v0.2 ships
 `scripts/ui/item-settings-form.js` + `templates/item-settings-form.hbs`,
@@ -150,7 +156,7 @@ etc.) so dnd5e's form-submit picks them up natively.
 
 ---
 
-## Theme 3 — Bypass type expansion
+## Theme 3 — Bypass type expansion — **`auto-pass` + `advantage` shipped v0.3**
 
 **Status today.** `addictionSaveBypass.type` is reserved for
 `auto-pass`, `advantage`, `+N`, and `reroll-on-fail`. Schema accepts
@@ -267,7 +273,7 @@ midi active or absent.
 
 ---
 
-## Theme 6 — Compendia content expansion (3×3 matrix)
+## Theme 6 — Compendia content expansion (3×3 matrix) — **round 1 shipped v0.3**
 
 **Status today.** v0.2 ships 7 substances + 5 paraphernalia,
 exercising every code path (gating, readiness, automation, bypass,
@@ -308,13 +314,17 @@ worlds before the next lands.
 
 ## What ships when (rough)
 
-- **0.3** — Theme 2 (Details-tab integration; deletes the 3-dot
-  form) + Theme 1 (wiki refactor) + Theme 6 round 1 (matrix fill).
-  Theme 2 anchors the release; the other two are content-shaped
-  and ride along.
-- **0.4** — Theme 3 (bypass types: `advantage` + `+N`) + Theme 6
-  round 2.
-- **0.5** — Theme 4 (TokenMagic FX) + Theme 6 round 3.
+- **0.3 — shipped.** Theme 2 (Details-tab integration; deleted
+  the 3-dot form) + Theme 3 partial (`auto-pass` + `advantage`
+  bypass types via the AE-flag modifier pipeline) + Theme 6 round 1
+  (matrix fill) + drag-to-inventory state-injection dialog +
+  subtype-based paraphernalia model.
+- **0.4** — Theme 3 (`+N` bypass type) + Theme 6 round 2 + Theme 1
+  (wiki refactor — slipped from v0.3 to keep the release scope
+  honest).
+- **0.5** — Theme 4 (TokenMagic FX) + module-integration settings
+  pattern (per-recommended-module toggles; deferred from v0.3
+  because no v0.3 consumer exercises it) + Theme 6 round 3.
 - **0.6** — Theme 3 finish (`reroll-on-fail`) + Theme 5 first
   cut (on-use macro hook).
 - **1.0** — stability pass + Foundry package registry submission.

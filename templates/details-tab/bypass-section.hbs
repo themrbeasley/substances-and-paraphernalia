@@ -1,0 +1,24 @@
+<fieldset class="fishut-details-bypass">
+  <legend>{{labels.bypassHeader}}</legend>
+  {{#if paraphernalia.bypass.present}}
+    <div class="form-group">
+      <label>{{labels.bypassType}}</label>
+      <span class="fishut-readonly">{{paraphernalia.bypass.typeLabel}}</span>
+    </div>
+    <div class="form-group">
+      <label>{{labels.bypassAppliesTo}}</label>
+      <span class="fishut-readonly">{{paraphernalia.bypass.appliesToText}}</span>
+    </div>
+    <div class="form-group">
+      <label>{{labels.bypassUsesPerDay}}</label>
+      <span class="fishut-readonly">{{paraphernalia.bypass.usesPerDayText}}</span>
+    </div>
+    <p class="hint">{{labels.bypassManageOnEffectsTab}}</p>
+  {{else}}
+    <p class="hint">{{labels.bypassNoneHint}}</p>
+    <button type="button" class="fishut-btn-text" data-fishut-action="grant-bypass">
+      <i class="fa-solid fa-plus"></i>
+      {{labels.bypassGrantButton}}
+    </button>
+  {{/if}}
+</fieldset>

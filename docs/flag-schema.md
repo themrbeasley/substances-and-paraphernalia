@@ -4,10 +4,9 @@ Canonical reference for the flags this module reads on items at v0.2. The
 schema is at version 2; v0.2 is a clean break from v0.1 (see
 [CHANGELOG.md](../CHANGELOG.md)).
 
-The recommended authoring path is the **Substance/Paraphernalia** entry in
-the item sheet's 3-dot context menu (next to the close button). It opens a
-form rooted at the item that writes every field documented here. Hand-editing
-JSON is still supported for shipped content; the form is just faster.
+The recommended authoring path is the **Substances & Paraphernalia** section
+on the dnd5e item sheet's Details tab. Hand-editing JSON is still supported
+for shipped content; the in-sheet form is just faster.
 
 All flags live under the namespace `flags["substances-and-paraphernalia"]` on
 each item.
@@ -348,7 +347,8 @@ const api = game.modules.get("substances-and-paraphernalia").api;
 // Flag accessors
 api.flagSchema.getKind(item);                      // "substance" | "paraphernalia" | null
 api.flagSchema.getCategory(substance);             // "stimulant" | ...
-api.flagSchema.getAdministration(substance);       // "inhaled" | ...
+// Administration lives on the dnd5e Poison subtype:
+//   substance.system.type.subtype  // "contact" | "ingested" | "inhaled" | "injury"
 api.flagSchema.getAddiction(substance);            // { save, withdrawalMod, addictionEffectId }
 api.flagSchema.getRequiredParaphernalia(substance); // [{ anyOf: [...] }, ...]
 api.flagSchema.getAddictionSaveBypass(paraphernalia); // { type, appliesTo, usesPerDay } | null
@@ -378,9 +378,6 @@ api.saveBypass.consumeBypassIfAvailable(actor, substance);
 // Integrations
 api.integrations.isActive("dae");                  // boolean
 api.integrations.listMissingIntegrations();        // [{ id, labelKey }, ...]
-
-// UI
-api.ui.openItemSettings(item);                     // open the form programmatically
 ```
 
 ## Limitations of gating (read this before authoring)

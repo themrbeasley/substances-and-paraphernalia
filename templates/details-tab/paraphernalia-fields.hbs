@@ -1,0 +1,13 @@
+<fieldset class="fishut-details-paraphernalia">
+  <div class="form-group">
+    <label>{{labels.subtype}}</label>
+    <select data-fishut-flag="subtype">
+      <option value="">{{labels.subtypeNone}}</option>
+      {{#each paraphernalia.subtypeSelectOptions}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{> fishut-details-bypass}}
+</fieldset>

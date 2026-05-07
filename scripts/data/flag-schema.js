@@ -1,14 +1,17 @@
 import { MODULE_ID, FLAGS } from "../config.js";
+import { readModifier } from "./modifier-flag.js";
 
 /**
  * @typedef {"substance" | "paraphernalia"} Kind
  * @typedef {"stimulant" | "mindAltering" | "performanceEnhancing"} Category
  * @typedef {"fantasy" | "sciFi" | "modern"} Setting
- * @typedef {"inhaled" | "ingested" | "injected" | "sublingual" | "topical"} Administration
- * @typedef {{ anyOf: string[] }} ParaphernaliaGroup
- *   A single requirement group. The substance is satisfied for this group if
- *   the actor possesses ANY one of the referenced paraphernalia. Multiple
- *   groups in `requiredParaphernalia` are AND-combined.
+ * @typedef {"contact" | "ingested" | "inhaled" | "injury"} Administration
+ *   Mirrors the dnd5e Poison subtype enum; carried on the consumable itself
+ *   at `system.type.subtype`, not as a module flag.
+ * @typedef {string} ParaphernaliaSubtype
+ *   Open enum: schema.json seeds well-known ids ("pipe", "snuff-horn", …) but
+ *   GMs may mint custom subtypes ad-hoc. A substance is satisfied when the
+ *   actor owns a ready paraphernalia for each subtype in `requiredSubtypes`.
  *
  * @typedef {Object} AddictionSave
  * @property {string} ability    Standard 5e ability key (defaults to "con").
@@ -34,12 +37,10 @@ import { MODULE_ID, FLAGS } from "../config.js";
  * @property {Kind} kind
  * @property {Category} [category]
  * @property {Setting} [setting]
- * @property {string[]} [tags]
- * @property {string} [paraphernaliaId]            Only set when kind === "paraphernalia".
- * @property {ParaphernaliaGroup[]} [requiredParaphernalia]  Only set when kind === "substance".
- * @property {Administration} [administration]     Only set when kind === "substance".
- * @property {AddictionBlock} [addiction]          Only set when kind === "substance".
- * @property {AddictionSaveBypassBlock} [addictionSaveBypass] Only set when kind === "paraphernalia".
+ * @property {ParaphernaliaSubtype} [subtype]              Only when kind === "paraphernalia".
+ * @property {ParaphernaliaSubtype[]} [requiredSubtypes]   Only when kind === "substance".
+ * @property {AddictionBlock} [addiction]                  Only when kind === "substance".
+ * @property {AddictionSaveBypassBlock} [addictionSaveBypass] Only when kind === "paraphernalia".
  * @property {number} [schemaVersion]
  *
  * @typedef {Object} WithdrawalEntry
@@ -63,14 +64,11 @@ const DEFAULT_SAVE_ABILITY = "con";
 /** @param {Item} item */ export const getSetting = (item) =>
   item?.getFlag?.(MODULE_ID, FLAGS.setting) ?? null;
 
-/** @param {Item} item */ export const getTags = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.tags) ?? [];
+/** @param {Item} item */ export const getSubtype = (item) =>
+  item?.getFlag?.(MODULE_ID, FLAGS.subtype) ?? null;
 
-/** @param {Item} item */ export const getParaphernaliaId = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.paraphernaliaId) ?? null;
-
-/** @param {Item} item */ export const getRequiredParaphernalia = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.requiredParaphernalia) ?? [];
+/** @param {Item} item @returns {string[]} */ export const getRequiredSubtypes = (item) =>
+  item?.getFlag?.(MODULE_ID, FLAGS.requiredSubtypes) ?? [];
 
 /** @param {Item} item */ export const isSubstance = (item) => getKind(item) === "substance";
 
@@ -80,20 +78,11 @@ const DEFAULT_SAVE_ABILITY = "con";
 export const setKind = (item, value) => item.setFlag(MODULE_ID, FLAGS.kind, value);
 export const setCategory = (item, value) => item.setFlag(MODULE_ID, FLAGS.category, value);
 export const setSetting = (item, value) => item.setFlag(MODULE_ID, FLAGS.setting, value);
-export const setTags = (item, value) => item.setFlag(MODULE_ID, FLAGS.tags, value);
-export const setParaphernaliaId = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.paraphernaliaId, value);
-export const setRequiredParaphernalia = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.requiredParaphernalia, value);
+export const setSubtype = (item, value) => item.setFlag(MODULE_ID, FLAGS.subtype, value);
+export const setRequiredSubtypes = (item, value) =>
+  item.setFlag(MODULE_ID, FLAGS.requiredSubtypes, value);
 
-// ─── Substance flags (administration + addiction) ────────────────────────────
-
-/** @param {Item} item @returns {Administration|null} */
-export const getAdministration = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.administration) ?? null;
-
-export const setAdministration = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.administration, value);
+// ─── Substance flags (addiction) ─────────────────────────────────────────────
 
 /** @param {Item} item @returns {AddictionBlock|null} */
 export const getAddiction = (item) => item?.getFlag?.(MODULE_ID, FLAGS.addiction) ?? null;
@@ -145,6 +134,17 @@ export const getSourceSubstanceId = (effect) =>
 
 export const setSourceSubstanceId = (effect, value) =>
   effect.setFlag(MODULE_ID, FLAGS.sourceSubstanceId, value);
+
+// ─── Active Effect flag (modifier — bypass/advantage pipeline) ───────────────
+
+/**
+ * @param {ActiveEffect} effect
+ * @returns {import("./modifier-flag.js").ModifierBlock|null}
+ */
+export const getModifier = (effect) => readModifier(effect?.flags?.[MODULE_ID]);
+
+export const setModifier = (effect, value) =>
+  effect.setFlag(MODULE_ID, FLAGS.modifier, value);
 
 // ─── Actor flags (withdrawal map) ────────────────────────────────────────────
 

@@ -9,7 +9,7 @@
     "description": {
       "value": "<p>An oil-based stack of underground origin. Used responsibly it produces a measurable strength gain; used carelessly it produces a coroner's report. Discipline is the difference, and discipline is written down.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +2 bonus to Strength (Athletics) checks, a +1 bonus to Strength-based weapon attack rolls, and your walking speed increases by 5 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Black Lift (see below).</p><p><strong><em>Addicted from Black Lift.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on Constitution saving throws, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal Modifier: 6.</em></strong> Withdrawal lasts max(6 − your Constitution modifier, 3) long rests, minimum 1.</p><p><em>Requires: Tincture Dropper AND Athlete's Logbook.</em></p>"
     },
-    "type": { "value": "poison", "subtype": "" },
+    "type": { "value": "poison", "subtype": "ingested" },
     "rarity": "rare",
     "weight": { "value": 0.2, "units": "lb" },
     "price": { "value": 400, "denomination": "gp" },
@@ -62,12 +62,7 @@
       "kind": "substance",
       "category": "performanceEnhancing",
       "setting": "modern",
-      "tags": ["oil", "stack"],
-      "administration": "sublingual",
-      "requiredParaphernalia": [
-        { "anyOf": ["tincture-dropper"] },
-        { "anyOf": ["athletes-logbook"] }
-      ],
+      "requiredSubtypes": ["tincture-dropper", "athletes-logbook"],
       "addiction": {
         "save": { "ability": "con", "dc": 15 },
         "withdrawalMod": 6,

@@ -1,5 +1,4 @@
-import { MODULE_ID, FLAGS } from "../config.js";
-import { isCompendiumRef } from "./ref-kind.js";
+import { isParaphernalia, getSubtype } from "./flag-schema.js";
 
 /**
  * @typedef {Object} ParaphernaliaInspection
@@ -10,15 +9,7 @@ import { isCompendiumRef } from "./ref-kind.js";
  */
 
 /**
- * Locates a paraphernalia reference on an actor and reports its readiness.
- *
- * `ref` resolution:
- *  - A Compendium UUID (starts with `Compendium.`). Matched against
- *    `_stats.compendiumSource` first, then a direct `uuid` match. Stable when
- *    the source slug changes; what shipped substances should normally use to
- *    point at shipped paraphernalia.
- *  - Otherwise treated as a slug, matched against the `paraphernaliaId` flag
- *    on each item. The author-friendly path for user-built content.
+ * Decide readiness for a single paraphernalia item the actor owns.
  *
  * Readiness rules (gate, not just inventory presence):
  *  - Equipment paraphernalia must have `system.equipped === true`.
@@ -27,55 +18,61 @@ import { isCompendiumRef } from "./ref-kind.js";
  *  - Attunement-required paraphernalia (`system.attunement === "required"`)
  *    must have `system.attuned === true` on the actor's copy.
  *
- * @param {Actor} actor
- * @param {string} ref
+ * @param {Item} item
  * @returns {ParaphernaliaInspection}
  */
-export function inspectParaphernalia(actor, ref) {
-  if (!actor || typeof ref !== "string" || ref.length === 0) {
-    return { item: null, ready: false, reason: "missing" };
-  }
-  const items = actor.items;
-  if (!items) return { item: null, ready: false, reason: "missing" };
+export function inspectParaphernaliaItem(item) {
+  if (!item) return { item: null, ready: false, reason: "missing" };
+  const sys = item.system ?? {};
 
-  const isUuidRef = isCompendiumRef(ref);
-  let candidate = null;
-  for (const item of items) {
-    if (isUuidRef) {
-      const src = item._stats?.compendiumSource ?? item.flags?.core?.sourceId;
-      if (src === ref || item.uuid === ref) { candidate = item; break; }
-    } else {
-      const slug = item.flags?.[MODULE_ID]?.[FLAGS.paraphernaliaId];
-      if (slug === ref) { candidate = item; break; }
-    }
-  }
-  if (!candidate) return { item: null, ready: false, reason: "missing" };
-
-  const sys = candidate.system ?? {};
-
-  if (candidate.type === "consumable") {
+  if (item.type === "consumable") {
     const qty = sys.quantity;
     if (typeof qty === "number" && qty <= 0) {
-      return { item: candidate, ready: false, reason: "missing" };
+      return { item, ready: false, reason: "missing" };
     }
-  } else if (candidate.type === "equipment" && sys.equipped !== true) {
-    return { item: candidate, ready: false, reason: "unequipped" };
+  } else if (item.type === "equipment" && sys.equipped !== true) {
+    return { item, ready: false, reason: "unequipped" };
   }
 
   if (sys.attunement === "required" && sys.attuned !== true) {
-    return { item: candidate, ready: false, reason: "unattuned" };
+    return { item, ready: false, reason: "unattuned" };
   }
 
-  return { item: candidate, ready: true, reason: null };
+  return { item, ready: true, reason: null };
 }
 
 /**
- * Boolean readiness check. Convenience wrapper around `inspectParaphernalia`.
+ * Enumerate every paraphernalia of the given subtype the actor owns, with
+ * readiness inspection for each. Returns an empty array when the actor has
+ * none of that subtype.
  *
  * @param {Actor} actor
- * @param {string} ref
+ * @param {string} subtype
+ * @returns {ParaphernaliaInspection[]}
+ */
+export function inspectSubtypeOnActor(actor, subtype) {
+  if (!actor || typeof subtype !== "string" || subtype.length === 0) return [];
+  const items = actor.items;
+  if (!items) return [];
+
+  const matches = [];
+  for (const item of items) {
+    if (!isParaphernalia(item)) continue;
+    if (getSubtype(item) !== subtype) continue;
+    matches.push(inspectParaphernaliaItem(item));
+  }
+  return matches;
+}
+
+/**
+ * Boolean readiness check: does the actor own ≥1 ready paraphernalia of the
+ * given subtype.
+ *
+ * @param {Actor} actor
+ * @param {string} subtype
  * @returns {boolean}
  */
-export function actorHasParaphernalia(actor, ref) {
-  return inspectParaphernalia(actor, ref).ready;
+export function actorHasSubtype(actor, subtype) {
+  return inspectSubtypeOnActor(actor, subtype).some((i) => i.ready);
 }
+

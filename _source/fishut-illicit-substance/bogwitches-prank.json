@@ -9,7 +9,7 @@
     "description": {
       "value": "<p>A small purple-capped fungus that grows on rotting logs in marshlands, visually identical to a popular edible variety. Foragers learn to tell the difference; their friends usually don't. Eaten unwittingly more often than not.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour your sense of color is heightened and faintly synesthetic: you have advantage on Charisma (Performance) checks and disadvantage on Wisdom (Perception) checks that rely on sight.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 11 Constitution saving throw. On a failed save, you gain the Addicted condition from Bogwitch's Prank (see below).</p><p><strong><em>Addicted from Bogwitch's Prank.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom (Perception) checks.</p><p><strong><em>Withdrawal Modifier: 2.</em></strong> Withdrawal lasts max(2 &minus; your Constitution modifier, 1) long rests, minimum 1.</p>"
     },
-    "type": { "value": "poison", "subtype": "" },
+    "type": { "value": "poison", "subtype": "ingested" },
     "rarity": "common",
     "weight": { "value": 0.05, "units": "lb" },
     "price": { "value": 0, "denomination": "gp" },
@@ -62,9 +62,6 @@
       "kind": "substance",
       "category": "mindAltering",
       "setting": "fantasy",
-      "tags": ["fungus", "natural"],
-      "administration": "ingested",
-      "requiredParaphernalia": [],
       "addiction": {
         "save": { "ability": "con", "dc": 11 },
         "withdrawalMod": 2,

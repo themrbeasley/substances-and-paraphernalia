@@ -18,8 +18,7 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "modern",
-      "paraphernaliaId": "athletes-logbook",
-      "tags": ["protocol", "schedule", "knowledge"],
+      "subtype": "athletes-logbook",
       "schemaVersion": 2
     }
   },
