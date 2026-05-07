@@ -300,14 +300,7 @@ function buildSubstanceContext(item) {
 }
 
 function buildParaphernaliaContext(item) {
-  const category = getCategory(item);
   const subtype = getSubtype(item) ?? "";
-
-  const categories = SCHEMA.categories.map((c) => ({
-    id: c.id,
-    label: L(c.labelKey),
-    selected: c.id === category,
-  }));
 
   const subtypeOptions = buildSubtypeOptions(subtype);
   const subtypeSelectOptions = subtypeOptions.map((o) => ({
@@ -317,8 +310,6 @@ function buildParaphernaliaContext(item) {
   }));
 
   return {
-    categories,
-    categoryAny: !category,
     subtype,
     subtypeSelectOptions,
     bypass: buildBypassDisplay(findBypassEffect(item)),

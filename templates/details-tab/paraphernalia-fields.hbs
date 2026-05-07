@@ -1,15 +1,5 @@
 <fieldset class="fishut-details-paraphernalia">
   <div class="form-group">
-    <label>{{labels.category}}</label>
-    <select data-fishut-flag="category">
-      <option value="" {{#if paraphernalia.categoryAny}}selected{{/if}}>{{labels.categoryAny}}</option>
-      {{#each paraphernalia.categories}}
-        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-      {{/each}}
-    </select>
-  </div>
-
-  <div class="form-group">
     <label>{{labels.subtype}}</label>
     <select data-fishut-flag="subtype">
       <option value="">{{labels.subtypeNone}}</option>
