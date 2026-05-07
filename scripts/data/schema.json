@@ -29,8 +29,7 @@
     { "id": "snuff-horn", "labelKey": "FISHUT.ParaphernaliaSubtype.SnuffHorn" },
     { "id": "syringe", "labelKey": "FISHUT.ParaphernaliaSubtype.Syringe" },
     { "id": "vial", "labelKey": "FISHUT.ParaphernaliaSubtype.Vial" },
-    { "id": "flame-source", "labelKey": "FISHUT.ParaphernaliaSubtype.FlameSource" },
-    { "id": "smokestick", "labelKey": "FISHUT.ParaphernaliaSubtype.Smokestick" },
+    { "id": "papers", "labelKey": "FISHUT.ParaphernaliaSubtype.Papers" },
     { "id": "inhaler", "labelKey": "FISHUT.ParaphernaliaSubtype.Inhaler" }
   ],
   "addictionSaveBypassTypes": [

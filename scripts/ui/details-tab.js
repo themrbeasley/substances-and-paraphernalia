@@ -39,11 +39,13 @@ export function registerDetailsTab() {
   Hooks.on("renderApplicationV2", onRenderApplicationV2);
 }
 
-// Inject the master "Illicit Substance" / "Paraphernalia" checkbox. We try to
-// place it inside the native dnd5e Properties fieldset (where Magical /
-// Adamantine / Stealth Disadvantage live) so it matches the user's mental
-// model. If we can't locate that fieldset (dnd5e markup churn), fall back to
-// our own card at the top of the Details panel — toggle is still reachable.
+// Inject the master "Illicit Substance" / "Paraphernalia" checkbox alongside
+// dnd5e's Properties checkboxes (Magical / Adamantine / Stealth Disadvantage
+// for equipment; Magical for consumable). dnd5e 5.2 wraps those in a
+// `<dnd5e-checkbox-group>` web component, so we target that first. If the
+// markup shifts, fall back to a `<div>` (NOT a fieldset) so the authoring-
+// section anchor below isn't fooled into placing itself relative to our own
+// fallback wrapper.
 function injectKindToggle(detailsTab, item) {
   if (detailsTab.querySelector(`[${TOGGLE_MARKER}]`)) return;
 
@@ -73,23 +75,29 @@ function injectKindToggle(detailsTab, item) {
     );
   });
 
-  // Preferred home: alongside the native system.properties checkboxes.
-  const propsCheckbox = detailsTab.querySelector('input[name="system.properties"]');
-  const propsHost =
-    propsCheckbox?.closest("dnd5e-checkbox-group, .form-group, fieldset") ?? null;
-  if (propsHost) {
-    propsHost.appendChild(wrapper);
+  const host = findPropertiesHost(detailsTab);
+  if (host) {
+    host.appendChild(wrapper);
     return;
   }
 
-  // Fallback: our own card at the top of the panel.
-  const card = document.createElement("fieldset");
-  card.classList.add("card", "fishut-kind-toggle-card");
-  const legend = document.createElement("legend");
-  legend.textContent = L("FISHUT.DetailsTab.SectionHeader");
-  card.appendChild(legend);
-  card.appendChild(wrapper);
-  detailsTab.insertBefore(card, detailsTab.firstChild);
+  const fallback = document.createElement("div");
+  fallback.classList.add("fishut-kind-toggle-fallback");
+  fallback.appendChild(wrapper);
+  detailsTab.insertBefore(fallback, detailsTab.firstChild);
+}
+
+// Locate the dnd5e Item-Properties container so the kind-toggle slots in
+// alongside Magical/Adamantine/etc. dnd5e 5.2 emits `<dnd5e-checkbox-group>`
+// for the property list; older fallbacks use plain inputs whose name targets
+// `system.properties`.
+function findPropertiesHost(detailsTab) {
+  const ckGroup = detailsTab.querySelector("dnd5e-checkbox-group");
+  if (ckGroup) return ckGroup;
+  const propInput = detailsTab.querySelector(
+    '[name="system.properties"], [name^="system.properties."]',
+  );
+  return propInput?.closest("fieldset, .form-group") ?? null;
 }
 
 /**
@@ -187,7 +195,6 @@ function buildLabels() {
     addictionEffect: L("FISHUT.DetailsTab.Field.AddictionEffect.Label"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
-    subtypeCustomPlaceholder: L("FISHUT.DetailsTab.Field.Subtype.CustomPlaceholder"),
     requiredSubtypes: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Label"),
     requiredSubtypesAdd: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Add"),
     requiredSubtypesEmpty: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Empty"),
@@ -280,7 +287,6 @@ function buildSubstanceContext(item) {
     addictionEffectOptions,
     requiredSubtypes,
     subtypeAddOptions,
-    canAddCustom: true,
   };
 }
 
@@ -295,7 +301,6 @@ function buildParaphernaliaContext(item) {
   }));
 
   const subtypeOptions = buildSubtypeOptions(subtype);
-  const subtypeMatched = subtypeOptions.some((o) => o.id === subtype);
   const subtypeSelectOptions = subtypeOptions.map((o) => ({
     id: o.id,
     label: o.label,
@@ -307,7 +312,6 @@ function buildParaphernaliaContext(item) {
     categoryAny: !category,
     subtype,
     subtypeSelectOptions,
-    subtypeIsCustom: !!subtype && !subtypeMatched,
     bypass: buildBypassDisplay(findBypassEffect(item)),
   };
 }
@@ -424,15 +428,8 @@ async function dispatchAction(button, wrapper, item) {
   }
   if (action === "add-required-subtype") {
     const select = wrapper.querySelector('[data-fishut-add-subtype="select"]');
-    const customInput = wrapper.querySelector('[data-fishut-add-subtype="custom"]');
-    const selected = select?.value ?? "";
-    const custom = customInput?.value?.trim() ?? "";
-    const id = (custom || selected || "").trim();
+    const id = (select?.value ?? "").trim();
     if (!id) return null;
-    if (!KEBAB.test(id)) {
-      logger.warn?.("details-tab add-required-subtype: id must be kebab-case", id);
-      return null;
-    }
     const current = getRequiredSubtypes(item) ?? [];
     if (current.includes(id)) return null;
     return setRequiredSubtypes(item, [...current, id]);

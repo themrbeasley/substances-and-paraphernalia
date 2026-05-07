@@ -428,14 +428,14 @@ function referencesBatch(context) {
         name: "Empty Test Papers",
         type: "consumable",
         system: { quantity: 0 },
-        flags: { [MODULE_ID]: { [FLAGS.subtype]: "smokestick" } },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "papers" } },
       });
       try {
-        const arr = inspectSubtypeOnActor(actor, "smokestick");
+        const arr = inspectSubtypeOnActor(actor, "papers");
         assert.equal(arr.length, 1);
         assert.equal(arr[0].ready, false);
         assert.equal(arr[0].reason, "missing");
-        assert.equal(actorHasSubtype(actor, "smokestick"), false);
+        assert.equal(actorHasSubtype(actor, "papers"), false);
       } finally {
         await item.delete();
       }

@@ -65,10 +65,6 @@
           <option value="{{this.id}}">{{this.label}}</option>
         {{/each}}
       </select>
-      <input type="text"
-             data-fishut-add-subtype="custom"
-             pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-             placeholder="{{labels.subtypeCustomPlaceholder}}" />
       <button type="button" class="fishut-btn-text" data-fishut-action="add-required-subtype">
         <i class="fa-solid fa-plus"></i>
         {{labels.requiredSubtypesAdd}}

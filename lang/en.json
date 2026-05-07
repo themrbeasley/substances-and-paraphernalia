@@ -22,8 +22,7 @@
   "FISHUT.ParaphernaliaSubtype.SnuffHorn": "Snuff Horn",
   "FISHUT.ParaphernaliaSubtype.Syringe": "Syringe",
   "FISHUT.ParaphernaliaSubtype.Vial": "Vial",
-  "FISHUT.ParaphernaliaSubtype.FlameSource": "Flame Source",
-  "FISHUT.ParaphernaliaSubtype.Smokestick": "Smokestick",
+  "FISHUT.ParaphernaliaSubtype.Papers": "Papers",
   "FISHUT.ParaphernaliaSubtype.Inhaler": "Inhaler",
 
   "FISHUT.Settings.EnforceParaphernalia.Name": "Enforce paraphernalia requirements",
@@ -106,7 +105,6 @@
   "FISHUT.DetailsTab.Field.AddictionEffect.None": "(none)",
   "FISHUT.DetailsTab.Field.Subtype.Label": "Subtype",
   "FISHUT.DetailsTab.Field.Subtype.None": "(none)",
-  "FISHUT.DetailsTab.Field.Subtype.CustomPlaceholder": "kebab-case-id",
   "FISHUT.DetailsTab.Field.RequiredSubtypes.Label": "Required Subtypes",
   "FISHUT.DetailsTab.Field.RequiredSubtypes.Add": "Add Subtype",
   "FISHUT.DetailsTab.Field.RequiredSubtypes.Empty": "No subtypes required.",
