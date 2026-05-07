@@ -95,6 +95,8 @@
   "FISHUT.DragInventory.Applied.Decline": "{actor} declined to use <strong>{item}</strong>.",
 
   "FISHUT.DetailsTab.SectionHeader": "Substances & Paraphernalia",
+  "FISHUT.DetailsTab.Toggle.Substance": "Illicit Substance",
+  "FISHUT.DetailsTab.Toggle.Paraphernalia": "Paraphernalia",
   "FISHUT.DetailsTab.Field.Category.Label": "Category",
   "FISHUT.DetailsTab.Field.Category.Any": "(any)",
   "FISHUT.DetailsTab.Field.SaveAbility": "Save Ability",

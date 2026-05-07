@@ -1,4 +1,4 @@
-import { MODULE_ID, SCHEMA, labelKey } from "../config.js";
+import { MODULE_ID, FLAGS, SCHEMA, labelKey } from "../config.js";
 import {
   getKind,
   getCategory,
@@ -8,6 +8,7 @@ import {
   getRequiredSubtypes,
   getSubtype,
   getModifier,
+  setKind,
   setCategory,
   setAddictionSave,
   setWithdrawalMod,
@@ -22,7 +23,9 @@ const SUBSTANCE_PARTIAL = `modules/${MODULE_ID}/templates/details-tab/substance-
 const PARAPHERNALIA_PARTIAL = `modules/${MODULE_ID}/templates/details-tab/paraphernalia-fields.hbs`;
 const BYPASS_PARTIAL = `modules/${MODULE_ID}/templates/details-tab/bypass-section.hbs`;
 const ELIGIBLE_ITEM_TYPES = new Set(["consumable", "equipment"]);
+const KIND_BY_ITEM_TYPE = { consumable: "substance", equipment: "paraphernalia" };
 const INJECTED_MARKER = "data-fishut-details-injected";
+const TOGGLE_MARKER = "data-fishut-toggle-injected";
 
 // Hook: dnd5e 5.2.5 item sheets are ApplicationV2; the generic V2 render hook
 // fires once the rendered HTMLElement is in place, with payload
@@ -34,6 +37,70 @@ const INJECTED_MARKER = "data-fishut-details-injected";
 // V1 sheets (`renderItemSheet5e`) are not back-supported.
 export function registerDetailsTab() {
   Hooks.on("renderApplicationV2", onRenderApplicationV2);
+}
+
+// Inject the master "Illicit Substance" / "Paraphernalia" checkbox. We try to
+// place it inside the native dnd5e Properties fieldset (where Magical /
+// Adamantine / Stealth Disadvantage live) so it matches the user's mental
+// model. If we can't locate that fieldset (dnd5e markup churn), fall back to
+// our own card at the top of the Details panel — toggle is still reachable.
+function injectKindToggle(detailsTab, item) {
+  if (detailsTab.querySelector(`[${TOGGLE_MARKER}]`)) return;
+
+  const intendedKind = KIND_BY_ITEM_TYPE[item.type];
+  if (!intendedKind) return;
+  const isEnabled = getKind(item) === intendedKind;
+
+  const labelText =
+    intendedKind === "substance"
+      ? L("FISHUT.DetailsTab.Toggle.Substance")
+      : L("FISHUT.DetailsTab.Toggle.Paraphernalia");
+
+  const wrapper = document.createElement("label");
+  wrapper.setAttribute(TOGGLE_MARKER, "");
+  wrapper.classList.add("checkbox", "fishut-kind-toggle");
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.checked = isEnabled;
+  input.dataset.fishutKindToggle = intendedKind;
+  wrapper.appendChild(input);
+  wrapper.appendChild(document.createTextNode(` ${labelText}`));
+
+  input.addEventListener("change", (event) => {
+    event.stopPropagation();
+    persistKindToggle(item, intendedKind, input.checked).catch((err) =>
+      logger.error("details-tab kind-toggle failed", err),
+    );
+  });
+
+  // Preferred home: alongside the native system.properties checkboxes.
+  const propsCheckbox = detailsTab.querySelector('input[name="system.properties"]');
+  const propsHost =
+    propsCheckbox?.closest("dnd5e-checkbox-group, .form-group, fieldset") ?? null;
+  if (propsHost) {
+    propsHost.appendChild(wrapper);
+    return;
+  }
+
+  // Fallback: our own card at the top of the panel.
+  const card = document.createElement("fieldset");
+  card.classList.add("card", "fishut-kind-toggle-card");
+  const legend = document.createElement("legend");
+  legend.textContent = L("FISHUT.DetailsTab.SectionHeader");
+  card.appendChild(legend);
+  card.appendChild(wrapper);
+  detailsTab.insertBefore(card, detailsTab.firstChild);
+}
+
+/**
+ * Toggle the item-level `kind` flag. Exported for Quench coverage.
+ * @param {Item} item
+ * @param {"substance"|"paraphernalia"} intendedKind
+ * @param {boolean} checked
+ */
+export async function persistKindToggle(item, intendedKind, checked) {
+  if (checked) return setKind(item, intendedKind);
+  return item.unsetFlag(MODULE_ID, FLAGS.kind);
 }
 
 let templatesLoaded = false;
@@ -51,11 +118,17 @@ async function onRenderApplicationV2(app, htmlElement) {
   const doc = app?.document;
   if (!doc || doc.documentName !== "Item") return;
   if (!ELIGIBLE_ITEM_TYPES.has(doc.type)) return;
-  const kind = getKind(doc);
-  if (kind !== "substance" && kind !== "paraphernalia") return;
 
   const detailsTab = htmlElement?.querySelector?.('section.tab[data-tab="details"]');
   if (!detailsTab) return;
+
+  // Toggle checkbox always renders for eligible item types so a fresh item can
+  // be marked substance/paraphernalia. The authoring section below only renders
+  // when the kind flag is set.
+  injectKindToggle(detailsTab, doc);
+
+  const kind = getKind(doc);
+  if (kind !== "substance" && kind !== "paraphernalia") return;
   if (detailsTab.querySelector(`[${INJECTED_MARKER}]`)) return;
 
   try {

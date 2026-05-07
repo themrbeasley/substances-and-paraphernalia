@@ -15,6 +15,7 @@ import {
   getAddictionEffectId,
   getAddictionSave,
   getCategory,
+  getKind,
   getModifier,
   getRequiredSubtypes,
   getSetting,
@@ -27,7 +28,11 @@ import {
   setRequiredSubtypes,
 } from "../../scripts/data/flag-schema.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
-import { createBypassStubAE, persistField } from "../../scripts/ui/details-tab.js";
+import {
+  createBypassStubAE,
+  persistField,
+  persistKindToggle,
+} from "../../scripts/ui/details-tab.js";
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 
@@ -78,6 +83,11 @@ export function registerQuenchSuite() {
       `${BATCH_PREFIX}.grant-bypass-button`,
       grantBypassButtonBatch,
       { displayName: "S&P · Grant-bypass button creates stub AE" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.kind-toggle`,
+      kindToggleBatch,
+      { displayName: "S&P · Details-tab kind toggle round-trip" },
     );
     quench.registerBatch(
       `${BATCH_PREFIX}.drag-to-inventory-dialog`,
@@ -1072,6 +1082,66 @@ function grantBypassButtonBatch(context) {
       const found = [...(fresh.effects ?? [])].find((e) => e.id === stub.id);
       assert.ok(found, "the created AE must be present on item.effects");
       assert.equal(getModifier(found)?.kind, "bypass");
+    });
+  });
+}
+
+// ─── Batch: Details-tab kind toggle ─────────────────────────────────────────
+
+function kindToggleBatch(context) {
+  const { describe, it, assert, before, after, afterEach } = context;
+
+  describe("persistKindToggle(item, intendedKind, checked)", () => {
+    let actor;
+    const created = [];
+
+    before(async () => {
+      actor = await makeActor("S&P kind-toggle test");
+    });
+
+    after(async () => {
+      for (const item of created) {
+        if (item && actor.items.get(item.id)) await item.delete();
+      }
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      // Each test creates a fresh, unflagged item; collect for batch cleanup.
+    });
+
+    async function makeBareConsumable() {
+      const [item] = await actor.createEmbeddedDocuments("Item", [
+        { name: "Bare Consumable", type: "consumable", img: "icons/svg/item-bag.svg" },
+      ]);
+      created.push(item);
+      return item;
+    }
+
+    async function makeBareEquipment() {
+      const [item] = await actor.createEmbeddedDocuments("Item", [
+        { name: "Bare Equipment", type: "equipment", img: "icons/svg/item-bag.svg" },
+      ]);
+      created.push(item);
+      return item;
+    }
+
+    it("flips a fresh consumable into a substance and back", async () => {
+      const item = await makeBareConsumable();
+      assert.equal(getKind(item), null, "fresh consumable starts unflagged");
+      await persistKindToggle(item, "substance", true);
+      assert.equal(getKind(item), "substance");
+      await persistKindToggle(item, "substance", false);
+      assert.equal(getKind(item), null, "unset must clear the flag, not leave 'substance'");
+    });
+
+    it("flips a fresh equipment into paraphernalia and back", async () => {
+      const item = await makeBareEquipment();
+      assert.equal(getKind(item), null);
+      await persistKindToggle(item, "paraphernalia", true);
+      assert.equal(getKind(item), "paraphernalia");
+      await persistKindToggle(item, "paraphernalia", false);
+      assert.equal(getKind(item), null);
     });
   });
 }
