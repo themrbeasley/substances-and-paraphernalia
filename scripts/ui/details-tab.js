@@ -61,16 +61,25 @@ function injectKindToggle(detailsTab, item) {
   const wrapper = document.createElement("label");
   wrapper.setAttribute(TOGGLE_MARKER, "");
   wrapper.classList.add("checkbox", "fishut-kind-toggle");
-  const input = document.createElement("input");
-  input.type = "checkbox";
-  input.checked = isEnabled;
+  // Use dnd5e's <dnd5e-checkbox> web component so the box renders with the
+  // same shadow-DOM styling as the sibling Magical / Adamantine / etc.
+  // checkboxes. Falls back to a native input if the component isn't defined
+  // (older dnd5e or non-V2 sheet).
+  const useWebComponent =
+    typeof window !== "undefined" &&
+    window.customElements?.get("dnd5e-checkbox");
+  const input = document.createElement(
+    useWebComponent ? "dnd5e-checkbox" : "input",
+  );
+  if (!useWebComponent) input.type = "checkbox";
+  if (isEnabled) input.setAttribute("checked", "");
   input.dataset.fishutKindToggle = intendedKind;
   wrapper.appendChild(input);
   wrapper.appendChild(document.createTextNode(` ${labelText}`));
 
   input.addEventListener("change", (event) => {
     event.stopPropagation();
-    persistKindToggle(item, intendedKind, input.checked).catch((err) =>
+    persistKindToggle(item, intendedKind, input.checked === true).catch((err) =>
       logger.error("details-tab kind-toggle failed", err),
     );
   });
