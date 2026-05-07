@@ -9,7 +9,7 @@
     "description": {
       "value": "<p>A jet-black snuff ground from the resin of coalshade trees. A pinch sharpens the senses and steadies the hands; the price is a bone-deep restlessness that lingers for hours.</p><p><strong><em>Desired effects on use.</em></strong> For one hour you have a +2 bonus to Wisdom (Perception) and Dexterity (Sleight of Hand) checks, and you have advantage on initiative rolls.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Coalshade Powder (see below).</p><p><strong><em>Addicted from Coalshade Powder.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom checks.</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 − your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Snuff Horn.</em></p>"
     },
-    "type": { "value": "poison", "subtype": "" },
+    "type": { "value": "poison", "subtype": "inhaled" },
     "rarity": "uncommon",
     "weight": { "value": 0.1, "units": "lb" },
     "price": { "value": 25, "denomination": "gp" },
@@ -62,11 +62,7 @@
       "kind": "substance",
       "category": "stimulant",
       "setting": "fantasy",
-      "tags": ["snuff", "alchemical"],
-      "administration": "inhaled",
-      "requiredParaphernalia": [
-        { "anyOf": ["snuff-horn"] }
-      ],
+      "requiredSubtypes": ["snuff-horn"],
       "addiction": {
         "save": { "ability": "con", "dc": 13 },
         "withdrawalMod": 4,

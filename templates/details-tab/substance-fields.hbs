@@ -1,0 +1,78 @@
+<fieldset class="fishut-details-substance">
+  <div class="form-group">
+    <label>{{labels.category}}</label>
+    <select data-fishut-flag="category">
+      <option value="">—</option>
+      {{#each substance.categories}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>{{labels.saveAbility}}</label>
+    <select data-fishut-flag="save.ability">
+      {{#each substance.save.abilityOptions}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>{{labels.saveDc}}</label>
+    <input type="number" data-fishut-flag="save.dc" value="{{substance.save.dc}}" min="1" step="1" />
+  </div>
+
+  <div class="form-group">
+    <label>{{labels.withdrawalMod}}</label>
+    <input type="number" data-fishut-flag="withdrawalMod" value="{{substance.withdrawalMod}}" min="0" step="1" />
+  </div>
+
+  <div class="form-group">
+    <label>{{labels.addictionEffect}}</label>
+    <select data-fishut-flag="addictionEffectId">
+      {{#each substance.addictionEffectOptions}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <fieldset class="fishut-details-required-subtypes">
+    <legend>{{labels.requiredSubtypes}}</legend>
+
+    {{#if substance.requiredSubtypes.length}}
+      <ul class="fishut-subtype-chips">
+        {{#each substance.requiredSubtypes}}
+          <li class="fishut-subtype-chip">
+            <span class="fishut-subtype-chip-label">{{this.label}}</span>
+            <button type="button" class="fishut-btn-icon"
+                    data-fishut-action="remove-required-subtype"
+                    data-fishut-subtype="{{this.id}}"
+                    title="{{../labels.requiredSubtypesRemove}}">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p class="fishut-subtype-empty">{{labels.requiredSubtypesEmpty}}</p>
+    {{/if}}
+
+    <div class="fishut-subtype-add">
+      <select data-fishut-add-subtype="select">
+        <option value="">—</option>
+        {{#each substance.subtypeAddOptions}}
+          <option value="{{this.id}}">{{this.label}}</option>
+        {{/each}}
+      </select>
+      <input type="text"
+             data-fishut-add-subtype="custom"
+             pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+             placeholder="{{labels.subtypeCustomPlaceholder}}" />
+      <button type="button" class="fishut-btn-text" data-fishut-action="add-required-subtype">
+        <i class="fa-solid fa-plus"></i>
+        {{labels.requiredSubtypesAdd}}
+      </button>
+    </div>
+  </fieldset>
+</fieldset>

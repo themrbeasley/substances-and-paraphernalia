@@ -1,27 +1,27 @@
 {
-  "_id": "fhSubEmbergrss01",
-  "_key": "!items!fhSubEmbergrss01",
-  "name": "Embergrass",
+  "_id": "fhSubVoltBeans01",
+  "_key": "!items!fhSubVoltBeans01",
+  "name": "Voltbeans",
   "type": "consumable",
   "img": "icons/svg/item-bag.svg",
   "folder": "fhSubModern00001",
   "system": {
     "description": {
-      "value": "<p>A loose-leaf cure of red-veined herb, rolled and smoked. Steadies the nerves and dulls the edge of a long day; chronic users complain that the days stop having edges at all.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have advantage on saving throws against being frightened, and a +1 bonus to Charisma (Persuasion) checks.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 12 Constitution saving throw. On a failed save, you gain the Addicted condition from Embergrass (see below).</p><p><strong><em>Addicted from Embergrass.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Intelligence checks.</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Rolling Papers.</em></p>"
+      "value": "<p>Glossy yellow capsules pressed in someone's apartment kitchen and sold at warehouse parties. The hit lands fast and lasts about as long as the bassline. Quality varies by batch and by who owes who a favor that week.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have advantage on Dexterity (Acrobatics) checks and a +2 bonus to Charisma (Performance) checks.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Voltbeans (see below).</p><p><strong><em>Addicted from Voltbeans.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Constitution saving throws made to maintain concentration.</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p>"
     },
-    "type": { "value": "poison", "subtype": "inhaled" },
+    "type": { "value": "poison", "subtype": "ingested" },
     "rarity": "uncommon",
-    "weight": { "value": 0.1, "units": "lb" },
-    "price": { "value": 30, "denomination": "gp" },
+    "weight": { "value": 0.02, "units": "lb" },
+    "price": { "value": 40, "denomination": "gp" },
     "uses": {
       "spent": 0,
       "max": "1",
       "autoDestroy": true
     },
     "activities": {
-      "fhActEmbergrss01": {
+      "fhActVoltBeans01": {
         "type": "utility",
-        "_id": "fhActEmbergrss01",
+        "_id": "fhActVoltBeans01",
         "sort": 0,
         "activation": { "type": "action", "override": false, "condition": "" },
         "consumption": {
@@ -34,7 +34,7 @@
         "description": { "chatFlavor": "" },
         "duration": { "units": "hour", "value": "1", "concentration": false, "override": false },
         "effects": [
-          { "_id": "fhAEEmbergrssBen" }
+          { "_id": "fhAEVoltBeansBen" }
         ],
         "flags": {},
         "range": { "units": "self", "override": false, "special": "" },
@@ -60,42 +60,41 @@
   "flags": {
     "substances-and-paraphernalia": {
       "kind": "substance",
-      "category": "mindAltering",
+      "category": "stimulant",
       "setting": "modern",
-      "requiredSubtypes": ["rolling-papers"],
       "addiction": {
-        "save": { "ability": "con", "dc": 12 },
+        "save": { "ability": "con", "dc": 13 },
         "withdrawalMod": 3,
-        "addictionEffectId": "fhAEEmbergrssAdc"
+        "addictionEffectId": "fhAEVoltBeansAdc"
       },
       "schemaVersion": 2
     }
   },
   "effects": [
     {
-      "_id": "fhAEEmbergrssBen",
-      "_key": "!items.effects!fhSubEmbergrss01.fhAEEmbergrssBen",
-      "name": "Altered by Embergrass",
+      "_id": "fhAEVoltBeansBen",
+      "_key": "!items.effects!fhSubVoltBeans01.fhAEVoltBeansBen",
+      "name": "Altered by Voltbeans",
       "img": "icons/svg/aura.svg",
       "transfer": false,
       "disabled": false,
       "duration": { "seconds": 3600 },
-      "description": "<p>Advantage on saves against being frightened. +1 to Charisma (Persuasion) checks.</p>",
+      "description": "<p>Advantage on Dexterity (Acrobatics) checks. +2 to Charisma (Performance) checks.</p>",
       "changes": [
-        { "key": "system.skills.per.bonuses.check", "mode": 2, "value": "+1", "priority": 20 }
+        { "key": "system.skills.prf.bonuses.check", "mode": 2, "value": "+2", "priority": 20 }
       ],
       "flags": {}
     },
     {
-      "_id": "fhAEEmbergrssAdc",
-      "_key": "!items.effects!fhSubEmbergrss01.fhAEEmbergrssAdc",
-      "name": "Embergrass Addiction",
+      "_id": "fhAEVoltBeansAdc",
+      "_key": "!items.effects!fhSubVoltBeans01.fhAEVoltBeansAdc",
+      "name": "Voltbeans Addiction",
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
       "statuses": ["poisoned"],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Intelligence checks until withdrawal completes.</p>",
+      "description": "<p>Poisoned. Disadvantage on Constitution saving throws to maintain concentration until withdrawal completes.</p>",
       "changes": [],
       "flags": {}
     }

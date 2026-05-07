@@ -24,13 +24,18 @@ export const FLAGS = SCHEMA.flagKeys;
 export const KIND_IDS = SCHEMA.kinds.map((k) => k.id);
 export const CATEGORY_IDS = SCHEMA.categories.map((c) => c.id);
 export const SETTING_IDS = SCHEMA.settings.map((s) => s.id);
+export const MODIFIER_KIND_IDS = SCHEMA.modifier.kinds.map((k) => k.id);
+export const MODIFIER_TYPE_IDS = SCHEMA.modifier.types.map((t) => t.id);
 
 /**
- * Display label key for any schema enum entry.
- * @param {"kinds"|"categories"|"settings"} group
+ * Display label key for any schema enum entry. Group may be a top-level
+ * array key ("kinds", "categories", "settings") or a dotted path into the
+ * schema ("modifier.kinds", "modifier.types").
+ * @param {string} group
  * @param {string} id
  * @returns {string|undefined}
  */
 export function labelKey(group, id) {
-  return SCHEMA[group]?.find((entry) => entry.id === id)?.labelKey;
+  const list = group.split(".").reduce((node, key) => node?.[key], SCHEMA);
+  return Array.isArray(list) ? list.find((entry) => entry.id === id)?.labelKey : undefined;
 }

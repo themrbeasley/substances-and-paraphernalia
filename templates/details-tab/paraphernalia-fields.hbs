@@ -1,0 +1,32 @@
+<fieldset class="fishut-details-paraphernalia">
+  <div class="form-group">
+    <label>{{labels.category}}</label>
+    <select data-fishut-flag="category">
+      <option value="" {{#if paraphernalia.categoryAny}}selected{{/if}}>{{labels.categoryAny}}</option>
+      {{#each paraphernalia.categories}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>{{labels.subtype}}</label>
+    <select data-fishut-flag="subtype">
+      <option value="">{{labels.subtypeNone}}</option>
+      {{#each paraphernalia.subtypeSelectOptions}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="form-group fishut-subtype-custom-row">
+    <label>{{labels.subtypeCustomPlaceholder}}</label>
+    <input type="text"
+           data-fishut-flag="subtype"
+           value="{{paraphernalia.subtype}}"
+           pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+           placeholder="{{labels.subtypeCustomPlaceholder}}" />
+  </div>
+
+  {{> fishut-details-bypass}}
+</fieldset>

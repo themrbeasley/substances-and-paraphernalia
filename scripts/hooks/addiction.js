@@ -8,7 +8,7 @@ import {
   clearActorWithdrawalEntry,
   isSubstance,
 } from "../data/flag-schema.js";
-import { consumeBypassIfAvailable } from "../data/save-bypass.js";
+import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { computeRestsRemaining } from "../data/withdrawal.js";
 import { logger } from "../logger.js";
 
@@ -56,17 +56,18 @@ export async function rollSaveAndApply(actor, item) {
     return applyOutcome(actor, item, { alreadyAddicted: true });
   }
 
-  const bypass = await consumeBypassIfAvailable(actor, item);
-  if (bypass.bypassed) {
-    return applyOutcome(actor, item, { bypass });
+  const modifier = await consumeBypassIfAvailable(actor, item);
+  if (modifier.resolution === "auto-pass") {
+    return applyOutcome(actor, item, { modifier });
   }
 
   const ability = addiction.save?.ability ?? DEFAULT_SAVE_ABILITY;
   const dc = addiction.save.dc;
-  const saveRoll = await rollSave(actor, ability, dc);
+  const advantage = modifier.resolution === "advantage";
+  const saveRoll = await rollSave(actor, ability, dc, { advantage });
   if (!saveRoll) return;
   const saveResult = saveRoll.total >= dc ? "success" : "fail";
-  return applyOutcome(actor, item, { saveResult, saveTotal: saveRoll.total });
+  return applyOutcome(actor, item, { saveResult, saveTotal: saveRoll.total, modifier });
 }
 
 /**
@@ -77,7 +78,9 @@ export async function rollSaveAndApply(actor, item) {
  * @param {Item}   item
  * @param {Object} outcome
  * @param {boolean} [outcome.alreadyAddicted]
- * @param {{bypassed: true, paraphernalia: Item, type: string}} [outcome.bypass]
+ * @param {import("../data/modifier-pipeline.js").ModifierResolution} [outcome.modifier]
+ *   `resolution === "auto-pass"`: save is skipped, chat cites `source.name`.
+ *   `resolution === "advantage"`: combined with `saveResult`, chat cites `source.name`.
  * @param {"success"|"fail"} [outcome.saveResult]
  * @param {number}            [outcome.saveTotal]
  */
@@ -104,20 +107,26 @@ export async function applyOutcome(actor, item, outcome) {
     return { applied: "extended", restsRemaining: next };
   }
 
-  if (outcome?.bypass?.bypassed) {
+  if (outcome?.modifier?.resolution === "auto-pass") {
     await chat(
       game.i18n.format("FISHUT.Addiction.Save.Bypass", {
         actor: actor.name,
         item: item.name,
-        paraphernalia: outcome.bypass.paraphernalia?.name ?? "",
+        paraphernalia: outcome.modifier.source?.name ?? "",
       }),
     );
     return { applied: "bypassed" };
   }
 
+  const advantageSource =
+    outcome?.modifier?.resolution === "advantage" ? (outcome.modifier.source?.name ?? "") : "";
+
   if (outcome?.saveResult === "success") {
+    const key = advantageSource
+      ? "FISHUT.Addiction.Save.PassWithAdvantage"
+      : "FISHUT.Addiction.Save.Pass";
     await chat(
-      game.i18n.format("FISHUT.Addiction.Save.Pass", { actor: actor.name, item: item.name }),
+      game.i18n.format(key, { actor: actor.name, item: item.name, source: advantageSource }),
     );
     return { applied: "passed" };
   }
@@ -128,11 +137,15 @@ export async function applyOutcome(actor, item, outcome) {
       restsRemaining: newComputed,
       appliedAt: new Date().toISOString(),
     });
+    const key = advantageSource
+      ? "FISHUT.Addiction.Save.FailWithAdvantage"
+      : "FISHUT.Addiction.Save.Fail";
     await chat(
-      game.i18n.format("FISHUT.Addiction.Save.Fail", {
+      game.i18n.format(key, {
         actor: actor.name,
         item: item.name,
         rests: newComputed,
+        source: advantageSource,
       }),
     );
     return { applied: "addicted", restsRemaining: newComputed };
@@ -144,7 +157,7 @@ function conMod(actor) {
   return typeof mod === "number" ? mod : 0;
 }
 
-async function rollSave(actor, ability, dc) {
+async function rollSave(actor, ability, dc, { advantage = false } = {}) {
   if (typeof actor.rollAbilitySave !== "function" && typeof actor.rollSavingThrow !== "function") {
     logger.warn("actor has no rollAbilitySave/rollSavingThrow; skipping save");
     return null;
@@ -156,6 +169,7 @@ async function rollSave(actor, ability, dc) {
     ability,
     target: dc,
     targetValue: dc,
+    advantage,
     fastForward: false,
     chatMessage: true,
   });

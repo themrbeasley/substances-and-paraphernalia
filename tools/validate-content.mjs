@@ -11,21 +11,31 @@
  * Substance contract:
  *   - flags["substances-and-paraphernalia"].kind === "substance"
  *   - flags[…].schemaVersion === 2
- *   - administration is one of inhaled|ingested|injected|sublingual|topical
+ *   - system.type.value === "poison"
+ *   - system.type.subtype is one of contact|ingested|inhaled|injury
+ *     (dnd5e Poison subtype is the source of truth for administration)
  *   - addiction.save.dc is a finite number
  *   - addiction.withdrawalMod is a positive integer
  *   - addiction.addictionEffectId points to an AE on the same item whose name
  *     contains /addict/i
+ *   - requiredSubtypes (if present) is a flat array of kebab-case subtype ids;
+ *     the legacy requiredParaphernalia AND-of-OR shape is a hard error
  *
  * Paraphernalia contract:
  *   - flags["substances-and-paraphernalia"].kind === "paraphernalia"
  *   - flags[…].schemaVersion === 2
- *   - paraphernaliaId is a kebab-case slug
- *   - if addictionSaveBypass is set:
- *       - type === "auto-pass" (only supported in v2)
+ *   - subtype is a non-empty kebab-case string identifying the paraphernalia
+ *     class (open enum — schema seeds well-known ids but custom subtypes are
+ *     allowed)
+ *   - legacy item-level paraphernaliaId / tags / addictionSaveBypass flags are
+ *     hard errors (v0.3 clean break)
+ *   - bypass intent is declared via an embedded AE with transfer:true carrying
+ *     flags["substances-and-paraphernalia"].modifier:
+ *       - kind === "bypass"
+ *       - type is one of "auto-pass" | "advantage" (v0.3 ships these only)
  *       - appliesTo is a non-empty array of valid administration strings
- *       - usesPerDay is set
- *       - system.uses.recovery includes a day/recoverAll entry
+ *     and when usesPerDay is declared the host item must have
+ *     system.uses.recovery including a day/recoverAll entry
  */
 
 import { readFile, readdir } from "node:fs/promises";
@@ -36,7 +46,8 @@ const __filename = fileURLToPath(import.meta.url);
 const ROOT = resolve(dirname(__filename), "..");
 const FLAG_SCOPE = "substances-and-paraphernalia";
 
-const ADMIN_VALUES = new Set(["inhaled", "ingested", "injected", "sublingual", "topical"]);
+const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]);
+const MODIFIER_TYPES = new Set(["auto-pass", "advantage"]);
 const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
 const errors = [];
@@ -83,9 +94,19 @@ function checkSubstance({ relPath, data }) {
   if (flags.schemaVersion !== 2) {
     err(`${tag}: schemaVersion must be 2 (got ${flags.schemaVersion})`);
   }
-  if (!ADMIN_VALUES.has(flags.administration)) {
+  if (flags.administration !== undefined) {
     err(
-      `${tag}: administration must be one of ${[...ADMIN_VALUES].join("|")} (got ${flags.administration})`,
+      `${tag}: legacy "administration" flag is removed in v0.3 — administration now lives on system.type.subtype (dnd5e Poison subtype)`,
+    );
+  }
+  const poisonValue = data?.system?.type?.value;
+  if (poisonValue !== "poison") {
+    err(`${tag}: system.type.value must be "poison" (got ${poisonValue})`);
+  }
+  const subtype = data?.system?.type?.subtype;
+  if (!ADMIN_VALUES.has(subtype)) {
+    err(
+      `${tag}: system.type.subtype must be one of ${[...ADMIN_VALUES].join("|")} (got ${subtype})`,
     );
   }
 
@@ -117,6 +138,23 @@ function checkSubstance({ relPath, data }) {
   if (!/addict/i.test(ae.name ?? "")) {
     err(`${tag}: addiction AE name "${ae.name}" must contain "addict"`);
   }
+
+  if (flags.requiredParaphernalia !== undefined) {
+    err(
+      `${tag}: legacy "requiredParaphernalia" flag is removed in v0.3 — declare a flat "requiredSubtypes" array of paraphernalia subtype ids instead`,
+    );
+  }
+  if (flags.requiredSubtypes !== undefined) {
+    if (!Array.isArray(flags.requiredSubtypes)) {
+      err(`${tag}: requiredSubtypes must be an array of subtype id strings`);
+    } else {
+      for (const s of flags.requiredSubtypes) {
+        if (typeof s !== "string" || !KEBAB.test(s)) {
+          err(`${tag}: requiredSubtypes entry must be a kebab-case string (got ${JSON.stringify(s)})`);
+        }
+      }
+    }
+  }
 }
 
 function checkParaphernalia({ relPath, data }) {
@@ -133,37 +171,70 @@ function checkParaphernalia({ relPath, data }) {
   if (flags.schemaVersion !== 2) {
     err(`${tag}: schemaVersion must be 2 (got ${flags.schemaVersion})`);
   }
-  if (typeof flags.paraphernaliaId !== "string" || !KEBAB.test(flags.paraphernaliaId)) {
-    err(`${tag}: paraphernaliaId must be kebab-case (got ${flags.paraphernaliaId})`);
+  if (typeof flags.subtype !== "string" || !KEBAB.test(flags.subtype)) {
+    err(`${tag}: subtype must be a kebab-case string (got ${JSON.stringify(flags.subtype)})`);
+  }
+  if (flags.paraphernaliaId !== undefined) {
+    err(
+      `${tag}: legacy "paraphernaliaId" flag is removed in v0.3 — declare flags["${FLAG_SCOPE}"].subtype instead`,
+    );
+  }
+  if (flags.tags !== undefined) {
+    err(
+      `${tag}: legacy "tags" flag is removed in v0.3 — paraphernalia identity is the subtype id alone`,
+    );
   }
 
-  const bypass = flags.addictionSaveBypass;
-  if (!bypass) return;
-
-  if (bypass.type !== "auto-pass") {
-    err(`${tag}: addictionSaveBypass.type must be "auto-pass" in v2 (got ${bypass.type})`);
+  if (flags.addictionSaveBypass !== undefined) {
+    err(
+      `${tag}: legacy item-level "addictionSaveBypass" flag is removed in v0.3 — declare bypass via an embedded transfer:true AE with flags["${FLAG_SCOPE}"].modifier instead`,
+    );
   }
-  if (!Array.isArray(bypass.appliesTo) || bypass.appliesTo.length === 0) {
-    err(`${tag}: addictionSaveBypass.appliesTo must be a non-empty array`);
-  } else {
-    for (const a of bypass.appliesTo) {
-      if (!ADMIN_VALUES.has(a)) {
-        err(`${tag}: addictionSaveBypass.appliesTo contains invalid administration "${a}"`);
+
+  const effects = Array.isArray(data.effects) ? data.effects : [];
+  const bypassEffects = [];
+  for (const effect of effects) {
+    const modifier = effect?.flags?.[FLAG_SCOPE]?.modifier;
+    if (!modifier || modifier.kind !== "bypass") continue;
+    bypassEffects.push({ effect, modifier });
+  }
+  if (bypassEffects.length === 0) return;
+
+  let needsDailyRecovery = false;
+  for (const { effect, modifier } of bypassEffects) {
+    const aeTag = `${tag} effect "${effect?.name ?? effect?._id ?? "?"}"`;
+    if (effect.transfer !== true) {
+      err(`${aeTag}: bypass-granting AE must declare transfer:true`);
+    }
+    if (!MODIFIER_TYPES.has(modifier.type)) {
+      err(
+        `${aeTag}: modifier.type must be one of ${[...MODIFIER_TYPES].join("|")} (got ${modifier.type})`,
+      );
+    }
+    if (!Array.isArray(modifier.appliesTo) || modifier.appliesTo.length === 0) {
+      err(`${aeTag}: modifier.appliesTo must be a non-empty array`);
+    } else {
+      for (const a of modifier.appliesTo) {
+        if (!ADMIN_VALUES.has(a)) {
+          err(`${aeTag}: modifier.appliesTo contains invalid administration "${a}"`);
+        }
       }
     }
-  }
-  if (bypass.usesPerDay === undefined || bypass.usesPerDay === null || bypass.usesPerDay === "") {
-    err(`${tag}: addictionSaveBypass.usesPerDay must be set`);
+    if (modifier.usesPerDay !== undefined && modifier.usesPerDay !== null && modifier.usesPerDay !== "") {
+      needsDailyRecovery = true;
+    }
   }
 
-  const recovery = data.system?.uses?.recovery;
-  const hasDailyRecovery =
-    Array.isArray(recovery) &&
-    recovery.some((r) => r?.period === "day" && r?.type === "recoverAll");
-  if (!hasDailyRecovery) {
-    err(
-      `${tag}: addictionSaveBypass-granting paraphernalia must declare system.uses.recovery: [{ period: "day", type: "recoverAll" }]`,
-    );
+  if (needsDailyRecovery) {
+    const recovery = data.system?.uses?.recovery;
+    const hasDailyRecovery =
+      Array.isArray(recovery) &&
+      recovery.some((r) => r?.period === "day" && r?.type === "recoverAll");
+    if (!hasDailyRecovery) {
+      err(
+        `${tag}: paraphernalia granting a usesPerDay-bounded bypass must declare system.uses.recovery: [{ period: "day", type: "recoverAll" }]`,
+      );
+    }
   }
 }
 

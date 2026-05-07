@@ -26,16 +26,32 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "fantasy",
-      "paraphernaliaId": "dubious-pipe",
-      "tags": ["pipe", "dragon-fang", "legendary", "inhalation"],
-      "addictionSaveBypass": {
-        "type": "auto-pass",
-        "appliesTo": ["inhaled"],
-        "usesPerDay": "@prof"
-      },
+      "subtype": "pipe",
       "schemaVersion": 2
     }
   },
-  "effects": [],
+  "effects": [
+    {
+      "_id": "fhAEDubsPipeByp",
+      "_key": "!items.effects!fhParaDubsPipe01.fhAEDubsPipeByp",
+      "name": "Dubious Pipe — Bypass",
+      "img": "icons/svg/aura.svg",
+      "transfer": true,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Grants automatic success on Constitution saving throws against addiction to inhaled substances burned in the Dubious Pipe. Uses recover at the end of a long rest, tracked on the pipe's native uses pool.</p>",
+      "changes": [],
+      "flags": {
+        "substances-and-paraphernalia": {
+          "modifier": {
+            "kind": "bypass",
+            "type": "auto-pass",
+            "appliesTo": ["inhaled"],
+            "usesPerDay": "@prof"
+          }
+        }
+      }
+    }
+  ],
   "ownership": { "default": 0 }
 }

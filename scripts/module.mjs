@@ -3,20 +3,25 @@ import { logger } from "./logger.js";
 import { registerSettings } from "./settings.js";
 import { registerMigrationSettings, runMigrations } from "./migrations.js";
 import * as flagSchema from "./data/flag-schema.js";
-import { actorHasParaphernalia, inspectParaphernalia } from "./data/references.js";
-import { evaluateRequirements, evaluateSubstance } from "./data/required-paraphernalia.js";
+import { actorHasSubtype, inspectSubtypeOnActor } from "./data/references.js";
+import {
+  evaluateSubtypeRequirements,
+  evaluateSubstance,
+} from "./data/subtype-requirements.js";
 import { registerActivityGating } from "./hooks/activity-gating.js";
 import { registerAddictionHooks, rollSaveAndApply, applyOutcome } from "./hooks/addiction.js";
-import { consumeBypassIfAvailable } from "./data/save-bypass.js";
+import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
+import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
 import { isActive, listMissingIntegrations } from "./integrations/index.js";
-import { registerItemSettingsForm, openFor as openItemSettings } from "./ui/item-settings-form.js";
+import { registerDetailsTab } from "./ui/details-tab.js";
 
 Hooks.once("init", () => {
   registerMigrationSettings();
   registerSettings();
   registerActivityGating();
   registerAddictionHooks();
-  registerItemSettingsForm();
+  registerDragToInventory();
+  registerDetailsTab();
   registerQuenchSuiteIfActive();
   logger.log("init complete");
 });
@@ -35,12 +40,11 @@ Hooks.once("ready", async () => {
     module.api = {
       schema: SCHEMA,
       flagSchema,
-      references: { actorHasParaphernalia, inspectParaphernalia },
-      requirements: { evaluateRequirements, evaluateSubstance },
+      references: { actorHasSubtype, inspectSubtypeOnActor },
+      requirements: { evaluateSubtypeRequirements, evaluateSubstance },
       addiction: { rollSaveAndApply, applyOutcome },
       saveBypass: { consumeBypassIfAvailable },
       integrations: { isActive, listMissingIntegrations },
-      ui: { openItemSettings },
     };
   }
   notifyMissingIntegrations();

@@ -23,8 +23,7 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "modern",
-      "paraphernaliaId": "rolling-papers",
-      "tags": ["paper", "consumable", "pack-of-50"],
+      "subtype": "rolling-papers",
       "schemaVersion": 2
     }
   },

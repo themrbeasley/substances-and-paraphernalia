@@ -1,0 +1,104 @@
+{
+  "_id": "fhSubGntBreath01",
+  "_key": "!items!fhSubGntBreath01",
+  "name": "Giantsbreath Tonic",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhSubFantasy0001",
+  "system": {
+    "description": {
+      "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws made to resist being grappled, shoved, or restrained.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Tincture Dropper.</em></p>"
+    },
+    "type": { "value": "poison", "subtype": "ingested" },
+    "rarity": "rare",
+    "weight": { "value": 0.2, "units": "lb" },
+    "price": { "value": 300, "denomination": "gp" },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": true
+    },
+    "activities": {
+      "fhActGntBreath01": {
+        "type": "utility",
+        "_id": "fhActGntBreath01",
+        "sort": 0,
+        "activation": { "type": "action", "override": false, "condition": "" },
+        "consumption": {
+          "scaling": { "allowed": false },
+          "spellSlot": true,
+          "targets": [
+            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+          ]
+        },
+        "description": { "chatFlavor": "" },
+        "duration": { "units": "minute", "value": "10", "concentration": false, "override": false },
+        "effects": [
+          { "_id": "fhAEGntBreathBen" }
+        ],
+        "flags": {},
+        "range": { "units": "self", "override": false, "special": "" },
+        "target": {
+          "template": { "contiguous": false, "units": "ft", "type": "" },
+          "affects": { "choice": false, "type": "self" },
+          "override": false,
+          "prompt": true
+        },
+        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "visibility": {
+          "level": { "min": null, "max": null },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "name": ""
+      }
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "substance",
+      "category": "performanceEnhancing",
+      "setting": "fantasy",
+      "requiredSubtypes": ["tincture-dropper"],
+      "addiction": {
+        "save": { "ability": "con", "dc": 14 },
+        "withdrawalMod": 4,
+        "addictionEffectId": "fhAEGntBreathAdc"
+      },
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAEGntBreathBen",
+      "_key": "!items.effects!fhSubGntBreath01.fhAEGntBreathBen",
+      "name": "Altered by Giantsbreath Tonic",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": { "seconds": 600 },
+      "description": "<p>+2 to Strength (Athletics) checks. Advantage on Strength saves vs. grapple/shove/restrain.</p>",
+      "changes": [
+        { "key": "system.skills.ath.bonuses.check", "mode": 2, "value": "+2", "priority": 20 }
+      ],
+      "flags": {}
+    },
+    {
+      "_id": "fhAEGntBreathAdc",
+      "_key": "!items.effects!fhSubGntBreath01.fhAEGntBreathAdc",
+      "name": "Giantsbreath Tonic Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": ["poisoned"],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on Dexterity (Sleight of Hand) checks until withdrawal completes.</p>",
+      "changes": [],
+      "flags": {}
+    }
+  ],
+  "ownership": { "default": 0 }
+}

@@ -18,8 +18,7 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "fantasy",
-      "paraphernaliaId": "snuff-horn",
-      "tags": ["snuff", "horn", "inhalation"],
+      "subtype": "snuff-horn",
       "schemaVersion": 2
     }
   },

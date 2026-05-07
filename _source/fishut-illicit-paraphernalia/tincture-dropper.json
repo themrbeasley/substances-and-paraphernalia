@@ -23,8 +23,7 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "modern",
-      "paraphernaliaId": "tincture-dropper",
-      "tags": ["dropper", "measurement", "single-use"],
+      "subtype": "tincture-dropper",
       "schemaVersion": 2
     }
   },
