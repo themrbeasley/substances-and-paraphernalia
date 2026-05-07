@@ -7,6 +7,53 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-07
+
+### Breaking
+- **`addictionSaveBypass` removed from paraphernalia flag blocks.** Save
+  bypass is now an AE-flag mechanism: any AE on the actor whose
+  `flags["substances-and-paraphernalia"].modifier` block carries
+  `kind: "bypass"` and an `appliesTo` administration list participates
+  in the modifier pipeline. Paraphernalia grant bypass by carrying a
+  `transfer: true` AE with that flag block. Pre-1.0 clean break — no
+  migration shim. Re-import paraphernalia from the shipped compendium;
+  the legacy item-level `addictionSaveBypass` shape is now a hard
+  validator error.
+- **Paraphernalia gating model switched to kebab-case subtypes.**
+  Substances declare `requiredSubtypes: string[]` (open-enum, kebab-
+  case), paraphernalia declare a single `subtype` field. The legacy
+  `tags` / `requiredParaphernalia` / `paraphernaliaId` shapes are hard
+  validator errors. Re-import shipped content.
+- **3-dot authoring form removed.** `scripts/ui/item-settings-form.js`,
+  its template, and the `FISHUT.ItemSettings.*` localization keys are
+  deleted. Authoring lives on the dnd5e item-sheet **Details** tab.
+
+### Added
+- Native dnd5e Details-tab authoring section for substances and
+  paraphernalia, replacing the 3-dot form. ApplicationV2 / dnd5e 5.2.5.
+- AE-flag modifier pipeline (`scripts/data/modifier-pipeline.js`) with
+  composition rule `auto-pass > advantage > none`; deterministic
+  tie-break by AE id.
+- `advantage` save-bypass type — addiction saves roll with advantage
+  when a matching `kind: "bypass" / type: "advantage"` AE is on the
+  actor.
+- Drag-to-inventory state-injection dialog (GM/ASSISTANT only) that
+  fires when a substance is dropped onto a `character` or `npc` actor.
+  States: Altered (informational), Addicted (applies addiction AE +
+  withdrawal entry), Withdrawing (withdrawal entry only), Decline
+  (chat note). Tolerant / Overdosed buttons stub for v0.4.
+- Theme 6 round 1 content: four substances filling the empty cells of
+  the 3×3 setting × category matrix — Giantsbreath Tonic (fantasy /
+  performance-enhancing), Spaceport Stim-Patch (sci-fi / stimulant),
+  Reflex Injector (sci-fi / performance-enhancing), Voltbeans (modern
+  / stimulant).
+- Public API surface adds `api.modifierPipeline` and `api.modifierFlag`.
+
+### Changed
+- `consumeBypassIfAvailable(actor, substance)` returns
+  `{ resolution, source }` (was `{ bypassed, paraphernalia, type }`).
+- `module.json` `compatibility.verified` pinned to dnd5e 5.2.5.
+
 ## [0.2.0] — 2026-05-05
 
 ### Breaking
