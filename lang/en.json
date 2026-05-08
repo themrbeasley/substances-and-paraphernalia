@@ -46,6 +46,15 @@
   "FISHUT.Settings.VoluntaryAbstainEnabled.Name": "Allow voluntary abstain on long rest",
   "FISHUT.Settings.VoluntaryAbstainEnabled.Hint": "When on, actors with active withdrawal may attempt a Wisdom save during a long rest to skip an extra rest. Pass: -2 rests. Fail: normal -1 rest, no penalty.",
 
+  "FISHUT.Settings.DaeIntegration.Name": "Wire into Dynamic Active Effects (DAE)",
+  "FISHUT.Settings.DaeIntegration.Hint": "Disable to make this module ignore DAE even if it's installed. Suppresses DAE-aware effect detection and the missing-DAE warning.",
+  "FISHUT.Settings.MidiqolIntegration.Name": "Wire into Midi-QoL",
+  "FISHUT.Settings.MidiqolIntegration.Hint": "Disable to make this module ignore Midi-QoL even if it's installed.",
+  "FISHUT.Settings.TimesUpIntegration.Name": "Wire into Times Up",
+  "FISHUT.Settings.TimesUpIntegration.Hint": "Disable to make this module ignore Times Up even if it's installed.",
+  "FISHUT.Settings.TmfxIntegration.Name": "Wire into Token Magic FX",
+  "FISHUT.Settings.TmfxIntegration.Hint": "Disable to make this module ignore Token Magic FX even if it's installed.",
+
   "FISHUT.Settings.ManageParaphernaliaSubtypes.Name": "Manage Paraphernalia Subtypes",
   "FISHUT.Settings.ManageParaphernaliaSubtypes.Label": "Manage Subtypes",
   "FISHUT.Settings.ManageParaphernaliaSubtypes.Hint": "Add, edit, or remove custom paraphernalia subtypes. Built-in subtypes ship with the module and cannot be removed.",

@@ -26,7 +26,12 @@ import {
   applyAbstainPreDecrement,
 } from "./hooks/long-rest-abstain.js";
 import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
-import { isActive, listMissingIntegrations } from "./integrations/index.js";
+import {
+  isActive,
+  isIntegrationEnabled,
+  isIntegrationSettingEnabled,
+  listMissingIntegrations,
+} from "./integrations/index.js";
 import { registerDetailsTab } from "./ui/details-tab.js";
 import {
   registerSimulateDose,
@@ -77,7 +82,12 @@ Hooks.once("ready", async () => {
       saveBypass: { consumeBypassIfAvailable },
       abstain: { applyAbstainPreDecrement },
       simulateDose: { runSimulation, sweepOrphanedTestActors },
-      integrations: { isActive, listMissingIntegrations },
+      integrations: {
+        isActive,
+        isIntegrationEnabled,
+        isIntegrationSettingEnabled,
+        listMissingIntegrations,
+      },
     };
   }
   notifyMissingIntegrations();
@@ -86,7 +96,9 @@ Hooks.once("ready", async () => {
 
 function notifyMissingIntegrations() {
   if (game.settings.get(MODULE_ID, "suppressIntegrationWarnings")) return;
-  const missing = listMissingIntegrations();
+  // The user explicitly opted out of integrations whose setting is false —
+  // don't nag them about modules they've already declined to wire into.
+  const missing = listMissingIntegrations().filter((m) => isIntegrationSettingEnabled(m.id));
   if (missing.length === 0) return;
   const labels = missing.map((m) => game.i18n.localize(m.labelKey));
   const sep = game.i18n.localize("FISHUT.Gating.Group.Separator");

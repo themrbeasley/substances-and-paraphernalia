@@ -9,6 +9,10 @@ export const SETTING_KEYS = Object.freeze({
   addictionPoisonedCoupling: "addictionPoisonedCoupling",
   voluntaryAbstainEnabled: "voluntaryAbstainEnabled",
   customParaphernaliaSubtypes: "customParaphernaliaSubtypes",
+  daeIntegration: "daeIntegration",
+  midiqolIntegration: "midiqolIntegration",
+  timesUpIntegration: "timesUpIntegration",
+  tmfxIntegration: "tmfxIntegration",
 });
 
 export const MENU_KEYS = Object.freeze({
@@ -56,6 +60,42 @@ export function registerSettings() {
   game.settings.register(MODULE_ID, SETTING_KEYS.voluntaryAbstainEnabled, {
     name: "FISHUT.Settings.VoluntaryAbstainEnabled.Name",
     hint: "FISHUT.Settings.VoluntaryAbstainEnabled.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(MODULE_ID, SETTING_KEYS.daeIntegration, {
+    name: "FISHUT.Settings.DaeIntegration.Name",
+    hint: "FISHUT.Settings.DaeIntegration.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(MODULE_ID, SETTING_KEYS.midiqolIntegration, {
+    name: "FISHUT.Settings.MidiqolIntegration.Name",
+    hint: "FISHUT.Settings.MidiqolIntegration.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(MODULE_ID, SETTING_KEYS.timesUpIntegration, {
+    name: "FISHUT.Settings.TimesUpIntegration.Name",
+    hint: "FISHUT.Settings.TimesUpIntegration.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(MODULE_ID, SETTING_KEYS.tmfxIntegration, {
+    name: "FISHUT.Settings.TmfxIntegration.Name",
+    hint: "FISHUT.Settings.TmfxIntegration.Hint",
     scope: "world",
     config: true,
     type: Boolean,
