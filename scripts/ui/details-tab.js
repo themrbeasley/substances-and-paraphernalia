@@ -213,11 +213,13 @@ function buildLabels() {
     saveAbility: L("FISHUT.DetailsTab.Field.SaveAbility"),
     saveDc: L("FISHUT.DetailsTab.Field.SaveDc"),
     addictionEffect: L("FISHUT.DetailsTab.Field.AddictionEffect.Label"),
+    addictionEffectCreateTooltip: L("FISHUT.DetailsTab.Field.AddictionEffect.CreateTooltip"),
     withdrawalHeader: L("FISHUT.DetailsTab.Withdrawal.Header"),
     withdrawalEnabled: L("FISHUT.DetailsTab.Withdrawal.Enabled"),
     withdrawalMod: L("FISHUT.DetailsTab.Field.WithdrawalMod"),
     withdrawalEffect: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Label"),
     withdrawalEffectTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip"),
+    withdrawalEffectCreateTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.CreateTooltip"),
     overdoseHeader: L("FISHUT.DetailsTab.Overdose.Header"),
     overdoseEnabled: L("FISHUT.DetailsTab.Overdose.Enabled"),
     overdoseChancePercent: L("FISHUT.DetailsTab.Overdose.ChancePercent"),
@@ -587,6 +589,12 @@ async function dispatchAction(button, wrapper, item) {
   if (action === "grant-bypass") {
     return createBypassStubAE(item);
   }
+  if (action === "create-addiction-ae") {
+    return createAddictionStubAE(item);
+  }
+  if (action === "create-withdrawal-ae") {
+    return createWithdrawalStubAE(item);
+  }
   if (action === "add-required-subtype") {
     const select = wrapper.querySelector('[data-fishut-add-subtype="select"]');
     const id = (select?.value ?? "").trim();
@@ -634,6 +642,50 @@ export async function createBypassStubAE(item) {
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
   return created?.[0] ?? null;
+}
+
+// Create a blank addiction-template AE on the substance item and auto-select it
+// as the active addiction effect. `transfer: false` because addiction templates
+// are applied programmatically on save fail, not by item ownership. Name must
+// contain `addict` (case-insensitive) per the AE-naming contract.
+export async function createAddictionStubAE(item) {
+  const name = game.i18n.format("FISHUT.DetailsTab.Field.AddictionEffect.AeName.Default", {
+    item: item.name,
+  });
+  const data = [
+    {
+      name,
+      img: item.img ?? "icons/svg/aura.svg",
+      transfer: false,
+      changes: [],
+    },
+  ];
+  const created = await item.createEmbeddedDocuments("ActiveEffect", data);
+  const effect = created?.[0] ?? null;
+  if (effect?.id) await setAddictionEffectId(item, effect.id);
+  return effect;
+}
+
+// Create a blank withdrawal-template AE on the substance item and auto-select
+// it as the active withdrawal effect. `transfer: false` because withdrawal
+// templates are applied programmatically at long-rest tick. Name must contain
+// `withdraw` (case-insensitive) per the AE-naming contract.
+export async function createWithdrawalStubAE(item) {
+  const name = game.i18n.format("FISHUT.DetailsTab.Field.WithdrawalEffect.AeName.Default", {
+    item: item.name,
+  });
+  const data = [
+    {
+      name,
+      img: item.img ?? "icons/svg/aura.svg",
+      transfer: false,
+      changes: [],
+    },
+  ];
+  const created = await item.createEmbeddedDocuments("ActiveEffect", data);
+  const effect = created?.[0] ?? null;
+  if (effect?.id) await setWithdrawalEffectId(item, effect.id);
+  return effect;
 }
 
 function parseIntOrNull(value) {

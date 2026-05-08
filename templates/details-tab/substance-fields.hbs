@@ -38,12 +38,23 @@
 
     <div class="form-group">
       <label>{{labels.addictionEffect}}</label>
-      <select data-fishut-flag="addictionEffectId"
-              {{#if substance.addiction.fieldsDisabled}}disabled{{/if}}>
-        {{#each substance.addiction.addictionEffectOptions}}
-          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-        {{/each}}
-      </select>
+      <div class="fishut-effect-picker">
+        <select class="fishut-effect-picker__select"
+                data-fishut-flag="addictionEffectId"
+                {{#if substance.addiction.fieldsDisabled}}disabled{{/if}}>
+          {{#each substance.addiction.addictionEffectOptions}}
+            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+        <button type="button"
+                class="fishut-effect-picker__add"
+                data-fishut-action="create-addiction-ae"
+                data-tooltip="{{labels.addictionEffectCreateTooltip}}"
+                aria-label="{{labels.addictionEffectCreateTooltip}}"
+                {{#if substance.addiction.fieldsDisabled}}disabled{{/if}}>
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
   </fieldset>
 
@@ -69,12 +80,23 @@
         {{labels.withdrawalEffect}}
         <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.withdrawalEffectTooltip}}"></i>
       </label>
-      <select data-fishut-flag="withdrawal.effectId"
-              {{#if substance.withdrawal.fieldsDisabled}}disabled{{/if}}>
-        {{#each substance.withdrawal.withdrawalEffectOptions}}
-          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-        {{/each}}
-      </select>
+      <div class="fishut-effect-picker">
+        <select class="fishut-effect-picker__select"
+                data-fishut-flag="withdrawal.effectId"
+                {{#if substance.withdrawal.fieldsDisabled}}disabled{{/if}}>
+          {{#each substance.withdrawal.withdrawalEffectOptions}}
+            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+        <button type="button"
+                class="fishut-effect-picker__add"
+                data-fishut-action="create-withdrawal-ae"
+                data-tooltip="{{labels.withdrawalEffectCreateTooltip}}"
+                aria-label="{{labels.withdrawalEffectCreateTooltip}}"
+                {{#if substance.withdrawal.fieldsDisabled}}disabled{{/if}}>
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
   </fieldset>
 

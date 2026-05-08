@@ -319,3 +319,25 @@
   gap: 0.35rem;
   white-space: nowrap;
 }
+
+/* Inline AE creator next to a select — mirrors the dnd5e Activity sheet's
+   "Applied Effects" header pattern (select + small `+` button). Used by the
+   Addiction Effect and Withdrawal Effect pickers on the substance Details tab. */
+.fishut-effect-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fishut-effect-picker__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fishut-effect-picker__add {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+}
