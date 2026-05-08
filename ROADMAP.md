@@ -24,6 +24,25 @@ Theme 1 (GM Guide moved to GitHub wiki + CI link-check), Theme 3
 cell), three new Remove-X macros (Tolerance, Overdose, Withdrawal),
 and the Paraphernalia Subtype Manager settings sub-menu.
 
+v0.5 is shipped: Theme 4 (TokenMagic FX integration — `Altered by *`
+AE drives a TMFX preset or macro-mode dispatch via the new
+`fishut-illicit-macros` compendium of 9 setting × category macros;
+authored on the Details tab via mode `none` / `preset` / `macro`),
+per-integration boolean settings (`daeIntegration`,
+`midiqolIntegration`, `timesUpIntegration`, `tmfxIntegration`;
+default-on, off-state ignores the integration even when installed),
+the per-owner CSS withdrawal vignette (mounted to `#interface`,
+color inherited onto the AE flag from the substance at
+`applyWithdrawalEffect` time), Theme 6 round 3 paraphernalia
+(ritual incense burner / pill cutter / neural shunt, paired into
+Coalshade Powder / Ironhour Caps / Memorywire respectively), and
+the pre-sprint integration license audit
+(`docs/INTEGRATION-LICENSES.md`). JB2A integration was dropped
+from v0.5 — the audit could not clear CC-BY-NC-SA-4.0 for our
+distribution model and there is no signed clearance from JB2A's
+authors. Users who own JB2A can still drive Sequencer effects via
+a world-local macro through the `tmfx.macroUuid` field.
+
 ---
 
 ## Explicitly out of scope
@@ -200,7 +219,7 @@ intrusive and should be last; it changes the post-hook control flow.
 
 ---
 
-## Theme 4 — Token Magic FX visual filters
+## Theme 4 — Token Magic FX visual filters — **shipped v0.5**
 
 **Status today.** TokenMagic is in `relationships.recommends` but
 the module never invokes its API. The integration warning is
@@ -282,7 +301,7 @@ midi active or absent.
 
 ---
 
-## Theme 6 — Compendia content expansion (3×3 matrix) — **round 1 shipped v0.3, round 2 shipped v0.4**
+## Theme 6 — Compendia content expansion (3×3 matrix) — **round 1 shipped v0.3, round 2 shipped v0.4, round 3 shipped v0.5**
 
 **Status today.** v0.2 ships 7 substances + 5 paraphernalia,
 exercising every code path (gating, readiness, automation, bypass,
@@ -336,9 +355,19 @@ worlds before the next lands.
   d100, withdrawal-bite picker, voluntary-abstain dialog, poisoned-
   coupling tri-state setting, simulate-dose 3-dot menu, three
   Remove-X macros, and the Paraphernalia Subtype Manager.
-- **0.5** — Theme 4 (TokenMagic FX) + module-integration settings
-  pattern (per-recommended-module toggles; deferred from v0.3
-  because no v0.3 consumer exercises it) + Theme 6 round 3.
+- **0.5 — shipped.** Theme 4 (TokenMagic FX integration with
+  preset/macro mode + 9-macro setting × category palette in the
+  new `fishut-illicit-macros` compendium) + per-integration
+  boolean settings pattern (`daeIntegration`, `midiqolIntegration`,
+  `timesUpIntegration`, `tmfxIntegration`; deferred from v0.3 and
+  TMFX is its first real consumer) + per-owner CSS withdrawal
+  vignette mounted to `#interface` with color inherited onto the
+  AE at apply time + Theme 6 round 3 (ritual incense burner / pill
+  cutter / neural shunt, paired into Coalshade Powder / Ironhour
+  Caps / Memorywire) + pre-sprint integration license audit
+  (`docs/INTEGRATION-LICENSES.md`). JB2A integration dropped —
+  CC-BY-NC-SA-4.0 vs. author Patreon ambiguity, no signed
+  clearance; revisit if licensing posture changes.
 - **0.6** — Theme 3 finish (`reroll-on-fail`) + Theme 5 first
   cut (on-use macro hook).
 - **1.0** — stability pass + Foundry package registry submission.
