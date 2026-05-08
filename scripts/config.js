@@ -5,7 +5,18 @@
  */
 
 const schemaUrl = new URL("./data/schema.json", import.meta.url);
-const rawSchema = await fetch(schemaUrl).then((r) => r.json());
+
+// In Foundry's browser runtime `import.meta.url` resolves to https://; in
+// Node-based unit tests it resolves to file://, which Node's fetch rejects.
+async function loadSchema(url) {
+  if (url.protocol === "file:") {
+    const { readFile } = await import("node:fs/promises");
+    return JSON.parse(await readFile(url, "utf8"));
+  }
+  return fetch(url).then((r) => r.json());
+}
+
+const rawSchema = await loadSchema(schemaUrl);
 
 function deepFreeze(value) {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
@@ -26,6 +37,7 @@ export const CATEGORY_IDS = SCHEMA.categories.map((c) => c.id);
 export const SETTING_IDS = SCHEMA.settings.map((s) => s.id);
 export const MODIFIER_KIND_IDS = SCHEMA.modifier.kinds.map((k) => k.id);
 export const MODIFIER_TYPE_IDS = SCHEMA.modifier.types.map((t) => t.id);
+export const COUPLING_MODE_IDS = SCHEMA.coupling?.modes?.map((m) => m.id) ?? [];
 
 /**
  * Display label key for any schema enum entry. Group may be a top-level

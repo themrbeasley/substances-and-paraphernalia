@@ -20,9 +20,12 @@ import {
   isSubstance,
   getAddiction,
   getAddictionEffectId,
+  getOverdose,
   setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
 import { computeRestsRemaining } from "../data/withdrawal.js";
+import { applyOrIncrementToleranceStack } from "./addiction.js";
+import { applyOverdoseEffect } from "./overdose.js";
 import { logger } from "../logger.js";
 
 const DIALOG_TEMPLATE = `modules/${MODULE_ID}/templates/drag-to-inventory-dialog.hbs`;
@@ -221,10 +224,30 @@ export async function applyDragOutcome(actor, item, choice) {
       return { applied: "withdrawing", restsRemaining: rests };
     }
 
-    case CHOICES.TOLERANT:
+    case CHOICES.TOLERANT: {
+      const effect = await applyOrIncrementToleranceStack(actor, item);
+      const stacks = Number(effect?.flags?.[MODULE_ID]?.stacks) || 1;
+      await chat(
+        game.i18n.format("FISHUT.DragInventory.Applied.Tolerant", {
+          actor: actor.name,
+          item: item.name,
+          stacks,
+        }),
+      );
+      return { applied: "tolerant", stacks };
+    }
+
     case CHOICES.OVERDOSED: {
-      ui.notifications?.info(game.i18n.localize("FISHUT.DragInventory.Toast.ComingInV04"));
-      return { applied: "stub" };
+      const block = getOverdose(item);
+      const effect = await applyOverdoseEffect(actor, item, block);
+      await chat(
+        game.i18n.format("FISHUT.DragInventory.Applied.Overdosed", {
+          actor: actor.name,
+          item: item.name,
+          description: block?.description ?? "",
+        }),
+      );
+      return { applied: "overdosed", effectId: effect?.id ?? null };
     }
 
     default:

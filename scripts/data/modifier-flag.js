@@ -5,18 +5,33 @@
  * pulling in Foundry globals or the world-config bootstrap. The Foundry-
  * coupled wrappers `getModifier` / `setModifier` live in `flag-schema.js`.
  *
- * @typedef {"bypass"} ModifierKind
- *   The pipeline-supported modifier kinds. v0.3 ships only "bypass".
+ * @typedef {"bypass" | "tolerance"} ModifierKind
+ *   v0.4 adds "tolerance" — actor-side stack-counted state (no per-shot consumption).
+ *   "bypass" is the original paraphernalia-grants-save-relief pipeline.
  *
- * @typedef {"auto-pass" | "advantage"} ModifierType
- *   v0.3 ships only "auto-pass" and "advantage".
+ * @typedef {"auto-pass" | "advantage" | "+N"} ModifierType
+ *   For `kind: "bypass"` only. Tier strength: auto-pass > advantage > +N.
+ *
+ * @typedef {Object} ToleranceFactor
+ * @property {number}  [durationFactor]   Per-stack additive delta on a 1.0 baseline.
+ * @property {number}  [modifierFactor]   Per-stack additive delta on a 1.0 baseline.
+ * @property {boolean} [dropAdvantage]    OR'd across stacks ≥ 1.
+ *
+ * @typedef {Object} WithdrawalAmplifyFactor
+ * @property {number}  [durationFactor]
+ * @property {number}  [modifierFactor]
+ * @property {boolean} [addDisadvantage]
  *
  * @typedef {Object} ModifierBlock
- * @property {ModifierKind} kind
- * @property {ModifierType} type
- * @property {string[]}     appliesTo     Administrations the modifier applies to.
- * @property {number|string} [usesPerDay] Numeric or formula (e.g. "@prof").
- * @property {number}        [bonus]      Reserved for v0.4 `+N` types.
+ * @property {ModifierKind}  kind
+ * @property {ModifierType}  [type]                  (bypass only)
+ * @property {string[]}      [appliesTo]             (bypass only) Administrations the modifier applies to.
+ * @property {number|string} [usesPerDay]            (bypass only) Numeric or formula (e.g. "@prof").
+ * @property {number}        [bonus]                 (bypass, type === "+N")
+ * @property {string}        [substanceId]           (tolerance only) Item id of the addictive substance.
+ * @property {ToleranceFactor}         [attenuateAltered]   (tolerance only)
+ * @property {number}                  [addictionDcBump]    (tolerance only)
+ * @property {WithdrawalAmplifyFactor} [withdrawalAmplify]  (tolerance only)
  */
 
 const MODIFIER_KEY = "modifier";

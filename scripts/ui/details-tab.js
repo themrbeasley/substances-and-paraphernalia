@@ -5,6 +5,8 @@ import {
   getAddictionSave,
   getWithdrawalMod,
   getAddictionEffectId,
+  getWithdrawalEffectId,
+  getOverdose,
   getRequiredSubtypes,
   getSubtype,
   getModifier,
@@ -13,9 +15,12 @@ import {
   setAddictionSave,
   setWithdrawalMod,
   setAddictionEffectId,
+  setWithdrawalEffectId,
+  setOverdose,
   setRequiredSubtypes,
   setSubtype,
 } from "../data/flag-schema.js";
+import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
 import { logger } from "../logger.js";
 
 const SECTION_TEMPLATE = `modules/${MODULE_ID}/templates/details-tab/section.hbs`;
@@ -202,6 +207,13 @@ function buildLabels() {
     saveDc: L("FISHUT.DetailsTab.Field.SaveDc"),
     withdrawalMod: L("FISHUT.DetailsTab.Field.WithdrawalMod"),
     addictionEffect: L("FISHUT.DetailsTab.Field.AddictionEffect.Label"),
+    withdrawalEffect: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Label"),
+    withdrawalEffectHint: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Hint"),
+    overdoseHeader: L("FISHUT.DetailsTab.Overdose.Header"),
+    overdoseEnabled: L("FISHUT.DetailsTab.Overdose.Enabled"),
+    overdoseChancePercent: L("FISHUT.DetailsTab.Overdose.ChancePercent"),
+    overdoseDescription: L("FISHUT.DetailsTab.Overdose.Description"),
+    overdoseHint: L("FISHUT.DetailsTab.Overdose.Hint"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
     requiredSubtypes: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Label"),
@@ -214,6 +226,7 @@ function buildLabels() {
     bypassType: L("FISHUT.DetailsTab.Bypass.Type"),
     bypassAppliesTo: L("FISHUT.DetailsTab.Bypass.AppliesTo.Label"),
     bypassUsesPerDay: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Label"),
+    bypassBonus: L("FISHUT.DetailsTab.Bypass.Bonus.Label"),
     bypassManageOnEffectsTab: L("FISHUT.DetailsTab.Bypass.ManageOnEffectsTab"),
   };
 }
@@ -221,14 +234,18 @@ function buildLabels() {
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function buildSubtypeOptions(currentId) {
-  const seeded = (SCHEMA.paraphernaliaSubtypes ?? []).map((s) => ({
+  // Composed list = built-ins (read from schema) + GM-managed customs (read
+  // from the world setting). Built-ins resolve via labelKey; customs carry
+  // their own resolved label.
+  const composed = getEffectiveParaphernaliaSubtypes();
+  const seeded = composed.map((s) => ({
     id: s.id,
-    label: L(s.labelKey),
+    label: s.source === "builtin" ? L(s.labelKey) : (s.label ?? s.id),
   }));
   const seenIds = new Set(seeded.map((o) => o.id));
   const options = [...seeded];
-  // Preserve a custom subtype that isn't in the schema seed list — keeps the
-  // open-enum contract: GMs can mint their own subtype ids.
+  // Preserve a saved subtype that's no longer in the composed list (e.g. GM
+  // removed a custom after authoring) so re-saving doesn't silently change it.
   if (currentId && !seenIds.has(currentId) && currentId !== "__custom__") {
     options.push({ id: currentId, label: currentId });
     seenIds.add(currentId);
@@ -242,6 +259,7 @@ function buildSubstanceContext(item) {
   const save = getAddictionSave(item) ?? { ability: "con", dc: null };
   const withdrawalMod = getWithdrawalMod(item);
   const addictionEffectId = getAddictionEffectId(item);
+  const withdrawalEffectId = getWithdrawalEffectId(item);
   const requiredSubtypeIds = getRequiredSubtypes(item) ?? [];
 
   const categories = SCHEMA.categories.map((c) => ({
@@ -250,15 +268,43 @@ function buildSubstanceContext(item) {
     selected: c.id === category,
   }));
 
+  const allEffects = Array.from(item.effects ?? []);
   const noneLabel = L("FISHUT.DetailsTab.Field.AddictionEffect.None");
   const addictionEffectOptions = [
     { id: "", label: noneLabel, selected: !addictionEffectId },
-    ...Array.from(item.effects ?? []).map((e) => ({
+    ...allEffects.map((e) => ({
       id: e.id,
       label: e.name,
       selected: e.id === addictionEffectId,
     })),
   ];
+
+  // Withdrawal-effect picker only lists AEs whose name contains "withdraw"
+  // (case-insensitive) — same naming contract enforced by validate-content
+  // and the long-rest tick. If the saved id no longer matches the contract
+  // (e.g. AE renamed), preserve it as a synthetic option so re-saving doesn't
+  // silently drop the pointer.
+  const withdrawalNoneLabel = L("FISHUT.DetailsTab.Field.WithdrawalEffect.None");
+  const withdrawAes = allEffects.filter((e) => /withdraw/i.test(e.name ?? ""));
+  const withdrawalEffectOptions = [
+    { id: "", label: withdrawalNoneLabel, selected: !withdrawalEffectId },
+    ...withdrawAes.map((e) => ({
+      id: e.id,
+      label: e.name,
+      selected: e.id === withdrawalEffectId,
+    })),
+  ];
+  if (
+    withdrawalEffectId &&
+    !withdrawalEffectOptions.some((o) => o.id === withdrawalEffectId)
+  ) {
+    const stale = allEffects.find((e) => e.id === withdrawalEffectId);
+    withdrawalEffectOptions.push({
+      id: withdrawalEffectId,
+      label: stale?.name ?? withdrawalEffectId,
+      selected: true,
+    });
+  }
 
   const currentAbility = save.ability ?? "con";
   const abilityEntries = Object.entries(CONFIG?.DND5E?.abilities ?? {});
@@ -294,12 +340,31 @@ function buildSubstanceContext(item) {
     },
     withdrawalMod: Number.isFinite(withdrawalMod) ? withdrawalMod : "",
     addictionEffectOptions,
+    withdrawalEffectOptions,
+    overdose: buildOverdoseContext(item),
     requiredSubtypes,
     subtypeAddOptions,
   };
 }
 
-function buildParaphernaliaContext(item) {
+function buildOverdoseContext(item) {
+  const block = getOverdose(item) ?? {};
+  const enabled = block.enabled === true;
+  const rawChance = Number(block.chancePercent);
+  // Default to 5% per SPEC.md authoring example. Inert when `enabled` is
+  // false but kept in the context so the field doesn't blank when toggled
+  // off and re-on.
+  const chancePercent = Number.isFinite(rawChance) ? rawChance : 5;
+  const description = typeof block.description === "string" ? block.description : "";
+  return {
+    enabled,
+    chancePercent,
+    description,
+    fieldsDisabled: !enabled,
+  };
+}
+
+export function buildParaphernaliaContext(item) {
   const subtype = getSubtype(item) ?? "";
 
   const subtypeOptions = buildSubtypeOptions(subtype);
@@ -343,11 +408,23 @@ function buildBypassDisplay(match) {
     usesPerDay === undefined || usesPerDay === null || usesPerDay === ""
       ? L("FISHUT.DetailsTab.Bypass.UsesPerDay.None")
       : String(usesPerDay);
+  // +N bypass surfaces a per-AE bonus value alongside type/appliesTo/uses;
+  // pipeline sums across AEs at runtime, but the sheet only knows about this
+  // one bypass effect. Display the raw integer with a +/- sign.
+  const isPlusN = block.type === "+N";
+  const rawBonus = Number(block.bonus);
+  const bonusValue = Number.isFinite(rawBonus) ? Math.trunc(rawBonus) : null;
+  const bonusText =
+    bonusValue === null
+      ? L("FISHUT.DetailsTab.Bypass.Bonus.None")
+      : `${bonusValue >= 0 ? "+" : ""}${bonusValue}`;
   return {
     present: true,
     typeLabel,
     appliesToText,
     usesPerDayText,
+    isPlusN,
+    bonusText,
   };
 }
 
@@ -360,7 +437,8 @@ function wireDetails(wrapper, item) {
     const flagField = target.dataset?.fishutFlag;
     if (!flagField) return;
     event.stopPropagation();
-    persistField(item, flagField, target.value).catch((err) =>
+    const rawValue = readFieldValue(target);
+    persistField(item, flagField, rawValue).catch((err) =>
       logger.error("details-tab persistField failed", err),
     );
   });
@@ -376,13 +454,24 @@ function wireDetails(wrapper, item) {
   });
 }
 
+// Read the user-visible value off a form control. Native checkboxes and the
+// dnd5e-checkbox web component report state via `.checked`; everything else
+// uses `.value`. Boolean values are stringified to "true" / "false" so
+// persistField can stay scalar-friendly.
+function readFieldValue(target) {
+  const isCheckbox =
+    target.matches?.("dnd5e-checkbox, input[type='checkbox']") === true;
+  if (isCheckbox) return target.checked === true ? "true" : "false";
+  return typeof target.value === "string" ? target.value : "";
+}
+
 // ─── Persistence ───────────────────────────────────────────────────────────
 
 /**
  * Persist a single scalar field. Exported for Quench coverage.
  * @param {Item} item
  * @param {string} field  Dotted path: category | save.ability | save.dc |
- *   withdrawalMod | addictionEffectId | subtype
+ *   withdrawalMod | addictionEffectId | withdrawalEffectId | subtype
  * @param {string} rawValue
  */
 export async function persistField(item, field, rawValue) {
@@ -405,6 +494,20 @@ export async function persistField(item, field, rawValue) {
       return setWithdrawalMod(item, parseIntOrNull(rawValue));
     case "addictionEffectId":
       return setAddictionEffectId(item, rawValue || null);
+    case "withdrawalEffectId":
+      return setWithdrawalEffectId(item, rawValue || null);
+    case "overdose.enabled":
+      return persistOverdoseField(item, "enabled", rawValue === "true");
+    case "overdose.chancePercent": {
+      const n = parseIntOrNull(rawValue);
+      // Validator hard-requires 1..100 when enabled; clamp here so a user
+      // typing "0" or "200" doesn't write an out-of-range value.
+      const clamped =
+        n === null ? null : Math.max(1, Math.min(100, n));
+      return persistOverdoseField(item, "chancePercent", clamped);
+    }
+    case "overdose.description":
+      return persistOverdoseField(item, "description", rawValue ?? "");
     case "subtype": {
       const id = (rawValue ?? "").trim();
       if (!id) return setSubtype(item, null);
@@ -479,4 +582,20 @@ function parseIntOrNull(value) {
   if (value === "" || value == null) return null;
   const n = Number(value);
   return Number.isFinite(n) ? Math.trunc(n) : null;
+}
+
+// `setOverdose` writes the whole `OverdoseBlock`, so per-subfield edits read
+// the existing block (or default to a 5%-disabled stub), patch the one key,
+// and write it back. Default `chancePercent` of 5 matches the authoring UI.
+async function persistOverdoseField(item, key, value) {
+  const current = getOverdose(item) ?? {};
+  const merged = {
+    enabled: current.enabled === true,
+    chancePercent: Number.isFinite(Number(current.chancePercent))
+      ? Number(current.chancePercent)
+      : 5,
+    description: typeof current.description === "string" ? current.description : "",
+    [key]: value,
+  };
+  return setOverdose(item, merged);
 }

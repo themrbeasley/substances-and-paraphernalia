@@ -117,6 +117,35 @@ export const setAddictionEffectId = (item, value) => {
   return setAddiction(item, { ...block, addictionEffectId: value });
 };
 
+// ─── Substance flags (overdose, withdrawal AE template) ─────────────────────
+
+/**
+ * @typedef {Object} OverdoseBlock
+ * @property {boolean} enabled
+ * @property {number}  chancePercent  Integer 1–100; per-consumption d100 chance.
+ * @property {string}  description    Free-text shown in the chat card on hit.
+ */
+
+/** @param {Item} item @returns {OverdoseBlock|null} */
+export const getOverdose = (item) =>
+  item?.getFlag?.(MODULE_ID, FLAGS.overdose) ?? null;
+
+export const setOverdose = (item, value) =>
+  item.setFlag(MODULE_ID, FLAGS.overdose, value);
+
+/**
+ * Item-level pointer to a withdrawal AE template that lives on the same item.
+ * The long-rest tick clones this AE onto the actor when withdrawal applies; if
+ * unset, falls back to the v0.3 default behavior.
+ * @param {Item} item
+ * @returns {string|null}
+ */
+export const getWithdrawalEffectId = (item) =>
+  item?.getFlag?.(MODULE_ID, FLAGS.withdrawalEffect) ?? null;
+
+export const setWithdrawalEffectId = (item, value) =>
+  item.setFlag(MODULE_ID, FLAGS.withdrawalEffect, value);
+
 // ─── Paraphernalia flag (addictionSaveBypass) ────────────────────────────────
 
 /** @param {Item} item @returns {AddictionSaveBypassBlock|null} */

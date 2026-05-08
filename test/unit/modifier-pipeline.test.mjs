@@ -14,9 +14,13 @@ const candidate = (overrides = {}) => ({
 
 describe("pickBypassResolution(administration, candidates)", () => {
   // ── Acceptance: AE present + appliesTo match → auto-pass ───────────────
-  it("returns the bypass candidate when administration is in appliesTo", () => {
+  it("returns an auto-pass resolution when administration is in appliesTo", () => {
     const c = candidate();
-    assert.equal(pickBypassResolution("inhaled", [c]), c);
+    const r = pickBypassResolution("inhaled", [c]);
+    assert.equal(r.resolution, "auto-pass");
+    assert.equal(r.sources.length, 1);
+    assert.equal(r.sources[0], c);
+    assert.equal(r.bonus, 0);
   });
 
   // ── Acceptance: appliesTo mismatch → none ─────────────────────────────
@@ -39,12 +43,15 @@ describe("pickBypassResolution(administration, candidates)", () => {
 
   it("treats unlimited-uses candidates (no usesPerDay declared) as always available", () => {
     const c = candidate({ hasUsesConfig: false, usesRemaining: undefined });
-    assert.equal(pickBypassResolution("inhaled", [c]), c);
+    const r = pickBypassResolution("inhaled", [c]);
+    assert.equal(r.resolution, "auto-pass");
+    assert.equal(r.sources[0], c);
   });
 
   it("coerces string usesRemaining numerically", () => {
     const ok = candidate({ hasUsesConfig: true, usesRemaining: "3" });
-    assert.equal(pickBypassResolution("inhaled", [ok]), ok);
+    const r = pickBypassResolution("inhaled", [ok]);
+    assert.equal(r.sources[0], ok);
     const empty = candidate({ id: "ae-empty", hasUsesConfig: true, usesRemaining: "0" });
     assert.equal(pickBypassResolution("inhaled", [empty]), null);
   });
@@ -53,16 +60,22 @@ describe("pickBypassResolution(administration, candidates)", () => {
   it("auto-pass outranks advantage when both match", () => {
     const adv = candidate({ id: "ae-advantage", type: "advantage" });
     const auto = candidate({ id: "ae-autopass", type: "auto-pass" });
-    assert.equal(pickBypassResolution("inhaled", [adv, auto]), auto);
+    let r = pickBypassResolution("inhaled", [adv, auto]);
+    assert.equal(r.resolution, "auto-pass");
+    assert.equal(r.sources[0], auto);
     // Order in the input doesn't matter — composition rule wins.
-    assert.equal(pickBypassResolution("inhaled", [auto, adv]), auto);
+    r = pickBypassResolution("inhaled", [auto, adv]);
+    assert.equal(r.resolution, "auto-pass");
+    assert.equal(r.sources[0], auto);
   });
 
   // ── Acceptance: only advantage AEs → advantage ────────────────────────
   it("returns advantage when no auto-pass candidates exist", () => {
     const a = candidate({ id: "ae-a", type: "advantage" });
     const b = candidate({ id: "ae-b", type: "advantage", appliesTo: ["ingested"] });
-    assert.equal(pickBypassResolution("inhaled", [a, b]), a);
+    const r = pickBypassResolution("inhaled", [a, b]);
+    assert.equal(r.resolution, "advantage");
+    assert.equal(r.sources[0], a);
   });
 
   // ── Acceptance: no matching AEs → none ────────────────────────────────
@@ -98,14 +111,17 @@ describe("pickBypassResolution(administration, candidates)", () => {
     const z = candidate({ id: "z-pipe" });
     const a = candidate({ id: "a-pipe" });
     const m = candidate({ id: "m-pipe" });
-    assert.equal(pickBypassResolution("inhaled", [z, a, m]), a);
-    assert.equal(pickBypassResolution("inhaled", [m, z, a]), a);
+    let r = pickBypassResolution("inhaled", [z, a, m]);
+    assert.equal(r.sources[0], a);
+    r = pickBypassResolution("inhaled", [m, z, a]);
+    assert.equal(r.sources[0], a);
   });
 
   it("breaks ties within advantage tier by ascending id", () => {
     const z = candidate({ id: "z-token", type: "advantage" });
     const a = candidate({ id: "a-token", type: "advantage" });
-    assert.equal(pickBypassResolution("inhaled", [z, a]), a);
+    const r = pickBypassResolution("inhaled", [z, a]);
+    assert.equal(r.sources[0], a);
   });
 
   // ── Mixed eligibility ─────────────────────────────────────────────────
@@ -113,12 +129,89 @@ describe("pickBypassResolution(administration, candidates)", () => {
     const wrong = candidate({ id: "ae-wrong", appliesTo: ["contact"] });
     const empty = candidate({ id: "ae-empty", hasUsesConfig: true, usesRemaining: 0 });
     const ok = candidate({ id: "ae-ok" });
-    assert.equal(pickBypassResolution("inhaled", [wrong, empty, ok]), ok);
+    const r = pickBypassResolution("inhaled", [wrong, empty, ok]);
+    assert.equal(r.sources[0], ok);
   });
 
   it("prefers an auto-pass even when an advantage with a lexicographically smaller id exists", () => {
     const advA = candidate({ id: "a-token", type: "advantage" });
     const autoZ = candidate({ id: "z-token", type: "auto-pass" });
-    assert.equal(pickBypassResolution("inhaled", [advA, autoZ]), autoZ);
+    const r = pickBypassResolution("inhaled", [advA, autoZ]);
+    assert.equal(r.resolution, "auto-pass");
+    assert.equal(r.sources[0], autoZ);
+  });
+
+  // ── +N tier — weakest, sums across all matching AEs ───────────────────
+  it("returns +N with the bonus for a single matching +N candidate", () => {
+    const c = candidate({ id: "ae-pn", type: "+N", bonus: 2 });
+    const r = pickBypassResolution("inhaled", [c]);
+    assert.equal(r.resolution, "+N");
+    assert.equal(r.bonus, 2);
+    assert.equal(r.sources.length, 1);
+    assert.equal(r.sources[0], c);
+  });
+
+  it("sums +N bonuses across multiple matching candidates", () => {
+    const a = candidate({ id: "ae-a", type: "+N", bonus: 1 });
+    const b = candidate({ id: "ae-b", type: "+N", bonus: 3 });
+    const c = candidate({ id: "ae-c", type: "+N", bonus: 2 });
+    const r = pickBypassResolution("inhaled", [a, b, c]);
+    assert.equal(r.resolution, "+N");
+    assert.equal(r.bonus, 6);
+    assert.equal(r.sources.length, 3);
+    // Sources are deterministically ordered by id
+    assert.deepEqual(
+      r.sources.map((s) => s.id),
+      ["ae-a", "ae-b", "ae-c"],
+    );
+  });
+
+  it("treats missing or non-numeric +N bonus as 0", () => {
+    const a = candidate({ id: "ae-a", type: "+N" });
+    const b = candidate({ id: "ae-b", type: "+N", bonus: "oops" });
+    const c = candidate({ id: "ae-c", type: "+N", bonus: 2 });
+    const r = pickBypassResolution("inhaled", [a, b, c]);
+    assert.equal(r.bonus, 2);
+  });
+
+  it("auto-pass beats +N", () => {
+    const auto = candidate({ id: "ae-auto", type: "auto-pass" });
+    const pn = candidate({ id: "ae-pn", type: "+N", bonus: 5 });
+    const r = pickBypassResolution("inhaled", [auto, pn]);
+    assert.equal(r.resolution, "auto-pass");
+    assert.equal(r.sources[0], auto);
+    assert.equal(r.bonus, 0);
+  });
+
+  it("advantage beats +N", () => {
+    const adv = candidate({ id: "ae-adv", type: "advantage" });
+    const pn = candidate({ id: "ae-pn", type: "+N", bonus: 5 });
+    const r = pickBypassResolution("inhaled", [adv, pn]);
+    assert.equal(r.resolution, "advantage");
+    assert.equal(r.sources[0], adv);
+    assert.equal(r.bonus, 0);
+  });
+
+  it("ignores +N candidates whose appliesTo doesn't match (no contribution to bonus)", () => {
+    const ok = candidate({ id: "ae-ok", type: "+N", bonus: 2 });
+    const wrong = candidate({ id: "ae-wrong", type: "+N", bonus: 99, appliesTo: ["contact"] });
+    const r = pickBypassResolution("inhaled", [ok, wrong]);
+    assert.equal(r.resolution, "+N");
+    assert.equal(r.bonus, 2);
+    assert.equal(r.sources.length, 1);
+  });
+
+  it("excludes exhausted +N candidates from the sum", () => {
+    const ok = candidate({ id: "ae-ok", type: "+N", bonus: 2 });
+    const empty = candidate({
+      id: "ae-empty",
+      type: "+N",
+      bonus: 99,
+      hasUsesConfig: true,
+      usesRemaining: 0,
+    });
+    const r = pickBypassResolution("inhaled", [ok, empty]);
+    assert.equal(r.bonus, 2);
+    assert.equal(r.sources.length, 1);
   });
 });

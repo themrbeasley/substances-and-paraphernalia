@@ -1,0 +1,23 @@
+<section class="fishut-simulate-dose-result">
+  <h3>{{summary}}</h3>
+  {{#if error}}
+    <p class="fishut-error notification error">{{error}}</p>
+  {{/if}}
+
+  <div class="fishut-sim-chat">
+    {{#if hasCapturedContent}}
+      {{{capturedContent}}}
+    {{else}}
+      <p class="hint">{{noChatLabel}}</p>
+    {{/if}}
+  </div>
+
+  {{#if hasFinalAEs}}
+    <h4>{{aesHeader}}</h4>
+    <ul class="fishut-sim-aes">
+      {{#each finalAEs}}
+        <li>{{this}}</li>
+      {{/each}}
+    </ul>
+  {{/if}}
+</section>

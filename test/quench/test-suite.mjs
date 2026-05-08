@@ -17,6 +17,7 @@ import {
   getCategory,
   getKind,
   getModifier,
+  getOverdose,
   getRequiredSubtypes,
   getSetting,
   getSubtype,
@@ -25,16 +26,20 @@ import {
   getActorWithdrawalEntry,
   isParaphernalia,
   isSubstance,
+  setActorWithdrawalEntry,
   setRequiredSubtypes,
 } from "../../scripts/data/flag-schema.js";
+import { defaultAbstainDc } from "../../scripts/data/abstain.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
 import {
+  buildParaphernaliaContext,
   createBypassStubAE,
   persistField,
   persistKindToggle,
 } from "../../scripts/ui/details-tab.js";
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
+import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
 
 const BATCH_PREFIX = "substances-and-paraphernalia";
 
@@ -70,6 +75,21 @@ export function registerQuenchSuite() {
       { displayName: "S&P · Save bypass (consumeBypassIfAvailable)" },
     );
     quench.registerBatch(
+      `${BATCH_PREFIX}.overdose`,
+      overdoseBatch,
+      { displayName: "S&P · Overdose d100 + marker AE" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.tolerance-stack`,
+      toleranceStackBatch,
+      { displayName: "S&P · Tolerance auto-stack on save pass" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.withdrawal-template`,
+      withdrawalTemplateBatch,
+      { displayName: "S&P · Withdrawal AE template selection" },
+    );
+    quench.registerBatch(
       `${BATCH_PREFIX}.details-tab-substance-persistence`,
       detailsTabSubstancePersistenceBatch,
       { displayName: "S&P · Details-tab substance field persistence" },
@@ -85,6 +105,11 @@ export function registerQuenchSuite() {
       { displayName: "S&P · Grant-bypass button creates stub AE" },
     );
     quench.registerBatch(
+      `${BATCH_PREFIX}.bypass-section-display`,
+      bypassSectionDisplayBatch,
+      { displayName: "S&P · Bypass section +N display" },
+    );
+    quench.registerBatch(
       `${BATCH_PREFIX}.kind-toggle`,
       kindToggleBatch,
       { displayName: "S&P · Details-tab kind toggle round-trip" },
@@ -93,6 +118,26 @@ export function registerQuenchSuite() {
       `${BATCH_PREFIX}.drag-to-inventory-dialog`,
       dragToInventoryBatch,
       { displayName: "S&P · Drag-to-inventory state injection" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.coupling-modes`,
+      couplingModesBatch,
+      { displayName: "S&P · Poisoned-coupling tri-state at AE-apply" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.simulate-dose-roundtrip`,
+      simulateDoseBatch,
+      { displayName: "S&P · Simulate-dose round-trip + cleanup" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.long-rest-abstain-flow`,
+      longRestAbstainFlowBatch,
+      { displayName: "S&P · Long-rest abstain flow" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.remove-x-macros`,
+      removeXMacrosBatch,
+      { displayName: "S&P · Remove-X macro presence" },
     );
   });
 }
@@ -883,6 +928,577 @@ function bypassBatch(context) {
       });
     });
   });
+
+  describe("addiction save path with +N modifier", () => {
+    let actor;
+    const cleanup = [];
+
+    before(async () => {
+      actor = await makeActor("S&P plus-N save test");
+    });
+
+    after(async () => {
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      while (cleanup.length) {
+        const item = cleanup.pop();
+        if (item && actor.items.get(item.id)) await item.delete().catch(() => {});
+      }
+      const map = getActorWithdrawal(actor);
+      for (const id of Object.keys(map)) {
+        const ae = findAppliedAddictionEffect(actor, id);
+        if (ae) await ae.delete();
+      }
+      await actor.unsetFlag(MODULE_ID, FLAGS.withdrawal);
+    });
+
+    async function withSavingThrowStub(forcedTotal, fn) {
+      const original = actor.rollSavingThrow ?? actor.rollAbilitySave;
+      const calls = [];
+      const stub = async (config) => {
+        calls.push(config);
+        return { total: forcedTotal };
+      };
+      actor.rollSavingThrow = stub;
+      actor.rollAbilitySave = stub;
+      try {
+        await fn(calls);
+      } finally {
+        if (original) {
+          actor.rollSavingThrow = original;
+          actor.rollAbilitySave = original;
+        } else {
+          delete actor.rollSavingThrow;
+          delete actor.rollAbilitySave;
+        }
+      }
+    }
+
+    async function makePlusNPipe({ name, bonus, appliesTo = ["inhaled"] } = {}) {
+      const pipe = await embedParaphernalia(actor, {
+        name,
+        system: {
+          equipped: true,
+          attunement: "required",
+          attuned: true,
+          uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
+        },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        effects: [
+          {
+            name: `${name} — Bypass`,
+            icon: "icons/svg/aura.svg",
+            transfer: true,
+            disabled: false,
+            duration: {},
+            changes: [],
+            flags: {
+              [MODULE_ID]: {
+                [FLAGS.modifier]: {
+                  kind: "bypass",
+                  type: "+N",
+                  appliesTo,
+                  bonus,
+                  usesPerDay: "4",
+                },
+              },
+            },
+          },
+        ],
+      });
+      cleanup.push(pipe);
+      return pipe;
+    }
+
+    async function makePlusNSubstance() {
+      const sub = await embedSubstance(actor, {
+        name: "+N Test Substance",
+        system: { type: { value: "poison", subtype: "inhaled" } },
+        flags: { [MODULE_ID]: { [FLAGS.requiredSubtypes]: [] } },
+      });
+      cleanup.push(sub);
+      return sub;
+    }
+
+    it("passes the +N bonus to rollSavingThrow.parts and cites the AE in chat", async () => {
+      await makePlusNPipe({ name: "Lucky Pipe", bonus: 2 });
+      const sub = await makePlusNSubstance();
+      await withSavingThrowStub(99, async (calls) => {
+        const before = game.messages.size;
+        await api().addiction.rollSaveAndApply(actor, sub);
+        assert.equal(calls.length, 1, "rollSavingThrow must be called exactly once");
+        assert.equal(calls[0].advantage, false, "advantage must default to false for +N");
+        assert.deepEqual(
+          calls[0].parts,
+          ["2"],
+          "rollSavingThrow must receive parts:['2'] when a +N AE matches",
+        );
+        assert.ok(game.messages.size > before);
+        const last = [...game.messages].at(-1);
+        assert.match(last.content ?? "", /Lucky Pipe — Bypass/);
+        assert.match(last.content ?? "", /\+2/);
+      });
+    });
+
+    it("sums bonuses across multiple +N AEs and lists each source in chat", async () => {
+      await makePlusNPipe({ name: "Pipe A", bonus: 1 });
+      await makePlusNPipe({ name: "Pipe B", bonus: 3 });
+      const sub = await makePlusNSubstance();
+      await withSavingThrowStub(99, async (calls) => {
+        await api().addiction.rollSaveAndApply(actor, sub);
+        assert.equal(calls.length, 1);
+        assert.deepEqual(
+          calls[0].parts,
+          ["4"],
+          "+N parts must reflect the summed bonus across all matching AEs",
+        );
+        const last = [...game.messages].at(-1);
+        assert.match(last.content ?? "", /Pipe A — Bypass/);
+        assert.match(last.content ?? "", /Pipe B — Bypass/);
+        assert.match(last.content ?? "", /\+4/);
+      });
+    });
+
+    it("does not pass parts when no +N AEs match — auto-pass beats +N", async () => {
+      // Auto-pass paraphernalia paired with a +N paraphernalia — auto-pass wins,
+      // save is bypassed, parts should not appear because rollSavingThrow is skipped.
+      await embedParaphernalia(actor, {
+        name: "Auto Pipe",
+        system: {
+          equipped: true,
+          attunement: "required",
+          attuned: true,
+          uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
+        },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        effects: [
+          {
+            name: "Auto Pipe — Bypass",
+            icon: "icons/svg/aura.svg",
+            transfer: true,
+            disabled: false,
+            duration: {},
+            changes: [],
+            flags: {
+              [MODULE_ID]: {
+                [FLAGS.modifier]: {
+                  kind: "bypass",
+                  type: "auto-pass",
+                  appliesTo: ["inhaled"],
+                  usesPerDay: "4",
+                },
+              },
+            },
+          },
+        ],
+      }).then((pipe) => cleanup.push(pipe));
+      await makePlusNPipe({ name: "Backup Pipe", bonus: 5 });
+      const sub = await makePlusNSubstance();
+      await withSavingThrowStub(99, async (calls) => {
+        await api().addiction.rollSaveAndApply(actor, sub);
+        assert.equal(calls.length, 0, "auto-pass should bypass — rollSavingThrow not called");
+        const last = [...game.messages].at(-1);
+        assert.match(last.content ?? "", /Auto Pipe — Bypass/);
+        assert.doesNotMatch(last.content ?? "", /Backup Pipe/);
+      });
+    });
+  });
+}
+
+// ─── Batch: Overdose d100 + marker AE ───────────────────────────────────────
+
+function overdoseBatch(context) {
+  const { describe, it, assert, before, after, afterEach } = context;
+
+  describe("module.api.overdose.rollOverdoseAndApply", () => {
+    let actor;
+    const cleanup = [];
+
+    before(async () => {
+      actor = await makeActor("S&P overdose test");
+    });
+
+    after(async () => {
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      while (cleanup.length) {
+        const item = cleanup.pop();
+        if (item && actor.items.get(item.id)) await item.delete().catch(() => {});
+      }
+      // Sweep any overdose marker AEs the test left behind.
+      for (const effect of [...(actor.effects ?? [])]) {
+        if (/overdose/i.test(effect.name ?? "")) await effect.delete();
+      }
+    });
+
+    async function makeOverdoseSubstance({ enabled = true, chancePercent = 50, description = "Test desc." } = {}) {
+      const sub = await embedSubstance(actor, {
+        name: "Overdose Test Substance",
+        flags: {
+          [MODULE_ID]: {
+            [FLAGS.overdose]: { enabled, chancePercent, description },
+          },
+        },
+      });
+      cleanup.push(sub);
+      return sub;
+    }
+
+    function findOverdoseEffect(substanceId) {
+      for (const effect of actor.effects ?? []) {
+        if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
+        if (/overdose/i.test(effect.name ?? "")) return effect;
+      }
+      return null;
+    }
+
+    it("does nothing when overdose flag is absent", async () => {
+      const sub = await embedSubstance(actor, { name: "No-overdose Substance" });
+      cleanup.push(sub);
+      const result = await api().overdose.rollOverdoseAndApply(
+        actor,
+        sub,
+        null,
+        { randomFn: () => 0 /* always hits if it ran */ },
+      );
+      assert.equal(result, null, "should short-circuit with no overdose block");
+      assert.equal(findOverdoseEffect(sub.id), null);
+    });
+
+    it("does nothing when enabled === false", async () => {
+      const sub = await makeOverdoseSubstance({ enabled: false, chancePercent: 100 });
+      const result = await api().overdose.rollOverdoseAndApply(
+        actor,
+        sub,
+        { enabled: false, chancePercent: 100, description: "x" },
+        { randomFn: () => 0 },
+      );
+      assert.equal(result, null);
+      assert.equal(findOverdoseEffect(sub.id), null);
+    });
+
+    it("applies marker AE and posts chat card on hit (deterministic randomFn)", async () => {
+      const sub = await makeOverdoseSubstance({ chancePercent: 50, description: "Heart pounds." });
+      const before = game.messages.size;
+      const result = await api().overdose.rollOverdoseAndApply(
+        actor,
+        sub,
+        { enabled: true, chancePercent: 50, description: "Heart pounds." },
+        { randomFn: () => 0 /* roll = 1, always ≤ 50 */ },
+      );
+      assert.equal(result.hit, true);
+      const effect = findOverdoseEffect(sub.id);
+      assert.ok(effect, "marker AE must exist on the actor");
+      assert.match(effect.name ?? "", /overdose/i, "marker AE name must contain 'overdose'");
+      assert.match(effect.name ?? "", /Overdose Test Substance/);
+      assert.ok(game.messages.size > before, "chat card must be posted");
+      const last = [...game.messages].at(-1);
+      assert.match(last.content ?? "", /Heart pounds/);
+    });
+
+    it("does not apply marker AE on miss", async () => {
+      const sub = await makeOverdoseSubstance({ chancePercent: 5, description: "x" });
+      const before = game.messages.size;
+      const result = await api().overdose.rollOverdoseAndApply(
+        actor,
+        sub,
+        { enabled: true, chancePercent: 5, description: "x" },
+        { randomFn: () => 0.99 /* roll = 100, > 5 */ },
+      );
+      assert.equal(result.hit, false);
+      assert.equal(findOverdoseEffect(sub.id), null);
+      assert.equal(game.messages.size, before, "no chat card on miss");
+    });
+
+    it("marker AE carries sourceSubstanceId pointing at the substance item", async () => {
+      const sub = await makeOverdoseSubstance({ chancePercent: 100, description: "x" });
+      await api().overdose.rollOverdoseAndApply(
+        actor,
+        sub,
+        { enabled: true, chancePercent: 100, description: "x" },
+        { randomFn: () => 0 },
+      );
+      const effect = findOverdoseEffect(sub.id);
+      assert.ok(effect);
+      assert.equal(effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId], sub.id);
+    });
+  });
+}
+
+// ─── Batch: Tolerance auto-stack on save pass ───────────────────────────────
+
+function toleranceStackBatch(context) {
+  const { describe, it, assert, before, after, afterEach } = context;
+
+  describe("module.api.addiction.applyOrIncrementToleranceStack", () => {
+    let actor;
+    const cleanup = [];
+
+    before(async () => {
+      actor = await makeActor("S&P tolerance stack test");
+    });
+
+    after(async () => {
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      while (cleanup.length) {
+        const item = cleanup.pop();
+        if (item && actor.items.get(item.id)) await item.delete().catch(() => {});
+      }
+      // Sweep any tolerance AEs the test left behind.
+      for (const effect of [...(actor.effects ?? [])]) {
+        if (/tolerance/i.test(effect.name ?? "")) await effect.delete();
+      }
+    });
+
+    async function makeSubstance(name) {
+      const sub = await embedSubstance(actor, { name });
+      cleanup.push(sub);
+      return sub;
+    }
+
+    function findToleranceEffect(substanceId) {
+      for (const effect of actor.effects ?? []) {
+        if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
+        if (/tolerance/i.test(effect.name ?? "")) return effect;
+      }
+      return null;
+    }
+
+    it("first call applies a tolerance AE with stacks: 1", async () => {
+      const sub = await makeSubstance("Tolerance Test Substance A");
+      const effect = await api().addiction.applyOrIncrementToleranceStack(actor, sub);
+      assert.ok(effect, "AE must be created");
+      assert.match(effect.name ?? "", /tolerance/i, "AE name must contain 'tolerance'");
+      assert.match(effect.name ?? "", /Tolerance Test Substance A/);
+      assert.equal(effect.flags?.[MODULE_ID]?.stacks, 1);
+      assert.equal(effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId], sub.id);
+      assert.equal(getModifier(effect)?.kind, "tolerance");
+      assert.equal(getModifier(effect)?.substanceId, sub.id);
+    });
+
+    it("second call on the same substance increments the same AE to stacks: 2", async () => {
+      const sub = await makeSubstance("Tolerance Test Substance B");
+      const first = await api().addiction.applyOrIncrementToleranceStack(actor, sub);
+      const second = await api().addiction.applyOrIncrementToleranceStack(actor, sub);
+      assert.equal(first.id, second.id, "must be the same AE, not a new one");
+      assert.equal(second.flags?.[MODULE_ID]?.stacks, 2);
+      // Only one tolerance AE for this substance.
+      const matches = [...(actor.effects ?? [])].filter(
+        (e) =>
+          e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === sub.id &&
+          /tolerance/i.test(e.name ?? ""),
+      );
+      assert.equal(matches.length, 1);
+    });
+
+    it("third call increments to stacks: 3", async () => {
+      const sub = await makeSubstance("Tolerance Test Substance C");
+      await api().addiction.applyOrIncrementToleranceStack(actor, sub);
+      await api().addiction.applyOrIncrementToleranceStack(actor, sub);
+      const third = await api().addiction.applyOrIncrementToleranceStack(actor, sub);
+      assert.equal(third.flags?.[MODULE_ID]?.stacks, 3);
+    });
+
+    it("different substances get independent tolerance AEs", async () => {
+      const subA = await makeSubstance("Tolerance Multi A");
+      const subB = await makeSubstance("Tolerance Multi B");
+      const aeA = await api().addiction.applyOrIncrementToleranceStack(actor, subA);
+      const aeB = await api().addiction.applyOrIncrementToleranceStack(actor, subB);
+      assert.notEqual(aeA.id, aeB.id);
+      assert.equal(aeA.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId], subA.id);
+      assert.equal(aeB.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId], subB.id);
+      // Re-stacking subA must not affect subB.
+      const aeA2 = await api().addiction.applyOrIncrementToleranceStack(actor, subA);
+      assert.equal(aeA.id, aeA2.id);
+      assert.equal(aeA2.flags?.[MODULE_ID]?.stacks, 2);
+      assert.equal(findToleranceEffect(subB.id).flags?.[MODULE_ID]?.stacks, 1);
+    });
+
+    it("uses the substance's authored tolerance AE template when present", async () => {
+      const sub = await makeSubstance("Tolerance Templated Substance");
+      // Add a tolerance template AE on the substance item itself.
+      await sub.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Tolerance Template (authored)",
+          icon: "icons/svg/upgrade.svg",
+          changes: [],
+          flags: {
+            [MODULE_ID]: {
+              [FLAGS.modifier]: {
+                kind: "tolerance",
+                substanceId: sub.id,
+                addictionDcBump: 1,
+              },
+            },
+          },
+        },
+      ]);
+      const effect = await api().addiction.applyOrIncrementToleranceStack(actor, sub);
+      assert.ok(effect);
+      assert.equal(getModifier(effect)?.addictionDcBump, 1, "should carry authored field");
+      // Name should be normalized for stack-count display, not the template's name.
+      assert.match(effect.name ?? "", /tolerance/i);
+      assert.match(effect.name ?? "", /Tolerance Templated Substance/);
+    });
+
+    it("applyOutcome on save pass auto-stacks tolerance for that substance", async () => {
+      const sub = await makeSubstance("Tolerance via applyOutcome");
+      await api().addiction.applyOutcome(actor, sub, {
+        saveResult: "success",
+        saveTotal: 99,
+      });
+      const effect = findToleranceEffect(sub.id);
+      assert.ok(effect, "save pass must auto-stack a tolerance AE");
+      assert.equal(effect.flags?.[MODULE_ID]?.stacks, 1);
+      await api().addiction.applyOutcome(actor, sub, {
+        saveResult: "success",
+        saveTotal: 99,
+      });
+      const after = findToleranceEffect(sub.id);
+      assert.equal(after.flags?.[MODULE_ID]?.stacks, 2);
+    });
+  });
+}
+
+// ─── Batch: Withdrawal AE template selection ───────────────────────────────
+
+function withdrawalTemplateBatch(context) {
+  const { describe, it, assert, before, after, afterEach } = context;
+
+  describe("module.api.addiction.applyWithdrawalEffect", () => {
+    let actor;
+    const cleanup = [];
+
+    before(async () => {
+      actor = await makeActor("S&P withdrawal template test");
+    });
+
+    after(async () => {
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      while (cleanup.length) {
+        const item = cleanup.pop();
+        if (item && actor.items.get(item.id)) await item.delete().catch(() => {});
+      }
+      // Sweep any addiction/withdrawal AEs left behind.
+      for (const effect of [...(actor.effects ?? [])]) {
+        const name = effect.name ?? "";
+        if (/addict|withdraw/i.test(name)) await effect.delete().catch(() => {});
+      }
+      await actor.unsetFlag(MODULE_ID, FLAGS.withdrawal);
+    });
+
+    async function makeSubstance(name, withdrawalAeName = null) {
+      const sub = await embedSubstance(actor, { name });
+      if (withdrawalAeName) {
+        const [ae] = await sub.createEmbeddedDocuments("ActiveEffect", [
+          {
+            name: withdrawalAeName,
+            icon: "icons/svg/sleep.svg",
+            changes: [],
+            disabled: false,
+            transfer: false,
+            duration: {},
+            flags: {},
+          },
+        ]);
+        await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawalEffect}`]: ae.id });
+      }
+      cleanup.push(sub);
+      return sub;
+    }
+
+    function findAppliedWithdrawalAE(substanceId) {
+      for (const effect of actor.effects ?? []) {
+        if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
+        if (/withdraw/i.test(effect.name ?? "")) return effect;
+      }
+      return null;
+    }
+
+    it("returns null when withdrawalEffectId is unset (v0.3 fallback preserved)", async () => {
+      const sub = await makeSubstance("Withdrawal Test A");
+      const result = await api().addiction.applyWithdrawalEffect(actor, sub);
+      assert.equal(result, null);
+      assert.equal(findAppliedWithdrawalAE(sub.id), null);
+    });
+
+    it("applies the authored withdrawal AE when withdrawalEffectId is set", async () => {
+      const sub = await makeSubstance("Withdrawal Test B", "Withdrawal Bite — Test B");
+      const result = await api().addiction.applyWithdrawalEffect(actor, sub);
+      assert.ok(result, "withdrawal AE should be created on the actor");
+      assert.match(result.name ?? "", /withdraw/i);
+      assert.equal(result.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId], sub.id);
+      assert.equal(findAppliedWithdrawalAE(sub.id)?.id, result.id);
+    });
+
+    it("logs warning + skips when authored template name lacks 'withdraw'", async () => {
+      const sub = await embedSubstance(actor, { name: "Withdrawal Test C" });
+      cleanup.push(sub);
+      const [ae] = await sub.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Bad Template (no keyword)",
+          icon: "icons/svg/sleep.svg",
+          changes: [],
+          disabled: false,
+          transfer: false,
+          duration: {},
+          flags: {},
+        },
+      ]);
+      await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawalEffect}`]: ae.id });
+      const result = await api().addiction.applyWithdrawalEffect(actor, sub);
+      assert.equal(result, null, "should skip when name contract violated");
+      assert.equal(findAppliedWithdrawalAE(sub.id), null);
+    });
+
+    it("applyOutcome on saveResult=fail also applies authored withdrawal AE", async () => {
+      const sub = await makeSubstance("Withdrawal Test D", "Withdrawal — D");
+      await api().addiction.applyOutcome(actor, sub, { saveResult: "fail" });
+      // Both addiction AE and withdrawal AE should be present.
+      const addictionAE = findAppliedAddictionEffect(actor, sub.id);
+      assert.ok(addictionAE, "addiction AE must be applied on save fail");
+      assert.match(addictionAE.name ?? "", /addict/i);
+      const withdrawalAE = findAppliedWithdrawalAE(sub.id);
+      assert.ok(withdrawalAE, "withdrawal AE must be applied alongside addiction on save fail");
+      assert.match(withdrawalAE.name ?? "", /withdraw/i);
+      assert.notEqual(addictionAE.id, withdrawalAE.id);
+    });
+
+    it("applyOutcome on saveResult=fail applies no withdrawal AE when unset (v0.3)", async () => {
+      const sub = await makeSubstance("Withdrawal Test E");
+      await api().addiction.applyOutcome(actor, sub, { saveResult: "fail" });
+      assert.ok(findAppliedAddictionEffect(actor, sub.id), "addiction AE still applies");
+      assert.equal(
+        findAppliedWithdrawalAE(sub.id),
+        null,
+        "no withdrawal AE without withdrawalEffectId",
+      );
+    });
+
+    it("long-rest tick at restsRemaining=0 removes both addiction and withdrawal AEs", async () => {
+      const sub = await makeSubstance("Withdrawal Test F", "Withdrawal — F");
+      await api().addiction.applyOutcome(actor, sub, { saveResult: "fail" });
+      assert.ok(findAppliedAddictionEffect(actor, sub.id));
+      assert.ok(findAppliedWithdrawalAE(sub.id));
+      // withdrawalMod=4, conMod=0 → restsRemaining=4. Tick 4 times.
+      for (let i = 0; i < 4; i++) {
+        await Hooks.callAll("dnd5e.restCompleted", actor, { longRest: true });
+      }
+      assert.equal(getActorWithdrawalEntry(actor, sub.id), null);
+      assert.equal(findAppliedAddictionEffect(actor, sub.id), null);
+      assert.equal(findAppliedWithdrawalAE(sub.id), null, "withdrawal AE must be removed at 0");
+    });
+  });
 }
 
 // ─── Batch: Details-tab substance field persistence ─────────────────────────
@@ -966,6 +1582,53 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getAddictionEffectId(substance), ae.id);
       await persistField(substance, "addictionEffectId", "");
       assert.equal(getAddictionEffectId(substance), null);
+    });
+
+    it("persists withdrawalEffectId and clears on empty value", async () => {
+      const created = await substance.createEmbeddedDocuments("ActiveEffect", [
+        { name: `${substance.name} Withdrawal`, transfer: false, changes: [] },
+      ]);
+      const withdrawalAe = created?.[0];
+      assert.ok(withdrawalAe, "withdrawal AE should be created");
+      try {
+        await persistField(substance, "withdrawalEffectId", withdrawalAe.id);
+        assert.equal(
+          substance.getFlag(MODULE_ID, FLAGS.withdrawalEffect),
+          withdrawalAe.id,
+        );
+        await persistField(substance, "withdrawalEffectId", "");
+        assert.equal(substance.getFlag(MODULE_ID, FLAGS.withdrawalEffect), null);
+      } finally {
+        if (substance.effects.get(withdrawalAe.id)) await withdrawalAe.delete();
+      }
+    });
+
+    it("persists overdose.enabled toggle while preserving sibling fields", async () => {
+      await persistField(substance, "overdose.chancePercent", "12");
+      await persistField(substance, "overdose.description", "Hallucinations");
+      await persistField(substance, "overdose.enabled", "true");
+      const after = getOverdose(substance);
+      assert.equal(after?.enabled, true);
+      assert.equal(after?.chancePercent, 12);
+      assert.equal(after?.description, "Hallucinations");
+      await persistField(substance, "overdose.enabled", "false");
+      assert.equal(getOverdose(substance)?.enabled, false);
+    });
+
+    it("clamps overdose.chancePercent to 1..100", async () => {
+      await persistField(substance, "overdose.chancePercent", "0");
+      assert.equal(getOverdose(substance)?.chancePercent, 1);
+      await persistField(substance, "overdose.chancePercent", "250");
+      assert.equal(getOverdose(substance)?.chancePercent, 100);
+      await persistField(substance, "overdose.chancePercent", "37");
+      assert.equal(getOverdose(substance)?.chancePercent, 37);
+    });
+
+    it("persists overdose.description as free text and clears on empty", async () => {
+      await persistField(substance, "overdose.description", "Convulsions for 1d4 minutes.");
+      assert.equal(getOverdose(substance)?.description, "Convulsions for 1d4 minutes.");
+      await persistField(substance, "overdose.description", "");
+      assert.equal(getOverdose(substance)?.description, "");
     });
 
     it("round-trips requiredSubtypes via setRequiredSubtypes", async () => {
@@ -1082,6 +1745,83 @@ function grantBypassButtonBatch(context) {
       const found = [...(fresh.effects ?? [])].find((e) => e.id === stub.id);
       assert.ok(found, "the created AE must be present on item.effects");
       assert.equal(getModifier(found)?.kind, "bypass");
+    });
+  });
+}
+
+// ─── Batch: Bypass-section +N display ───────────────────────────────────────
+
+function bypassSectionDisplayBatch(context) {
+  const { describe, it, assert, before, after, beforeEach, afterEach } = context;
+
+  describe("buildParaphernaliaContext — bypass.bonus rendering", () => {
+    let actor, paraphernalia;
+
+    before(async () => {
+      actor = await makeActor("S&P bypass-section display test");
+    });
+
+    after(async () => {
+      await deleteActor(actor);
+    });
+
+    beforeEach(async () => {
+      paraphernalia = await embedParaphernalia(actor, {
+        name: "+N Bypass Test Pipe",
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+      });
+    });
+
+    afterEach(async () => {
+      if (paraphernalia && actor.items.get(paraphernalia.id)) await paraphernalia.delete();
+    });
+
+    async function attachBypass(block) {
+      const [ae] = await paraphernalia.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: `${paraphernalia.name} — Bypass`,
+          transfer: true,
+          changes: [],
+          flags: { [MODULE_ID]: { modifier: block } },
+        },
+      ]);
+      return ae;
+    }
+
+    it("surfaces isPlusN=false and no bonus row for an auto-pass bypass", async () => {
+      await attachBypass({ kind: "bypass", type: "auto-pass", appliesTo: ["inhaled"] });
+      const ctx = buildParaphernaliaContext(paraphernalia);
+      assert.equal(ctx.bypass.present, true);
+      assert.equal(ctx.bypass.isPlusN, false);
+    });
+
+    it("surfaces isPlusN=true and signed bonus text for a +N bypass", async () => {
+      await attachBypass({
+        kind: "bypass",
+        type: "+N",
+        appliesTo: ["inhaled"],
+        bonus: 2,
+      });
+      const ctx = buildParaphernaliaContext(paraphernalia);
+      assert.equal(ctx.bypass.present, true);
+      assert.equal(ctx.bypass.isPlusN, true);
+      assert.equal(ctx.bypass.bonusText, "+2");
+    });
+
+    it("falls back to the unset label when +N omits bonus", async () => {
+      await attachBypass({ kind: "bypass", type: "+N", appliesTo: ["inhaled"] });
+      const ctx = buildParaphernaliaContext(paraphernalia);
+      assert.equal(ctx.bypass.isPlusN, true);
+      assert.match(
+        ctx.bypass.bonusText,
+        /unset/i,
+        "missing bonus should fall back to the localized 'unset' label",
+      );
+    });
+
+    it("renders bypass.present=false when no bypass AE is attached", async () => {
+      const ctx = buildParaphernaliaContext(paraphernalia);
+      assert.equal(ctx.bypass.present, false);
     });
   });
 }
@@ -1222,6 +1962,39 @@ function dragToInventoryBatch(context) {
         "withdrawing must not apply the addiction AE",
       );
     });
+
+    it("tolerant: applies tolerance AE with stacks=1; second call increments to stacks=2", async () => {
+      const result1 = await applyDragOutcome(actor, substance, "tolerant");
+      assert.equal(result1?.applied, "tolerant");
+      assert.equal(result1?.stacks, 1, "first tolerant should produce stacks=1");
+
+      const tolAe = [...(actor.effects ?? [])].find(
+        (e) =>
+          e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substance.id &&
+          /tolerance/i.test(e.name ?? ""),
+      );
+      assert.ok(tolAe, "tolerance AE should be present after first tolerant");
+
+      const result2 = await applyDragOutcome(actor, substance, "tolerant");
+      assert.equal(result2?.stacks, 2, "second tolerant should bump to stacks=2");
+
+      const tolerances = [...(actor.effects ?? [])].filter((e) =>
+        /tolerance/i.test(e.name ?? ""),
+      );
+      assert.equal(tolerances.length, 1, "tolerant should not duplicate AEs");
+    });
+
+    it("overdosed: applies overdose marker AE", async () => {
+      const result = await applyDragOutcome(actor, substance, "overdosed");
+      assert.equal(result?.applied, "overdosed");
+
+      const odAe = [...(actor.effects ?? [])].find(
+        (e) =>
+          e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substance.id &&
+          /overdose/i.test(e.name ?? ""),
+      );
+      assert.ok(odAe, "overdose marker AE should be present");
+    });
   });
 
   describe("shouldShowDialog", () => {
@@ -1256,6 +2029,439 @@ function dragToInventoryBatch(context) {
 
     it("returns false for GM dropping substance on vehicle actor", () => {
       assert.equal(shouldShowDialog(gmUser, vehicleActor, substance), false);
+    });
+  });
+}
+
+// ─── Batch: Poisoned-coupling tri-state ────────────────────────────────────
+
+function couplingModesBatch(context) {
+  const { describe, it, assert, before, after, afterEach } = context;
+
+  describe("addictionPoisonedCoupling setting drives AE-apply behavior", () => {
+    const COUPLING_KEY = "addictionPoisonedCoupling";
+    let actor;
+    let originalCoupling;
+    const cleanup = [];
+
+    before(async () => {
+      actor = await makeActor("S&P coupling-modes test");
+      originalCoupling = game.settings.get(MODULE_ID, COUPLING_KEY);
+    });
+
+    after(async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, originalCoupling);
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      while (cleanup.length) {
+        const item = cleanup.pop();
+        if (item && actor.items.get(item.id)) await item.delete().catch(() => {});
+      }
+      for (const effect of [...(actor.effects ?? [])]) {
+        await effect.delete({ fishutIntentional: true }).catch(() => {});
+      }
+      await actor.unsetFlag(MODULE_ID, FLAGS.withdrawal);
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "linked-cascade");
+    });
+
+    async function makeSubstanceWithPoisonedTemplate(name) {
+      const sub = await embedSubstance(actor, { name });
+      const ae = sub.effects.contents[0];
+      await ae.update({ name: `${name} Addiction`, statuses: ["poisoned"] });
+      cleanup.push(sub);
+      return sub;
+    }
+
+    async function makeSubstanceWithoutStatuses(name) {
+      const sub = await embedSubstance(actor, { name });
+      const ae = sub.effects.contents[0];
+      await ae.update({ name: `${name} Addiction` });
+      cleanup.push(sub);
+      return sub;
+    }
+
+    it("linked-cascade: applied AE retains the template's poisoned status", async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "linked-cascade");
+      const sub = await makeSubstanceWithPoisonedTemplate("Cascade Sub");
+      const created = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.ok(created, "AE must be created");
+      const statuses = [...(created.statuses ?? [])];
+      assert.ok(statuses.includes("poisoned"), `expected poisoned in ${JSON.stringify(statuses)}`);
+    });
+
+    it("linked-isolated: applied AE retains poisoned status (link still visible)", async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "linked-isolated");
+      const sub = await makeSubstanceWithPoisonedTemplate("Isolated Sub");
+      const created = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.ok(created);
+      const statuses = [...(created.statuses ?? [])];
+      assert.ok(statuses.includes("poisoned"), `expected poisoned in ${JSON.stringify(statuses)}`);
+    });
+
+    it("independent: applied AE strips poisoned from statuses", async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "independent");
+      const sub = await makeSubstanceWithPoisonedTemplate("Independent Sub");
+      const created = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.ok(created);
+      const statuses = [...(created.statuses ?? [])];
+      assert.ok(
+        !statuses.includes("poisoned"),
+        `expected poisoned to be stripped, got ${JSON.stringify(statuses)}`,
+      );
+    });
+
+    it("independent: leaves unrelated statuses on the template intact", async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "independent");
+      const sub = await embedSubstance(actor, { name: "Independent Multi-status Sub" });
+      const ae = sub.effects.contents[0];
+      await ae.update({
+        name: "Multi Addiction",
+        statuses: ["poisoned", "frightened"],
+      });
+      cleanup.push(sub);
+      const created = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.ok(created);
+      const statuses = [...(created.statuses ?? [])];
+      assert.ok(!statuses.includes("poisoned"), "poisoned must be stripped");
+      assert.ok(statuses.includes("frightened"), "unrelated statuses must remain");
+    });
+
+    it("linked-isolated: onPreDeleteActiveEffect cancels external deletes of addiction AE", async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "linked-isolated");
+      const sub = await makeSubstanceWithPoisonedTemplate("Guard Sub");
+      const created = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.ok(created);
+
+      // Simulate Foundry's hook callback for an external (un-flagged) delete.
+      const blocked = api().addiction.onPreDeleteActiveEffect(created, {}, game.user.id);
+      assert.equal(blocked, false, "guard must return false to cancel external delete");
+
+      // And the inverse — a delete marked intentional must NOT be blocked.
+      const allowed = api().addiction.onPreDeleteActiveEffect(
+        created,
+        { fishutIntentional: true },
+        game.user.id,
+      );
+      assert.notEqual(allowed, false, "intentional delete must not be cancelled");
+    });
+
+    it("linked-cascade: onPreDeleteActiveEffect does not block external deletes", async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "linked-cascade");
+      const sub = await makeSubstanceWithPoisonedTemplate("Cascade Guard Sub");
+      const created = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.ok(created);
+      const result = api().addiction.onPreDeleteActiveEffect(created, {}, game.user.id);
+      assert.notEqual(result, false, "cascade mode must let Foundry's native cascade run");
+    });
+
+    it("independent: onPreDeleteActiveEffect does not block external deletes", async () => {
+      await game.settings.set(MODULE_ID, COUPLING_KEY, "independent");
+      const sub = await makeSubstanceWithoutStatuses("Independent Guard Sub");
+      const created = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.ok(created);
+      const result = api().addiction.onPreDeleteActiveEffect(created, {}, game.user.id);
+      assert.notEqual(result, false, "independent mode must not block deletes");
+    });
+
+    it("isAppliedAddictionEffect: returns false for tolerance / withdrawal AEs", async () => {
+      const sub = await makeSubstanceWithPoisonedTemplate("Predicate Sub");
+      const addictionAE = await api().addiction.applyAddictionEffect(actor, sub);
+      assert.equal(api().addiction.isAppliedAddictionEffect(addictionAE), true);
+
+      const [tolAE] = await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: `Tolerance to ${sub.name} (1)`,
+          icon: "icons/svg/upgrade.svg",
+          changes: [],
+          flags: { [MODULE_ID]: { [FLAGS.sourceSubstanceId]: sub.id } },
+        },
+      ]);
+      assert.equal(
+        api().addiction.isAppliedAddictionEffect(tolAE),
+        false,
+        "tolerance AE must NOT count as an addiction AE",
+      );
+
+      const [withdrawAE] = await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: `Withdrawal Bite — ${sub.name}`,
+          icon: "icons/svg/sleep.svg",
+          changes: [],
+          flags: { [MODULE_ID]: { [FLAGS.sourceSubstanceId]: sub.id } },
+        },
+      ]);
+      assert.equal(
+        api().addiction.isAppliedAddictionEffect(withdrawAE),
+        false,
+        "withdrawal AE must NOT count as an addiction AE",
+      );
+
+      const [unrelatedAE] = await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Random Buff",
+          icon: "icons/svg/aura.svg",
+          changes: [],
+          flags: {},
+        },
+      ]);
+      assert.equal(
+        api().addiction.isAppliedAddictionEffect(unrelatedAE),
+        false,
+        "unflagged AE must NOT count as an addiction AE",
+      );
+    });
+  });
+}
+
+// ─── Batch: Simulate-dose round-trip + cleanup ──────────────────────────────
+
+const SIM_TEST_PREFIX = "__fishut-test-";
+
+function countTestActors() {
+  return [...(game.actors ?? [])].filter(
+    (a) => typeof a?.name === "string" && a.name.startsWith(SIM_TEST_PREFIX),
+  ).length;
+}
+
+async function purgeOrphanTestActors() {
+  const orphans = [...(game.actors ?? [])].filter(
+    (a) => typeof a?.name === "string" && a.name.startsWith(SIM_TEST_PREFIX),
+  );
+  for (const a of orphans) {
+    try {
+      await a.delete();
+    } catch {
+      // best-effort
+    }
+  }
+}
+
+function simulateDoseBatch(context) {
+  const { describe, it, assert, before, after, beforeEach } = context;
+
+  describe("simulate-dose round-trip + cleanup", () => {
+    let host;
+
+    before(async () => {
+      host = await makeActor("S&P Simulate-Dose Host");
+    });
+
+    beforeEach(async () => {
+      await purgeOrphanTestActors();
+    });
+
+    after(async () => {
+      await purgeOrphanTestActors();
+      await deleteActor(host);
+    });
+
+    it("happy path: runs against a real substance, ok=true, no orphan actor remains", async () => {
+      const sub = await embedSubstance(host, { name: "SimDose Happy Sub" });
+      const beforeCount = countTestActors();
+      const result = await runSimulation({
+        substance: sub,
+        conMod: 0,
+        addictionState: "none",
+        readySubtypes: [],
+      });
+      assert.equal(result?.ok, true, `runSimulation returned ok=false (error: ${result?.error})`);
+      assert.equal(
+        countTestActors(),
+        beforeCount,
+        "simulate-dose left a __fishut-test-* actor behind",
+      );
+    });
+
+    it("invalid substance: returns ok=false without creating an actor", async () => {
+      const beforeCount = countTestActors();
+      const result = await runSimulation({ substance: null });
+      assert.equal(result?.ok, false);
+      assert.equal(
+        countTestActors(),
+        beforeCount,
+        "invalid-substance path must not create a test actor",
+      );
+    });
+
+    it("orphan sweep: deletes leftover __fishut-test-* actors", async () => {
+      const orphan = await Actor.create({
+        name: `${SIM_TEST_PREFIX}fakeorphan__SweepTarget`,
+        type: "character",
+      });
+      assert.ok(orphan, "could not create orphan fixture");
+      const swept = await sweepOrphanedTestActors();
+      assert.ok(swept >= 1, `expected at least 1 actor swept (got ${swept})`);
+      assert.equal(
+        game.actors.get(orphan.id),
+        undefined,
+        "orphan actor still present after sweep",
+      );
+    });
+  });
+}
+
+// ─── Batch: Long-rest abstain flow ──────────────────────────────────────────
+
+const ABSTAIN_SETTING_KEY = "voluntaryAbstainEnabled";
+
+function longRestAbstainFlowBatch(context) {
+  const { describe, it, assert, before, after, beforeEach } = context;
+
+  describe("voluntary abstain — composition with GM rest tick", () => {
+    let actor;
+    let priorSetting;
+
+    before(async () => {
+      actor = await makeActor("S&P Abstain Test Actor");
+      priorSetting = game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY);
+    });
+
+    beforeEach(async () => {
+      // Wipe any existing withdrawal entries between tests.
+      const map = getActorWithdrawal(actor) ?? {};
+      for (const id of Object.keys(map)) {
+        await actor.unsetFlag(MODULE_ID, `withdrawal.${id}`);
+      }
+    });
+
+    after(async () => {
+      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, priorSetting);
+      await deleteActor(actor);
+    });
+
+    it("DC formula: 8 + Math.floor(withdrawalMod), min 8", () => {
+      assert.equal(defaultAbstainDc(0), 8);
+      assert.equal(defaultAbstainDc(2), 10);
+      assert.equal(defaultAbstainDc(4), 12);
+      assert.equal(defaultAbstainDc(-1), 7, "DC formula does not floor negatives");
+      assert.equal(defaultAbstainDc(NaN), 8, "non-finite mod falls back to 8");
+    });
+
+    it("public API surface: api.abstain.applyAbstainPreDecrement is callable", async () => {
+      const fn = api()?.abstain?.applyAbstainPreDecrement;
+      assert.equal(typeof fn, "function", "abstain helper missing on module API");
+    });
+
+    it("pre-decrement: rests=3 → 2 (single -1)", async () => {
+      const sub = await embedSubstance(actor, { name: "Abstain Sub A" });
+      await setActorWithdrawalEntry(actor, sub.id, {
+        restsRemaining: 3,
+        appliedAt: new Date().toISOString(),
+      });
+      const result = await api().abstain.applyAbstainPreDecrement(actor, sub.id, {
+        restsRemaining: 3,
+      });
+      assert.equal(result?.newRests, 2, "pre-decrement should drop 3 → 2");
+      const stored = getActorWithdrawalEntry(actor, sub.id);
+      assert.equal(stored?.restsRemaining, 2);
+    });
+
+    it("clamp at 0: rests=0 stays at 0 after pre-decrement", async () => {
+      const sub = await embedSubstance(actor, { name: "Abstain Sub Clamp" });
+      await setActorWithdrawalEntry(actor, sub.id, {
+        restsRemaining: 0,
+        appliedAt: new Date().toISOString(),
+      });
+      const result = await api().abstain.applyAbstainPreDecrement(actor, sub.id, {
+        restsRemaining: 0,
+      });
+      assert.equal(result?.newRests, 0, "0-rest entry should clamp at 0");
+      const stored = getActorWithdrawalEntry(actor, sub.id);
+      assert.equal(stored?.restsRemaining, 0);
+    });
+
+    it("composition: pre-decrement + GM tick = total -2 from rests=3", async () => {
+      const sub = await embedSubstance(actor, { name: "Abstain Sub Compose" });
+      await setActorWithdrawalEntry(actor, sub.id, {
+        restsRemaining: 3,
+        appliedAt: new Date().toISOString(),
+      });
+
+      // Simulate the abstain pre-decrement.
+      await api().abstain.applyAbstainPreDecrement(actor, sub.id, { restsRemaining: 3 });
+      assert.equal(getActorWithdrawalEntry(actor, sub.id)?.restsRemaining, 2);
+
+      // Trigger the standard GM tick via the dnd5e hook.
+      await Hooks.callAll("dnd5e.restCompleted", actor, { longRest: true });
+
+      // Hook side effects are async; wait a tick.
+      await new Promise((r) => setTimeout(r, 50));
+      const final = getActorWithdrawalEntry(actor, sub.id);
+      assert.equal(final?.restsRemaining, 1, "composed result should be 1 after -2");
+    });
+
+    it("composition: pre-decrement + GM tick clears entry when rests was 1", async () => {
+      const sub = await embedSubstance(actor, { name: "Abstain Sub Clear" });
+      await setActorWithdrawalEntry(actor, sub.id, {
+        restsRemaining: 1,
+        appliedAt: new Date().toISOString(),
+      });
+      await api().abstain.applyAbstainPreDecrement(actor, sub.id, { restsRemaining: 1 });
+      assert.equal(getActorWithdrawalEntry(actor, sub.id)?.restsRemaining, 0);
+
+      await Hooks.callAll("dnd5e.restCompleted", actor, { longRest: true });
+      await new Promise((r) => setTimeout(r, 50));
+
+      const final = getActorWithdrawalEntry(actor, sub.id);
+      assert.equal(final, null, "tick should clear the entry once rests reach 0");
+    });
+
+    it("setting toggle: setting can be flipped on and off without error", async () => {
+      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, false);
+      assert.equal(game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY), false);
+      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, true);
+      assert.equal(game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY), true);
+    });
+  });
+}
+
+// ─── Batch: Remove-X macro presence ─────────────────────────────────────────
+
+function removeXMacrosBatch(context) {
+  const { describe, it, assert, before } = context;
+
+  describe("Remove-X macros are present in the fishut-illicit-macros pack", () => {
+    let macros;
+
+    before(async () => {
+      const pack = game.packs.get(`${MODULE_ID}.fishut-illicit-macros`);
+      macros = pack ? await pack.getDocuments() : [];
+    });
+
+    it("Remove Tolerance macro is present and is a script macro", () => {
+      const macro = macros.find((m) => m.name === "Remove Tolerance");
+      assert.ok(macro, "Remove Tolerance macro missing from compendium");
+      assert.equal(macro.type, "script");
+      assert.match(macro.command ?? "", /tolerance/i, "macro body should reference tolerance");
+    });
+
+    it("Remove Overdose macro is present and is a script macro", () => {
+      const macro = macros.find((m) => m.name === "Remove Overdose");
+      assert.ok(macro, "Remove Overdose macro missing from compendium");
+      assert.equal(macro.type, "script");
+      assert.match(macro.command ?? "", /overdose/i, "macro body should reference overdose");
+    });
+
+    it("Remove Withdrawal macro is present and is a script macro", () => {
+      const macro = macros.find((m) => m.name === "Remove Withdrawal");
+      assert.ok(macro, "Remove Withdrawal macro missing from compendium");
+      assert.equal(macro.type, "script");
+      assert.match(macro.command ?? "", /withdraw/i, "macro body should reference withdraw");
+    });
+
+    it("All four Remove-X macros are GM-gated", () => {
+      const names = ["Remove Addiction", "Remove Tolerance", "Remove Overdose", "Remove Withdrawal"];
+      for (const name of names) {
+        const macro = macros.find((m) => m.name === name);
+        assert.ok(macro, `${name} macro missing`);
+        assert.match(
+          macro.command ?? "",
+          /game\.user\.isGM/,
+          `${name} macro should gate on game.user.isGM`,
+        );
+      }
     });
   });
 }

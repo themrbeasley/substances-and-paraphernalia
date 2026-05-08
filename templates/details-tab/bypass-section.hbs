@@ -13,6 +13,12 @@
       <label>{{labels.bypassUsesPerDay}}</label>
       <span class="fishut-readonly">{{paraphernalia.bypass.usesPerDayText}}</span>
     </div>
+    {{#if paraphernalia.bypass.isPlusN}}
+      <div class="form-group">
+        <label>{{labels.bypassBonus}}</label>
+        <span class="fishut-readonly">{{paraphernalia.bypass.bonusText}}</span>
+      </div>
+    {{/if}}
     <p class="hint">{{labels.bypassManageOnEffectsTab}}</p>
   {{else}}
     <p class="hint">{{labels.bypassNoneHint}}</p>

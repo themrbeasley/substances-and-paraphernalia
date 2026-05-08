@@ -15,6 +15,15 @@ deletes the 3-dot form), AE-flag modifier pipeline (`auto-pass` +
 GM/ASSISTANT, subtype-based paraphernalia model (open kebab-case
 enum), and Theme 6 round 1 matrix fill (one substance per cell).
 
+v0.4 is shipped: tolerance auto-stacking on save pass, overdose d100
+per consumption with marker AE, withdrawal-bite AE template picker,
+voluntary-abstain long-rest dialog button, poisoned-coupling tri-state
+world setting, simulate-dose 3-dot menu entry on substance items,
+Theme 1 (GM Guide moved to GitHub wiki + CI link-check), Theme 3
+`+N` bypass type, Theme 6 round 2 matrix fill (≥2 substances per
+cell), three new Remove-X macros (Tolerance, Overdose, Withdrawal),
+and the Paraphernalia Subtype Manager settings sub-menu.
+
 ---
 
 ## Explicitly out of scope
@@ -39,7 +48,7 @@ enum), and Theme 6 round 1 matrix fill (one substance per cell).
 
 ---
 
-## Theme 1 — GM Guide refactor (wiki-first)
+## Theme 1 — GM Guide refactor (wiki-first) — **shipped v0.4**
 
 **Status today.** Single-page in-world journal at
 `_source/fishut-journals/gm-guide.json` covering Overview, Addiction
@@ -156,7 +165,7 @@ etc.) so dnd5e's form-submit picks them up natively.
 
 ---
 
-## Theme 3 — Bypass type expansion — **`auto-pass` + `advantage` shipped v0.3**
+## Theme 3 — Bypass type expansion — **`auto-pass` + `advantage` shipped v0.3, `+N` shipped v0.4**
 
 **Status today.** `addictionSaveBypass.type` is reserved for
 `auto-pass`, `advantage`, `+N`, and `reroll-on-fail`. Schema accepts
@@ -273,7 +282,7 @@ midi active or absent.
 
 ---
 
-## Theme 6 — Compendia content expansion (3×3 matrix) — **round 1 shipped v0.3**
+## Theme 6 — Compendia content expansion (3×3 matrix) — **round 1 shipped v0.3, round 2 shipped v0.4**
 
 **Status today.** v0.2 ships 7 substances + 5 paraphernalia,
 exercising every code path (gating, readiness, automation, bypass,
@@ -319,9 +328,14 @@ worlds before the next lands.
   bypass types via the AE-flag modifier pipeline) + Theme 6 round 1
   (matrix fill) + drag-to-inventory state-injection dialog +
   subtype-based paraphernalia model.
-- **0.4** — Theme 3 (`+N` bypass type) + Theme 6 round 2 + Theme 1
-  (wiki refactor — slipped from v0.3 to keep the release scope
-  honest).
+- **0.4 — shipped.** Theme 3 (`+N` bypass type) + Theme 6 round 2
+  (≥2 substances per matrix cell + a `+N`-bypass paraphernalia) +
+  Theme 1 (GM Guide moved to GitHub wiki, in-world journal reduced
+  to a pointer page, CI link-check). Mechanics-depth additions
+  beyond the original theme list: tolerance auto-stacking, overdose
+  d100, withdrawal-bite picker, voluntary-abstain dialog, poisoned-
+  coupling tri-state setting, simulate-dose 3-dot menu, three
+  Remove-X macros, and the Paraphernalia Subtype Manager.
 - **0.5** — Theme 4 (TokenMagic FX) + module-integration settings
   pattern (per-recommended-module toggles; deferred from v0.3
   because no v0.3 consumer exercises it) + Theme 6 round 3.

@@ -37,6 +37,43 @@
     </select>
   </div>
 
+  <div class="form-group fishut-details-withdrawal-effect">
+    <label>{{labels.withdrawalEffect}}</label>
+    <select data-fishut-flag="withdrawalEffectId">
+      {{#each substance.withdrawalEffectOptions}}
+        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+    <p class="fishut-field-hint notes">{{labels.withdrawalEffectHint}}</p>
+  </div>
+
+  <fieldset class="fishut-details-overdose">
+    <legend>{{labels.overdoseHeader}}</legend>
+
+    <div class="form-group">
+      <label class="checkbox">
+        <dnd5e-checkbox data-fishut-flag="overdose.enabled"
+          {{#if substance.overdose.enabled}}checked{{/if}}></dnd5e-checkbox>
+        {{labels.overdoseEnabled}}
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>{{labels.overdoseChancePercent}}</label>
+      <input type="number" data-fishut-flag="overdose.chancePercent"
+             value="{{substance.overdose.chancePercent}}"
+             min="1" max="100" step="1"
+             {{#if substance.overdose.fieldsDisabled}}disabled{{/if}} />
+    </div>
+
+    <div class="form-group">
+      <label>{{labels.overdoseDescription}}</label>
+      <textarea data-fishut-flag="overdose.description" rows="3"
+                {{#if substance.overdose.fieldsDisabled}}disabled{{/if}}>{{substance.overdose.description}}</textarea>
+      <p class="fishut-field-hint notes">{{labels.overdoseHint}}</p>
+    </div>
+  </fieldset>
+
   <fieldset class="fishut-details-required-subtypes">
     <legend>{{labels.requiredSubtypes}}</legend>
 

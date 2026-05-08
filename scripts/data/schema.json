@@ -30,18 +30,30 @@
     { "id": "syringe", "labelKey": "FISHUT.ParaphernaliaSubtype.Syringe" },
     { "id": "vial", "labelKey": "FISHUT.ParaphernaliaSubtype.Vial" },
     { "id": "papers", "labelKey": "FISHUT.ParaphernaliaSubtype.Papers" },
-    { "id": "inhaler", "labelKey": "FISHUT.ParaphernaliaSubtype.Inhaler" }
+    { "id": "inhaler", "labelKey": "FISHUT.ParaphernaliaSubtype.Inhaler" },
+    { "id": "rolling-papers", "labelKey": "FISHUT.ParaphernaliaSubtype.RollingPapers" },
+    { "id": "tincture-dropper", "labelKey": "FISHUT.ParaphernaliaSubtype.TinctureDropper" },
+    { "id": "athletes-logbook", "labelKey": "FISHUT.ParaphernaliaSubtype.AthletesLogbook" }
   ],
   "addictionSaveBypassTypes": [
     { "id": "auto-pass", "labelKey": "FISHUT.SaveBypass.Type.AutoPass" }
   ],
   "modifier": {
     "kinds": [
-      { "id": "bypass", "labelKey": "FISHUT.Modifier.Kind.Bypass" }
+      { "id": "bypass", "labelKey": "FISHUT.Modifier.Kind.Bypass" },
+      { "id": "tolerance", "labelKey": "FISHUT.Modifier.Kind.Tolerance" }
     ],
     "types": [
       { "id": "auto-pass", "labelKey": "FISHUT.Modifier.Type.AutoPass" },
-      { "id": "advantage", "labelKey": "FISHUT.Modifier.Type.Advantage" }
+      { "id": "advantage", "labelKey": "FISHUT.Modifier.Type.Advantage" },
+      { "id": "+N", "labelKey": "FISHUT.Modifier.Type.PlusN" }
+    ]
+  },
+  "coupling": {
+    "modes": [
+      { "id": "linked-cascade", "labelKey": "FISHUT.Coupling.Mode.LinkedCascade" },
+      { "id": "linked-isolated", "labelKey": "FISHUT.Coupling.Mode.LinkedIsolated" },
+      { "id": "independent", "labelKey": "FISHUT.Coupling.Mode.Independent" }
     ]
   },
   "worldSettings": [
@@ -92,6 +104,8 @@
     "sourceSubstanceId": "sourceSubstanceId",
     "withdrawal": "withdrawal",
     "schemaVersion": "schemaVersion",
-    "modifier": "modifier"
+    "modifier": "modifier",
+    "overdose": "overdose",
+    "withdrawalEffect": "withdrawalEffectId"
   }
 }

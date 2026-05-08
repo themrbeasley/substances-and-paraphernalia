@@ -1,0 +1,390 @@
+// Simulate-dose authoring tool.
+//
+// Adds a "Simulate dose…" entry to the substance item-sheet's 3-dot header
+// dropdown (dnd5e 5.2.5 ApplicationV2). Clicking it spawns an ephemeral test
+// actor named `__fishut-test-<uuid>__<substance.name>`, embeds a clone of the
+// substance plus stub paraphernalia for selected subtypes, runs the same test
+// seams the live `dnd5e.postUseActivity` flow uses (`rollSaveAndApply` +
+// `rollOverdoseAndApply`), captures any chat output it produces, and renders
+// a result dialog. The temp actor is reaped on dialog close. A `ready`-time
+// orphan sweep cleans up actors left behind by crashes (GM-arbitrated).
+//
+// Hook strategy: we use the generic `renderApplicationV2` hook (mirroring the
+// existing details-tab injection in `scripts/ui/details-tab.js`) rather than
+// any specific 3-dot-menu API — this insulates us from V2 hook renames as
+// dnd5e iterates.
+
+import { MODULE_ID, FLAGS } from "../config.js";
+import {
+  getAddiction,
+  getOverdose,
+  getRequiredSubtypes,
+  isSubstance,
+  setActorWithdrawalEntry,
+} from "../data/flag-schema.js";
+import { computeRestsRemaining } from "../data/withdrawal.js";
+import {
+  applyAddictionEffect,
+  applyWithdrawalEffect,
+  rollSaveAndApply,
+} from "../hooks/addiction.js";
+import { rollOverdoseAndApply } from "../hooks/overdose.js";
+import { logger } from "../logger.js";
+
+const DIALOG_TEMPLATE = `modules/${MODULE_ID}/templates/simulate-dose-dialog.hbs`;
+const RESULT_TEMPLATE = `modules/${MODULE_ID}/templates/simulate-dose-result.hbs`;
+const INJECTED_MARKER = "data-fishut-simulate-injected";
+const TEST_ACTOR_PREFIX = "__fishut-test-";
+
+export function registerSimulateDose() {
+  Hooks.on("renderApplicationV2", onRenderApplicationV2);
+  Hooks.once("ready", () => {
+    sweepOrphanedTestActors().catch((err) =>
+      logger.error("simulate-dose: orphan sweep failed", err),
+    );
+  });
+}
+
+function onRenderApplicationV2(app, htmlElement) {
+  const doc = app?.document;
+  if (!doc || doc.documentName !== "Item") return;
+  if (doc.type !== "consumable") return;
+  if (!isSubstance(doc)) return;
+  if (!htmlElement?.querySelector) return;
+
+  const dropdown =
+    htmlElement.querySelector("header.window-header .controls-dropdown") ??
+    htmlElement.querySelector(".controls-dropdown");
+  if (!dropdown) return;
+  if (dropdown.querySelector(`[${INJECTED_MARKER}]`)) return;
+
+  const li = document.createElement("li");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "control";
+  button.setAttribute(INJECTED_MARKER, "");
+  button.dataset.action = "fishut-simulate-dose";
+  const icon = document.createElement("i");
+  icon.className = "fa-solid fa-flask-vial";
+  button.appendChild(icon);
+  button.appendChild(
+    document.createTextNode(` ${game.i18n.localize("FISHUT.SimulateDose.MenuLabel")}`),
+  );
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openSimulateDoseDialog(doc).catch((err) =>
+      logger.error("simulate-dose: dialog open failed", err),
+    );
+  });
+  li.appendChild(button);
+  dropdown.appendChild(li);
+}
+
+/**
+ * Open the simulate-dose dialog for a substance item. Exported for tests.
+ * @param {Item} item
+ */
+export async function openSimulateDoseDialog(item) {
+  if (!item || !isSubstance(item)) return null;
+  const formValues = await openKnobsDialog(item);
+  if (!formValues) return null;
+  const result = await runSimulation({ substance: item, ...formValues });
+  await openResultDialog(item, result);
+  return result;
+}
+
+async function openKnobsDialog(item) {
+  const subtypes = getRequiredSubtypes(item) ?? [];
+  const context = {
+    substance: { name: item.name },
+    requiredSubtypes: subtypes.map((id) => ({ id })),
+    hasSubtypes: subtypes.length > 0,
+  };
+  const content = await foundry.applications.handlebars.renderTemplate(DIALOG_TEMPLATE, context);
+
+  return foundry.applications.api.DialogV2.wait({
+    window: {
+      title: game.i18n.format("FISHUT.SimulateDose.Title", { item: item.name }),
+    },
+    content,
+    buttons: [
+      {
+        action: "run",
+        label: game.i18n.localize("FISHUT.SimulateDose.Run"),
+        default: true,
+        callback: (_event, _button, dialog) => readFormValues(dialog),
+      },
+      {
+        action: "cancel",
+        label: game.i18n.localize("FISHUT.SimulateDose.Cancel"),
+        callback: () => null,
+      },
+    ],
+    rejectClose: false,
+    modal: false,
+  });
+}
+
+function readFormValues(dialog) {
+  const root = dialog?.element ?? dialog;
+  if (!root?.querySelector) return null;
+  const conModInput = root.querySelector('[name="conMod"]');
+  const stateInput = root.querySelector('[name="addictionState"]:checked');
+  const subtypeInputs = root.querySelectorAll('[name="readySubtypes"]:checked');
+  const conMod = Number.parseInt(conModInput?.value ?? "0", 10);
+  const addictionState = stateInput?.value ?? "none";
+  const readySubtypes = [...subtypeInputs].map((el) => el.value);
+  return {
+    conMod: Number.isFinite(conMod) ? conMod : 0,
+    addictionState,
+    readySubtypes,
+  };
+}
+
+async function openResultDialog(item, result) {
+  const summary = result?.ok
+    ? game.i18n.format("FISHUT.SimulateDose.Result.Header", { item: item.name })
+    : game.i18n.format("FISHUT.SimulateDose.Result.Error", { item: item.name });
+  const noChatLabel = game.i18n.localize("FISHUT.SimulateDose.Result.NoChatCaptured");
+  const aesHeader = game.i18n.localize("FISHUT.SimulateDose.Result.AEsHeader");
+  const context = {
+    summary,
+    ok: result?.ok === true,
+    error: result?.error ?? null,
+    capturedContent: result?.capturedContent ?? "",
+    hasCapturedContent: typeof result?.capturedContent === "string" && result.capturedContent.length > 0,
+    finalAEs: result?.finalAEs ?? [],
+    hasFinalAEs: Array.isArray(result?.finalAEs) && result.finalAEs.length > 0,
+    noChatLabel,
+    aesHeader,
+  };
+  const content = await foundry.applications.handlebars.renderTemplate(RESULT_TEMPLATE, context);
+  return foundry.applications.api.DialogV2.wait({
+    window: {
+      title: game.i18n.format("FISHUT.SimulateDose.Result.Title", { item: item.name }),
+    },
+    content,
+    buttons: [
+      {
+        action: "ok",
+        label: game.i18n.localize("FISHUT.SimulateDose.Result.Ok"),
+        default: true,
+      },
+    ],
+    rejectClose: false,
+    modal: false,
+  });
+}
+
+/**
+ * Run a simulated dose. Creates an ephemeral actor, embeds a clone of the
+ * substance + stub paraphernalia for the chosen ready subtypes, optionally
+ * pre-seeds an addicted/withdrawing state, then exercises the same test seams
+ * the live save/AE/overdose flow uses. Captures `createChatMessage`-emitted
+ * content via a temporary listener and reaps captured messages so the
+ * simulation does not pollute the live chat log.
+ *
+ * @param {object} opts
+ * @param {Item}   opts.substance
+ * @param {number} [opts.conMod]
+ * @param {"none"|"addicted"|"withdrawing"} [opts.addictionState]
+ * @param {string[]} [opts.readySubtypes]
+ * @returns {Promise<{
+ *   ok: boolean,
+ *   capturedContent: string,
+ *   finalAEs: string[],
+ *   error?: string,
+ * }>}
+ */
+export async function runSimulation({
+  substance,
+  conMod = 0,
+  addictionState = "none",
+  readySubtypes = [],
+} = {}) {
+  if (!substance || !isSubstance(substance)) {
+    return {
+      ok: false,
+      capturedContent: "",
+      finalAEs: [],
+      error: "simulate-dose: invalid substance",
+    };
+  }
+
+  let testActor = null;
+  const capturedIds = [];
+  const captureFn = (msg) => {
+    if (msg?.id) capturedIds.push(msg.id);
+  };
+  Hooks.on("createChatMessage", captureFn);
+  const capturedContents = [];
+
+  try {
+    testActor = await createTestActor(substance, conMod);
+    if (!testActor) throw new Error("simulate-dose: failed to create test actor");
+
+    const embeddedSubstance = await embedSubstanceClone(testActor, substance);
+    await embedStubParaphernalia(testActor, readySubtypes);
+
+    if (addictionState === "addicted" || addictionState === "withdrawing") {
+      await preSeedAddictionState(testActor, embeddedSubstance, addictionState, conMod);
+    }
+
+    await rollSaveAndApply(testActor, embeddedSubstance);
+    const overdoseBlock = getOverdose(embeddedSubstance);
+    if (overdoseBlock?.enabled === true) {
+      await rollOverdoseAndApply(testActor, embeddedSubstance, overdoseBlock);
+    }
+
+    // Snapshot final AEs before cleanup so the result dialog has data.
+    const finalAEs = [...(testActor.effects ?? [])].map((e) => e.name).filter(Boolean);
+
+    // Drain captured chat content from the in-memory documents *before*
+    // deletion (deletion will purge them from `game.messages`).
+    for (const id of capturedIds) {
+      const msg = game.messages?.get?.(id);
+      if (msg?.content) capturedContents.push(msg.content);
+    }
+
+    return {
+      ok: true,
+      capturedContent: capturedContents.join("\n<hr/>\n"),
+      finalAEs,
+    };
+  } catch (err) {
+    logger.error("simulate-dose: simulation failed", err);
+    return {
+      ok: false,
+      capturedContent: capturedContents.join("\n<hr/>\n"),
+      finalAEs: [],
+      error: err?.message ?? String(err),
+    };
+  } finally {
+    Hooks.off("createChatMessage", captureFn);
+    // Reap captured chat messages so simulation artifacts do not pollute the
+    // live chat log. Best-effort — failures are non-fatal.
+    if (capturedIds.length > 0) {
+      try {
+        await ChatMessage.deleteDocuments(capturedIds);
+      } catch (err) {
+        logger.warn("simulate-dose: chat cleanup partial failure", err);
+      }
+    }
+    if (testActor && !testActor.destroyed) {
+      try {
+        await testActor.delete();
+      } catch (err) {
+        logger.warn("simulate-dose: test-actor cleanup failed", err);
+      }
+    }
+  }
+}
+
+async function createTestActor(substance, conMod) {
+  const id = foundry.utils?.randomID?.() ?? Math.random().toString(36).slice(2, 10);
+  const name = `${TEST_ACTOR_PREFIX}${id}__${substance.name}`;
+  const conValue = 10 + 2 * (Number.isFinite(conMod) ? conMod : 0);
+  return Actor.create({
+    name,
+    type: "character",
+    system: {
+      abilities: { con: { value: conValue } },
+    },
+  });
+}
+
+async function embedSubstanceClone(actor, sourceItem) {
+  const sourceData = sourceItem.toObject();
+  delete sourceData._id;
+
+  // Capture original effect ids by name so we can remap id-pointing flags
+  // (`addiction.addictionEffectId`, `withdrawalEffectId`) onto the cloned AEs.
+  const originalIdByName = new Map();
+  for (const ae of sourceItem.effects ?? []) {
+    if (ae.name) originalIdByName.set(ae.name, ae.id ?? ae._id);
+  }
+  for (const ae of sourceData.effects ?? []) {
+    delete ae._id;
+  }
+
+  const [embedded] = await actor.createEmbeddedDocuments("Item", [sourceData]);
+
+  const remap = new Map();
+  for (const newAe of embedded.effects ?? []) {
+    const originalId = originalIdByName.get(newAe.name ?? "");
+    if (originalId) remap.set(originalId, newAe.id);
+  }
+
+  const updates = {};
+  const oldAddict = sourceItem.flags?.[MODULE_ID]?.[FLAGS.addiction]?.addictionEffectId;
+  if (oldAddict && remap.has(oldAddict)) {
+    updates[`flags.${MODULE_ID}.${FLAGS.addiction}.addictionEffectId`] = remap.get(oldAddict);
+  }
+  const oldWithdraw = sourceItem.flags?.[MODULE_ID]?.[FLAGS.withdrawalEffect];
+  if (oldWithdraw && remap.has(oldWithdraw)) {
+    updates[`flags.${MODULE_ID}.${FLAGS.withdrawalEffect}`] = remap.get(oldWithdraw);
+  }
+  if (Object.keys(updates).length > 0) {
+    await embedded.update(updates);
+  }
+  return embedded;
+}
+
+async function embedStubParaphernalia(actor, readySubtypes) {
+  if (!Array.isArray(readySubtypes) || readySubtypes.length === 0) return;
+  const payloads = readySubtypes.map((subtypeId) => ({
+    name: `Sim Paraphernalia (${subtypeId})`,
+    type: "equipment",
+    img: "icons/svg/mystery-man.svg",
+    system: { equipped: true },
+    flags: {
+      [MODULE_ID]: {
+        [FLAGS.kind]: "paraphernalia",
+        [FLAGS.subtype]: subtypeId,
+        [FLAGS.schemaVersion]: 2,
+      },
+    },
+  }));
+  await actor.createEmbeddedDocuments("Item", payloads);
+}
+
+async function preSeedAddictionState(actor, item, state, conMod) {
+  const addiction = getAddiction(item);
+  if (!addiction) return;
+  const wMod = Number(addiction.withdrawalMod) || 0;
+  const fullRests = computeRestsRemaining(wMod, conMod);
+  const rests =
+    state === "withdrawing" ? Math.max(1, Math.ceil(fullRests / 2)) : fullRests;
+  if (state === "addicted") {
+    await applyAddictionEffect(actor, item);
+  }
+  await applyWithdrawalEffect(actor, item).catch(() => null);
+  await setActorWithdrawalEntry(actor, item.id, {
+    restsRemaining: rests,
+    appliedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * GM-arbitrated sweep of `__fishut-test-*` actor leftovers. Exported for tests.
+ * Returns the count of actors deleted.
+ */
+export async function sweepOrphanedTestActors() {
+  if (typeof game === "undefined" || !game?.actors) return 0;
+  if (game.users?.activeGM && game.users.activeGM !== game.user) return 0;
+  const orphans = [...game.actors].filter((a) =>
+    typeof a?.name === "string" && a.name.startsWith(TEST_ACTOR_PREFIX),
+  );
+  let count = 0;
+  for (const actor of orphans) {
+    try {
+      await actor.delete();
+      count += 1;
+    } catch (err) {
+      logger.warn(`simulate-dose: failed to delete orphan ${actor.name}`, err);
+    }
+  }
+  if (count > 0) logger.log(`simulate-dose: swept ${count} orphan test actor(s)`);
+  return count;
+}

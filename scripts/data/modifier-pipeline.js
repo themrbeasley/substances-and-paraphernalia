@@ -1,12 +1,17 @@
+import { MODULE_ID } from "../config.js";
 import { getModifier } from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
+import { composeTolerance } from "./tolerance.js";
 
 /**
- * @typedef {"auto-pass" | "advantage" | "none"} ModifierResolutionType
+ * @typedef {"auto-pass" | "advantage" | "+N" | "none"} ModifierResolutionType
  *
  * @typedef {Object} ModifierResolution
  * @property {ModifierResolutionType} resolution
- * @property {ActiveEffect|null}      [source]   AE that granted the resolution, when one exists.
+ * @property {ActiveEffect|null}   [source]   Primary contributing AE (first in `sources`).
+ *                                            Kept for back-compat with v0.3 callers.
+ * @property {ActiveEffect[]}      [sources]  All contributing AEs (auto-pass/advantage: 1, +N: ≥1).
+ * @property {number}              [bonus]    Sum of bonuses for `+N`; 0 otherwise.
  */
 
 const NONE = Object.freeze({ resolution: "none" });
@@ -15,12 +20,12 @@ const NONE = Object.freeze({ resolution: "none" });
  * Walk the actor's applied AEs, find any whose modifier flag block matches
  * (`kind: "bypass"`, `appliesTo` includes the substance's administration,
  * uses available on the source item), pick the strongest by composition rule,
- * and consume one use on the AE's source item if it tracks uses.
+ * and consume one use on each contributing AE's source item if it tracks uses.
  *
- * Composition: `auto-pass` outranks `advantage`; within a tier, deterministic
- * ascending by AE id (so reload ordering of `appliedEffects` doesn't change
- * the choice). Per-day refresh of `system.uses` rides on dnd5e's native
- * recovery; the pipeline doesn't manage refresh.
+ * Composition: auto-pass > advantage > +N. Within auto-pass / advantage,
+ * deterministic ascending by AE id picks one. Within +N, ALL eligible AEs
+ * contribute and their `bonus` values are summed. Per-day refresh of
+ * `system.uses` rides on dnd5e's native recovery.
  *
  * @param {Actor} actor
  * @param {Item}  substance
@@ -42,6 +47,7 @@ export async function consumeBypassIfAvailable(actor, substance) {
   for (const effect of effects) {
     const block = getModifier(effect);
     if (!block) continue;
+    if (block.kind !== "bypass") continue;
 
     let sourceItem = null;
     let hasUsesConfig = false;
@@ -66,6 +72,7 @@ export async function consumeBypassIfAvailable(actor, substance) {
       kind: block.kind,
       type: block.type,
       appliesTo: block.appliesTo,
+      bonus: Number(block.bonus) || 0,
       hasUsesConfig,
       usesRemaining,
     });
@@ -75,12 +82,57 @@ export async function consumeBypassIfAvailable(actor, substance) {
   const chosen = pickBypassResolution(administration, candidates);
   if (!chosen) return { ...NONE };
 
-  const link = links.get(chosen.id);
-  if (link?.sourceItem && link.hasUsesConfig) {
-    const spent = Number(link.sourceItem.system?.uses?.spent) || 0;
-    await link.sourceItem.update({ "system.uses.spent": spent + 1 });
+  const sourceEffects = [];
+  for (const candidate of chosen.sources) {
+    const link = links.get(candidate.id);
+    if (!link) continue;
+    if (link.sourceItem && link.hasUsesConfig) {
+      const spent = Number(link.sourceItem.system?.uses?.spent) || 0;
+      await link.sourceItem.update({ "system.uses.spent": spent + 1 });
+    }
+    if (link.effect) sourceEffects.push(link.effect);
   }
-  return { resolution: chosen.type, source: link?.effect ?? null };
+
+  return {
+    resolution: chosen.resolution,
+    source: sourceEffects[0] ?? null,
+    sources: sourceEffects,
+    bonus: chosen.bonus,
+  };
+}
+
+/**
+ * Walk the actor's applied AEs for `kind: "tolerance"` entries matching
+ * `substanceId`, and compose their per-stack effects via `composeTolerance`.
+ *
+ * Stacks are read from `effect.flags[MODULE_ID].stacks` (default 1). No uses
+ * are consumed — tolerance is a state, not a per-shot resource.
+ *
+ * @param {Actor}  actor
+ * @param {string} substanceId
+ * @returns {import("./tolerance.js").ComposedTolerance|null}
+ *   `null` when no matching AE exists; otherwise the composed effect.
+ */
+export function consumeToleranceForSubstance(actor, substanceId) {
+  if (!actor || !substanceId) return null;
+  const effects = actor.appliedEffects ?? actor.effects ?? [];
+  const candidates = [];
+  for (const effect of effects) {
+    const block = getModifier(effect);
+    if (!block) continue;
+    if (block.kind !== "tolerance") continue;
+    if (block.substanceId !== substanceId) continue;
+    const stacks = readStacks(effect);
+    candidates.push({ ...block, stacks });
+  }
+  if (candidates.length === 0) return null;
+  return composeTolerance(candidates);
+}
+
+function readStacks(effect) {
+  const raw = Number(effect?.flags?.[MODULE_ID]?.stacks);
+  if (!Number.isFinite(raw) || raw < 1) return 1;
+  return Math.floor(raw);
 }
 
 /**
