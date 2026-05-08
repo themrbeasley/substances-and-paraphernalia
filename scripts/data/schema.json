@@ -33,7 +33,10 @@
     { "id": "inhaler", "labelKey": "FISHUT.ParaphernaliaSubtype.Inhaler" },
     { "id": "rolling-papers", "labelKey": "FISHUT.ParaphernaliaSubtype.RollingPapers" },
     { "id": "tincture-dropper", "labelKey": "FISHUT.ParaphernaliaSubtype.TinctureDropper" },
-    { "id": "athletes-logbook", "labelKey": "FISHUT.ParaphernaliaSubtype.AthletesLogbook" }
+    { "id": "athletes-logbook", "labelKey": "FISHUT.ParaphernaliaSubtype.AthletesLogbook" },
+    { "id": "incense-burner", "labelKey": "FISHUT.ParaphernaliaSubtype.IncenseBurner" },
+    { "id": "pill-cutter", "labelKey": "FISHUT.ParaphernaliaSubtype.PillCutter" },
+    { "id": "neural-shunt", "labelKey": "FISHUT.ParaphernaliaSubtype.NeuralShunt" }
   ],
   "addictionSaveBypassTypes": [
     { "id": "auto-pass", "labelKey": "FISHUT.SaveBypass.Type.AutoPass" }

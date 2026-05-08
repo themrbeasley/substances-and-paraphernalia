@@ -115,7 +115,8 @@
       "category": "stimulant",
       "setting": "fantasy",
       "requiredSubtypes": [
-        "snuff-horn"
+        "snuff-horn",
+        "incense-burner"
       ],
       "addiction": {
         "enabled": true,

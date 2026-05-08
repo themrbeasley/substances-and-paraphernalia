@@ -27,6 +27,9 @@
   "FISHUT.ParaphernaliaSubtype.RollingPapers": "Rolling Papers",
   "FISHUT.ParaphernaliaSubtype.TinctureDropper": "Tincture Dropper",
   "FISHUT.ParaphernaliaSubtype.AthletesLogbook": "Athlete's Logbook",
+  "FISHUT.ParaphernaliaSubtype.IncenseBurner": "Incense Burner",
+  "FISHUT.ParaphernaliaSubtype.PillCutter": "Pill Cutter",
+  "FISHUT.ParaphernaliaSubtype.NeuralShunt": "Neural Shunt",
 
   "FISHUT.Settings.EnforceParaphernalia.Name": "Enforce paraphernalia requirements",
   "FISHUT.Settings.EnforceParaphernalia.Hint": "When on, substances with required paraphernalia cannot be consumed unless the actor possesses the required gear. When off, all substances consume freely.",

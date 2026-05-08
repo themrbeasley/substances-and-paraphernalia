@@ -115,7 +115,8 @@
       "category": "performanceEnhancing",
       "setting": "modern",
       "requiredSubtypes": [
-        "vial"
+        "vial",
+        "pill-cutter"
       ],
       "addiction": {
         "enabled": true,

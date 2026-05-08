@@ -1,0 +1,49 @@
+{
+  "_id": "fhParaPillCut001",
+  "_key": "!items!fhParaPillCut001",
+  "name": "Pill Cutter",
+  "type": "equipment",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhParaModern0001",
+  "system": {
+    "description": {
+      "value": "<p>A spring-loaded steel splitter with a hinged blade and a magnifying lid. Halving a dose before swallowing puts a smaller chemical wave through the bloodstream — slower onset, lower cliff, marginally less hook on the way down.</p><p><strong>Half dose.</strong> Provides a +1 bonus to Constitution saving throws against addiction from ingested substances split with this tool.</p>"
+    },
+    "type": { "value": "trinket" },
+    "rarity": "common",
+    "weight": { "value": 0.1, "units": "lb" },
+    "price": { "value": 25, "denomination": "gp" }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "modern",
+      "subtype": "pill-cutter",
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAEPillCutByp01",
+      "_key": "!items.effects!fhParaPillCut001.fhAEPillCutByp01",
+      "name": "Pill Cutter — Save Modifier",
+      "img": "icons/svg/aura.svg",
+      "transfer": true,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Grants a +1 bonus to Constitution saving throws against addiction to ingested substances split with the cutter.</p>",
+      "changes": [],
+      "flags": {
+        "substances-and-paraphernalia": {
+          "modifier": {
+            "kind": "bypass",
+            "type": "+N",
+            "bonus": 1,
+            "appliesTo": ["ingested"]
+          }
+        }
+      }
+    }
+  ],
+  "ownership": { "default": 0 }
+}
