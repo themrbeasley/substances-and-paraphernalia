@@ -4,14 +4,14 @@ import {
   getCategory,
   getAddictionEnabled,
   getAddictionSave,
-  getAddictionEffectId,
+  getAddictionEffectIds,
   getWithdrawalEnabled,
   getWithdrawalMod,
-  getWithdrawalEffectId,
+  getWithdrawalEffectIds,
   getOverdose,
-  getOverdoseEffectId,
+  getOverdoseEffectIds,
   getToleranceEnabled,
-  getToleranceEffectId,
+  getToleranceEffectIds,
   getRequiredSubtypes,
   getSubtype,
   getModifier,
@@ -19,14 +19,14 @@ import {
   setCategory,
   setAddictionEnabled,
   setAddictionSave,
-  setAddictionEffectId,
+  setAddictionEffectIds,
   setWithdrawalEnabled,
   setWithdrawalMod,
-  setWithdrawalEffectId,
+  setWithdrawalEffectIds,
   setOverdose,
-  setOverdoseEffectId,
+  setOverdoseEffectIds,
   setToleranceEnabled,
-  setToleranceEffectId,
+  setToleranceEffectIds,
   setRequiredSubtypes,
   setSubtype,
   setModifier,
@@ -254,6 +254,9 @@ function buildLabels() {
     bypassUsesPerDay: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Label"),
     bypassUsesPerDayPlaceholder: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Placeholder"),
     bypassBonus: L("FISHUT.DetailsTab.Bypass.Bonus.Label"),
+    effectEmpty: L("FISHUT.DetailsTab.EffectPicker.Empty"),
+    effectDissociate: L("FISHUT.DetailsTab.EffectPicker.Dissociate"),
+    effectDelete: L("FISHUT.DetailsTab.EffectPicker.Delete"),
   };
 }
 
@@ -316,18 +319,16 @@ function buildSubstanceContext(item) {
 function buildAddictionContext(item) {
   const enabled = getAddictionEnabled(item);
   const save = getAddictionSave(item) ?? { ability: "con", dc: null };
-  const addictionEffectId = getAddictionEffectId(item);
+  const attachedIds = getAddictionEffectIds(item);
 
   const allEffects = Array.from(item.effects ?? []);
-  const noneLabel = L("FISHUT.DetailsTab.Field.AddictionEffect.None");
-  const addictionEffectOptions = [
-    { id: "", label: noneLabel, selected: !addictionEffectId },
-    ...allEffects.map((e) => ({
-      id: e.id,
-      label: e.name,
-      selected: e.id === addictionEffectId,
-    })),
-  ];
+  // Addiction picker has no name-substring filter — any AE on the item is a
+  // valid addiction-template candidate. Author intent is the source of truth.
+  const { availableEffects, attachedEffects } = buildEffectPicker(
+    allEffects,
+    attachedIds,
+    () => true,
+  );
 
   const currentAbility = save.ability ?? "con";
   const abilityEntries = Object.entries(CONFIG?.DND5E?.abilities ?? {});
@@ -350,48 +351,33 @@ function buildAddictionContext(item) {
       abilityOptions,
       dc: Number.isFinite(save.dc) ? save.dc : "",
     },
-    addictionEffectOptions,
+    availableEffects,
+    attachedEffects,
   };
 }
 
 function buildWithdrawalContext(item) {
   const enabled = getWithdrawalEnabled(item);
   const withdrawalMod = getWithdrawalMod(item);
-  const withdrawalEffectId = getWithdrawalEffectId(item);
+  const attachedIds = getWithdrawalEffectIds(item);
 
   const allEffects = Array.from(item.effects ?? []);
-  // Withdrawal-effect picker only lists AEs whose name contains "withdraw"
+  // Withdrawal picker only lists AEs whose name contains "withdraw"
   // (case-insensitive) — same naming contract enforced by validate-content
-  // and the long-rest tick. If the saved id no longer matches the contract
-  // (e.g. AE renamed), preserve it as a synthetic option so re-saving doesn't
-  // silently drop the pointer.
-  const withdrawalNoneLabel = L("FISHUT.DetailsTab.Field.WithdrawalEffect.None");
-  const withdrawAes = allEffects.filter((e) => /withdraw/i.test(e.name ?? ""));
-  const withdrawalEffectOptions = [
-    { id: "", label: withdrawalNoneLabel, selected: !withdrawalEffectId },
-    ...withdrawAes.map((e) => ({
-      id: e.id,
-      label: e.name,
-      selected: e.id === withdrawalEffectId,
-    })),
-  ];
-  if (
-    withdrawalEffectId &&
-    !withdrawalEffectOptions.some((o) => o.id === withdrawalEffectId)
-  ) {
-    const stale = allEffects.find((e) => e.id === withdrawalEffectId);
-    withdrawalEffectOptions.push({
-      id: withdrawalEffectId,
-      label: stale?.name ?? withdrawalEffectId,
-      selected: true,
-    });
-  }
+  // and the long-rest tick. Stale ids are preserved as `isStale` rows so
+  // re-saving doesn't silently drop the pointer.
+  const { availableEffects, attachedEffects } = buildEffectPicker(
+    allEffects,
+    attachedIds,
+    (e) => /withdraw/i.test(e.name ?? ""),
+  );
 
   return {
     enabled,
     fieldsDisabled: !enabled,
     mod: Number.isFinite(withdrawalMod) ? withdrawalMod : "",
-    withdrawalEffectOptions,
+    availableEffects,
+    attachedEffects,
   };
 }
 
@@ -405,39 +391,23 @@ function buildOverdoseContext(item) {
   const chancePercent = Number.isFinite(rawChance) ? rawChance : 5;
   const description = typeof block.description === "string" ? block.description : "";
 
-  const overdoseEffectId = getOverdoseEffectId(item);
+  const attachedIds = getOverdoseEffectIds(item);
   const allEffects = Array.from(item.effects ?? []);
-  // Overdose-effect picker only lists AEs whose name contains "overdose"
-  // (case-insensitive) per the AE-naming contract. Stale ids preserved as a
-  // synthetic option so renames don't silently drop the pointer.
-  const noneLabel = L("FISHUT.DetailsTab.Field.OverdoseEffect.None");
-  const overdoseAes = allEffects.filter((e) => /overdose/i.test(e.name ?? ""));
-  const overdoseEffectOptions = [
-    { id: "", label: noneLabel, selected: !overdoseEffectId },
-    ...overdoseAes.map((e) => ({
-      id: e.id,
-      label: e.name,
-      selected: e.id === overdoseEffectId,
-    })),
-  ];
-  if (
-    overdoseEffectId &&
-    !overdoseEffectOptions.some((o) => o.id === overdoseEffectId)
-  ) {
-    const stale = allEffects.find((e) => e.id === overdoseEffectId);
-    overdoseEffectOptions.push({
-      id: overdoseEffectId,
-      label: stale?.name ?? overdoseEffectId,
-      selected: true,
-    });
-  }
+  // Overdose picker only lists AEs whose name contains "overdose"
+  // (case-insensitive) per the AE-naming contract.
+  const { availableEffects, attachedEffects } = buildEffectPicker(
+    allEffects,
+    attachedIds,
+    (e) => /overdose/i.test(e.name ?? ""),
+  );
 
   return {
     enabled,
     chancePercent,
     description,
     fieldsDisabled: !enabled,
-    overdoseEffectOptions,
+    availableEffects,
+    attachedEffects,
   };
 }
 
@@ -445,42 +415,78 @@ function buildToleranceContext(item) {
   // Tolerance defaults to enabled when the flag is unset (legacy compat) —
   // matches the auto-stack-on-save-pass behavior the engine has shipped with.
   const enabled = getToleranceEnabled(item);
-  const toleranceEffectId = getToleranceEffectId(item);
+  const attachedIds = getToleranceEffectIds(item);
 
   const allEffects = Array.from(item.effects ?? []);
-  // Tolerance-effect picker lists AEs whose name contains "tolerance"
+  // Tolerance picker lists AEs whose name contains "tolerance"
   // (case-insensitive) OR carry a `modifier.kind === "tolerance"` flag block —
   // either heuristic is sufficient to mark the AE as a tolerance template.
-  const noneLabel = L("FISHUT.DetailsTab.Field.ToleranceEffect.None");
-  const toleranceAes = allEffects.filter((e) => {
-    if (/tolerance/i.test(e.name ?? "")) return true;
-    return getModifier(e)?.kind === "tolerance";
-  });
-  const toleranceEffectOptions = [
-    { id: "", label: noneLabel, selected: !toleranceEffectId },
-    ...toleranceAes.map((e) => ({
-      id: e.id,
-      label: e.name,
-      selected: e.id === toleranceEffectId,
-    })),
-  ];
-  if (
-    toleranceEffectId &&
-    !toleranceEffectOptions.some((o) => o.id === toleranceEffectId)
-  ) {
-    const stale = allEffects.find((e) => e.id === toleranceEffectId);
-    toleranceEffectOptions.push({
-      id: toleranceEffectId,
-      label: stale?.name ?? toleranceEffectId,
-      selected: true,
-    });
-  }
+  const { availableEffects, attachedEffects } = buildEffectPicker(
+    allEffects,
+    attachedIds,
+    (e) => /tolerance/i.test(e.name ?? "") || getModifier(e)?.kind === "tolerance",
+  );
 
   return {
     enabled,
     fieldsDisabled: !enabled,
-    toleranceEffectOptions,
+    availableEffects,
+    attachedEffects,
   };
+}
+
+// Shared shape builder for the multi-attach effect picker. Returns:
+//   - `availableEffects`: AEs that pass the `predicate` filter, each carrying
+//     `{ id, name, selected }` so the `<multi-select>` can show the current
+//     attachment as the selected set.
+//   - `attachedEffects`: one row per id in `attachedIds`, in author order.
+//     Each row is `{ id, name, img, isStale }`. Stale ids (id present in
+//     attached list but no AE on the item, or AE no longer matches predicate)
+//     are flagged so the UI can surface them as removable.
+const FALLBACK_AE_IMG = "icons/svg/aura.svg";
+function buildEffectPicker(allEffects, attachedIds, predicate) {
+  const idToEffect = new Map(allEffects.map((e) => [e.id, e]));
+  const attachedSet = new Set(attachedIds);
+  const candidates = allEffects.filter((e) => predicate(e));
+
+  // Stale ids: attached but the AE either doesn't exist anymore on the item,
+  // or it's an existing AE that no longer satisfies the predicate (renamed).
+  // Either way, surface it so the GM can dissociate explicitly. Synthesise an
+  // option for the multi-select so its selected state stays consistent.
+  const staleAttached = attachedIds.filter((id) => {
+    const e = idToEffect.get(id);
+    return !e || !predicate(e);
+  });
+  const candidateIds = new Set(candidates.map((c) => c.id));
+  const availableEffects = [
+    ...candidates.map((e) => ({
+      id: e.id,
+      name: e.name,
+      selected: attachedSet.has(e.id),
+    })),
+    ...staleAttached
+      .filter((id) => !candidateIds.has(id))
+      .map((id) => ({
+        id,
+        name: idToEffect.get(id)?.name ?? id,
+        selected: true,
+      })),
+  ];
+
+  const attachedEffects = attachedIds.map((id) => {
+    const e = idToEffect.get(id);
+    if (!e) {
+      return { id, name: id, img: FALLBACK_AE_IMG, isStale: true };
+    }
+    return {
+      id,
+      name: e.name,
+      img: e.img ?? FALLBACK_AE_IMG,
+      isStale: !predicate(e),
+    };
+  });
+
+  return { availableEffects, attachedEffects };
 }
 
 export function buildParaphernaliaContext(item) {
@@ -549,6 +555,17 @@ function wireDetails(wrapper, item) {
   wrapper.addEventListener("change", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
+
+    const multiField = target.dataset?.fishutMulti;
+    if (multiField) {
+      event.stopPropagation();
+      const ids = readMultiSelectValue(target);
+      persistMultiField(item, multiField, ids).catch((err) =>
+        logger.error("details-tab persistMultiField failed", err),
+      );
+      return;
+    }
+
     const flagField = target.dataset?.fishutFlag;
     if (!flagField) return;
     event.stopPropagation();
@@ -580,14 +597,34 @@ function readFieldValue(target) {
   return typeof target.value === "string" ? target.value : "";
 }
 
+// Foundry V13 `<multi-select>` (`HTMLMultiSelectElement`) reports its value as
+// either a Set of selected ids or an Array depending on subtype. Normalise to
+// a deduped string array so persistMultiField stays type-stable.
+function readMultiSelectValue(target) {
+  const raw = target?.value;
+  if (raw == null) return [];
+  if (Array.isArray(raw)) return [...new Set(raw.map(String).filter(Boolean))];
+  if (raw instanceof Set) return [...new Set([...raw].map(String).filter(Boolean))];
+  if (typeof raw[Symbol.iterator] === "function") {
+    return [...new Set(Array.from(raw).map(String).filter(Boolean))];
+  }
+  return [String(raw)];
+}
+
 // ─── Persistence ───────────────────────────────────────────────────────────
 
 /**
  * Persist a single scalar field. Exported for Quench coverage.
+ *
+ * Effect-id arrays (`addiction.effectIds`, `withdrawal.effectIds`,
+ * `overdose.effectIds`, `tolerance.effectIds`) are not handled here — they
+ * flow through `persistMultiField` which is fed by the multi-select change
+ * branch in `wireDetails`.
+ *
  * @param {Item} item
  * @param {string} field  Dotted path: category | addiction.enabled |
- *   save.ability | save.dc | addictionEffectId | withdrawal.enabled |
- *   withdrawal.mod | withdrawal.effectId | subtype | overdose.* | bypass.*
+ *   save.ability | save.dc | withdrawal.enabled | withdrawal.mod | subtype |
+ *   overdose.* | tolerance.enabled | bypass.*
  * @param {string} rawValue
  * @param {HTMLElement} [target]
  *   The form control whose change fired. Required for `bypass.appliesTo`,
@@ -612,14 +649,10 @@ export async function persistField(item, field, rawValue, target) {
         dc: parseIntOrNull(rawValue),
       });
     }
-    case "addictionEffectId":
-      return setAddictionEffectId(item, rawValue || null);
     case "withdrawal.enabled":
       return setWithdrawalEnabled(item, rawValue === "true");
     case "withdrawal.mod":
       return setWithdrawalMod(item, parseIntOrNull(rawValue));
-    case "withdrawal.effectId":
-      return setWithdrawalEffectId(item, rawValue || null);
     case "overdose.enabled":
       return persistOverdoseField(item, "enabled", rawValue === "true");
     case "overdose.chancePercent": {
@@ -632,12 +665,8 @@ export async function persistField(item, field, rawValue, target) {
     }
     case "overdose.description":
       return persistOverdoseField(item, "description", rawValue ?? "");
-    case "overdose.effectId":
-      return setOverdoseEffectId(item, rawValue || null);
     case "tolerance.enabled":
       return setToleranceEnabled(item, rawValue === "true");
-    case "tolerance.effectId":
-      return setToleranceEffectId(item, rawValue || null);
     case "subtype": {
       const id = (rawValue ?? "").trim();
       if (!id) return setSubtype(item, null);
@@ -676,6 +705,32 @@ export async function persistField(item, field, rawValue, target) {
   }
 }
 
+/**
+ * Persist a `<multi-select>` value. Routes the field name to the matching
+ * plural setter on `flag-schema.js`. Exported for Quench coverage.
+ *
+ * @param {Item} item
+ * @param {string} field  One of `addiction.effectIds`, `withdrawal.effectIds`,
+ *   `overdose.effectIds`, `tolerance.effectIds`.
+ * @param {string[]} ids  Selected effect ids, deduped.
+ */
+export async function persistMultiField(item, field, ids) {
+  const list = Array.isArray(ids) ? ids.filter(Boolean) : [];
+  switch (field) {
+    case "addiction.effectIds":
+      return setAddictionEffectIds(item, list);
+    case "withdrawal.effectIds":
+      return setWithdrawalEffectIds(item, list);
+    case "overdose.effectIds":
+      return setOverdoseEffectIds(item, list);
+    case "tolerance.effectIds":
+      return setToleranceEffectIds(item, list);
+    default:
+      logger.warn?.("details-tab persistMultiField: unknown field", field);
+      return null;
+  }
+}
+
 async function dispatchAction(button, wrapper, item) {
   const action = button.dataset.fishutAction;
 
@@ -694,6 +749,22 @@ async function dispatchAction(button, wrapper, item) {
   if (action === "create-tolerance-ae") {
     return createToleranceStubAE(item);
   }
+
+  // Multi-attach effect-list controls. Each `<li>` row in the picker emits
+  // either `dissociate-X-ae` (drop the id from the persisted list, keep the AE
+  // around for re-attaching later) or `delete-X-ae` (drop the id AND delete
+  // the embedded AE). The slot is encoded in the action name; the AE id rides
+  // on `data-fishut-effect-id`.
+  const effectMatch = /^(dissociate|delete)-(addiction|withdrawal|overdose|tolerance)-ae$/.exec(
+    action ?? "",
+  );
+  if (effectMatch) {
+    const [, op, slot] = effectMatch;
+    const effectId = button.dataset.fishutEffectId;
+    if (!effectId) return null;
+    return mutateEffectListForSlot(item, slot, effectId, op);
+  }
+
   if (action === "add-required-subtype") {
     const select = wrapper.querySelector('[data-fishut-add-subtype="select"]');
     const id = (select?.value ?? "").trim();
@@ -713,6 +784,39 @@ async function dispatchAction(button, wrapper, item) {
   logger.warn?.("details-tab dispatchAction: unknown action", action);
   return null;
 }
+
+// Effect-list mutation shared across the four substance slots. `op` is either
+// "dissociate" (just drop the id from the slot's effect-id list) or "delete"
+// (drop the id AND delete the embedded ActiveEffect itself). All persistence
+// goes through the plural setter, which keeps the on-disk list authoritative.
+async function mutateEffectListForSlot(item, slot, effectId, op) {
+  const accessors = SLOT_ACCESSORS[slot];
+  if (!accessors) {
+    logger.warn?.("details-tab mutateEffectListForSlot: unknown slot", slot);
+    return null;
+  }
+  const current = accessors.get(item) ?? [];
+  const next = current.filter((id) => id !== effectId);
+  await accessors.set(item, next);
+  if (op === "delete") {
+    const effect = item.effects?.get?.(effectId) ?? null;
+    if (effect) {
+      try {
+        await effect.delete();
+      } catch (err) {
+        logger.error("details-tab effect delete failed", err);
+      }
+    }
+  }
+  return null;
+}
+
+const SLOT_ACCESSORS = {
+  addiction: { get: getAddictionEffectIds, set: setAddictionEffectIds },
+  withdrawal: { get: getWithdrawalEffectIds, set: setWithdrawalEffectIds },
+  overdose: { get: getOverdoseEffectIds, set: setOverdoseEffectIds },
+  tolerance: { get: getToleranceEffectIds, set: setToleranceEffectIds },
+};
 
 /**
  * Create a minimal-but-valid save-modifier AE on the paraphernalia item.
@@ -763,7 +867,9 @@ export async function createAddictionStubAE(item) {
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
   const effect = created?.[0] ?? null;
-  if (effect?.id) await setAddictionEffectId(item, effect.id);
+  if (effect?.id) {
+    await setAddictionEffectIds(item, [...getAddictionEffectIds(item), effect.id]);
+  }
   return effect;
 }
 
@@ -785,7 +891,9 @@ export async function createWithdrawalStubAE(item) {
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
   const effect = created?.[0] ?? null;
-  if (effect?.id) await setWithdrawalEffectId(item, effect.id);
+  if (effect?.id) {
+    await setWithdrawalEffectIds(item, [...getWithdrawalEffectIds(item), effect.id]);
+  }
   return effect;
 }
 
@@ -807,7 +915,9 @@ export async function createOverdoseStubAE(item) {
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
   const effect = created?.[0] ?? null;
-  if (effect?.id) await setOverdoseEffectId(item, effect.id);
+  if (effect?.id) {
+    await setOverdoseEffectIds(item, [...getOverdoseEffectIds(item), effect.id]);
+  }
   return effect;
 }
 
@@ -838,7 +948,9 @@ export async function createToleranceStubAE(item) {
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
   const effect = created?.[0] ?? null;
-  if (effect?.id) await setToleranceEffectId(item, effect.id);
+  if (effect?.id) {
+    await setToleranceEffectIds(item, [...getToleranceEffectIds(item), effect.id]);
+  }
   return effect;
 }
 

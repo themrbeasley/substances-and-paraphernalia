@@ -123,7 +123,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectId": "fhAETriBurnAdc01"
+        "addictionEffectIds": ["fhAETriBurnAdc01"]
       },
       "withdrawal": {
         "enabled": true,

@@ -123,7 +123,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectId": "fhAEMemwire01Adc"
+        "addictionEffectIds": ["fhAEMemwire01Adc"]
       },
       "withdrawal": {
         "enabled": true,

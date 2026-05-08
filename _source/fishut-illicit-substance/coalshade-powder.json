@@ -123,7 +123,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectId": "fhAECoalshadeAdc"
+        "addictionEffectIds": ["fhAECoalshadeAdc"]
       },
       "withdrawal": {
         "enabled": true,

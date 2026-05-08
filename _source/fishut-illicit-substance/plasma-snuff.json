@@ -123,7 +123,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectId": "fhAEPlasSnufAdc1"
+        "addictionEffectIds": ["fhAEPlasSnufAdc1"]
       },
       "withdrawal": {
         "enabled": true,

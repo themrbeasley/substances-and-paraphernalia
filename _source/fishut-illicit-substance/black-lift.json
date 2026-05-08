@@ -124,7 +124,7 @@
           "ability": "con",
           "dc": 15
         },
-        "addictionEffectId": "fhAEBlackLiftAdc"
+        "addictionEffectIds": ["fhAEBlackLiftAdc"]
       },
       "withdrawal": {
         "enabled": true,

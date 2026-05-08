@@ -12,8 +12,9 @@
 import { MODULE_ID, FLAGS } from "../../scripts/config.js";
 import {
   getAddiction,
-  getAddictionEffectId,
+  getAddictionEffectIds,
   getAddictionSave,
+  getWithdrawalEffectIds,
   getCategory,
   getKind,
   getModifier,
@@ -36,6 +37,7 @@ import {
   createBypassStubAE,
   persistField,
   persistKindToggle,
+  persistMultiField,
 } from "../../scripts/ui/details-tab.js";
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
@@ -203,7 +205,7 @@ async function embedSubstance(actor, overrides = {}) {
   // Wire the addiction effect ID now that the AE has a real _id on the embedded item.
   const ae = item.effects?.contents?.[0] ?? null;
   if (ae) {
-    await item.update({ [`flags.${MODULE_ID}.${FLAGS.addiction}.addictionEffectId`]: ae.id });
+    await item.update({ [`flags.${MODULE_ID}.${FLAGS.addiction}.addictionEffectIds`]: [ae.id] });
   }
   return item;
 }
@@ -293,18 +295,23 @@ function contractsSubstancesBatch(context) {
       }
     });
 
-    it("references an addiction AE that exists on the same item and matches /addict/i", () => {
+    it("references at least one addiction AE that exists on the same item and matches /addict/i", () => {
       for (const item of substances) {
-        const id = getAddiction(item)?.addictionEffectId;
-        assert.ok(id, `${item.name}: addictionEffectId is required`);
-        const ae =
-          item.effects?.get?.(id) ?? [...(item.effects ?? [])].find((e) => e.id === id || e._id === id);
-        assert.ok(ae, `${item.name}: addictionEffectId ${id} not found on item.effects`);
-        assert.match(
-          ae.name ?? "",
-          /addict/i,
-          `${item.name}: addiction AE name "${ae.name}" must contain "addict"`,
+        const ids = getAddictionEffectIds(item);
+        assert.ok(
+          Array.isArray(ids) && ids.length > 0,
+          `${item.name}: addictionEffectIds must be a non-empty array`,
         );
+        for (const id of ids) {
+          const ae =
+            item.effects?.get?.(id) ?? [...(item.effects ?? [])].find((e) => e.id === id || e._id === id);
+          assert.ok(ae, `${item.name}: addiction effect id ${id} not found on item.effects`);
+          assert.match(
+            ae.name ?? "",
+            /addict/i,
+            `${item.name}: addiction AE name "${ae.name}" must contain "addict"`,
+          );
+        }
       }
     });
   });
@@ -1575,32 +1582,26 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getWithdrawalMod(substance), null);
     });
 
-    it("persists addictionEffectId and clears on empty value", async () => {
+    it("persists addiction.effectIds and clears on empty list", async () => {
       const ae = substance.effects?.contents?.[0];
       assert.ok(ae, "embedSubstance should produce one AE");
-      await persistField(substance, "addictionEffectId", ae.id);
-      assert.equal(getAddictionEffectId(substance), ae.id);
-      await persistField(substance, "addictionEffectId", "");
-      assert.equal(getAddictionEffectId(substance), null);
+      await persistMultiField(substance, "addiction.effectIds", [ae.id]);
+      assert.deepEqual(getAddictionEffectIds(substance), [ae.id]);
+      await persistMultiField(substance, "addiction.effectIds", []);
+      assert.deepEqual(getAddictionEffectIds(substance), []);
     });
 
-    it("persists withdrawal.effectId and clears on empty value", async () => {
+    it("persists withdrawal.effectIds and clears on empty list", async () => {
       const created = await substance.createEmbeddedDocuments("ActiveEffect", [
         { name: `${substance.name} Withdrawal`, transfer: false, changes: [] },
       ]);
       const withdrawalAe = created?.[0];
       assert.ok(withdrawalAe, "withdrawal AE should be created");
       try {
-        await persistField(substance, "withdrawal.effectId", withdrawalAe.id);
-        assert.equal(
-          substance.getFlag(MODULE_ID, FLAGS.withdrawal)?.effectId,
-          withdrawalAe.id,
-        );
-        await persistField(substance, "withdrawal.effectId", "");
-        assert.equal(
-          substance.getFlag(MODULE_ID, FLAGS.withdrawal)?.effectId ?? null,
-          null,
-        );
+        await persistMultiField(substance, "withdrawal.effectIds", [withdrawalAe.id]);
+        assert.deepEqual(getWithdrawalEffectIds(substance), [withdrawalAe.id]);
+        await persistMultiField(substance, "withdrawal.effectIds", []);
+        assert.deepEqual(getWithdrawalEffectIds(substance), []);
       } finally {
         if (substance.effects.get(withdrawalAe.id)) await withdrawalAe.delete();
       }

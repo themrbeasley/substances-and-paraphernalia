@@ -169,7 +169,10 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].withdrawal.effectId = "ghost";
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /withdrawal\.effectId "ghost" not found/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /withdrawal\.effectIds entry "ghost" not found/.test(e)),
+      true,
+    );
   });
 
   it("errors when the resolved AE name does not contain 'withdraw'", () => {

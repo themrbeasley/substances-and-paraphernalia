@@ -120,7 +120,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectId": "fhAEVoltBeansAdc"
+        "addictionEffectIds": ["fhAEVoltBeansAdc"]
       },
       "withdrawal": {
         "enabled": true,

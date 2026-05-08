@@ -123,7 +123,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectId": "fhAEStmPatch01Ad"
+        "addictionEffectIds": ["fhAEStmPatch01Ad"]
       },
       "withdrawal": {
         "enabled": true,

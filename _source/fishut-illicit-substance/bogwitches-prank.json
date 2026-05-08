@@ -120,7 +120,7 @@
           "ability": "con",
           "dc": 11
         },
-        "addictionEffectId": "fhAEBogwitchAdc1"
+        "addictionEffectIds": ["fhAEBogwitchAdc1"]
       },
       "withdrawal": {
         "enabled": true,

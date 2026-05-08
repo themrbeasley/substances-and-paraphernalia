@@ -76,19 +76,6 @@
   flex: 1 1 auto;
 }
 
-.fishut.fishut-item-settings .fishut-effect-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.2rem 0;
-  border-bottom: 1px dotted var(--color-border-light-tertiary, #ccc);
-}
-
-.fishut.fishut-item-settings .fishut-effect-row:last-child {
-  border-bottom: none;
-}
-
 .fishut.fishut-item-settings .fishut-btn-icon {
   flex: 0 0 auto;
   width: 1.6rem;
@@ -320,24 +307,3 @@
   white-space: nowrap;
 }
 
-/* Inline AE creator next to a select — mirrors the dnd5e Activity sheet's
-   "Applied Effects" header pattern (select + small `+` button). Used by the
-   Addiction Effect and Withdrawal Effect pickers on the substance Details tab. */
-.fishut-effect-picker {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.fishut-effect-picker__select {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.fishut-effect-picker__add {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.5rem;
-}

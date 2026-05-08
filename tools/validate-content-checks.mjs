@@ -105,15 +105,20 @@ export function checkSubstance(file) {
     }
   }
 
-  const aeId = addiction.addictionEffectId;
-  if (!aeId) {
-    err(`addiction.addictionEffectId is required`);
+  const addictionIds = resolveEffectIdList(
+    addiction.addictionEffectIds,
+    addiction.addictionEffectId,
+  );
+  if (addictionIds.length === 0) {
+    err(`addiction.addictionEffectIds is required (non-empty array of AE ids)`);
   } else {
-    const ae = findEffect(data, aeId);
-    if (!ae) {
-      err(`addiction.addictionEffectId "${aeId}" not found in effects[]`);
-    } else if (!/addict/i.test(ae.name ?? "")) {
-      err(`addiction AE name "${ae.name}" must contain "addict"`);
+    for (const aeId of addictionIds) {
+      const ae = findEffect(data, aeId);
+      if (!ae) {
+        err(`addiction.addictionEffectIds entry "${aeId}" not found in effects[]`);
+      } else if (!/addict/i.test(ae.name ?? "")) {
+        err(`addiction AE name "${ae.name}" must contain "addict"`);
+      }
     }
   }
 
@@ -150,26 +155,61 @@ export function checkSubstance(file) {
     }
   }
 
-  // v0.4 — withdrawal.effectId resolution + name-contract + content guidance.
+  // v0.4 — withdrawal.effectIds resolution + name-contract + content guidance.
   if (flags.withdrawalEffectId !== undefined) {
     err(
-      `legacy "withdrawalEffectId" flag is removed in v0.4 — declare flags["${FLAG_SCOPE}"].withdrawal.effectId instead`,
+      `legacy "withdrawalEffectId" flag is removed in v0.4 — declare flags["${FLAG_SCOPE}"].withdrawal.effectIds instead`,
     );
   }
-  const withdrawalId = flags.withdrawal?.effectId;
-  if (withdrawalId !== undefined && withdrawalId !== null && withdrawalId !== "") {
+  const withdrawalIds = resolveEffectIdList(
+    flags.withdrawal?.effectIds,
+    flags.withdrawal?.effectId,
+  );
+  for (const withdrawalId of withdrawalIds) {
     const withdrawalAe = findEffect(data, withdrawalId);
     if (!withdrawalAe) {
-      err(`withdrawal.effectId "${withdrawalId}" not found in effects[]`);
-    } else {
-      if (!/withdraw/i.test(withdrawalAe.name ?? "")) {
-        err(`withdrawal AE name "${withdrawalAe.name}" must contain "withdraw"`);
-      }
-      if (aeViolatesContentGuidance(withdrawalAe)) {
-        warn(
-          `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks — duplicates poisoned. Escalate instead (exhaustion, disadv on saves, speed reduction, stat penalty).`,
-        );
-      }
+      err(`withdrawal.effectIds entry "${withdrawalId}" not found in effects[]`);
+      continue;
+    }
+    if (!/withdraw/i.test(withdrawalAe.name ?? "")) {
+      err(`withdrawal AE name "${withdrawalAe.name}" must contain "withdraw"`);
+    }
+    if (aeViolatesContentGuidance(withdrawalAe)) {
+      warn(
+        `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks — duplicates poisoned. Escalate instead (exhaustion, disadv on saves, speed reduction, stat penalty).`,
+      );
+    }
+  }
+
+  // v0.4 — overdose.effectIds resolution + name-contract.
+  const overdoseIds = resolveEffectIdList(
+    flags.overdose?.effectIds,
+    flags.overdose?.effectId,
+  );
+  for (const overdoseId of overdoseIds) {
+    const overdoseAe = findEffect(data, overdoseId);
+    if (!overdoseAe) {
+      err(`overdose.effectIds entry "${overdoseId}" not found in effects[]`);
+      continue;
+    }
+    if (!/overdose/i.test(overdoseAe.name ?? "")) {
+      err(`overdose AE name "${overdoseAe.name}" must contain "overdose"`);
+    }
+  }
+
+  // v0.4 — tolerance.effectIds resolution + name-contract.
+  const toleranceIds = resolveEffectIdList(
+    flags.tolerance?.effectIds,
+    flags.tolerance?.effectId,
+  );
+  for (const toleranceId of toleranceIds) {
+    const toleranceAe = findEffect(data, toleranceId);
+    if (!toleranceAe) {
+      err(`tolerance.effectIds entry "${toleranceId}" not found in effects[]`);
+      continue;
+    }
+    if (!/tolerance/i.test(toleranceAe.name ?? "")) {
+      err(`tolerance AE name "${toleranceAe.name}" must contain "tolerance"`);
     }
   }
 
@@ -339,6 +379,19 @@ function checkModifierShape(ae, tag) {
 
 function isObject(v) {
   return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/**
+ * Mirror flag-schema's plural-with-singular-fallback shape so the validator
+ * accepts both v0.4 canonical `*EffectIds` arrays and pre-v0.4 singular
+ * `*EffectId` strings during the migration window.
+ */
+function resolveEffectIdList(plural, singular) {
+  if (Array.isArray(plural)) {
+    return plural.filter((id) => typeof id === "string" && id.length > 0);
+  }
+  if (typeof singular === "string" && singular.length > 0) return [singular];
+  return [];
 }
 
 /**

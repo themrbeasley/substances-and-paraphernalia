@@ -24,8 +24,8 @@ Open **Calibrated Inhaler** (new, modern, inhaler).
 
 - [x] **Subtype** select shows built-ins + custom; current value (`inhaler`) is selected.
 - [x] No substance fields leak onto paraphernalia (no Required subtypes, no Addiction block, no Overdose fieldset).
-- [ ] Open the AE tab, open the **Calibrated Inhaler — Save Modifier** AE — verify the modifier flag block on the AE flags tab (`kind: bypass`, `type: +N`, `bonus: 2`, `appliesTo: ["inhaled"]`).
-- [ ] **Addiction Save Modifiers** section on the Details tab shows `Save Bonus: +2`.
+- [x] Open the AE tab, open the **Calibrated Inhaler — Save Modifier** AE — verify the modifier flag block on the AE flags tab (`kind: bypass`, `type: +N`, `bonus: 2`, `appliesTo: ["inhaled"]`).
+- [x] **Addiction Save Modifiers** section on the Details tab shows `Save Bonus: +2`.
 
 ### 1.3 Paraphernalia Subtype Manager
 
@@ -45,15 +45,15 @@ Open **Calibrated Inhaler** (new, modern, inhaler).
 
 Open any substance item sheet → header **3-dot menu**.
 
-- [ ] **Simulate dose…** entry appears on substance items only.
-- [ ] On a paraphernalia (e.g. Calibrated Inhaler), the entry is absent.
-- [ ] Click it. Dialog opens with: Con-mod override, addiction state (none / addicted / withdrawing), per-required-subtype paraphernalia toggles.
-- [ ] Run with all defaults — chat output captured in the dialog summary, not posted to the live log.
-- [ ] Run with Con +5 — observable in the addiction-save line of the captured chat.
-- [ ] Run with paraphernalia OFF — gate fires, dialog summary shows the missing-paraphernalia message.
-- [ ] Run with paraphernalia ON — gate passes; addiction save rolls.
-- [ ] Close the dialog. Open the actor directory. **No `__fishut-test-*` actors remain.**
-- [ ] (If you can force one): leave a `__fishut-test-*` actor in the directory and reload the world. The active GM's `ready` hook should sweep it on next world load.
+- [x] **Simulate dose…** entry appears on substance items only.
+- [x] On a paraphernalia (e.g. Calibrated Inhaler), the entry is absent.
+- [x] Click it. Dialog opens with: Con-mod override, addiction state (none / addicted / withdrawing), per-required-subtype paraphernalia toggles.
+- [x] Run with all defaults — chat output captured in the dialog summary, not posted to the live log.
+- [x] Run with Con +5 — observable in the addiction-save line of the captured chat.
+- [x] Run with paraphernalia OFF — gate fires, dialog summary shows the missing-paraphernalia message.
+- [x] Run with paraphernalia ON — gate passes; addiction save rolls.
+- [x] Close the dialog. Open the actor directory. **No `__fishut-test-*` actors remain.**
+- [x] (If you can force one): leave a `__fishut-test-*` actor in the directory and reload the world. The active GM's `ready` hook should sweep it on next world load.
 
 ---
 
@@ -63,79 +63,79 @@ Open any substance item sheet → header **3-dot menu**.
 
 Pick a substance with a `requiredSubtypes` list (e.g. **Triple Burn** requires `inhaler`).
 
-- [ ] Drop the substance on a PC who has **no inhaler equipped/ready**. Use it. Missing-paraphernalia dialog appears.
-- [ ] Dialog is visible to a logged-in **player** (not just GM).
-- [ ] Click **Use anyway** — activity proceeds; no further gate prompt for that activity ID.
-- [ ] Equip a Calibrated Inhaler on the PC, retry — gate passes silently, activity runs.
-- [ ] *Game Settings → Enforce paraphernalia requirements* off → gate skipped entirely; addiction logic still fires (verify by failing a save).
+- [x] Drop the substance on a PC who has **no inhaler equipped/ready**. Use it. Missing-paraphernalia dialog appears.
+- [x] Dialog is visible to a logged-in **player** (not just GM).
+- [x] Click **Use anyway** — activity proceeds; no further gate prompt for that activity ID.
+- [x] Equip a Calibrated Inhaler on the PC, retry — gate passes silently, activity runs.
+- [x] *Game Settings → Enforce paraphernalia requirements* off → gate skipped entirely; addiction logic still fires (verify by failing a save).
 
 ### 2.2 Addiction (`postUseActivity`)
 
-- [ ] Use a substance with a low DC (e.g. DC 5) and a high withdrawalMod — let the actor fail the save. Addiction AE applied, name contains `addict`. Console shows no errors.
+- [x] Use a substance with a low DC (e.g. DC 5) and a high withdrawalMod — let the actor fail the save. Addiction AE applied, name contains `addict`. Console shows no errors.
 - [ ] Actor flag `flags["substances-and-paraphernalia"].withdrawal[<itemId>]` populated with `{ restsRemaining, appliedAt }`.
-- [ ] Re-use the substance while still addicted. **Withdrawal extended** to `max(currentRests, newComputed)`; doesn't reroll, doesn't shorten.
-- [ ] Use a different substance whose save the actor passes — addiction AE NOT applied; tolerance AE IS applied (next section).
+- [x] Re-use the substance while still addicted. **Withdrawal extended** to `max(currentRests, newComputed)`; doesn't reroll, doesn't shorten.
+- [x] Use a different substance whose save the actor passes — addiction AE NOT applied; tolerance AE IS applied (next section).
 
 ### 2.3 Withdrawal (`restCompleted`)
 
-- [ ] Long rest on an addicted actor. `restsRemaining` decrements by 1. AE survives until 0.
-- [ ] Long rest at `restsRemaining = 1` → AE removed; flag entry cleared.
-- [ ] Short rest does nothing.
-- [ ] **Multi-client**: with both a player and GM client connected, do a long rest. Withdrawal ticks **once**, not twice. (The active GM is the only client that decrements.)
-- [ ] Author a substance with `withdrawalEffectId` pointing at a custom withdrawal template AE. Trigger withdrawal on a PC. The **authored** template's AE is applied (not the v0.3 default).
-- [ ] Substance with `withdrawalEffectId` unset → v0.3 default behavior preserved.
+- [x] Long rest on an addicted actor. `restsRemaining` decrements by 1. AE survives until 0.
+- [x] Long rest at `restsRemaining = 1` → AE removed; flag entry cleared.
+- [x] Short rest does nothing.
+- [x] **Multi-client**: with both a player and GM client connected, do a long rest. Withdrawal ticks **once**, not twice. (The active GM is the only client that decrements.)
+- [x] Author a substance with `withdrawalEffectId` pointing at a custom withdrawal template AE. Trigger withdrawal on a PC. The **authored** template's AE is applied (not the v0.3 default).
+- [x] Substance with `withdrawalEffectId` unset → v0.3 default behavior preserved.
 
 ### 2.4 Tolerance
 
 Author a tolerance template AE on a substance (Active Effects tab → new AE → name *"Tolerance: {Substance}"* → flag block: `kind: tolerance`, `substanceId: <itemId>`, `addictionDcBump: 1`, `attenuateAltered: { durationFactor: 0.1 }`).
 
-- [ ] Pass the addiction save once. Tolerance AE applied to the actor with `flags.stacks: 1`. Name contains `tolerance`.
-- [ ] Pass the save again with the same substance. **Same AE**, stacks now 2.
-- [ ] Use a different substance, pass its save. **Separate** tolerance AE for that substance.
-- [ ] Three stacks of `addictionDcBump: 1` → effective DC for the next save is base + 3 (verify in the save chat card or via simulate-dose).
-- [ ] Three stacks of `attenuateAltered.durationFactor: 0.1` → Altered AE duration is base × 0.7 (verify via the next applied Altered AE's duration).
+- [x] Pass the addiction save once. Tolerance AE applied to the actor with `flags.stacks: 1`. Name contains `tolerance`.
+- [x] Pass the save again with the same substance. **Same AE**, stacks now 2.
+- [x] Use a different substance, pass its save. **Separate** tolerance AE for that substance.
+- [x] Three stacks of `addictionDcBump: 1` → effective DC for the next save is base + 3 (verify in the save chat card or via simulate-dose).
+- [x] Three stacks of `attenuateAltered.durationFactor: 0.1` → Altered AE duration is base × 0.7 (verify via the next applied Altered AE's duration).
 
 ### 2.5 Overdose
 
 Set a substance's overdose: `enabled: true, chancePercent: 100, description: "<some text>"`.
 
-- [ ] Use the substance. Marker AE **Overdosed on {Substance}** applied. Name contains `overdose`. Chat card posted with the description.
-- [ ] Set `chancePercent: 0` and use 5×. Marker never fires.
-- [ ] At `chancePercent: 100`, use a substance the actor passes the addiction save on — overdose **still fires**. (Overdose is independent of save outcome.)
-- [ ] Disable overdose. Marker doesn't fire. No chat card.
+- [x] Use the substance. Marker AE **Overdosed on {Substance}** applied. Name contains `overdose`. Chat card posted with the description.
+- [x] Set `chancePercent: 0` and use 5×. Marker never fires.
+- [x] At `chancePercent: 100`, use a substance the actor passes the addiction save on — overdose **still fires**. (Overdose is independent of save outcome.)
+- [x] Disable overdose. Marker doesn't fire. No chat card.
 
 ### 2.6 Voluntary abstain
 
 Pre-condition: actor has at least one active withdrawal AE.
 
-- [ ] *Module Settings → Voluntary Abstain* on. Open the long-rest dialog. **Abstain this rest** button per active withdrawal substance.
-- [ ] Click it. Wis save rolled vs `8 + withdrawalMod`.
-- [ ] **Pass** → `restsRemaining -= 2`, clamped at 0; AE removed when at 0.
-- [ ] **Fail** → `restsRemaining -= 1`, no penalty (same as a normal rest).
-- [ ] Setting off → no Abstain button.
-- [ ] Two simultaneous withdrawals → two independent buttons, two independent saves.
+- [x] *Module Settings → Voluntary Abstain* on. Open the long-rest dialog. **Abstain this rest** button per active withdrawal substance.
+- [x] Click it. Wis save rolled vs `8 + withdrawalMod`.
+- [x] **Pass** → `restsRemaining -= 2`, clamped at 0; AE removed when at 0.
+- [x] **Fail** → `restsRemaining -= 1`, no penalty (same as a normal rest).
+- [x] Setting off → no Abstain button.
+- [x] Two simultaneous withdrawals → two independent buttons, two independent saves.
 
 ### 2.7 Poisoned coupling
 
-- [ ] *Module Settings → Addiction ↔ Poisoned* set to **linked-cascade** (default). Apply addiction. Externally remove the *poisoned* status. Addiction AE removed too.
-- [ ] Set to **linked-isolated**. Apply a fresh addiction (existing AEs aren't retroactively rewritten). Externally remove *poisoned*. **Addiction AE survives.**
-- [ ] Set to **independent**. Apply a fresh addiction. AE has empty `statuses` (no poisoned coupling). Removing *poisoned* doesn't affect it.
-- [ ] Switch the setting back to linked-cascade. Existing AEs from the prior modes still behave per the mode they were applied under (no retroactive rewrite).
+- [x] *Module Settings → Addiction ↔ Poisoned* set to **linked-cascade** (default). Apply addiction. Externally remove the *poisoned* status. Addiction AE removed too.
+- [x] Set to **linked-isolated**. Apply a fresh addiction (existing AEs aren't retroactively rewritten). Externally remove *poisoned*. **Addiction AE survives.**
+- [x] Set to **independent**. Apply a fresh addiction. AE has empty `statuses` (no poisoned coupling). Removing *poisoned* doesn't affect it.
+- [x] Switch the setting back to linked-cascade. Existing AEs from the prior modes still behave per the mode they were applied under (no retroactive rewrite).
 
 ### 2.8 `+N` bypass
 
-- [ ] Equip Calibrated Inhaler on a PC. Use Triple Burn (inhaled). Save chat shows **+2** bonus, sources line cites the inhaler.
-- [ ] Equip a second `+N` paraphernalia (e.g. duplicate the inhaler with `bonus: 1`). Save shows **+3** (sum).
-- [ ] Equip an `advantage`-tier inhaler bypass alongside the `+N` inhaler. Save rolls with **advantage**, no `+N` bonus added.
-- [ ] Equip an `auto-pass` inhaler too. Save **auto-passes**; sources line cites the auto-pass source.
+- [x] Equip Calibrated Inhaler on a PC. Use Triple Burn (inhaled). Save chat shows **+2** bonus, sources line cites the inhaler.
+- [x] Equip a second `+N` paraphernalia (e.g. duplicate the inhaler with `bonus: 1`). Save shows **+3** (sum).
+- [x] Equip an `advantage`-tier inhaler bypass alongside the `+N` inhaler. Save rolls with **advantage**, no `+N` bonus added.
+- [x] Equip an `auto-pass` inhaler too. Save **auto-passes**; sources line cites the auto-pass source.
 
 ### 2.9 Drag-to-inventory dialog
 
 GM or ASSISTANT drags a substance to a PC's inventory.
 
-- [ ] Dialog appears with the v0.3 buttons + the v0.4 ones.
-- [ ] **TOLERANT** → tolerance AE applied to the actor, `flags.stacks: 1`. No "Coming in v0.4" toast.
-- [ ] **OVERDOSED** → overdose marker AE applied. No toast.
+- [x] Dialog appears with the v0.3 buttons + the v0.4 ones.
+- [x] **TOLERANT** → tolerance AE applied to the actor, `flags.stacks: 1`. No "Coming in v0.4" toast.
+- [x] **OVERDOSED** → overdose marker AE applied. No toast.
 
 ---
 

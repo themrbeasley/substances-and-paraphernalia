@@ -25,9 +25,12 @@ import {
  * @property {boolean} [enabled]   Defaults to true when omitted; false disables
  *   the post-use addiction save (and AE application) entirely.
  * @property {AddictionSave} save
+ * @property {string[]} [addictionEffectIds]
+ *   v0.4 canonical: ids of {Substance} Addiction AE templates on the substance
+ *   item. ALL listed AEs are cloned onto the actor when the addiction save
+ *   fails so a GM can split a complex addiction across multiple AEs.
  * @property {string} [addictionEffectId]
- *   The `_id` of the {Substance} Addiction AE on the substance item, cloned
- *   onto the actor when the addiction save fails.
+ *   Deprecated pre-v0.4 singular id; readers wrap it in an array on the fly.
  *
  * @typedef {Object} WithdrawalBlock
  * @property {boolean} [enabled]   Defaults to true when omitted; false skips
@@ -35,9 +38,11 @@ import {
  *   addiction AE persists with no rest-tick countdown).
  * @property {number} [mod]        Positive integer; floor of withdrawal
  *   duration is `ceil(mod / 2)` long rests.
- * @property {string} [effectId]   `_id` of a withdrawal AE template on the
- *   same item; the long-rest tick clones it onto the actor when withdrawal
- *   applies. If unset, falls back to the v0.3 default behavior.
+ * @property {string[]} [effectIds]
+ *   v0.4 canonical: ids of withdrawal AE templates on the same item; the
+ *   long-rest tick clones ALL of them onto the actor when withdrawal applies.
+ * @property {string} [effectId]
+ *   Deprecated pre-v0.4 singular id; readers wrap it in an array on the fly.
  *
  * @typedef {"auto-pass"} AddictionSaveBypassType
  *   Reserved values (`"advantage"`, `"+N"`, `"reroll"`) are not yet implemented.
@@ -128,13 +133,38 @@ export const setAddictionSave = (item, save) => {
   return setAddiction(item, { ...block, save });
 };
 
-/** @param {Item} item */ export const getAddictionEffectId = (item) =>
-  getAddiction(item)?.addictionEffectId ?? null;
-
-export const setAddictionEffectId = (item, value) => {
-  const block = getAddiction(item) ?? {};
-  return setAddiction(item, { ...block, addictionEffectId: value });
+/**
+ * Plural canonical: list of addiction AE template ids on the substance item.
+ * Reads `addictionEffectIds` first; falls back to wrapping the legacy singular
+ * `addictionEffectId` in an array so pre-v0.4 content keeps working.
+ * @param {Item} item @returns {string[]}
+ */
+export const getAddictionEffectIds = (item) => {
+  const block = getAddiction(item);
+  if (!block) return [];
+  if (Array.isArray(block.addictionEffectIds)) {
+    return block.addictionEffectIds.filter((id) => typeof id === "string" && id.length > 0);
+  }
+  return block.addictionEffectId ? [block.addictionEffectId] : [];
 };
+
+/**
+ * Write the canonical plural list. Strips the legacy singular `addictionEffectId`
+ * field so the document carries one shape going forward.
+ */
+export const setAddictionEffectIds = (item, ids) => {
+  const block = { ...(getAddiction(item) ?? {}) };
+  block.addictionEffectIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
+  delete block.addictionEffectId;
+  return setAddiction(item, block);
+};
+
+/** @deprecated Use {@link getAddictionEffectIds}. Returns the first id or null. */
+export const getAddictionEffectId = (item) => getAddictionEffectIds(item)[0] ?? null;
+
+/** @deprecated Use {@link setAddictionEffectIds}. Replaces the entire list with `[value]`. */
+export const setAddictionEffectId = (item, value) =>
+  setAddictionEffectIds(item, value ? [value] : []);
 
 // ─── Substance flags (withdrawal block, item-level) ──────────────────────────
 
@@ -172,17 +202,33 @@ export const setWithdrawalMod = (item, value) => {
 };
 
 /**
- * Item-level pointer to a withdrawal AE template that lives on the same item.
- * The long-rest tick clones this AE onto the actor when withdrawal applies; if
- * unset, falls back to the v0.3 default behavior.
- * @param {Item} item @returns {string|null}
+ * Plural canonical: list of withdrawal AE template ids on the substance item.
+ * Reads `effectIds` first; falls back to wrapping the legacy singular `effectId`
+ * in an array.
+ * @param {Item} item @returns {string[]}
  */
-export const getWithdrawalEffectId = (item) => getWithdrawal(item)?.effectId ?? null;
-
-export const setWithdrawalEffectId = (item, value) => {
-  const block = getWithdrawal(item) ?? {};
-  return setWithdrawal(item, { ...block, effectId: value });
+export const getWithdrawalEffectIds = (item) => {
+  const block = getWithdrawal(item);
+  if (!block) return [];
+  if (Array.isArray(block.effectIds)) {
+    return block.effectIds.filter((id) => typeof id === "string" && id.length > 0);
+  }
+  return block.effectId ? [block.effectId] : [];
 };
+
+export const setWithdrawalEffectIds = (item, ids) => {
+  const block = { ...(getWithdrawal(item) ?? {}) };
+  block.effectIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
+  delete block.effectId;
+  return setWithdrawal(item, block);
+};
+
+/** @deprecated Use {@link getWithdrawalEffectIds}. Returns the first id or null. */
+export const getWithdrawalEffectId = (item) => getWithdrawalEffectIds(item)[0] ?? null;
+
+/** @deprecated Use {@link setWithdrawalEffectIds}. Replaces the entire list with `[value]`. */
+export const setWithdrawalEffectId = (item, value) =>
+  setWithdrawalEffectIds(item, value ? [value] : []);
 
 // ─── Substance flags (overdose) ──────────────────────────────────────────────
 
@@ -191,9 +237,12 @@ export const setWithdrawalEffectId = (item, value) => {
  * @property {boolean} enabled
  * @property {number}  chancePercent  Integer 1–100; per-consumption d100 chance.
  * @property {string}  description    Free-text shown in the chat card on hit.
- * @property {string}  [effectId]     `_id` of an overdose marker AE template on
- *   the same item; cloned onto the actor when overdose fires. If unset, a
- *   minimal marker AE is built inline.
+ * @property {string[]} [effectIds]
+ *   v0.4 canonical: ids of overdose marker AE templates on the same item; ALL
+ *   are cloned onto the actor when overdose fires. If empty, a minimal marker
+ *   AE is built inline.
+ * @property {string}  [effectId]
+ *   Deprecated pre-v0.4 singular id; readers wrap it in an array on the fly.
  */
 
 /** @param {Item} item @returns {OverdoseBlock|null} */
@@ -203,13 +252,29 @@ export const getOverdose = (item) =>
 export const setOverdose = (item, value) =>
   item.setFlag(MODULE_ID, FLAGS.overdose, value);
 
-/** @param {Item} item @returns {string|null} */
-export const getOverdoseEffectId = (item) => getOverdose(item)?.effectId ?? null;
-
-export const setOverdoseEffectId = (item, value) => {
-  const block = getOverdose(item) ?? {};
-  return setOverdose(item, { ...block, effectId: value });
+/** @param {Item} item @returns {string[]} */
+export const getOverdoseEffectIds = (item) => {
+  const block = getOverdose(item);
+  if (!block) return [];
+  if (Array.isArray(block.effectIds)) {
+    return block.effectIds.filter((id) => typeof id === "string" && id.length > 0);
+  }
+  return block.effectId ? [block.effectId] : [];
 };
+
+export const setOverdoseEffectIds = (item, ids) => {
+  const block = { ...(getOverdose(item) ?? {}) };
+  block.effectIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
+  delete block.effectId;
+  return setOverdose(item, block);
+};
+
+/** @deprecated Use {@link getOverdoseEffectIds}. Returns the first id or null. */
+export const getOverdoseEffectId = (item) => getOverdoseEffectIds(item)[0] ?? null;
+
+/** @deprecated Use {@link setOverdoseEffectIds}. Replaces the entire list with `[value]`. */
+export const setOverdoseEffectId = (item, value) =>
+  setOverdoseEffectIds(item, value ? [value] : []);
 
 // ─── Substance flags (tolerance) ─────────────────────────────────────────────
 
@@ -217,10 +282,12 @@ export const setOverdoseEffectId = (item, value) => {
  * @typedef {Object} ToleranceBlock
  * @property {boolean} [enabled]   Defaults to true when omitted; false skips
  *   the auto-stack on save pass.
- * @property {string}  [effectId]  `_id` of a tolerance AE template on the same
- *   item; cloned onto the actor (with `flags.stacks: 1`) on the first save
- *   pass. If unset, falls back to the built-in default tolerance template
- *   discovered via name regex.
+ * @property {string[]} [effectIds]
+ *   v0.4 canonical: ids of tolerance AE templates on the same item; ALL are
+ *   cloned onto the actor (each with `flags.stacks: 1`) on the first save
+ *   pass.
+ * @property {string}  [effectId]
+ *   Deprecated pre-v0.4 singular id; readers wrap it in an array on the fly.
  */
 
 /** @param {Item} item @returns {ToleranceBlock|null} */
@@ -241,13 +308,29 @@ export const setToleranceEnabled = (item, value) => {
   return setTolerance(item, { ...block, enabled: !!value });
 };
 
-/** @param {Item} item @returns {string|null} */
-export const getToleranceEffectId = (item) => getTolerance(item)?.effectId ?? null;
-
-export const setToleranceEffectId = (item, value) => {
-  const block = getTolerance(item) ?? {};
-  return setTolerance(item, { ...block, effectId: value });
+/** @param {Item} item @returns {string[]} */
+export const getToleranceEffectIds = (item) => {
+  const block = getTolerance(item);
+  if (!block) return [];
+  if (Array.isArray(block.effectIds)) {
+    return block.effectIds.filter((id) => typeof id === "string" && id.length > 0);
+  }
+  return block.effectId ? [block.effectId] : [];
 };
+
+export const setToleranceEffectIds = (item, ids) => {
+  const block = { ...(getTolerance(item) ?? {}) };
+  block.effectIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
+  delete block.effectId;
+  return setTolerance(item, block);
+};
+
+/** @deprecated Use {@link getToleranceEffectIds}. Returns the first id or null. */
+export const getToleranceEffectId = (item) => getToleranceEffectIds(item)[0] ?? null;
+
+/** @deprecated Use {@link setToleranceEffectIds}. Replaces the entire list with `[value]`. */
+export const setToleranceEffectId = (item, value) =>
+  setToleranceEffectIds(item, value ? [value] : []);
 
 // ─── Paraphernalia flag (addictionSaveBypass) ────────────────────────────────
 

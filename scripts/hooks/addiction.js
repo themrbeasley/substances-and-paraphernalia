@@ -1,9 +1,9 @@
 import { MODULE_ID, FLAGS } from "../config.js";
 import {
   getAddiction,
-  getAddictionEffectId,
+  getAddictionEffectIds,
   getAddictionEnabled,
-  getWithdrawalEffectId,
+  getWithdrawalEffectIds,
   getWithdrawalEnabled,
   getWithdrawalMod,
   getActorWithdrawal,
@@ -11,7 +11,7 @@ import {
   setActorWithdrawalEntry,
   clearActorWithdrawalEntry,
   getModifier,
-  getToleranceEffectId,
+  getToleranceEffectIds,
   getToleranceEnabled,
   isSubstance,
 } from "../data/flag-schema.js";
@@ -240,19 +240,31 @@ async function rollSave(actor, ability, dc, { advantage = false, bonus = 0 } = {
 }
 
 /**
- * Apply the substance's addiction AE to the actor (cloned from the authored
- * template). Adjusts `data.statuses` per the `addictionPoisonedCoupling`
- * setting before creation. Test seam — exported for Quench.
+ * Apply the substance's addiction AE templates to the actor. Every entry in
+ * `getAddictionEffectIds(item)` is cloned in a single batch so a GM can split
+ * a complex addiction across multiple AEs and have all of them appear at once.
+ * Adjusts `data.statuses` per the `addictionPoisonedCoupling` setting before
+ * creation. Test seam — exported for Quench.
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @returns {Promise<ActiveEffect|null>} the first applied effect (back-compat
+ *   for callers that only inspect a single result), or null if no templates
+ *   were found.
  */
 export async function applyAddictionEffect(actor, item) {
-  const template = findAddictionTemplate(item);
-  if (!template) {
+  const templates = findAddictionTemplates(item);
+  if (templates.length === 0) {
     logger.warn(`addiction template not found on ${item.name}; chat-only fail outcome`);
     return null;
   }
+  const couplingMode = readCouplingMode();
+  const payloads = templates.map((template) => buildAddictionPayload(template, item, couplingMode));
+  const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
+  return created?.[0] ?? null;
+}
+
+function buildAddictionPayload(template, item, couplingMode) {
   const data = template.toObject();
   delete data._id;
   data.flags = data.flags ?? {};
@@ -263,9 +275,8 @@ export async function applyAddictionEffect(actor, item) {
     data.duration.rounds = undefined;
     data.duration.seconds = undefined;
   }
-  applyCouplingMode(data, readCouplingMode());
-  const created = await actor.createEmbeddedDocuments("ActiveEffect", [data]);
-  return created?.[0] ?? null;
+  applyCouplingMode(data, couplingMode);
+  return data;
 }
 
 function readCouplingMode() {
@@ -290,30 +301,40 @@ async function refreshAddictionEffect(actor, item) {
   return applyAddictionEffect(actor, item);
 }
 
-function findAddictionTemplate(item) {
-  const id = getAddictionEffectId(item);
+function findAddictionTemplates(item) {
   const effects = item?.effects;
-  if (!effects) return null;
-  if (id) {
-    const direct = effects.get?.(id) ?? [...effects].find((e) => e.id === id || e._id === id);
-    if (direct) return direct;
+  if (!effects) return [];
+  const list = [...effects];
+  const ids = getAddictionEffectIds(item);
+  const resolved = [];
+  const seen = new Set();
+  for (const id of ids) {
+    const found = effects.get?.(id) ?? list.find((e) => e.id === id || e._id === id);
+    if (found && !seen.has(found.id ?? found._id)) {
+      resolved.push(found);
+      seen.add(found.id ?? found._id);
+    }
   }
-  // Fallback: name contains "addict" (case-insensitive).
-  return [...effects].find((e) => /addict/i.test(e.name ?? "")) ?? null;
+  if (resolved.length > 0) return resolved;
+  // Fallback: any effect whose name contains "addict" (case-insensitive).
+  return list.filter((e) => /addict/i.test(e.name ?? ""));
 }
 
 function findAppliedAddictionEffect(actor, substanceId) {
-  if (!actor?.effects) return null;
+  return findAllAppliedAddictionEffects(actor, substanceId)[0] ?? null;
+}
+
+function findAllAppliedAddictionEffects(actor, substanceId) {
+  if (!actor?.effects) return [];
+  const matches = [];
   for (const effect of actor.effects) {
     if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
     // Tolerance and withdrawal AEs share the sourceSubstanceId flag — disambiguate by name.
     if (/tolerance/i.test(effect.name ?? "")) continue;
     if (/withdraw/i.test(effect.name ?? "")) continue;
-    if (/addict/i.test(effect.name ?? "")) return effect;
-    // Pre-v0.4 effects without an "addict" name still match by flag for backwards-compat.
-    return effect;
+    matches.push(effect);
   }
-  return null;
+  return matches;
 }
 
 /**
@@ -366,13 +387,18 @@ async function onRestCompleted(actor, restData) {
   for (const substanceId of ids) {
     const entry = map[substanceId];
     const next = (Number(entry?.restsRemaining) || 0) - 1;
-    const effect = findAppliedAddictionEffect(actor, substanceId);
+    const addictionEffects = findAllAppliedAddictionEffects(actor, substanceId);
+    const primary = addictionEffects[0] ?? null;
     if (next <= 0) {
       await clearActorWithdrawalEntry(actor, substanceId);
-      if (effect) await effect.delete({ fishutIntentional: true });
-      const withdrawalEffect = findAppliedWithdrawalEffect(actor, substanceId);
-      if (withdrawalEffect) await withdrawalEffect.delete({ fishutIntentional: true });
-      const name = effect?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
+      for (const eff of addictionEffects) {
+        await eff.delete({ fishutIntentional: true });
+      }
+      const withdrawalEffects = findAllAppliedWithdrawalEffects(actor, substanceId);
+      for (const eff of withdrawalEffects) {
+        await eff.delete({ fishutIntentional: true });
+      }
+      const name = primary?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
       await chat(
         game.i18n.format("FISHUT.Withdrawal.Tick.Cleared", { actor: actor.name, effect: name }),
       );
@@ -381,7 +407,7 @@ async function onRestCompleted(actor, restData) {
         restsRemaining: next,
         appliedAt: entry?.appliedAt ?? new Date().toISOString(),
       });
-      const name = effect?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
+      const name = primary?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
       await chat(
         game.i18n.format("FISHUT.Withdrawal.Tick.Remaining", {
           actor: actor.name,
@@ -398,30 +424,48 @@ async function chat(content) {
 }
 
 /**
- * Increment an existing tolerance stack AE for this (actor, substance) pair, or
- * apply a new one (templated from the substance's authored tolerance AE, or a
- * built-in default). Test seam — exported for Quench.
+ * Increment all existing tolerance stack AEs for this (actor, substance) pair,
+ * or apply a new set (one per authored template, falling back to a built-in
+ * default if none authored). Test seam — exported for Quench.
+ *
+ * Semantics: "all-or-nothing per substance". If any tolerance AE already
+ * exists for the substance, every existing tolerance AE is incremented in
+ * lockstep so the GM never has to chase per-template counters. If none exist,
+ * every authored template is applied at `stacks: 1`.
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @returns {Promise<ActiveEffect|null>} the first AE touched (incremented or
+ *   created), or null if tolerance is disabled.
  */
 export async function applyOrIncrementToleranceStack(actor, item) {
   if (!getToleranceEnabled(item)) return null;
-  const existing = findAppliedToleranceEffect(actor, item.id);
-  if (existing) {
-    const currentStacks = Number(existing.flags?.[MODULE_ID]?.stacks) || 1;
-    const nextStacks = currentStacks + 1;
-    await existing.update({
-      [`flags.${MODULE_ID}.stacks`]: nextStacks,
-      name: formatToleranceName(item, nextStacks),
-    });
-    return existing;
+  const existing = findAllAppliedToleranceEffects(actor, item.id);
+  if (existing.length > 0) {
+    let firstUpdated = null;
+    for (const effect of existing) {
+      const currentStacks = Number(effect.flags?.[MODULE_ID]?.stacks) || 1;
+      const nextStacks = currentStacks + 1;
+      await effect.update({
+        [`flags.${MODULE_ID}.stacks`]: nextStacks,
+        name: formatToleranceName(item, nextStacks),
+      });
+      firstUpdated ??= effect;
+    }
+    return firstUpdated;
   }
-  return applyToleranceEffect(actor, item);
+  return applyToleranceEffects(actor, item);
 }
 
-async function applyToleranceEffect(actor, item) {
-  const template = findToleranceTemplate(item);
+async function applyToleranceEffects(actor, item) {
+  const templates = findToleranceTemplates(item);
+  const sources = templates.length > 0 ? templates : [null]; // null → default template
+  const payloads = sources.map((template) => buildTolerancePayload(template, item));
+  const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
+  return created?.[0] ?? null;
+}
+
+function buildTolerancePayload(template, item) {
   const baseData = template ? template.toObject() : buildDefaultToleranceTemplate(item);
   delete baseData._id;
   baseData.flags = baseData.flags ?? {};
@@ -443,8 +487,7 @@ async function applyToleranceEffect(actor, item) {
     baseData.duration.rounds = undefined;
     baseData.duration.seconds = undefined;
   }
-  const created = await actor.createEmbeddedDocuments("ActiveEffect", [baseData]);
-  return created?.[0] ?? null;
+  return baseData;
 }
 
 function buildDefaultToleranceTemplate(item) {
@@ -464,48 +507,69 @@ function formatToleranceName(item, stacks) {
   });
 }
 
-function findToleranceTemplate(item) {
+function findToleranceTemplates(item) {
   const effects = item?.effects;
-  if (!effects) return null;
-  const authoredId = getToleranceEffectId(item);
-  if (authoredId) {
-    const authored = effects.get?.(authoredId) ?? null;
-    if (authored) return authored;
-  }
+  if (!effects) return [];
   const list = [...effects];
-  const byModifier = list.find((e) => getModifier(e)?.kind === "tolerance");
-  if (byModifier) return byModifier;
-  return list.find((e) => /tolerance/i.test(e.name ?? "")) ?? null;
+  const ids = getToleranceEffectIds(item);
+  const resolved = [];
+  const seen = new Set();
+  for (const id of ids) {
+    const found = effects.get?.(id) ?? list.find((e) => e.id === id || e._id === id);
+    if (found && !seen.has(found.id ?? found._id)) {
+      resolved.push(found);
+      seen.add(found.id ?? found._id);
+    }
+  }
+  if (resolved.length > 0) return resolved;
+  // Fallback: any effect whose modifier block declares kind:"tolerance" or whose name contains "tolerance".
+  const byModifier = list.filter((e) => getModifier(e)?.kind === "tolerance");
+  if (byModifier.length > 0) return byModifier;
+  return list.filter((e) => /tolerance/i.test(e.name ?? ""));
 }
 
-function findAppliedToleranceEffect(actor, substanceId) {
-  if (!actor?.effects) return null;
+function findAllAppliedToleranceEffects(actor, substanceId) {
+  if (!actor?.effects) return [];
+  const matches = [];
   for (const effect of actor.effects) {
     if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    if (getModifier(effect)?.kind === "tolerance") return effect;
-    if (/tolerance/i.test(effect.name ?? "")) return effect;
+    if (getModifier(effect)?.kind === "tolerance" || /tolerance/i.test(effect.name ?? "")) {
+      matches.push(effect);
+    }
   }
-  return null;
+  return matches;
 }
 
 /**
- * Apply the substance's authored withdrawal AE template to the actor. No-op if
- * `getWithdrawalEffectId(item)` is unset (v0.3 behavior preserved). The applied
- * AE name must contain `withdraw`; mismatched templates log a warning and skip.
- * Test seam — exported for Quench.
+ * Apply the substance's authored withdrawal AE templates to the actor. No-op
+ * if `getWithdrawalEffectIds(item)` is empty (v0.3 behavior preserved). Each
+ * applied AE name must contain `withdraw`; mismatched templates log a warning
+ * and are skipped. Test seam — exported for Quench.
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @returns {Promise<ActiveEffect|null>} the first applied effect, or null if
+ *   no eligible templates were found.
  */
 export async function applyWithdrawalEffect(actor, item) {
-  const template = findWithdrawalTemplate(item);
-  if (!template) return null;
-  if (!/withdraw/i.test(template.name ?? "")) {
-    logger.warn(
-      `withdrawal template "${template.name}" on ${item.name} does not contain "withdraw"; skipping`,
-    );
-    return null;
+  const templates = findWithdrawalTemplates(item);
+  const eligible = [];
+  for (const template of templates) {
+    if (!/withdraw/i.test(template.name ?? "")) {
+      logger.warn(
+        `withdrawal template "${template.name}" on ${item.name} does not contain "withdraw"; skipping`,
+      );
+      continue;
+    }
+    eligible.push(template);
   }
+  if (eligible.length === 0) return null;
+  const payloads = eligible.map((template) => buildWithdrawalPayload(template, item));
+  const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
+  return created?.[0] ?? null;
+}
+
+function buildWithdrawalPayload(template, item) {
   const data = template.toObject();
   delete data._id;
   data.flags = data.flags ?? {};
@@ -517,23 +581,33 @@ export async function applyWithdrawalEffect(actor, item) {
     data.duration.rounds = undefined;
     data.duration.seconds = undefined;
   }
-  const created = await actor.createEmbeddedDocuments("ActiveEffect", [data]);
-  return created?.[0] ?? null;
+  return data;
 }
 
-function findWithdrawalTemplate(item) {
-  const id = getWithdrawalEffectId(item);
-  if (!id) return null;
+function findWithdrawalTemplates(item) {
+  const ids = getWithdrawalEffectIds(item);
+  if (ids.length === 0) return [];
   const effects = item?.effects;
-  if (!effects) return null;
-  return effects.get?.(id) ?? [...effects].find((e) => e.id === id || e._id === id) ?? null;
+  if (!effects) return [];
+  const list = [...effects];
+  const resolved = [];
+  const seen = new Set();
+  for (const id of ids) {
+    const found = effects.get?.(id) ?? list.find((e) => e.id === id || e._id === id);
+    if (found && !seen.has(found.id ?? found._id)) {
+      resolved.push(found);
+      seen.add(found.id ?? found._id);
+    }
+  }
+  return resolved;
 }
 
-function findAppliedWithdrawalEffect(actor, substanceId) {
-  if (!actor?.effects) return null;
+function findAllAppliedWithdrawalEffects(actor, substanceId) {
+  if (!actor?.effects) return [];
+  const matches = [];
   for (const effect of actor.effects) {
     if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    if (/withdraw/i.test(effect.name ?? "")) return effect;
+    if (/withdraw/i.test(effect.name ?? "")) matches.push(effect);
   }
-  return null;
+  return matches;
 }
