@@ -284,6 +284,58 @@
     </fieldset>
   </fieldset>
 
+  <fieldset class="fishut-details-tmfx">
+    <legend>{{labels.tmfxHeader}}</legend>
+
+    <div class="form-group">
+      <label>
+        {{labels.tmfxMode}}
+        <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.tmfxHint}}"></i>
+      </label>
+      <div class="fishut-tmfx-modes">
+        {{#each substance.tmfx.modeOptions}}
+          <label class="checkbox">
+            <input type="radio" name="fishut-tmfx-mode"
+                   data-fishut-flag="tmfx.mode"
+                   value="{{this.id}}"
+                   {{#if this.selected}}checked{{/if}} />
+            {{this.label}}
+          </label>
+        {{/each}}
+      </div>
+    </div>
+
+    {{#if substance.tmfx.isPreset}}
+      <div class="form-group">
+        <label>{{labels.tmfxPresetName}}</label>
+        <div class="fishut-tmfx-preset-row">
+          <input type="text" data-fishut-flag="tmfx.presetName"
+                 value="{{substance.tmfx.presetName}}"
+                 placeholder="{{labels.tmfxPresetPlaceholder}}" />
+          {{#if substance.tmfx.tmfxActive}}
+            <button type="button"
+                    class="unbutton control-button"
+                    data-fishut-action="pick-tmfx-preset"
+                    data-tooltip="{{labels.tmfxPickPresetTooltip}}"
+                    aria-label="{{labels.tmfxPickPresetTooltip}}">
+              <i class="fa-solid fa-wand-magic-sparkles" inert></i>
+              {{labels.tmfxPickPreset}}
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if substance.tmfx.isMacro}}
+      <div class="form-group">
+        <label>{{labels.tmfxMacroUuid}}</label>
+        <input type="text" data-fishut-flag="tmfx.macroUuid"
+               value="{{substance.tmfx.macroUuid}}"
+               placeholder="{{labels.tmfxMacroUuidPlaceholder}}" />
+      </div>
+    {{/if}}
+  </fieldset>
+
   <fieldset class="fishut-details-required-subtypes">
     <legend>{{labels.requiredSubtypes}}</legend>
 

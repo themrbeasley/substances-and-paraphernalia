@@ -22,6 +22,7 @@ import {
   getRequiredSubtypes,
   getSetting,
   getSubtype,
+  getTmfx,
   getWithdrawalMod,
   getActorWithdrawal,
   getActorWithdrawalEntry,
@@ -1633,6 +1634,38 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getOverdose(substance)?.description, "Convulsions for 1d4 minutes.");
       await persistField(substance, "overdose.description", "");
       assert.equal(getOverdose(substance)?.description, "");
+    });
+
+    it("persists tmfx preset mode + presetName round-trip", async () => {
+      await persistField(substance, "tmfx.mode", "preset");
+      await persistField(substance, "tmfx.presetName", "Glow Red");
+      const block = getTmfx(substance);
+      assert.equal(block?.mode, "preset");
+      assert.equal(block?.presetName, "Glow Red");
+    });
+
+    it("clears the tmfx block when mode switches to none", async () => {
+      await persistField(substance, "tmfx.mode", "preset");
+      await persistField(substance, "tmfx.presetName", "Glow Red");
+      await persistField(substance, "tmfx.mode", "none");
+      const block = getTmfx(substance);
+      assert.equal(block?.mode, "none");
+      assert.equal(block?.presetName, undefined);
+    });
+
+    it("persists tmfx macro mode + macroUuid round-trip", async () => {
+      await persistField(substance, "tmfx.mode", "macro");
+      await persistField(
+        substance,
+        "tmfx.macroUuid",
+        "Compendium.substances-and-paraphernalia.fishut-illicit-macros.abc",
+      );
+      const block = getTmfx(substance);
+      assert.equal(block?.mode, "macro");
+      assert.equal(
+        block?.macroUuid,
+        "Compendium.substances-and-paraphernalia.fishut-illicit-macros.abc",
+      );
     });
 
     it("round-trips requiredSubtypes via setRequiredSubtypes", async () => {
