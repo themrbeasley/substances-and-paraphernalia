@@ -106,6 +106,7 @@
     "schemaVersion": "schemaVersion",
     "modifier": "modifier",
     "overdose": "overdose",
-    "tolerance": "tolerance"
+    "tolerance": "tolerance",
+    "tmfx": "tmfx"
   }
 }

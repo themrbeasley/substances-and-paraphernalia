@@ -332,6 +332,24 @@ export const getToleranceEffectId = (item) => getToleranceEffectIds(item)[0] ?? 
 export const setToleranceEffectId = (item, value) =>
   setToleranceEffectIds(item, value ? [value] : []);
 
+// ─── Substance flag (tmfx) ───────────────────────────────────────────────────
+
+/**
+ * @typedef {Object} TmfxBlock
+ * @property {"none"|"preset"|"macro"} mode
+ * @property {string} [presetName]   Required when mode === "preset".
+ * @property {string} [macroUuid]    Required when mode === "macro".
+ *
+ * Render-only metadata read by the TMFX integration when an `Altered by *`
+ * benefit AE is applied. Stored shape may be raw — `parseTmfxConfig` is the
+ * canonical normalizer; getters/setters here are dumb pass-throughs.
+ */
+
+/** @param {Item} item @returns {TmfxBlock|null} */
+export const getTmfx = (item) => item?.getFlag?.(MODULE_ID, FLAGS.tmfx) ?? null;
+
+export const setTmfx = (item, value) => item.setFlag(MODULE_ID, FLAGS.tmfx, value);
+
 // ─── Paraphernalia flag (addictionSaveBypass) ────────────────────────────────
 
 /** @param {Item} item @returns {AddictionSaveBypassBlock|null} */

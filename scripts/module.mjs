@@ -32,6 +32,7 @@ import {
   isIntegrationSettingEnabled,
   listMissingIntegrations,
 } from "./integrations/index.js";
+import { registerTmfxIntegration } from "./integrations/tmfx.js";
 import { registerDetailsTab } from "./ui/details-tab.js";
 import {
   registerSimulateDose,
@@ -49,6 +50,7 @@ Hooks.once("init", () => {
   registerLongRestAbstain();
   registerDetailsTab();
   registerSimulateDose();
+  registerTmfxIntegration();
   registerQuenchSuiteIfActive();
   logger.log("init complete");
 });

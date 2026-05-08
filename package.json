@@ -12,7 +12,7 @@
     "validate:manifest": "node tools/validate-manifest.mjs",
     "validate:content": "node tools/validate-content.mjs",
     "validate": "npm run validate:manifest && npm run validate:content",
-    "test:unit": "node --test test/unit/abstain.test.mjs test/unit/integration-enabled.test.mjs test/unit/modifier-flag-shape.test.mjs test/unit/modifier-pipeline.test.mjs test/unit/overdose-flag-shape.test.mjs test/unit/overdose.test.mjs test/unit/paraphernalia-subtypes.test.mjs test/unit/requirements-eval.test.mjs test/unit/tolerance-pipeline.test.mjs test/unit/tolerance.test.mjs test/unit/validate-content.test.mjs test/unit/withdrawal-formula.test.mjs",
+    "test:unit": "node --test test/unit/abstain.test.mjs test/unit/integration-enabled.test.mjs test/unit/modifier-flag-shape.test.mjs test/unit/modifier-pipeline.test.mjs test/unit/overdose-flag-shape.test.mjs test/unit/overdose.test.mjs test/unit/paraphernalia-subtypes.test.mjs test/unit/requirements-eval.test.mjs test/unit/tmfx-config.test.mjs test/unit/tolerance-pipeline.test.mjs test/unit/tolerance.test.mjs test/unit/validate-content.test.mjs test/unit/withdrawal-formula.test.mjs",
     "release": "echo \"release is driven by .github/workflows/release.yml\" && exit 0"
   },
   "devDependencies": {
