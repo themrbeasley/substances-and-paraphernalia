@@ -18,12 +18,22 @@ import { readModifier } from "./modifier-flag.js";
  * @property {number} dc
  *
  * @typedef {Object} AddictionBlock
+ * @property {boolean} [enabled]   Defaults to true when omitted; false disables
+ *   the post-use addiction save (and AE application) entirely.
  * @property {AddictionSave} save
- * @property {number} withdrawalMod    Positive integer; floor of withdrawal
- *   duration is `ceil(withdrawalMod / 2)` long rests.
- * @property {string} addictionEffectId
+ * @property {string} [addictionEffectId]
  *   The `_id` of the {Substance} Addiction AE on the substance item, cloned
  *   onto the actor when the addiction save fails.
+ *
+ * @typedef {Object} WithdrawalBlock
+ * @property {boolean} [enabled]   Defaults to true when omitted; false skips
+ *   withdrawal AE application and actor-flag bookkeeping on save fail (the
+ *   addiction AE persists with no rest-tick countdown).
+ * @property {number} [mod]        Positive integer; floor of withdrawal
+ *   duration is `ceil(mod / 2)` long rests.
+ * @property {string} [effectId]   `_id` of a withdrawal AE template on the
+ *   same item; the long-rest tick clones it onto the actor when withdrawal
+ *   applies. If unset, falls back to the v0.3 default behavior.
  *
  * @typedef {"auto-pass"} AddictionSaveBypassType
  *   Reserved values (`"advantage"`, `"+N"`, `"reroll"`) are not yet implemented.
@@ -89,6 +99,18 @@ export const getAddiction = (item) => item?.getFlag?.(MODULE_ID, FLAGS.addiction
 
 export const setAddiction = (item, value) => item.setFlag(MODULE_ID, FLAGS.addiction, value);
 
+/**
+ * Whether the post-use addiction save runs at all. Undefined defaults to true
+ * so legacy items without the flag continue to behave as before.
+ * @param {Item} item @returns {boolean}
+ */
+export const getAddictionEnabled = (item) => getAddiction(item)?.enabled !== false;
+
+export const setAddictionEnabled = (item, value) => {
+  const block = getAddiction(item) ?? {};
+  return setAddiction(item, { ...block, enabled: !!value });
+};
+
 /** @param {Item} item @returns {AddictionSave|null} */
 export const getAddictionSave = (item) => {
   const block = getAddiction(item);
@@ -102,13 +124,6 @@ export const setAddictionSave = (item, save) => {
   return setAddiction(item, { ...block, save });
 };
 
-/** @param {Item} item */ export const getWithdrawalMod = (item) => getAddiction(item)?.withdrawalMod ?? null;
-
-export const setWithdrawalMod = (item, value) => {
-  const block = getAddiction(item) ?? {};
-  return setAddiction(item, { ...block, withdrawalMod: value });
-};
-
 /** @param {Item} item */ export const getAddictionEffectId = (item) =>
   getAddiction(item)?.addictionEffectId ?? null;
 
@@ -117,7 +132,55 @@ export const setAddictionEffectId = (item, value) => {
   return setAddiction(item, { ...block, addictionEffectId: value });
 };
 
-// ─── Substance flags (overdose, withdrawal AE template) ─────────────────────
+// ─── Substance flags (withdrawal block, item-level) ──────────────────────────
+
+/**
+ * Item-level withdrawal block. Distinct from the actor-level `flags.withdrawal`
+ * map (`WithdrawalMap`); Foundry namespaces flags per document so a substance
+ * item's `withdrawal` is the authored block while an actor's `withdrawal` is
+ * the runtime per-substance entry map.
+ * @param {Item} item @returns {WithdrawalBlock|null}
+ */
+export const getWithdrawal = (item) =>
+  item?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? null;
+
+export const setWithdrawal = (item, value) =>
+  item.setFlag(MODULE_ID, FLAGS.withdrawal, value);
+
+/**
+ * Whether withdrawal AE application + actor-flag bookkeeping runs on save fail.
+ * Undefined defaults to true.
+ * @param {Item} item @returns {boolean}
+ */
+export const getWithdrawalEnabled = (item) => getWithdrawal(item)?.enabled !== false;
+
+export const setWithdrawalEnabled = (item, value) => {
+  const block = getWithdrawal(item) ?? {};
+  return setWithdrawal(item, { ...block, enabled: !!value });
+};
+
+/** @param {Item} item */ export const getWithdrawalMod = (item) =>
+  getWithdrawal(item)?.mod ?? null;
+
+export const setWithdrawalMod = (item, value) => {
+  const block = getWithdrawal(item) ?? {};
+  return setWithdrawal(item, { ...block, mod: value });
+};
+
+/**
+ * Item-level pointer to a withdrawal AE template that lives on the same item.
+ * The long-rest tick clones this AE onto the actor when withdrawal applies; if
+ * unset, falls back to the v0.3 default behavior.
+ * @param {Item} item @returns {string|null}
+ */
+export const getWithdrawalEffectId = (item) => getWithdrawal(item)?.effectId ?? null;
+
+export const setWithdrawalEffectId = (item, value) => {
+  const block = getWithdrawal(item) ?? {};
+  return setWithdrawal(item, { ...block, effectId: value });
+};
+
+// ─── Substance flags (overdose) ──────────────────────────────────────────────
 
 /**
  * @typedef {Object} OverdoseBlock
@@ -132,19 +195,6 @@ export const getOverdose = (item) =>
 
 export const setOverdose = (item, value) =>
   item.setFlag(MODULE_ID, FLAGS.overdose, value);
-
-/**
- * Item-level pointer to a withdrawal AE template that lives on the same item.
- * The long-rest tick clones this AE onto the actor when withdrawal applies; if
- * unset, falls back to the v0.3 default behavior.
- * @param {Item} item
- * @returns {string|null}
- */
-export const getWithdrawalEffectId = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.withdrawalEffect) ?? null;
-
-export const setWithdrawalEffectId = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.withdrawalEffect, value);
 
 // ─── Paraphernalia flag (addictionSaveBypass) ────────────────────────────────
 

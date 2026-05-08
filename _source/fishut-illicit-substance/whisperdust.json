@@ -9,10 +9,19 @@
     "description": {
       "value": "<p>A pale powder folded into rolling papers and chewed under the tongue. Modern street name for a recipe older than streets — the same blend of crushed seeds and synthetic alkaloids surfaces in every city's quieter corners under a different name each year.</p><p><strong><em>Desired effects on use.</em></strong> For 30 minutes you have advantage on Wisdom (Insight) checks and Wisdom (Perception) checks that rely on hearing.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 12 Constitution saving throw. On a failed save, you gain the Addicted condition from Whisperdust (see below).</p><p><strong><em>Addicted from Whisperdust.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom saving throws (background voices keep pulling at your attention).</p><p><strong><em>Withdrawal Modifier: 2.</em></strong> Withdrawal lasts max(2 &minus; your Constitution modifier, 1) long rests, minimum 1.</p><p><em>Requires: Rolling Papers.</em></p>"
     },
-    "type": { "value": "poison", "subtype": "ingested" },
+    "type": {
+      "value": "poison",
+      "subtype": "ingested"
+    },
     "rarity": "uncommon",
-    "weight": { "value": 0.05, "units": "lb" },
-    "price": { "value": 40, "denomination": "gp" },
+    "weight": {
+      "value": 0.05,
+      "units": "lb"
+    },
+    "price": {
+      "value": 40,
+      "denomination": "gp"
+    },
     "uses": {
       "spent": 0,
       "max": "1",
@@ -23,36 +32,79 @@
         "type": "utility",
         "_id": "fhActWhisperD001",
         "sort": 0,
-        "activation": { "type": "action", "override": false, "condition": "" },
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
         "consumption": {
-          "scaling": { "allowed": false },
+          "scaling": {
+            "allowed": false
+          },
           "spellSlot": true,
           "targets": [
-            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
           ]
         },
-        "description": { "chatFlavor": "" },
-        "duration": { "units": "minute", "value": "30", "concentration": false, "override": false },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "minute",
+          "value": "30",
+          "concentration": false,
+          "override": false
+        },
         "effects": [
-          { "_id": "fhAEWhisperBen01" }
+          {
+            "_id": "fhAEWhisperBen01"
+          }
         ],
         "flags": {},
-        "range": { "units": "self", "override": false, "special": "" },
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
         "target": {
-          "template": { "contiguous": false, "units": "ft", "type": "" },
-          "affects": { "choice": false, "type": "self" },
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
           "override": false,
           "prompt": true
         },
-        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
         "visibility": {
-          "level": { "min": null, "max": null },
+          "level": {
+            "min": null,
+            "max": null
+          },
           "requireAttunement": false,
           "requireIdentification": false,
           "requireMagic": false,
           "identifier": ""
         },
-        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
         "name": ""
       }
     }
@@ -62,11 +114,20 @@
       "kind": "substance",
       "category": "mindAltering",
       "setting": "modern",
-      "requiredSubtypes": ["rolling-papers"],
+      "requiredSubtypes": [
+        "rolling-papers"
+      ],
       "addiction": {
-        "save": { "ability": "con", "dc": 12 },
-        "withdrawalMod": 2,
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 12
+        },
         "addictionEffectId": "fhAEWhisperAdc01"
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 2
       },
       "schemaVersion": 2
     }
@@ -79,7 +140,9 @@
       "img": "icons/svg/aura.svg",
       "transfer": false,
       "disabled": false,
-      "duration": { "seconds": 1800 },
+      "duration": {
+        "seconds": 1800
+      },
       "description": "<p>Advantage on Wisdom (Insight) checks and on hearing-based Wisdom (Perception) checks.</p>",
       "changes": [],
       "flags": {}
@@ -91,12 +154,16 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": ["poisoned"],
+      "statuses": [
+        "poisoned"
+      ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom saving throws until withdrawal completes.</p>",
       "changes": [],
       "flags": {}
     }
   ],
-  "ownership": { "default": 0 }
+  "ownership": {
+    "default": 0
+  }
 }

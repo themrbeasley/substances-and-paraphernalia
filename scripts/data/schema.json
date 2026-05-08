@@ -105,7 +105,6 @@
     "withdrawal": "withdrawal",
     "schemaVersion": "schemaVersion",
     "modifier": "modifier",
-    "overdose": "overdose",
-    "withdrawalEffect": "withdrawalEffectId"
+    "overdose": "overdose"
   }
 }

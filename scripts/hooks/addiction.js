@@ -2,7 +2,10 @@ import { MODULE_ID, FLAGS } from "../config.js";
 import {
   getAddiction,
   getAddictionEffectId,
+  getAddictionEnabled,
   getWithdrawalEffectId,
+  getWithdrawalEnabled,
+  getWithdrawalMod,
   getActorWithdrawal,
   getActorWithdrawalEntry,
   setActorWithdrawalEntry,
@@ -41,6 +44,7 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
+  if (!getAddictionEnabled(item)) return;
   const addiction = getAddiction(item);
   if (!addiction || typeof addiction.save?.dc !== "number") return;
 
@@ -100,7 +104,8 @@ export async function rollSaveAndApply(actor, item) {
 export async function applyOutcome(actor, item, outcome) {
   const addiction = getAddiction(item);
   if (!addiction) return;
-  const wMod = Number(addiction.withdrawalMod) || 0;
+  const withdrawalEnabled = getWithdrawalEnabled(item);
+  const wMod = Number(getWithdrawalMod(item)) || 0;
   const newComputed = computeRestsRemaining(wMod, conMod(actor));
 
   if (outcome?.alreadyAddicted) {
@@ -159,18 +164,29 @@ export async function applyOutcome(actor, item, outcome) {
 
   if (outcome?.saveResult === "fail") {
     await applyAddictionEffect(actor, item);
-    try {
-      await applyWithdrawalEffect(actor, item);
-    } catch (err) {
-      logger.error("withdrawal effect flow failed", err);
+    if (withdrawalEnabled) {
+      try {
+        await applyWithdrawalEffect(actor, item);
+      } catch (err) {
+        logger.error("withdrawal effect flow failed", err);
+      }
+      await setActorWithdrawalEntry(actor, item.id, {
+        restsRemaining: newComputed,
+        appliedAt: new Date().toISOString(),
+      });
     }
-    await setActorWithdrawalEntry(actor, item.id, {
-      restsRemaining: newComputed,
-      appliedAt: new Date().toISOString(),
-    });
-    let key = "FISHUT.Addiction.Save.Fail";
-    if (advantageSource) key = "FISHUT.Addiction.Save.FailWithAdvantage";
-    else if (isPlusN) key = "FISHUT.Addiction.Save.FailWithBonus";
+    let key;
+    if (!withdrawalEnabled) {
+      if (advantageSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithAdvantage";
+      else if (isPlusN) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithBonus";
+      else key = "FISHUT.Addiction.Save.FailNoWithdrawal";
+    } else if (advantageSource) {
+      key = "FISHUT.Addiction.Save.FailWithAdvantage";
+    } else if (isPlusN) {
+      key = "FISHUT.Addiction.Save.FailWithBonus";
+    } else {
+      key = "FISHUT.Addiction.Save.Fail";
+    }
     await chat(
       game.i18n.format(key, {
         actor: actor.name,
@@ -180,7 +196,10 @@ export async function applyOutcome(actor, item, outcome) {
         bonus: bonusValue,
       }),
     );
-    return { applied: "addicted", restsRemaining: newComputed };
+    return {
+      applied: "addicted",
+      restsRemaining: withdrawalEnabled ? newComputed : 0,
+    };
   }
 }
 

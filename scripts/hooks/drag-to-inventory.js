@@ -21,6 +21,7 @@ import {
   getAddiction,
   getAddictionEffectId,
   getOverdose,
+  getWithdrawalMod,
   setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
 import { computeRestsRemaining } from "../data/withdrawal.js";
@@ -185,7 +186,7 @@ export async function applyDragOutcome(actor, item, choice) {
         logger.warn(`addicted: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const wMod = Number(addiction.withdrawalMod) || 0;
+      const wMod = Number(getWithdrawalMod(item)) || 0;
       const rests = computeRestsRemaining(wMod, conMod(actor));
       await applyAddictionEffect(actor, item);
       await setActorWithdrawalEntry(actor, item.id, {
@@ -208,7 +209,7 @@ export async function applyDragOutcome(actor, item, choice) {
         logger.warn(`withdrawing: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const wMod = Number(addiction.withdrawalMod) || 0;
+      const wMod = Number(getWithdrawalMod(item)) || 0;
       const rests = computeRestsRemaining(wMod, conMod(actor));
       await setActorWithdrawalEntry(actor, item.id, {
         restsRemaining: rests,

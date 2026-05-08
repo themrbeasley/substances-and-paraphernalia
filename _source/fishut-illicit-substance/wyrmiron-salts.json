@@ -9,10 +9,19 @@
     "description": {
       "value": "<p>Black flakes ground from rust-stained scales shed by elder dragons. Inhaled through a snuff horn, the salts coat the lungs in a brief, glittering ash. Mercenaries pay handsomely; clerics call it desecration.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +1 bonus to AC as your skin hardens with a faint scaly sheen.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wyrmiron Salts (see below).</p><p><strong><em>Addicted from Wyrmiron Salts.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Stealth) checks (your skin makes a faint metallic rasp).</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Snuff Horn.</em></p>"
     },
-    "type": { "value": "poison", "subtype": "inhaled" },
+    "type": {
+      "value": "poison",
+      "subtype": "inhaled"
+    },
     "rarity": "rare",
-    "weight": { "value": 0.1, "units": "lb" },
-    "price": { "value": 350, "denomination": "gp" },
+    "weight": {
+      "value": 0.1,
+      "units": "lb"
+    },
+    "price": {
+      "value": 350,
+      "denomination": "gp"
+    },
     "uses": {
       "spent": 0,
       "max": "1",
@@ -23,36 +32,79 @@
         "type": "utility",
         "_id": "fhActWyrmiron001",
         "sort": 0,
-        "activation": { "type": "action", "override": false, "condition": "" },
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
         "consumption": {
-          "scaling": { "allowed": false },
+          "scaling": {
+            "allowed": false
+          },
           "spellSlot": true,
           "targets": [
-            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
           ]
         },
-        "description": { "chatFlavor": "" },
-        "duration": { "units": "minute", "value": "10", "concentration": false, "override": false },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "minute",
+          "value": "10",
+          "concentration": false,
+          "override": false
+        },
         "effects": [
-          { "_id": "fhAEWyrmironBen1" }
+          {
+            "_id": "fhAEWyrmironBen1"
+          }
         ],
         "flags": {},
-        "range": { "units": "self", "override": false, "special": "" },
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
         "target": {
-          "template": { "contiguous": false, "units": "ft", "type": "" },
-          "affects": { "choice": false, "type": "self" },
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
           "override": false,
           "prompt": true
         },
-        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
         "visibility": {
-          "level": { "min": null, "max": null },
+          "level": {
+            "min": null,
+            "max": null
+          },
           "requireAttunement": false,
           "requireIdentification": false,
           "requireMagic": false,
           "identifier": ""
         },
-        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
         "name": ""
       }
     }
@@ -62,11 +114,20 @@
       "kind": "substance",
       "category": "performanceEnhancing",
       "setting": "fantasy",
-      "requiredSubtypes": ["snuff-horn"],
+      "requiredSubtypes": [
+        "snuff-horn"
+      ],
       "addiction": {
-        "save": { "ability": "con", "dc": 14 },
-        "withdrawalMod": 4,
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 14
+        },
         "addictionEffectId": "fhAEWyrmironAdc1"
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 4
       },
       "schemaVersion": 2
     }
@@ -79,10 +140,17 @@
       "img": "icons/svg/aura.svg",
       "transfer": false,
       "disabled": false,
-      "duration": { "seconds": 600 },
+      "duration": {
+        "seconds": 600
+      },
       "description": "<p>+1 bonus to AC as skin hardens with a faint scaly sheen.</p>",
       "changes": [
-        { "key": "system.attributes.ac.bonus", "mode": 2, "value": "+1", "priority": 20 }
+        {
+          "key": "system.attributes.ac.bonus",
+          "mode": 2,
+          "value": "+1",
+          "priority": 20
+        }
       ],
       "flags": {}
     },
@@ -93,12 +161,16 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": ["poisoned"],
+      "statuses": [
+        "poisoned"
+      ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Dexterity (Stealth) checks until withdrawal completes.</p>",
       "changes": [],
       "flags": {}
     }
   ],
-  "ownership": { "default": 0 }
+  "ownership": {
+    "default": 0
+  }
 }

@@ -9,10 +9,19 @@
     "description": {
       "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws made to resist being grappled, shoved, or restrained.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Tincture Dropper.</em></p>"
     },
-    "type": { "value": "poison", "subtype": "ingested" },
+    "type": {
+      "value": "poison",
+      "subtype": "ingested"
+    },
     "rarity": "rare",
-    "weight": { "value": 0.2, "units": "lb" },
-    "price": { "value": 300, "denomination": "gp" },
+    "weight": {
+      "value": 0.2,
+      "units": "lb"
+    },
+    "price": {
+      "value": 300,
+      "denomination": "gp"
+    },
     "uses": {
       "spent": 0,
       "max": "1",
@@ -23,36 +32,79 @@
         "type": "utility",
         "_id": "fhActGntBreath01",
         "sort": 0,
-        "activation": { "type": "action", "override": false, "condition": "" },
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
         "consumption": {
-          "scaling": { "allowed": false },
+          "scaling": {
+            "allowed": false
+          },
           "spellSlot": true,
           "targets": [
-            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
           ]
         },
-        "description": { "chatFlavor": "" },
-        "duration": { "units": "minute", "value": "10", "concentration": false, "override": false },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "minute",
+          "value": "10",
+          "concentration": false,
+          "override": false
+        },
         "effects": [
-          { "_id": "fhAEGntBreathBen" }
+          {
+            "_id": "fhAEGntBreathBen"
+          }
         ],
         "flags": {},
-        "range": { "units": "self", "override": false, "special": "" },
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
         "target": {
-          "template": { "contiguous": false, "units": "ft", "type": "" },
-          "affects": { "choice": false, "type": "self" },
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
           "override": false,
           "prompt": true
         },
-        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
         "visibility": {
-          "level": { "min": null, "max": null },
+          "level": {
+            "min": null,
+            "max": null
+          },
           "requireAttunement": false,
           "requireIdentification": false,
           "requireMagic": false,
           "identifier": ""
         },
-        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
         "name": ""
       }
     }
@@ -62,11 +114,20 @@
       "kind": "substance",
       "category": "performanceEnhancing",
       "setting": "fantasy",
-      "requiredSubtypes": ["tincture-dropper"],
+      "requiredSubtypes": [
+        "tincture-dropper"
+      ],
       "addiction": {
-        "save": { "ability": "con", "dc": 14 },
-        "withdrawalMod": 4,
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 14
+        },
         "addictionEffectId": "fhAEGntBreathAdc"
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 4
       },
       "schemaVersion": 2
     }
@@ -79,10 +140,17 @@
       "img": "icons/svg/aura.svg",
       "transfer": false,
       "disabled": false,
-      "duration": { "seconds": 600 },
+      "duration": {
+        "seconds": 600
+      },
       "description": "<p>+2 to Strength (Athletics) checks. Advantage on Strength saves vs. grapple/shove/restrain.</p>",
       "changes": [
-        { "key": "system.skills.ath.bonuses.check", "mode": 2, "value": "+2", "priority": 20 }
+        {
+          "key": "system.skills.ath.bonuses.check",
+          "mode": 2,
+          "value": "+2",
+          "priority": 20
+        }
       ],
       "flags": {}
     },
@@ -93,12 +161,16 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": ["poisoned"],
+      "statuses": [
+        "poisoned"
+      ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Dexterity (Sleight of Hand) checks until withdrawal completes.</p>",
       "changes": [],
       "flags": {}
     }
   ],
-  "ownership": { "default": 0 }
+  "ownership": {
+    "default": 0
+  }
 }

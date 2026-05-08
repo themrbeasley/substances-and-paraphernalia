@@ -19,6 +19,7 @@ import {
   getAddiction,
   getOverdose,
   getRequiredSubtypes,
+  getWithdrawalMod,
   isSubstance,
   setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
@@ -52,11 +53,31 @@ function onRenderApplicationV2(app, htmlElement) {
   if (!isSubstance(doc)) return;
   if (!htmlElement?.querySelector) return;
 
+  // V13 lazy-builds the .controls-dropdown menu on first click of the 3-dot
+  // header button, so it usually isn't in the DOM at render time. Attempt
+  // eager injection (handles eagerly-rendered cases), then fall back to a
+  // MutationObserver that injects when the dropdown appears.
+  if (tryInjectMenuEntry(htmlElement, doc)) return;
+
+  const observer = new MutationObserver(() => {
+    tryInjectMenuEntry(htmlElement, doc);
+  });
+  observer.observe(htmlElement, { childList: true, subtree: true });
+
+  const closeHook = (closingApp) => {
+    if (closingApp !== app) return;
+    observer.disconnect();
+    Hooks.off("closeApplicationV2", closeHook);
+  };
+  Hooks.on("closeApplicationV2", closeHook);
+}
+
+function tryInjectMenuEntry(htmlElement, doc) {
   const dropdown =
     htmlElement.querySelector("header.window-header .controls-dropdown") ??
     htmlElement.querySelector(".controls-dropdown");
-  if (!dropdown) return;
-  if (dropdown.querySelector(`[${INJECTED_MARKER}]`)) return;
+  if (!dropdown) return false;
+  if (dropdown.querySelector(`[${INJECTED_MARKER}]`)) return true;
 
   const li = document.createElement("li");
   const button = document.createElement("button");
@@ -79,6 +100,7 @@ function onRenderApplicationV2(app, htmlElement) {
   });
   li.appendChild(button);
   dropdown.appendChild(li);
+  return true;
 }
 
 /**
@@ -299,7 +321,7 @@ async function embedSubstanceClone(actor, sourceItem) {
   delete sourceData._id;
 
   // Capture original effect ids by name so we can remap id-pointing flags
-  // (`addiction.addictionEffectId`, `withdrawalEffectId`) onto the cloned AEs.
+  // (`addiction.addictionEffectId`, `withdrawal.effectId`) onto the cloned AEs.
   const originalIdByName = new Map();
   for (const ae of sourceItem.effects ?? []) {
     if (ae.name) originalIdByName.set(ae.name, ae.id ?? ae._id);
@@ -321,9 +343,9 @@ async function embedSubstanceClone(actor, sourceItem) {
   if (oldAddict && remap.has(oldAddict)) {
     updates[`flags.${MODULE_ID}.${FLAGS.addiction}.addictionEffectId`] = remap.get(oldAddict);
   }
-  const oldWithdraw = sourceItem.flags?.[MODULE_ID]?.[FLAGS.withdrawalEffect];
+  const oldWithdraw = sourceItem.flags?.[MODULE_ID]?.[FLAGS.withdrawal]?.effectId;
   if (oldWithdraw && remap.has(oldWithdraw)) {
-    updates[`flags.${MODULE_ID}.${FLAGS.withdrawalEffect}`] = remap.get(oldWithdraw);
+    updates[`flags.${MODULE_ID}.${FLAGS.withdrawal}.effectId`] = remap.get(oldWithdraw);
   }
   if (Object.keys(updates).length > 0) {
     await embedded.update(updates);
@@ -352,7 +374,7 @@ async function embedStubParaphernalia(actor, readySubtypes) {
 async function preSeedAddictionState(actor, item, state, conMod) {
   const addiction = getAddiction(item);
   if (!addiction) return;
-  const wMod = Number(addiction.withdrawalMod) || 0;
+  const wMod = Number(getWithdrawalMod(item)) || 0;
   const fullRests = computeRestsRemaining(wMod, conMod);
   const rests =
     state === "withdrawing" ? Math.max(1, Math.ceil(fullRests / 2)) : fullRests;

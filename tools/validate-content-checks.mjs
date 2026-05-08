@@ -31,9 +31,11 @@ function findEffect(data, id) {
  * v0.3 baseline. v0.4 adds:
  *   - flags[…].overdose: when `enabled`, require chancePercent (1–100) and
  *     non-empty `description`.
- *   - flags[…].withdrawalEffectId: must resolve to an AE on the same item whose
- *     name contains "withdraw"; that AE warns if it imposes disadvantage on
- *     attack or check (escalate, don't duplicate poisoned).
+ *   - flags[…].withdrawal: top-level block { enabled?, mod, effectId? }.
+ *     `mod` is required and positive-integer. `effectId`, when set, must
+ *     resolve to an AE on the same item whose name contains "withdraw";
+ *     that AE warns if it imposes disadvantage on attack or check
+ *     (escalate, don't duplicate poisoned).
  *
  * @param {{relPath: string, data: object}} file
  * @returns {{errors: string[], warnings: string[]}}
@@ -77,13 +79,30 @@ export function checkSubstance(file) {
     err(`addiction block is required`);
     return { errors, warnings };
   }
+  if (addiction.enabled !== undefined && typeof addiction.enabled !== "boolean") {
+    err(`addiction.enabled must be a boolean when present (got ${typeof addiction.enabled})`);
+  }
+  if (addiction.withdrawalMod !== undefined) {
+    err(
+      `addiction.withdrawalMod is removed in v0.4 — move to flags.withdrawal.mod`,
+    );
+  }
   const dc = addiction.save?.dc;
   if (typeof dc !== "number" || !Number.isFinite(dc)) {
     err(`addiction.save.dc must be a finite number (got ${dc})`);
   }
-  const w = addiction.withdrawalMod;
-  if (!Number.isInteger(w) || w <= 0) {
-    err(`addiction.withdrawalMod must be a positive integer (got ${w})`);
+
+  const withdrawal = flags.withdrawal;
+  if (!withdrawal || typeof withdrawal !== "object" || Array.isArray(withdrawal)) {
+    err(`withdrawal block is required (object with at least { mod })`);
+  } else {
+    if (withdrawal.enabled !== undefined && typeof withdrawal.enabled !== "boolean") {
+      err(`withdrawal.enabled must be a boolean when present (got ${typeof withdrawal.enabled})`);
+    }
+    const w = withdrawal.mod;
+    if (!Number.isInteger(w) || w <= 0) {
+      err(`withdrawal.mod must be a positive integer (got ${w})`);
+    }
   }
 
   const aeId = addiction.addictionEffectId;
@@ -131,12 +150,17 @@ export function checkSubstance(file) {
     }
   }
 
-  // v0.4 — withdrawalEffectId resolution + name-contract + content guidance.
-  const withdrawalId = flags.withdrawalEffectId;
+  // v0.4 — withdrawal.effectId resolution + name-contract + content guidance.
+  if (flags.withdrawalEffectId !== undefined) {
+    err(
+      `legacy "withdrawalEffectId" flag is removed in v0.4 — declare flags["${FLAG_SCOPE}"].withdrawal.effectId instead`,
+    );
+  }
+  const withdrawalId = flags.withdrawal?.effectId;
   if (withdrawalId !== undefined && withdrawalId !== null && withdrawalId !== "") {
     const withdrawalAe = findEffect(data, withdrawalId);
     if (!withdrawalAe) {
-      err(`withdrawalEffectId "${withdrawalId}" not found in effects[]`);
+      err(`withdrawal.effectId "${withdrawalId}" not found in effects[]`);
     } else {
       if (!/withdraw/i.test(withdrawalAe.name ?? "")) {
         err(`withdrawal AE name "${withdrawalAe.name}" must contain "withdraw"`);

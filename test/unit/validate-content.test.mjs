@@ -22,9 +22,9 @@ function baseSubstance(overrides = {}) {
           setting: "fantasy",
           addiction: {
             save: { ability: "con", dc: 14 },
-            withdrawalMod: 3,
             addictionEffectId: "ae-addict-001",
           },
+          withdrawal: { mod: 3 },
         },
       },
       effects: [
@@ -151,25 +151,25 @@ describe("checkSubstance — overdose flag (v0.4)", () => {
   });
 });
 
-describe("checkSubstance — withdrawalEffectId (v0.4)", () => {
+describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
   function withWithdrawalAe(file, ae) {
     file.data.effects.push(ae);
-    file.data.flags[SCOPE].withdrawalEffectId = ae._id;
+    file.data.flags[SCOPE].withdrawal.effectId = ae._id;
     return file;
   }
 
-  it("accepts a missing withdrawalEffectId", () => {
+  it("accepts a missing withdrawal.effectId", () => {
     const file = baseSubstance();
     const { errors, warnings } = checkSubstance(file);
     assert.deepEqual(errors, []);
     assert.deepEqual(warnings, []);
   });
 
-  it("errors when withdrawalEffectId points at nothing", () => {
+  it("errors when withdrawal.effectId points at nothing", () => {
     const file = baseSubstance();
-    file.data.flags[SCOPE].withdrawalEffectId = "ghost";
+    file.data.flags[SCOPE].withdrawal.effectId = "ghost";
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /withdrawalEffectId "ghost" not found/.test(e)), true);
+    assert.equal(errors.some((e) => /withdrawal\.effectId "ghost" not found/.test(e)), true);
   });
 
   it("errors when the resolved AE name does not contain 'withdraw'", () => {

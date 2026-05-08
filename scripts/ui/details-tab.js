@@ -1,10 +1,12 @@
-import { MODULE_ID, FLAGS, SCHEMA, labelKey } from "../config.js";
+import { MODULE_ID, FLAGS, SCHEMA } from "../config.js";
 import {
   getKind,
   getCategory,
+  getAddictionEnabled,
   getAddictionSave,
-  getWithdrawalMod,
   getAddictionEffectId,
+  getWithdrawalEnabled,
+  getWithdrawalMod,
   getWithdrawalEffectId,
   getOverdose,
   getRequiredSubtypes,
@@ -12,13 +14,16 @@ import {
   getModifier,
   setKind,
   setCategory,
+  setAddictionEnabled,
   setAddictionSave,
-  setWithdrawalMod,
   setAddictionEffectId,
+  setWithdrawalEnabled,
+  setWithdrawalMod,
   setWithdrawalEffectId,
   setOverdose,
   setRequiredSubtypes,
   setSubtype,
+  setModifier,
 } from "../data/flag-schema.js";
 import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
 import { logger } from "../logger.js";
@@ -203,17 +208,21 @@ function buildLabels() {
     sectionHeader: L("FISHUT.DetailsTab.SectionHeader"),
     category: L("FISHUT.DetailsTab.Field.Category.Label"),
     categoryAny: L("FISHUT.DetailsTab.Field.Category.Any"),
+    addictionHeader: L("FISHUT.DetailsTab.Addiction.Header"),
+    addictionEnabled: L("FISHUT.DetailsTab.Addiction.Enabled"),
     saveAbility: L("FISHUT.DetailsTab.Field.SaveAbility"),
     saveDc: L("FISHUT.DetailsTab.Field.SaveDc"),
-    withdrawalMod: L("FISHUT.DetailsTab.Field.WithdrawalMod"),
     addictionEffect: L("FISHUT.DetailsTab.Field.AddictionEffect.Label"),
+    withdrawalHeader: L("FISHUT.DetailsTab.Withdrawal.Header"),
+    withdrawalEnabled: L("FISHUT.DetailsTab.Withdrawal.Enabled"),
+    withdrawalMod: L("FISHUT.DetailsTab.Field.WithdrawalMod"),
     withdrawalEffect: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Label"),
-    withdrawalEffectHint: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Hint"),
+    withdrawalEffectTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip"),
     overdoseHeader: L("FISHUT.DetailsTab.Overdose.Header"),
     overdoseEnabled: L("FISHUT.DetailsTab.Overdose.Enabled"),
     overdoseChancePercent: L("FISHUT.DetailsTab.Overdose.ChancePercent"),
     overdoseDescription: L("FISHUT.DetailsTab.Overdose.Description"),
-    overdoseHint: L("FISHUT.DetailsTab.Overdose.Hint"),
+    overdoseTooltip: L("FISHUT.DetailsTab.Overdose.Tooltip"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
     requiredSubtypes: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Label"),
@@ -226,8 +235,8 @@ function buildLabels() {
     bypassType: L("FISHUT.DetailsTab.Bypass.Type"),
     bypassAppliesTo: L("FISHUT.DetailsTab.Bypass.AppliesTo.Label"),
     bypassUsesPerDay: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Label"),
+    bypassUsesPerDayPlaceholder: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Placeholder"),
     bypassBonus: L("FISHUT.DetailsTab.Bypass.Bonus.Label"),
-    bypassManageOnEffectsTab: L("FISHUT.DetailsTab.Bypass.ManageOnEffectsTab"),
   };
 }
 
@@ -256,10 +265,6 @@ function buildSubtypeOptions(currentId) {
 
 function buildSubstanceContext(item) {
   const category = getCategory(item);
-  const save = getAddictionSave(item) ?? { ability: "con", dc: null };
-  const withdrawalMod = getWithdrawalMod(item);
-  const addictionEffectId = getAddictionEffectId(item);
-  const withdrawalEffectId = getWithdrawalEffectId(item);
   const requiredSubtypeIds = getRequiredSubtypes(item) ?? [];
 
   const categories = SCHEMA.categories.map((c) => ({
@@ -267,6 +272,33 @@ function buildSubstanceContext(item) {
     label: L(c.labelKey),
     selected: c.id === category,
   }));
+
+  const subtypeCatalog = buildSubtypeOptions(null);
+  const subtypeLabelById = new Map(subtypeCatalog.map((o) => [o.id, o.label]));
+  const usedIds = new Set(requiredSubtypeIds);
+  const requiredSubtypes = requiredSubtypeIds.map((id, idx) => ({
+    idx,
+    id,
+    label: subtypeLabelById.get(id) ?? id,
+  }));
+  const subtypeAddOptions = subtypeCatalog
+    .filter((o) => !usedIds.has(o.id))
+    .map((o) => ({ id: o.id, label: o.label }));
+
+  return {
+    categories,
+    addiction: buildAddictionContext(item),
+    withdrawal: buildWithdrawalContext(item),
+    overdose: buildOverdoseContext(item),
+    requiredSubtypes,
+    subtypeAddOptions,
+  };
+}
+
+function buildAddictionContext(item) {
+  const enabled = getAddictionEnabled(item);
+  const save = getAddictionSave(item) ?? { ability: "con", dc: null };
+  const addictionEffectId = getAddictionEffectId(item);
 
   const allEffects = Array.from(item.effects ?? []);
   const noneLabel = L("FISHUT.DetailsTab.Field.AddictionEffect.None");
@@ -279,6 +311,37 @@ function buildSubstanceContext(item) {
     })),
   ];
 
+  const currentAbility = save.ability ?? "con";
+  const abilityEntries = Object.entries(CONFIG?.DND5E?.abilities ?? {});
+  const abilityOptions = abilityEntries.map(([id, entry]) => ({
+    id,
+    label: entry?.label ? L(entry.label) : id,
+    selected: id === currentAbility,
+  }));
+  // Preserve a saved ability that's no longer in CONFIG (e.g. GM removed a
+  // custom ability after authoring) so re-saving doesn't silently change it.
+  if (currentAbility && !abilityOptions.some((o) => o.selected)) {
+    abilityOptions.unshift({ id: currentAbility, label: currentAbility, selected: true });
+  }
+
+  return {
+    enabled,
+    fieldsDisabled: !enabled,
+    save: {
+      ability: currentAbility,
+      abilityOptions,
+      dc: Number.isFinite(save.dc) ? save.dc : "",
+    },
+    addictionEffectOptions,
+  };
+}
+
+function buildWithdrawalContext(item) {
+  const enabled = getWithdrawalEnabled(item);
+  const withdrawalMod = getWithdrawalMod(item);
+  const withdrawalEffectId = getWithdrawalEffectId(item);
+
+  const allEffects = Array.from(item.effects ?? []);
   // Withdrawal-effect picker only lists AEs whose name contains "withdraw"
   // (case-insensitive) — same naming contract enforced by validate-content
   // and the long-rest tick. If the saved id no longer matches the contract
@@ -306,44 +369,11 @@ function buildSubstanceContext(item) {
     });
   }
 
-  const currentAbility = save.ability ?? "con";
-  const abilityEntries = Object.entries(CONFIG?.DND5E?.abilities ?? {});
-  const abilityOptions = abilityEntries.map(([id, entry]) => ({
-    id,
-    label: entry?.label ? L(entry.label) : id,
-    selected: id === currentAbility,
-  }));
-  // Preserve a saved ability that's no longer in CONFIG (e.g. GM removed a
-  // custom ability after authoring) so re-saving doesn't silently change it.
-  if (currentAbility && !abilityOptions.some((o) => o.selected)) {
-    abilityOptions.unshift({ id: currentAbility, label: currentAbility, selected: true });
-  }
-
-  const subtypeCatalog = buildSubtypeOptions(null);
-  const subtypeLabelById = new Map(subtypeCatalog.map((o) => [o.id, o.label]));
-  const usedIds = new Set(requiredSubtypeIds);
-  const requiredSubtypes = requiredSubtypeIds.map((id, idx) => ({
-    idx,
-    id,
-    label: subtypeLabelById.get(id) ?? id,
-  }));
-  const subtypeAddOptions = subtypeCatalog
-    .filter((o) => !usedIds.has(o.id))
-    .map((o) => ({ id: o.id, label: o.label }));
-
   return {
-    categories,
-    save: {
-      ability: currentAbility,
-      abilityOptions,
-      dc: Number.isFinite(save.dc) ? save.dc : "",
-    },
-    withdrawalMod: Number.isFinite(withdrawalMod) ? withdrawalMod : "",
-    addictionEffectOptions,
+    enabled,
+    fieldsDisabled: !enabled,
+    mod: Number.isFinite(withdrawalMod) ? withdrawalMod : "",
     withdrawalEffectOptions,
-    overdose: buildOverdoseContext(item),
-    requiredSubtypes,
-    subtypeAddOptions,
   };
 }
 
@@ -392,39 +422,35 @@ function findBypassEffect(item) {
 function buildBypassDisplay(match) {
   if (!match) return { present: false };
   const { block } = match;
-  const typeKey = labelKey("modifier.types", block.type);
-  const typeLabel = typeKey ? L(typeKey) : (block.type ?? "");
+  const currentType = block.type ?? "auto-pass";
+  const typeOptions = SCHEMA.modifier.types.map((t) => ({
+    id: t.id,
+    label: L(t.labelKey),
+    selected: t.id === currentType,
+  }));
+
   const appliesToList = Array.isArray(block.appliesTo) ? block.appliesTo : [];
-  const appliesToText = appliesToList.length
-    ? appliesToList
-        .map((id) => {
-          const k = labelKey("administrations", id);
-          return k ? L(k) : id;
-        })
-        .join(", ")
-    : L("FISHUT.DetailsTab.Bypass.AppliesTo.None");
+  const appliesToOptions = SCHEMA.administrations.map((a) => ({
+    id: a.id,
+    label: L(a.labelKey),
+    checked: appliesToList.includes(a.id),
+  }));
+
   const usesPerDay = block.usesPerDay;
-  const usesPerDayText =
-    usesPerDay === undefined || usesPerDay === null || usesPerDay === ""
-      ? L("FISHUT.DetailsTab.Bypass.UsesPerDay.None")
-      : String(usesPerDay);
-  // +N bypass surfaces a per-AE bonus value alongside type/appliesTo/uses;
-  // pipeline sums across AEs at runtime, but the sheet only knows about this
-  // one bypass effect. Display the raw integer with a +/- sign.
-  const isPlusN = block.type === "+N";
+  const usesPerDayValue =
+    usesPerDay === undefined || usesPerDay === null ? "" : String(usesPerDay);
+
+  const isPlusN = currentType === "+N";
   const rawBonus = Number(block.bonus);
-  const bonusValue = Number.isFinite(rawBonus) ? Math.trunc(rawBonus) : null;
-  const bonusText =
-    bonusValue === null
-      ? L("FISHUT.DetailsTab.Bypass.Bonus.None")
-      : `${bonusValue >= 0 ? "+" : ""}${bonusValue}`;
+  const bonusValue = Number.isFinite(rawBonus) ? String(Math.trunc(rawBonus)) : "";
+
   return {
     present: true,
-    typeLabel,
-    appliesToText,
-    usesPerDayText,
+    typeOptions,
+    appliesToOptions,
+    usesPerDayValue,
     isPlusN,
-    bonusText,
+    bonusValue,
   };
 }
 
@@ -438,7 +464,7 @@ function wireDetails(wrapper, item) {
     if (!flagField) return;
     event.stopPropagation();
     const rawValue = readFieldValue(target);
-    persistField(item, flagField, rawValue).catch((err) =>
+    persistField(item, flagField, rawValue, target).catch((err) =>
       logger.error("details-tab persistField failed", err),
     );
   });
@@ -470,14 +496,21 @@ function readFieldValue(target) {
 /**
  * Persist a single scalar field. Exported for Quench coverage.
  * @param {Item} item
- * @param {string} field  Dotted path: category | save.ability | save.dc |
- *   withdrawalMod | addictionEffectId | withdrawalEffectId | subtype
+ * @param {string} field  Dotted path: category | addiction.enabled |
+ *   save.ability | save.dc | addictionEffectId | withdrawal.enabled |
+ *   withdrawal.mod | withdrawal.effectId | subtype | overdose.* | bypass.*
  * @param {string} rawValue
+ * @param {HTMLElement} [target]
+ *   The form control whose change fired. Required for `bypass.appliesTo`,
+ *   which encodes the administration id in `data-fishut-bypass-admin` and
+ *   reports a checked/unchecked toggle (not a value).
  */
-export async function persistField(item, field, rawValue) {
+export async function persistField(item, field, rawValue, target) {
   switch (field) {
     case "category":
       return setCategory(item, rawValue || null);
+    case "addiction.enabled":
+      return setAddictionEnabled(item, rawValue === "true");
     case "save.ability": {
       const current = getAddictionSave(item) ?? { ability: "con", dc: null };
       const ability = (rawValue || "con").trim() || "con";
@@ -490,11 +523,13 @@ export async function persistField(item, field, rawValue) {
         dc: parseIntOrNull(rawValue),
       });
     }
-    case "withdrawalMod":
-      return setWithdrawalMod(item, parseIntOrNull(rawValue));
     case "addictionEffectId":
       return setAddictionEffectId(item, rawValue || null);
-    case "withdrawalEffectId":
+    case "withdrawal.enabled":
+      return setWithdrawalEnabled(item, rawValue === "true");
+    case "withdrawal.mod":
+      return setWithdrawalMod(item, parseIntOrNull(rawValue));
+    case "withdrawal.effectId":
       return setWithdrawalEffectId(item, rawValue || null);
     case "overdose.enabled":
       return persistOverdoseField(item, "enabled", rawValue === "true");
@@ -516,6 +551,29 @@ export async function persistField(item, field, rawValue) {
         return null;
       }
       return setSubtype(item, id);
+    }
+    case "bypass.type":
+      return persistBypassField(item, "type", rawValue || "auto-pass");
+    case "bypass.usesPerDay": {
+      // Empty string → unset (unlimited). Numbers clamped at 0.
+      if (rawValue === "" || rawValue == null) {
+        return persistBypassField(item, "usesPerDay", null);
+      }
+      const n = parseIntOrNull(rawValue);
+      const clamped = n === null ? null : Math.max(0, n);
+      return persistBypassField(item, "usesPerDay", clamped);
+    }
+    case "bypass.bonus": {
+      if (rawValue === "" || rawValue == null) {
+        return persistBypassField(item, "bonus", null);
+      }
+      return persistBypassField(item, "bonus", parseIntOrNull(rawValue));
+    }
+    case "bypass.appliesTo": {
+      const adminId = target?.dataset?.fishutBypassAdmin;
+      if (!adminId) return null;
+      const checked = rawValue === "true";
+      return persistBypassAppliesTo(item, adminId, checked);
     }
     default:
       logger.warn?.("details-tab persistField: unknown field", field);
@@ -598,4 +656,41 @@ async function persistOverdoseField(item, key, value) {
     [key]: value,
   };
   return setOverdose(item, merged);
+}
+
+// Patch a single key on the bypass AE's modifier flag block. Reads the
+// current block, merges the new value, writes via setModifier. `null` for
+// `usesPerDay` / `bonus` strips the key so the validator's "unset = unlimited"
+// /"no bonus" semantics hold.
+async function persistBypassField(item, key, value) {
+  const match = findBypassEffect(item);
+  if (!match) {
+    logger.warn?.("details-tab persistBypassField: no bypass AE on item");
+    return null;
+  }
+  const { effect, block } = match;
+  const merged = { ...block };
+  if (value === null && (key === "usesPerDay" || key === "bonus")) {
+    delete merged[key];
+  } else {
+    merged[key] = value;
+  }
+  return setModifier(effect, merged);
+}
+
+// Toggle membership of `adminId` in the bypass AE's `appliesTo` array.
+async function persistBypassAppliesTo(item, adminId, checked) {
+  const match = findBypassEffect(item);
+  if (!match) {
+    logger.warn?.("details-tab persistBypassAppliesTo: no bypass AE on item");
+    return null;
+  }
+  const { effect, block } = match;
+  const current = Array.isArray(block.appliesTo) ? block.appliesTo : [];
+  const has = current.includes(adminId);
+  let next;
+  if (checked && !has) next = [...current, adminId];
+  else if (!checked && has) next = current.filter((a) => a !== adminId);
+  else return null;
+  return setModifier(effect, { ...block, appliesTo: next });
 }

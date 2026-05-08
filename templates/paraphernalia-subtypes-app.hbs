@@ -3,57 +3,60 @@
     <p>{{labels.intro}}</p>
   </header>
 
-  <fieldset class="fishut-paraphernalia-subtypes__builtins">
-    <legend>{{labels.builtinsHeader}}</legend>
-    <ul class="fishut-paraphernalia-subtypes__list" data-fishut-readonly>
-      {{#each builtins}}
-        <li class="fishut-paraphernalia-subtypes__row" data-id="{{this.id}}">
-          <code class="fishut-paraphernalia-subtypes__id">{{this.id}}</code>
-          <span class="fishut-paraphernalia-subtypes__label">{{this.label}}</span>
-          <span class="fishut-paraphernalia-subtypes__readonly">{{../labels.readOnlyMarker}}</span>
-        </li>
-      {{/each}}
-    </ul>
-  </fieldset>
-
-  <fieldset class="fishut-paraphernalia-subtypes__customs">
-    <legend>{{labels.customsHeader}}</legend>
-    {{#if customs.length}}
-      <ul class="fishut-paraphernalia-subtypes__list" data-fishut-rows>
-        {{#each customs}}
-          <li class="fishut-paraphernalia-subtypes__row" data-index="{{@index}}">
-            <input
-              type="text"
-              name="customs.{{@index}}.id"
-              value="{{this.id}}"
-              placeholder="{{../labels.idPlaceholder}}"
-              pattern="[a-z0-9]+(-[a-z0-9]+)*"
-              required
-            />
-            <input
-              type="text"
-              name="customs.{{@index}}.label"
-              value="{{this.label}}"
-              placeholder="{{../labels.labelPlaceholder}}"
-              required
-            />
-            <button type="button" data-action="removeRow" data-index="{{@index}}">
-              {{../labels.removeRow}}
-            </button>
-          </li>
-        {{/each}}
-      </ul>
-    {{else}}
+  <div class="fishut-paraphernalia-subtypes__cloud" role="list">
+    {{#each builtins}}
+      <span class="fishut-chip fishut-chip--builtin"
+            data-id="{{this.id}}"
+            data-tooltip="{{../labels.readOnlyTooltip}}"
+            role="listitem">
+        <i class="fa-solid fa-lock fishut-chip__lock" aria-hidden="true"></i>
+        <span class="fishut-chip__label">{{this.label}}</span>
+        <code class="fishut-chip__id">{{this.id}}</code>
+      </span>
+    {{/each}}
+    {{#each customs}}
+      <span class="fishut-chip fishut-chip--custom"
+            data-id="{{this.id}}"
+            role="listitem">
+        <span class="fishut-chip__label">{{this.label}}</span>
+        <code class="fishut-chip__id">{{this.id}}</code>
+        <button type="button"
+                class="fishut-chip__remove"
+                data-action="removeChip"
+                data-id="{{this.id}}"
+                aria-label="{{../labels.removeRow}}">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </span>
+    {{/each}}
+    {{#unless customs.length}}
       <p class="fishut-paraphernalia-subtypes__empty">{{labels.emptyHint}}</p>
-    {{/if}}
-    <button type="button" data-action="addRow" class="fishut-paraphernalia-subtypes__add">
+    {{/unless}}
+  </div>
+
+  <div class="fishut-paraphernalia-subtypes__add-row">
+    <input type="text"
+           name="newId"
+           class="fishut-paraphernalia-subtypes__new-id"
+           placeholder="{{labels.idPlaceholder}}"
+           pattern="[a-z0-9]+(-[a-z0-9]+)*"
+           autocomplete="off" />
+    <input type="text"
+           name="newLabel"
+           class="fishut-paraphernalia-subtypes__new-label"
+           placeholder="{{labels.labelPlaceholder}}"
+           autocomplete="off" />
+    <button type="button"
+            data-action="addChip"
+            class="fishut-paraphernalia-subtypes__add">
+      <i class="fa-solid fa-plus" aria-hidden="true"></i>
       {{labels.addRow}}
     </button>
-  </fieldset>
+  </div>
 
   <footer class="fishut-paraphernalia-subtypes__footer">
     <button type="submit" class="fishut-paraphernalia-subtypes__save">
-      <i class="fa-solid fa-floppy-disk"></i>
+      <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
       {{labels.save}}
     </button>
   </footer>

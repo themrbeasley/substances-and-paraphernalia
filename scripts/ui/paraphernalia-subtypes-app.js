@@ -3,6 +3,10 @@
  * setting `customParaphernaliaSubtypes` via `game.settings.registerMenu`.
  * Reads the composed list from `getEffectiveParaphernaliaSubtypes()` so
  * built-ins render alongside (but distinct from) GM-managed customs.
+ *
+ * UX: chip-cloud with built-ins as locked chips and customs as removable
+ * chips. A persistent input row + Add button below the cloud appends new
+ * customs (validating before commit); Save writes the final list and closes.
  */
 
 import { MODULE_ID, SCHEMA } from "../config.js";
@@ -49,8 +53,8 @@ export class ParaphernaliaSubtypesApp extends HandlebarsApplicationMixin(Applica
       closeOnSubmit: true,
     },
     actions: {
-      addRow: ParaphernaliaSubtypesApp._onAddRow,
-      removeRow: ParaphernaliaSubtypesApp._onRemoveRow,
+      addChip: ParaphernaliaSubtypesApp._onAddChip,
+      removeChip: ParaphernaliaSubtypesApp._onRemoveChip,
     },
   };
 
@@ -58,12 +62,21 @@ export class ParaphernaliaSubtypesApp extends HandlebarsApplicationMixin(Applica
     form: { template: TEMPLATE },
   };
 
-  /** @type {Array<{ id: string, label: string }>} */
-  #pending = null;
+  /**
+   * In-flight custom list. Null until the user makes any edit, after which it
+   * shadows the persisted setting until Save (or close-without-save discards).
+   * @type {Array<{ id: string, label: string }> | null}
+   */
+  _pending = null;
+
+  /** @returns {Array<{ id: string, label: string }>} */
+  _currentCustoms() {
+    return this._pending ?? readCustomParaphernaliaSubtypes();
+  }
 
   /** @override */
   async _prepareContext() {
-    const customs = this.#pending ?? readCustomParaphernaliaSubtypes();
+    const customs = this._currentCustoms();
     const composed = getEffectiveParaphernaliaSubtypes({ custom: customs });
     const builtins = composed
       .filter((s) => s.source === "builtin")
@@ -73,12 +86,10 @@ export class ParaphernaliaSubtypesApp extends HandlebarsApplicationMixin(Applica
       customs: customs.map((c) => ({ id: c.id ?? "", label: c.label ?? "" })),
       labels: {
         intro: L("FISHUT.ParaphernaliaManager.Intro"),
-        builtinsHeader: L("FISHUT.ParaphernaliaManager.BuiltinsHeader"),
-        customsHeader: L("FISHUT.ParaphernaliaManager.CustomsHeader"),
         emptyHint: L("FISHUT.ParaphernaliaManager.EmptyHint"),
         addRow: L("FISHUT.ParaphernaliaManager.AddRow"),
         removeRow: L("FISHUT.ParaphernaliaManager.RemoveRow"),
-        readOnlyMarker: L("FISHUT.ParaphernaliaManager.ReadOnlyMarker"),
+        readOnlyTooltip: L("FISHUT.ParaphernaliaManager.ReadOnlyMarker"),
         idPlaceholder: L("FISHUT.ParaphernaliaManager.IdPlaceholder"),
         labelPlaceholder: L("FISHUT.ParaphernaliaManager.LabelPlaceholder"),
         save: L("FISHUT.ParaphernaliaManager.Save"),
@@ -86,39 +97,41 @@ export class ParaphernaliaSubtypesApp extends HandlebarsApplicationMixin(Applica
     };
   }
 
-  /**
-   * Read the current row inputs out of the live form before re-rendering or
-   * submitting. ApplicationV2 forms hand this back as a flat object — we
-   * regroup it back into an array using the indexed `customs.<i>.<key>` names.
-   * @returns {Array<{ id: string, label: string }>}
-   */
-  _readFormRows() {
+  static async _onAddChip(_event, _target) {
     const form = this.element;
-    if (!form) return [];
-    const fd = new foundry.applications.ux.FormDataExtended(form).object;
-    return collectRows(fd);
-  }
-
-  static async _onAddRow(_event, _target) {
-    const rows = this._readFormRows();
-    rows.push({ id: "", label: "" });
-    this.#pending = rows;
+    if (!form) return;
+    const idInput = form.querySelector('[name="newId"]');
+    const labelInput = form.querySelector('[name="newLabel"]');
+    const id = String(idInput?.value ?? "").trim();
+    const labelRaw = String(labelInput?.value ?? "").trim();
+    if (!id) {
+      ui?.notifications?.error?.(L("FISHUT.ParaphernaliaManager.Error.MissingId", { index: "" }));
+      return;
+    }
+    const proposed = [...this._currentCustoms(), { id, label: labelRaw || id }];
+    const validation = validateCustomParaphernaliaSubtypes(proposed);
+    if (!validation.valid) {
+      const newEntryErrors = validation.errors.filter((e) => e.index === proposed.length - 1);
+      const errors = newEntryErrors.length > 0 ? newEntryErrors : validation.errors;
+      const messages = errors.map((e) => L(errorMessageKey(e.code), { index: e.index + 1 }));
+      ui?.notifications?.error?.(messages.join("\n"));
+      return;
+    }
+    this._pending = proposed;
     await this.render({ force: false });
   }
 
-  static async _onRemoveRow(event, target) {
-    const index = Number(target?.dataset?.index ?? -1);
-    if (!Number.isInteger(index) || index < 0) return;
-    const rows = this._readFormRows();
-    if (index >= rows.length) return;
-    rows.splice(index, 1);
-    this.#pending = rows;
+  static async _onRemoveChip(_event, target) {
+    const id = target?.dataset?.id;
+    if (!id) return;
+    const filtered = this._currentCustoms().filter((c) => c.id !== id);
+    this._pending = filtered;
     await this.render({ force: false });
   }
 
-  static async _onSubmit(_event, _form, formData) {
-    const proposed = collectRows(formData?.object ?? {});
-    const trimmed = proposed.map((r) => ({
+  static async _onSubmit(_event, _form, _formData) {
+    const customs = this._currentCustoms();
+    const trimmed = customs.map((r) => ({
       id: String(r.id ?? "").trim(),
       label: String(r.label ?? "").trim(),
     }));
@@ -128,12 +141,11 @@ export class ParaphernaliaSubtypesApp extends HandlebarsApplicationMixin(Applica
         L(errorMessageKey(e.code), { index: e.index + 1 }),
       );
       ui?.notifications?.error?.(messages.join("\n"));
-      this.#pending = trimmed;
-      await this.render({ force: false });
+      this._pending = trimmed;
       throw new Error("paraphernalia subtype validation failed");
     }
     await game.settings.set(MODULE_ID, CUSTOM_SETTING_KEY, trimmed);
-    this.#pending = null;
+    this._pending = null;
     logger.log(
       `paraphernalia subtype manager wrote ${trimmed.length} custom entr${
         trimmed.length === 1 ? "y" : "ies"
@@ -141,22 +153,4 @@ export class ParaphernaliaSubtypesApp extends HandlebarsApplicationMixin(Applica
     );
     ui?.notifications?.info?.(L("FISHUT.ParaphernaliaManager.Saved"));
   }
-}
-
-/**
- * Reshape the flat `customs.0.id`, `customs.0.label`, `customs.1.id`… form
- * payload back into an ordered array. Resilient to gaps left by mid-edit
- * removals (we densify on read).
- */
-function collectRows(flat) {
-  const rows = [];
-  for (const [key, value] of Object.entries(flat ?? {})) {
-    const m = /^customs\.(\d+)\.(id|label)$/.exec(key);
-    if (!m) continue;
-    const idx = Number(m[1]);
-    const which = m[2];
-    rows[idx] ??= { id: "", label: "" };
-    rows[idx][which] = value ?? "";
-  }
-  return rows.filter(Boolean);
 }

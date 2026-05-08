@@ -9,10 +9,19 @@
     "description": {
       "value": "<p>A blend of dragon-scaled herbs and powdered tongue-coal, prepared by Shen Feng Wa's surviving apprentices. Burns clean only in the bowl of the Dubious Pipe; in any other vessel it produces foul black smoke and nothing else.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have a +2 bonus to Wisdom (Insight) checks and your passive Perception increases by 2.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wa's Reserve (see below).</p><p><strong><em>Addicted from Wa's Reserve.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (the smoke leaves a black residue on the tongue).</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Shen Feng Wa's Dubious Pipe.</em></p>"
     },
-    "type": { "value": "poison", "subtype": "inhaled" },
+    "type": {
+      "value": "poison",
+      "subtype": "inhaled"
+    },
     "rarity": "rare",
-    "weight": { "value": 0.05, "units": "lb" },
-    "price": { "value": 250, "denomination": "gp" },
+    "weight": {
+      "value": 0.05,
+      "units": "lb"
+    },
+    "price": {
+      "value": 250,
+      "denomination": "gp"
+    },
     "uses": {
       "spent": 0,
       "max": "1",
@@ -23,36 +32,79 @@
         "type": "utility",
         "_id": "fhActWasReserv01",
         "sort": 0,
-        "activation": { "type": "action", "override": false, "condition": "" },
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
         "consumption": {
-          "scaling": { "allowed": false },
+          "scaling": {
+            "allowed": false
+          },
           "spellSlot": true,
           "targets": [
-            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
           ]
         },
-        "description": { "chatFlavor": "" },
-        "duration": { "units": "hour", "value": "1", "concentration": false, "override": false },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "hour",
+          "value": "1",
+          "concentration": false,
+          "override": false
+        },
         "effects": [
-          { "_id": "fhAEWasReservBen" }
+          {
+            "_id": "fhAEWasReservBen"
+          }
         ],
         "flags": {},
-        "range": { "units": "self", "override": false, "special": "" },
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
         "target": {
-          "template": { "contiguous": false, "units": "ft", "type": "" },
-          "affects": { "choice": false, "type": "self" },
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
           "override": false,
           "prompt": true
         },
-        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
         "visibility": {
-          "level": { "min": null, "max": null },
+          "level": {
+            "min": null,
+            "max": null
+          },
           "requireAttunement": false,
           "requireIdentification": false,
           "requireMagic": false,
           "identifier": ""
         },
-        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
         "name": ""
       }
     }
@@ -62,11 +114,20 @@
       "kind": "substance",
       "category": "stimulant",
       "setting": "fantasy",
-      "requiredSubtypes": ["pipe"],
+      "requiredSubtypes": [
+        "pipe"
+      ],
       "addiction": {
-        "save": { "ability": "con", "dc": 14 },
-        "withdrawalMod": 3,
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 14
+        },
         "addictionEffectId": "fhAEWasReservAdc"
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 3
       },
       "schemaVersion": 2
     }
@@ -79,11 +140,23 @@
       "img": "icons/svg/aura.svg",
       "transfer": false,
       "disabled": false,
-      "duration": { "seconds": 3600 },
+      "duration": {
+        "seconds": 3600
+      },
       "description": "<p>+2 to Wisdom (Insight) checks. Passive Perception +2.</p>",
       "changes": [
-        { "key": "system.skills.ins.bonuses.check", "mode": 2, "value": "+2", "priority": 20 },
-        { "key": "system.skills.prc.passive", "mode": 2, "value": "+2", "priority": 20 }
+        {
+          "key": "system.skills.ins.bonuses.check",
+          "mode": 2,
+          "value": "+2",
+          "priority": 20
+        },
+        {
+          "key": "system.skills.prc.passive",
+          "mode": 2,
+          "value": "+2",
+          "priority": 20
+        }
       ],
       "flags": {}
     },
@@ -94,12 +167,16 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": ["poisoned"],
+      "statuses": [
+        "poisoned"
+      ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Charisma checks until withdrawal completes.</p>",
       "changes": [],
       "flags": {}
     }
   ],
-  "ownership": { "default": 0 }
+  "ownership": {
+    "default": 0
+  }
 }

@@ -9,10 +9,19 @@
     "description": {
       "value": "<p>A pearlescent suspension that dissolves in air. The user experiences sensations from elsewhere — sometimes elsewhen — for the duration. Operators learn not to trust the visions, but everyone tries them once.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have advantage on Intelligence (Investigation) checks but disadvantage on Wisdom saving throws. If the Dynamic Active Effects module is active, you also gain a +1d4 bonus to all saving throws for the duration (the &ldquo;Insight&rdquo; layer).</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 12 Constitution saving throw. On a failed save, you gain the Addicted condition from Stellar Mist (see below).</p><p><strong><em>Addicted from Stellar Mist.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom (Insight) and Wisdom (Perception) checks.</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Neural Diffuser or Vapor Mask.</em></p>"
     },
-    "type": { "value": "poison", "subtype": "inhaled" },
+    "type": {
+      "value": "poison",
+      "subtype": "inhaled"
+    },
     "rarity": "rare",
-    "weight": { "value": 0.1, "units": "lb" },
-    "price": { "value": 800, "denomination": "gp" },
+    "weight": {
+      "value": 0.1,
+      "units": "lb"
+    },
+    "price": {
+      "value": 800,
+      "denomination": "gp"
+    },
     "uses": {
       "spent": 0,
       "max": "1",
@@ -23,37 +32,82 @@
         "type": "utility",
         "_id": "fhActStellarMist",
         "sort": 0,
-        "activation": { "type": "action", "override": false, "condition": "" },
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
         "consumption": {
-          "scaling": { "allowed": false },
+          "scaling": {
+            "allowed": false
+          },
           "spellSlot": true,
           "targets": [
-            { "type": "itemUses", "value": "1", "target": "", "scaling": {} }
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
           ]
         },
-        "description": { "chatFlavor": "" },
-        "duration": { "units": "hour", "value": "1", "concentration": false, "override": false },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "hour",
+          "value": "1",
+          "concentration": false,
+          "override": false
+        },
         "effects": [
-          { "_id": "fhAEStellMistBen" },
-          { "_id": "fhAEStellMistIns" }
+          {
+            "_id": "fhAEStellMistBen"
+          },
+          {
+            "_id": "fhAEStellMistIns"
+          }
         ],
         "flags": {},
-        "range": { "units": "self", "override": false, "special": "" },
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
         "target": {
-          "template": { "contiguous": false, "units": "ft", "type": "" },
-          "affects": { "choice": false, "type": "self" },
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
           "override": false,
           "prompt": true
         },
-        "uses": { "spent": 0, "recovery": [], "max": "" },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
         "visibility": {
-          "level": { "min": null, "max": null },
+          "level": {
+            "min": null,
+            "max": null
+          },
           "requireAttunement": false,
           "requireIdentification": false,
           "requireMagic": false,
           "identifier": ""
         },
-        "roll": { "prompt": false, "visible": false, "formula": "", "name": "" },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
         "name": ""
       }
     }
@@ -63,11 +117,20 @@
       "kind": "substance",
       "category": "mindAltering",
       "setting": "sciFi",
-      "requiredSubtypes": ["inhaler"],
+      "requiredSubtypes": [
+        "inhaler"
+      ],
       "addiction": {
-        "save": { "ability": "con", "dc": 12 },
-        "withdrawalMod": 3,
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 12
+        },
         "addictionEffectId": "fhAEStellMistAdc"
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 3
       },
       "schemaVersion": 2
     }
@@ -80,7 +143,9 @@
       "img": "icons/svg/aura.svg",
       "transfer": false,
       "disabled": false,
-      "duration": { "seconds": 3600 },
+      "duration": {
+        "seconds": 3600
+      },
       "description": "<p>Advantage on Intelligence (Investigation) checks. Disadvantage on Wisdom saving throws.</p>",
       "changes": [],
       "flags": {}
@@ -92,13 +157,22 @@
       "img": "icons/svg/aura.svg",
       "transfer": false,
       "disabled": false,
-      "duration": { "seconds": 3600 },
+      "duration": {
+        "seconds": 3600
+      },
       "description": "<p>+1d4 to all saving throws (DAE-required layer).</p>",
       "changes": [
-        { "key": "system.bonuses.abilities.save", "mode": 0, "value": "+1d4", "priority": 20 }
+        {
+          "key": "system.bonuses.abilities.save",
+          "mode": 0,
+          "value": "+1d4",
+          "priority": 20
+        }
       ],
       "flags": {
-        "substances-and-paraphernalia": { "requiresDae": true }
+        "substances-and-paraphernalia": {
+          "requiresDae": true
+        }
       }
     },
     {
@@ -108,12 +182,16 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": ["poisoned"],
+      "statuses": [
+        "poisoned"
+      ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom (Insight) and Wisdom (Perception) checks until withdrawal completes.</p>",
       "changes": [],
       "flags": {}
     }
   ],
-  "ownership": { "default": 0 }
+  "ownership": {
+    "default": 0
+  }
 }

@@ -13,15 +13,17 @@
  *   - system.type.value === "poison"
  *   - system.type.subtype is one of contact|ingested|inhaled|injury
  *   - addiction.save.dc is a finite number
- *   - addiction.withdrawalMod is a positive integer
+ *   - addiction.enabled is boolean when present
+ *   - withdrawal.mod is a positive integer; withdrawal.enabled boolean when present
  *   - addiction.addictionEffectId points to an AE on the same item whose name
  *     contains /addict/i
  *   - requiredSubtypes (if present) is a flat array of kebab-case subtype ids
  *   - flags[…].overdose: when `enabled`, requires integer chancePercent 1..100
  *     and non-empty `description`
- *   - flags[…].withdrawalEffectId: must resolve to AE on the same item; AE
- *     name must contain /withdraw/i; warn on disadvantage-on-attack/check or
- *     statuses:["poisoned"] (don't duplicate poisoned)
+ *   - flags[…].withdrawal.effectId (if set): must resolve to AE on the same
+ *     item; AE name must contain /withdraw/i; warn on
+ *     disadvantage-on-attack/check or statuses:["poisoned"] (don't duplicate
+ *     poisoned)
  *   - any modifier-bearing AE: when kind="bypass" type="+N" requires non-zero
  *     numeric bonus; kind="tolerance" requires substanceId + at least one of
  *     attenuateAltered / addictionDcBump / withdrawalAmplify

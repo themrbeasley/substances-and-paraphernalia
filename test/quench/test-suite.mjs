@@ -1411,7 +1411,7 @@ function withdrawalTemplateBatch(context) {
             flags: {},
           },
         ]);
-        await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawalEffect}`]: ae.id });
+        await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawal}.effectId`]: ae.id });
       }
       cleanup.push(sub);
       return sub;
@@ -1455,7 +1455,7 @@ function withdrawalTemplateBatch(context) {
           flags: {},
         },
       ]);
-      await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawalEffect}`]: ae.id });
+      await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawal}.effectId`]: ae.id });
       const result = await api().addiction.applyWithdrawalEffect(actor, sub);
       assert.equal(result, null, "should skip when name contract violated");
       assert.equal(findAppliedWithdrawalAE(sub.id), null);
@@ -1584,20 +1584,23 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getAddictionEffectId(substance), null);
     });
 
-    it("persists withdrawalEffectId and clears on empty value", async () => {
+    it("persists withdrawal.effectId and clears on empty value", async () => {
       const created = await substance.createEmbeddedDocuments("ActiveEffect", [
         { name: `${substance.name} Withdrawal`, transfer: false, changes: [] },
       ]);
       const withdrawalAe = created?.[0];
       assert.ok(withdrawalAe, "withdrawal AE should be created");
       try {
-        await persistField(substance, "withdrawalEffectId", withdrawalAe.id);
+        await persistField(substance, "withdrawal.effectId", withdrawalAe.id);
         assert.equal(
-          substance.getFlag(MODULE_ID, FLAGS.withdrawalEffect),
+          substance.getFlag(MODULE_ID, FLAGS.withdrawal)?.effectId,
           withdrawalAe.id,
         );
-        await persistField(substance, "withdrawalEffectId", "");
-        assert.equal(substance.getFlag(MODULE_ID, FLAGS.withdrawalEffect), null);
+        await persistField(substance, "withdrawal.effectId", "");
+        assert.equal(
+          substance.getFlag(MODULE_ID, FLAGS.withdrawal)?.effectId ?? null,
+          null,
+        );
       } finally {
         if (substance.effects.get(withdrawalAe.id)) await withdrawalAe.delete();
       }
