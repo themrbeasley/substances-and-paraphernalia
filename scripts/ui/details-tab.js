@@ -422,7 +422,7 @@ function findBypassEffect(item) {
 function buildBypassDisplay(match) {
   if (!match) return { present: false };
   const { block } = match;
-  const currentType = block.type ?? "auto-pass";
+  const currentType = block.type ?? "+N";
   const typeOptions = SCHEMA.modifier.types.map((t) => ({
     id: t.id,
     label: L(t.labelKey),
@@ -553,7 +553,7 @@ export async function persistField(item, field, rawValue, target) {
       return setSubtype(item, id);
     }
     case "bypass.type":
-      return persistBypassField(item, "type", rawValue || "auto-pass");
+      return persistBypassField(item, "type", rawValue || "+N");
     case "bypass.usesPerDay": {
       // Empty string → unset (unlimited). Numbers clamped at 0.
       if (rawValue === "" || rawValue == null) {
@@ -608,11 +608,11 @@ async function dispatchAction(button, wrapper, item) {
 }
 
 /**
- * Create a minimal-but-valid bypass AE on the paraphernalia item. Exported
- * for Quench coverage. Default shape is `{ kind: "bypass", type: "auto-pass",
- * appliesTo: [] }`; the user fills in `appliesTo` and `usesPerDay` on the
- * Effects tab. `transfer: true` so the AE auto-transfers onto an actor when
- * the item is owned, matching the dubious-pipe pattern.
+ * Create a minimal-but-valid save-modifier AE on the paraphernalia item.
+ * Exported for Quench coverage. Default shape is `{ kind: "bypass",
+ * type: "+N", appliesTo: [] }`; the user fills in `bonus`, `appliesTo`, and
+ * `usesPerDay` on the Effects tab. `transfer: true` so the AE auto-transfers
+ * onto an actor when the item is owned, matching the dubious-pipe pattern.
  * @param {Item} item
  */
 export async function createBypassStubAE(item) {
@@ -627,7 +627,7 @@ export async function createBypassStubAE(item) {
       changes: [],
       flags: {
         [MODULE_ID]: {
-          modifier: { kind: "bypass", type: "auto-pass", appliesTo: [] },
+          modifier: { kind: "bypass", type: "+N", appliesTo: [] },
         },
       },
     },

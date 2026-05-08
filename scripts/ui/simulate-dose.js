@@ -9,10 +9,12 @@
 // a result dialog. The temp actor is reaped on dialog close. A `ready`-time
 // orphan sweep cleans up actors left behind by crashes (GM-arbitrated).
 //
-// Hook strategy: we use the generic `renderApplicationV2` hook (mirroring the
-// existing details-tab injection in `scripts/ui/details-tab.js`) rather than
-// any specific 3-dot-menu API — this insulates us from V2 hook renames as
-// dnd5e iterates.
+// Injection strategy: we lazy-patch the item-sheet ApplicationV2 subclass'
+// `_getHeaderControls()` on its first render and register a matching action
+// handler in `DEFAULT_OPTIONS.actions`. Foundry's standard header-controls
+// renderer then adds our entry to the 3-dot menu without us touching the DOM.
+// The first render of any unpatched class triggers a re-render so the entry
+// appears immediately for the currently-open sheet.
 
 import { MODULE_ID, FLAGS } from "../config.js";
 import {
@@ -34,8 +36,9 @@ import { logger } from "../logger.js";
 
 const DIALOG_TEMPLATE = `modules/${MODULE_ID}/templates/simulate-dose-dialog.hbs`;
 const RESULT_TEMPLATE = `modules/${MODULE_ID}/templates/simulate-dose-result.hbs`;
-const INJECTED_MARKER = "data-fishut-simulate-injected";
 const TEST_ACTOR_PREFIX = "__fishut-test-";
+const ACTION_ID = "fishutSimulateDose";
+const PATCHED_CONSTRUCTORS = new WeakSet();
 
 export function registerSimulateDose() {
   Hooks.on("renderApplicationV2", onRenderApplicationV2);
@@ -46,60 +49,71 @@ export function registerSimulateDose() {
   });
 }
 
-function onRenderApplicationV2(app, htmlElement) {
+function onRenderApplicationV2(app, _htmlElement) {
   const doc = app?.document;
   if (!doc || doc.documentName !== "Item") return;
   if (doc.type !== "consumable") return;
   if (!isSubstance(doc)) return;
-  if (!htmlElement?.querySelector) return;
 
-  // V13 lazy-builds the .controls-dropdown menu on first click of the 3-dot
-  // header button, so it usually isn't in the DOM at render time. Attempt
-  // eager injection (handles eagerly-rendered cases), then fall back to a
-  // MutationObserver that injects when the dropdown appears.
-  if (tryInjectMenuEntry(htmlElement, doc)) return;
+  const cls = app.constructor;
+  if (!cls || PATCHED_CONSTRUCTORS.has(cls)) return;
 
-  const observer = new MutationObserver(() => {
-    tryInjectMenuEntry(htmlElement, doc);
+  if (!patchSheetClass(cls)) return;
+  PATCHED_CONSTRUCTORS.add(cls);
+
+  // The current render computed _getHeaderControls before our patch took
+  // effect. Force a fresh render so our entry appears for this sheet now.
+  app.render({ force: false }).catch((err) => {
+    logger.error("simulate-dose: re-render after patch failed", err);
   });
-  observer.observe(htmlElement, { childList: true, subtree: true });
-
-  const closeHook = (closingApp) => {
-    if (closingApp !== app) return;
-    observer.disconnect();
-    Hooks.off("closeApplicationV2", closeHook);
-  };
-  Hooks.on("closeApplicationV2", closeHook);
 }
 
-function tryInjectMenuEntry(htmlElement, doc) {
-  const dropdown =
-    htmlElement.querySelector("header.window-header .controls-dropdown") ??
-    htmlElement.querySelector(".controls-dropdown");
-  if (!dropdown) return false;
-  if (dropdown.querySelector(`[${INJECTED_MARKER}]`)) return true;
+function patchSheetClass(cls) {
+  if (typeof cls?.prototype?._getHeaderControls !== "function") {
+    logger.warn?.(
+      "simulate-dose: sheet class has no _getHeaderControls — patch skipped",
+    );
+    return false;
+  }
 
-  const li = document.createElement("li");
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "control";
-  button.setAttribute(INJECTED_MARKER, "");
-  button.dataset.action = "fishut-simulate-dose";
-  const icon = document.createElement("i");
-  icon.className = "fa-solid fa-flask-vial";
-  button.appendChild(icon);
-  button.appendChild(
-    document.createTextNode(` ${game.i18n.localize("FISHUT.SimulateDose.MenuLabel")}`),
-  );
-  button.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    openSimulateDoseDialog(doc).catch((err) =>
+  const originalGet = cls.prototype._getHeaderControls;
+  cls.prototype._getHeaderControls = function patchedGetHeaderControls() {
+    const controls = originalGet.call(this) ?? [];
+    const doc = this.document;
+    if (
+      doc?.documentName === "Item" &&
+      doc.type === "consumable" &&
+      isSubstance(doc) &&
+      !controls.some((c) => c.action === ACTION_ID)
+    ) {
+      controls.push({
+        action: ACTION_ID,
+        icon: "fa-solid fa-flask-vial",
+        label: "FISHUT.SimulateDose.MenuLabel",
+      });
+    }
+    return controls;
+  };
+
+  const actionHandler = function fishutSimulateDoseHandler() {
+    openSimulateDoseDialog(this.document).catch((err) =>
       logger.error("simulate-dose: dialog open failed", err),
     );
-  });
-  li.appendChild(button);
-  dropdown.appendChild(li);
+  };
+
+  // Shadow inherited DEFAULT_OPTIONS so we don't mutate a parent class' frozen
+  // option object. mergeObject({ inplace: false }) returns a fresh deep copy.
+  const own = Object.getOwnPropertyDescriptor(cls, "DEFAULT_OPTIONS");
+  if (!own) {
+    cls.DEFAULT_OPTIONS = foundry.utils.mergeObject(
+      cls.DEFAULT_OPTIONS ?? {},
+      { actions: { [ACTION_ID]: actionHandler } },
+      { inplace: false },
+    );
+  } else {
+    const actions = cls.DEFAULT_OPTIONS.actions ?? {};
+    cls.DEFAULT_OPTIONS.actions = { ...actions, [ACTION_ID]: actionHandler };
+  }
   return true;
 }
 

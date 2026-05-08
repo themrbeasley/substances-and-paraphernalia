@@ -1732,7 +1732,7 @@ function grantBypassButtonBatch(context) {
       const block = getModifier(ae);
       assert.ok(block, "stub AE must carry a modifier flag block");
       assert.equal(block.kind, "bypass");
-      assert.equal(block.type, "auto-pass");
+      assert.equal(block.type, "+N");
       assert.deepEqual(block.appliesTo, []);
     });
 

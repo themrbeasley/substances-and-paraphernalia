@@ -34,7 +34,7 @@
     {
       "_id": "fhAEDubsPipeByp",
       "_key": "!items.effects!fhParaDubsPipe01.fhAEDubsPipeByp",
-      "name": "Dubious Pipe — Bypass",
+      "name": "Dubious Pipe — Save Modifier",
       "img": "icons/svg/aura.svg",
       "transfer": true,
       "disabled": false,

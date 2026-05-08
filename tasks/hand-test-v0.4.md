@@ -10,36 +10,36 @@ Walk through these in order. Each section is roughly self-contained; you can sto
 
 Open any substance (e.g. the new **Triple Burn** or any v0.3 substance).
 
-- [ ] Details tab renders without console errors.
-- [ ] **Kind / Category / Setting** selectors show current values; each persists round-trip (change → close → reopen).
-- [ ] **Required subtypes** picker lists all 9 built-ins plus any custom subtypes you've added (test 1.3 first, then come back here).
-- [ ] **Addiction** block — ability, DC, withdrawal mod, addiction-AE picker — each persists.
-- [ ] **Withdrawal AE picker** appears and lists the substance's own AEs whose name contains `withdraw`. Hint text below it reads coherently and warns against duplicating *poisoned*.
-- [ ] **Overdose fieldset**: enabled toggle, chancePercent (1–100 number), description (textarea). Toggle off → other fields visually inert. ChancePercent clamps client-side at 1 and 100. All three persist.
-- [ ] Schema-version / writeback: change a field, hit Save, reopen — value still there.
+- [x] Details tab renders without console errors.
+- [x] **Kind / Category / Setting** selectors show current values; each persists round-trip (change → close → reopen).
+- [x] **Required subtypes** picker lists all 9 built-ins plus any custom subtypes you've added (test 1.3 first, then come back here).
+- [x] **Addiction** block — ability, DC, withdrawal mod, addiction-AE picker — each persists.
+- [x] **Withdrawal AE picker** appears and lists the substance's own AEs whose name contains `withdraw`. Hint text below it reads coherently and warns against duplicating *poisoned*.
+- [x] **Overdose fieldset**: enabled toggle, chancePercent (1–100 number), description (textarea). Toggle off → other fields visually inert. ChancePercent clamps client-side at 1 and 100. All three persist.
+- [x] Schema-version / writeback: change a field, hit Save, reopen — value still there.
 
 ### 1.2 Paraphernalia Details tab
 
 Open **Calibrated Inhaler** (new, modern, inhaler).
 
-- [ ] **Subtype** select shows built-ins + custom; current value (`inhaler`) is selected.
-- [ ] No substance fields leak onto paraphernalia (no Required subtypes, no Addiction block, no Overdose fieldset).
-- [ ] Open the AE tab, open the **Calibrated Inhaler — Bypass** AE — verify the modifier flag block on the AE flags tab (`kind: bypass`, `type: +N`, `bonus: 2`, `appliesTo: ["inhaled"]`).
-- [ ] Bypass-section on the Details tab (or wherever the read-only summary lives) shows `+N: 2`.
+- [x] **Subtype** select shows built-ins + custom; current value (`inhaler`) is selected.
+- [x] No substance fields leak onto paraphernalia (no Required subtypes, no Addiction block, no Overdose fieldset).
+- [ ] Open the AE tab, open the **Calibrated Inhaler — Save Modifier** AE — verify the modifier flag block on the AE flags tab (`kind: bypass`, `type: +N`, `bonus: 2`, `appliesTo: ["inhaled"]`).
+- [ ] **Addiction Save Modifiers** section on the Details tab shows `Save Bonus: +2`.
 
 ### 1.3 Paraphernalia Subtype Manager
 
 *Game Settings → Module Settings → Manage Paraphernalia Subtypes*.
 
-- [ ] Built-ins listed (pipe, snuff-horn, syringe, vial, papers, inhaler, rolling-papers, tincture-dropper, athletes-logbook); not deletable, not editable.
-- [ ] **Add row** → enter `ritual-incense` with label "Ritual Incense" — saves cleanly.
-- [ ] Try to add `pipe` (built-in collision) → form rejects with an error before save.
-- [ ] Try to add `Ritual_Incense` (non-kebab-case) → form rejects.
-- [ ] Add a second custom row with the same id as the first → form rejects (duplicate).
-- [ ] Reload the world. Open the manager again. Custom subtype still present.
-- [ ] Open a substance, look at Required subtypes — `ritual-incense` appears as an option.
-- [ ] Open a paraphernalia, the Subtype select offers `ritual-incense`.
-- [ ] Delete the custom row from the manager. It vanishes from both pickers (after sheet re-render).
+- [x] Built-ins listed (pipe, snuff-horn, syringe, vial, papers, inhaler, rolling-papers, tincture-dropper, athletes-logbook); not deletable, not editable.
+- [x] **Add row** → enter `ritual-incense` with label "Ritual Incense" — saves cleanly.
+- [x] Try to add `pipe` (built-in collision) → form rejects with an error before save.
+- [x] Try to add `Ritual_Incense` (non-kebab-case) → form rejects.
+- [x] Add a second custom row with the same id as the first → form rejects (duplicate).
+- [x] Reload the world. Open the manager again. Custom subtype still present.
+- [x] Open a substance, look at Required subtypes — `ritual-incense` appears as an option.
+- [x] Open a paraphernalia, the Subtype select offers `ritual-incense`.
+- [x] Delete the custom row from the manager. It vanishes from both pickers (after sheet re-render).
 
 ### 1.4 Simulate dose
 

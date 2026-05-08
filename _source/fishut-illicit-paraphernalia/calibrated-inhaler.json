@@ -26,7 +26,7 @@
     {
       "_id": "fhAECalibInhByp",
       "_key": "!items.effects!fhParaCalibInh01.fhAECalibInhByp",
-      "name": "Calibrated Inhaler — Bypass",
+      "name": "Calibrated Inhaler — Save Modifier",
       "img": "icons/svg/aura.svg",
       "transfer": true,
       "disabled": false,
