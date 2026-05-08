@@ -21,7 +21,8 @@
     "scripts/module.mjs"
   ],
   "styles": [
-    "styles/module.css"
+    "styles/module.css",
+    "styles/withdrawal-vignette.css"
   ],
   "languages": [
     {

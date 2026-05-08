@@ -1,0 +1,25 @@
+/* Substances and Paraphernalia — withdrawal screen-edge vignette.
+ *
+ * Mounted into Foundry's #interface container by withdrawal-vignette.js when
+ * the current user owns an actor carrying a withdrawal AE. Sits above the
+ * canvas but below dialog/notification stacking contexts so save dialogs
+ * stay legible while the vignette is active.
+ */
+
+#interface > .fishut-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    var(--fishut-vignette-color, #b91c1c) 130%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+#interface > .fishut-vignette[data-active="true"] {
+  opacity: 0.55;
+}

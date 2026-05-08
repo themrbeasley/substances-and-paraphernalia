@@ -142,6 +142,11 @@ export function registerQuenchSuite() {
       removeXMacrosBatch,
       { displayName: "S&P · Remove-X macro presence" },
     );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.withdrawal-vignette`,
+      withdrawalVignetteBatch,
+      { displayName: "S&P · Withdrawal vignette mounts to #interface" },
+    );
   });
 }
 
@@ -2499,6 +2504,128 @@ function removeXMacrosBatch(context) {
           `${name} macro should gate on game.user.isGM`,
         );
       }
+    });
+  });
+}
+
+// ─── Batch: Withdrawal vignette mounts to #interface ────────────────────────
+
+function withdrawalVignetteBatch(context) {
+  const { describe, it, assert, before, after, afterEach } = context;
+
+  describe("withdrawal vignette tracks owned-actor withdrawal AEs", () => {
+    let actor;
+
+    before(async () => {
+      actor = await makeActor("S&P vignette test");
+    });
+
+    after(async () => {
+      // Strip any leftover vignette so subsequent batches start clean.
+      const el = document.querySelector("#interface > .fishut-vignette");
+      if (el) el.remove();
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      const effects = [...(actor.effects ?? [])];
+      for (const e of effects) await e.delete();
+      // Let the microtask-coalesced refresh settle.
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    it("mounts a fixed-position vignette div with data-active=true while a withdrawal AE is owned", async () => {
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      assert.ok(el, "vignette element should be appended to #interface");
+      assert.equal(el.dataset.active, "true");
+    });
+
+    it("flips data-active to false when the withdrawal AE is removed", async () => {
+      const [ae] = await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const onMount = document.querySelector("#interface > .fishut-vignette");
+      assert.ok(onMount, "vignette should mount while AE is present");
+      assert.equal(onMount.dataset.active, "true");
+
+      await ae.delete();
+      await new Promise((r) => setTimeout(r, 50));
+      const afterDelete = document.querySelector("#interface > .fishut-vignette");
+      // Element is intentionally left in DOM so the opacity transition runs;
+      // it just flips inactive.
+      assert.ok(afterDelete, "vignette element stays in DOM (kept for fade-out transition)");
+      assert.equal(afterDelete.dataset.active, "false");
+    });
+
+    it("never matches AEs whose name does not contain 'withdraw'", async () => {
+      // Strip any inactive leftover so we can detect a no-mount cleanly.
+      const stale = document.querySelector("#interface > .fishut-vignette");
+      if (stale) stale.remove();
+
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Some Random AE",
+          img: "icons/svg/aura.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      // No /withdraw/i AE → refresh sees no match → no mount path runs.
+      assert.equal(el, null, "non-withdrawal AE must not trigger the vignette");
+    });
+
+    it("ignores disabled withdrawal AEs", async () => {
+      const stale = document.querySelector("#interface > .fishut-vignette");
+      if (stale) stale.remove();
+
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal (disabled)",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: true,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      assert.equal(el, null, "disabled withdrawal AE must not trigger the vignette");
+    });
+
+    it("vignette CSS is loaded — element computed style sits below dialog stacking", async () => {
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      assert.ok(el, "vignette element should exist");
+      const cs = getComputedStyle(el);
+      assert.equal(cs.position, "fixed", "vignette must be position:fixed");
+      assert.equal(cs.pointerEvents, "none", "vignette must not block clicks");
+      // z-index 1 keeps the vignette above the canvas but below Foundry app
+      // windows / notifications which render at much higher layers.
+      assert.equal(cs.zIndex, "1");
     });
   });
 }

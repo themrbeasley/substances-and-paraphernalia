@@ -34,6 +34,7 @@ import {
 } from "./integrations/index.js";
 import { registerTmfxIntegration } from "./integrations/tmfx.js";
 import { registerDetailsTab } from "./ui/details-tab.js";
+import { registerWithdrawalVignette } from "./ui/withdrawal-vignette.js";
 import {
   registerSimulateDose,
   runSimulation,
@@ -92,6 +93,7 @@ Hooks.once("ready", async () => {
       },
     };
   }
+  registerWithdrawalVignette();
   notifyMissingIntegrations();
   logger.log("ready complete");
 });
