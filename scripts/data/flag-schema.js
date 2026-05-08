@@ -1,5 +1,9 @@
 import { MODULE_ID, FLAGS } from "../config.js";
-import { readModifier } from "./modifier-flag.js";
+import {
+  readModifier,
+  readModifierFromChanges,
+  mergeModifierIntoChanges,
+} from "./modifier-flag.js";
 
 /**
  * @typedef {"substance" | "paraphernalia"} Kind
@@ -263,16 +267,38 @@ export const getSourceSubstanceId = (effect) =>
 export const setSourceSubstanceId = (effect, value) =>
   effect.setFlag(MODULE_ID, FLAGS.sourceSubstanceId, value);
 
-// ─── Active Effect flag (modifier — bypass/advantage pipeline) ───────────────
+// ─── Active Effect modifier block (stored as Change rows) ────────────────────
 
 /**
+ * Read the modifier block from an AE.
+ *
+ * v0.4 canonical storage is `effect.changes[]` rows whose key starts with
+ * `flags.<scope>.modifier.` so the standard Foundry "Changes" tab is the
+ * editable surface. Falls back to the legacy `effect.flags.<scope>.modifier`
+ * shape so pre-v0.4 authored content (and Quench fixtures that haven't been
+ * migrated) keep working.
+ *
  * @param {ActiveEffect} effect
  * @returns {import("./modifier-flag.js").ModifierBlock|null}
  */
-export const getModifier = (effect) => readModifier(effect?.flags?.[MODULE_ID]);
+export const getModifier = (effect) => {
+  if (!effect) return null;
+  const fromChanges = readModifierFromChanges(effect.changes, MODULE_ID);
+  if (fromChanges) return fromChanges;
+  return readModifier(effect.flags?.[MODULE_ID]);
+};
 
-export const setModifier = (effect, value) =>
-  effect.setFlag(MODULE_ID, FLAGS.modifier, value);
+/**
+ * Write the modifier block to an AE's `changes[]` array, preserving any
+ * non-modifier rows the GM authored alongside it.
+ *
+ * @param {ActiveEffect} effect
+ * @param {import("./modifier-flag.js").ModifierBlock} value
+ */
+export const setModifier = (effect, value) => {
+  const changes = mergeModifierIntoChanges(effect?.changes, value, MODULE_ID);
+  return effect.update({ changes });
+};
 
 // ─── Actor flags (withdrawal map) ────────────────────────────────────────────
 

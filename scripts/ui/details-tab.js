@@ -32,6 +32,7 @@ import {
   setModifier,
 } from "../data/flag-schema.js";
 import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
+import { writeModifierAsChanges } from "../data/modifier-flag.js";
 import { logger } from "../logger.js";
 
 const SECTION_TEMPLATE = `modules/${MODULE_ID}/templates/details-tab/section.hbs`;
@@ -725,17 +726,19 @@ export async function createBypassStubAE(item) {
   const name = game.i18n.format("FISHUT.DetailsTab.Bypass.AeName.Default", {
     item: item.name,
   });
+  const block = {
+    kind: "bypass",
+    type: "+N",
+    appliesTo: [],
+    bonus: 1,
+    usesPerDay: 1,
+  };
   const data = [
     {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: true,
-      changes: [],
-      flags: {
-        [MODULE_ID]: {
-          modifier: { kind: "bypass", type: "+N", appliesTo: [] },
-        },
-      },
+      changes: writeModifierAsChanges(block, MODULE_ID),
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
@@ -818,17 +821,19 @@ export async function createToleranceStubAE(item) {
   const name = game.i18n.format("FISHUT.DetailsTab.Field.ToleranceEffect.AeName.Default", {
     item: item.name,
   });
+  const block = {
+    kind: "tolerance",
+    substanceId: item.id,
+    addictionDcBump: 1,
+    attenuateAltered: { durationFactor: 0, modifierFactor: 0, dropAdvantage: false },
+    withdrawalAmplify: { durationFactor: 0, modifierFactor: 0, addDisadvantage: false },
+  };
   const data = [
     {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: false,
-      changes: [],
-      flags: {
-        [MODULE_ID]: {
-          modifier: { kind: "tolerance", substanceId: item.id },
-        },
-      },
+      changes: writeModifierAsChanges(block, MODULE_ID),
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
