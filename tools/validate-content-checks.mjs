@@ -213,6 +213,30 @@ export function checkSubstance(file) {
     }
   }
 
+  // v0.5 — tmfx integration block. Author-facing guidance only (warn-only):
+  // when mode is "macro", macroUuid must be a Foundry UUID-shaped string;
+  // when mode is "preset", presetName must be non-empty. mode "none" or
+  // missing block is fine.
+  if (flags.tmfx !== undefined && flags.tmfx !== null) {
+    const t = flags.tmfx;
+    if (typeof t !== "object" || Array.isArray(t)) {
+      warn(`tmfx flag must be an object (got ${typeof t})`);
+    } else if (t.mode === "macro") {
+      const uuid = t.macroUuid;
+      if (typeof uuid !== "string" || uuid.length === 0) {
+        warn(`tmfx.macroUuid must be a non-empty string when mode is "macro"`);
+      } else if (!/^(Compendium\.|Macro\.)/.test(uuid)) {
+        warn(
+          `tmfx.macroUuid should start with "Compendium." or "Macro." (got ${JSON.stringify(uuid)})`,
+        );
+      }
+    } else if (t.mode === "preset") {
+      if (typeof t.presetName !== "string" || t.presetName.length === 0) {
+        warn(`tmfx.presetName must be a non-empty string when mode is "preset"`);
+      }
+    }
+  }
+
   // v0.4 — modifier-bearing AEs (tolerance template lives on the substance).
   for (const ae of effectsOf(data)) {
     const modErrs = checkModifierShape(ae, tag);

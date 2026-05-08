@@ -1,0 +1,12 @@
+{
+  "_id": "fhMacTmfxSciMind",
+  "_key": "!macros!fhMacTmfxSciMind",
+  "name": "TMFX · Sci-Fi · Mind-Altering",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/sun.svg",
+  "command": "// Sci-fi mind-altering — purple ray that drifts, evoking cognitive expansion.\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nif (!token) return;\nconst filterId = \"fishut-tmfx-scifi-mind-altering\";\nif (mode === \"remove\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"ray\",\n  filterId,\n  color: 0x8c30ff,\n  time: 0,\n  intensity: 2,\n  amplitude: 1,\n  blend: 8,\n  divergence: 5,\n  animated: { time: { active: true, speed: 0.0008, animType: \"move\" } }\n}]);",
+  "author": null,
+  "ownership": { "default": 0 },
+  "flags": {}
+}

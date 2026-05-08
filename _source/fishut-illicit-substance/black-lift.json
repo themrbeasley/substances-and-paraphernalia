@@ -130,6 +130,10 @@
         "enabled": true,
         "mod": 6
       },
+      "tmfx": {
+        "mode": "macro",
+        "macroUuid": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxModPerf"
+      },
       "schemaVersion": 2
     }
   },

@@ -1,0 +1,12 @@
+{
+  "_id": "fhMacTmfxFanMind",
+  "_key": "!macros!fhMacTmfxFanMind",
+  "name": "TMFX · Fantasy · Mind-Altering",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/aura.svg",
+  "command": "// Fantasy mind-altering — fey rippling distortion.\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nif (!token) return;\nconst filterId = \"fishut-tmfx-fantasy-mind-altering\";\nif (mode === \"remove\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"wave\",\n  filterId,\n  amplitude: 1.5,\n  time: 0,\n  animated: { time: { active: true, speed: 0.0008, animType: \"move\" } }\n}]);",
+  "author": null,
+  "ownership": { "default": 0 },
+  "flags": {}
+}

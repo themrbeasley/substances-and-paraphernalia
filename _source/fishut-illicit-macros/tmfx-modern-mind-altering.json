@@ -1,0 +1,12 @@
+{
+  "_id": "fhMacTmfxModMind",
+  "_key": "!macros!fhMacTmfxModMind",
+  "name": "TMFX · Modern · Mind-Altering",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/eye.svg",
+  "command": "// Modern mind-altering — psychedelic chromatic xglow that wanders through hue.\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nif (!token) return;\nconst filterId = \"fishut-tmfx-modern-mind-altering\";\nif (mode === \"remove\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"xglow\",\n  filterId,\n  color: 0x9b30ff,\n  thickness: 2,\n  scale: 1.2,\n  time: 0,\n  animated: {\n    time: { active: true, speed: 0.0008, animType: \"move\" },\n    color: { active: true, loopDuration: 4000, animType: \"colorOscillation\", val1: 0xc22bff, val2: 0x39ffb5 }\n  }\n}]);",
+  "author": null,
+  "ownership": { "default": 0 },
+  "flags": {}
+}

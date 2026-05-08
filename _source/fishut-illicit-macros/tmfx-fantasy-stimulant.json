@@ -1,0 +1,12 @@
+{
+  "_id": "fhMacTmfxFanStim",
+  "_key": "!macros!fhMacTmfxFanStim",
+  "name": "TMFX · Fantasy · Stimulant",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/fire.svg",
+  "command": "// Fantasy stimulant — warm ember glow tied to the substance's Altered AE.\n// Receives { token, mode, substance, effect } from the integration dispatcher.\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nif (!token) return;\nconst filterId = \"fishut-tmfx-fantasy-stimulant\";\nif (mode === \"remove\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"glow\",\n  filterId,\n  color: 0xff6b1a,\n  distance: 8,\n  outerStrength: 4,\n  innerStrength: 0,\n  quality: 0.5,\n  padding: 8,\n  animated: { color: { active: true, loopDuration: 4000, animType: \"colorOscillation\", val1: 0xff6b1a, val2: 0xff3300 } }\n}]);",
+  "author": null,
+  "ownership": { "default": 0 },
+  "flags": {}
+}

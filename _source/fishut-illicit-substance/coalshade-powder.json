@@ -129,6 +129,10 @@
         "enabled": true,
         "mod": 4
       },
+      "tmfx": {
+        "mode": "macro",
+        "macroUuid": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxFanStim"
+      },
       "schemaVersion": 2
     }
   },
