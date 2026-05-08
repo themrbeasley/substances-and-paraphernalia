@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A FoundryVTT V13 / dnd5e 4.x module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; v0.2 is a clean break from v0.1.
+A FoundryVTT V13 / dnd5e 5.2.5 module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; latest shipped is v0.4.x. Clean breaks preferred over migration shims (no shipped users).
 
 ## Common commands
 
@@ -41,6 +41,8 @@ The in-repo `module.json` keeps both `manifest` and `download` pointed at `relea
 
 CI (`.github/workflows/ci.yml`) runs lint + validate + unit tests + pack on every push and PR. No release on CI.
 
+If a tag/release pair ends up stale (e.g. tag pushed before a PR landed), recover with `gh release delete vX.Y.Z --yes --cleanup-tag` — that drops both the release and the remote tag — then `git tag -a vX.Y.Z <sha> -m "..."` and `git push origin vX.Y.Z` to re-fire the workflow.
+
 ## Architecture
 
 ### One init pipeline
@@ -62,6 +64,8 @@ Adding a new hook means adding a `register*` call in `module.mjs` and a correspo
 
 `scripts/config.js` fetches `schema.json` at module load and exports frozen constants. **Don't hardcode enum values in JS** — read them from `SCHEMA` / use `labelKey()`.
 
+Paraphernalia subtypes are an exception: the legal list is **runtime-composed** by `scripts/data/paraphernalia-subtypes.js` `getEffectiveParaphernaliaSubtypes()` (built-ins from `SCHEMA.paraphernalia.subtypes` + custom entries from the `customParaphernaliaSubtypes` world setting, written by the Manage Subtypes settings menu). Authoring code, the Details-tab select, and `validate-content.mjs` all call the helper — never read `SCHEMA.paraphernalia.subtypes` directly.
+
 ### Three-layer data model
 
 1. **Item flags** (the canonical source). `scripts/data/flag-schema.js` is the only place that reads/writes `flags["substances-and-paraphernalia"]`. Every other module talks to flags through these accessors.
@@ -70,7 +74,7 @@ Adding a new hook means adding a `register*` call in `module.mjs` and a correspo
 
 ### AE naming contract
 
-Substance addiction AE names **must contain** the substring `addict` (case-insensitive). The `Remove Addiction` macro uses `*addict*` as a fallback when `addictionEffectId` / `sourceSubstanceId` flags are missing. Benefit AEs follow `Altered by {Substance}` for uniformity.
+AE names **must contain** the relevant substring (case-insensitive): addiction AEs → `addict`, withdrawal AEs → `withdraw`, overdose AEs → `overdose`, tolerance AEs → `tolerance`. The `Remove {X}` macros use the matching substring as a regex fallback when source-flag matching fails. Benefit AEs follow `Altered by {Substance}` for uniformity.
 
 ### Gate vs save are independent
 

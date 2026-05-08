@@ -2,7 +2,9 @@
 
 ## Context
 
-v0.2 shipped: addiction loop, paraphernalia-granted save bypass, 3-dot authoring form, content invariants, CI, tag-driven release. This spec defines the v0.3 → v1.0 forward arc. It supersedes `ROADMAP.md` for the items it covers; `ROADMAP.md` becomes a higher-level themes index after this lands.
+v0.2 shipped: addiction loop, paraphernalia-granted save bypass, 3-dot authoring form, content invariants, CI, tag-driven release. v0.3 shipped: native Details-tab authoring, AE-flag modifier pipeline, drag-to-inventory dialog, matrix round 1. v0.4 shipped: tolerance auto-stacking, overdose d100, withdrawal-bite picker, voluntary abstain, poisoned-coupling tri-state, simulate-dose, GM Guide → wiki, `+N` bypass, matrix round 2, three Remove-X macros, Paraphernalia Subtype Manager.
+
+This spec defines the v0.3 → v1.0 forward arc. It supersedes `ROADMAP.md` for the items it covers; `ROADMAP.md` becomes a higher-level themes index after this lands.
 
 The spec absorbs the six existing roadmap themes plus six previously-undocumented features the author wants in this arc. Two further idea clusters (content/narrative and crafting/expansion) are out of scope for this module and have been extracted to a separate companion-module file.
 
@@ -24,8 +26,8 @@ Each release has a single thesis. Slipping a feature out of a release is preferr
 
 | Release | Thesis | Contents |
 |---|---|---|
-| **v0.3** | Foundation: native sheet + bypass canonicalization | Theme 2 (Details-tab integration; deletes 3-dot form). AE-flag bypass canonicalization (auto-pass + advantage `type`). Drag-to-inventory state-injection dialog. Module-integration settings pattern (groundwork — toggles per recommended module). Theme 6 round 1 (matrix fill). |
-| **v0.4** | Mechanics + Wiki + Authoring polish | Tolerance system. Overdose system. Withdrawal-bite (AE picker + content guidance). Voluntary abstain at long rest. Poisoned-coupling tri-state setting. Theme 1 (GM Guide → wiki). Simulate-dose authoring tool. Macro parity (Remove Tolerance/Overdose/Withdrawal). Bypass `type: '+N'`. Theme 6 round 2. |
+| **v0.3** — *shipped* | Foundation: native sheet + bypass canonicalization | Theme 2 (Details-tab integration; deletes 3-dot form). AE-flag bypass canonicalization (auto-pass + advantage `type`). Drag-to-inventory state-injection dialog. Module-integration settings pattern (groundwork — toggles per recommended module). Theme 6 round 1 (matrix fill). |
+| **v0.4** — *shipped* | Mechanics + Wiki + Authoring polish | Tolerance system. Overdose system. Withdrawal-bite (AE picker + content guidance). Voluntary abstain at long rest. Poisoned-coupling tri-state setting. Theme 1 (GM Guide → wiki). Simulate-dose authoring tool. Macro parity (Remove Tolerance/Overdose/Withdrawal). Bypass `type: '+N'`. Theme 6 round 2. Paraphernalia Subtype Manager (user addition, not original spec). |
 | **v0.5** | Visuals | Theme 4 (TMFX integration for "Altered" AEs, gated by setting, default-on-if-installed). CSS withdrawal vignette (built-in, hex from AE flag, per-player). JB2A licensing evaluation; if cleared, JB2A added to recommends and used as preferred overlay. Theme 6 round 3. |
 | **v0.6** | Advanced bypass + Midi | Bypass `type: 'reroll-on-fail'`. Theme 5 first cut (midi-qol on-use macros for substances; midi-driven overdose adjudication if installed). |
 | **v1.0** | Stability + submission | No new features. Bug fixes, content polish, wiki completeness, Foundry package registry submission. |
