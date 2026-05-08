@@ -17,6 +17,8 @@ import {
   getModifier,
   getTmfx,
   setTmfx,
+  getVignetteColor,
+  setVignetteColor,
   setKind,
   setCategory,
   setAddictionEnabled,
@@ -230,6 +232,8 @@ function buildLabels() {
     withdrawalEffect: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Label"),
     withdrawalEffectTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip"),
     withdrawalEffectCreateTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.CreateTooltip"),
+    vignetteColor: L("FISHUT.DetailsTab.VignetteColor.Label"),
+    vignetteColorHint: L("FISHUT.DetailsTab.VignetteColor.Hint"),
     overdoseHeader: L("FISHUT.DetailsTab.Overdose.Header"),
     overdoseEnabled: L("FISHUT.DetailsTab.Overdose.Enabled"),
     overdoseChancePercent: L("FISHUT.DetailsTab.Overdose.ChancePercent"),
@@ -424,6 +428,7 @@ function buildWithdrawalContext(item) {
     enabled,
     fieldsDisabled: !enabled,
     mod: Number.isFinite(withdrawalMod) ? withdrawalMod : "",
+    vignetteColor: getVignetteColor(item) ?? "#b91c1c",
     availableEffects,
     attachedEffects,
   };
@@ -701,6 +706,17 @@ export async function persistField(item, field, rawValue, target) {
       return setWithdrawalEnabled(item, rawValue === "true");
     case "withdrawal.mod":
       return setWithdrawalMod(item, parseIntOrNull(rawValue));
+    case "vignetteColor": {
+      const trimmed = typeof rawValue === "string" ? rawValue.trim() : "";
+      if (!trimmed) return setVignetteColor(item, null);
+      // <input type="color"> always emits a 7-char #rrggbb string, so the
+      // regex guard catches only adversarial console pokes.
+      if (!/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+        logger.warn?.("details-tab persistField: vignetteColor must be #rrggbb", trimmed);
+        return null;
+      }
+      return setVignetteColor(item, trimmed.toLowerCase());
+    }
     case "overdose.enabled":
       return persistOverdoseField(item, "enabled", rawValue === "true");
     case "overdose.chancePercent": {

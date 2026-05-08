@@ -107,6 +107,7 @@
     "modifier": "modifier",
     "overdose": "overdose",
     "tolerance": "tolerance",
-    "tmfx": "tmfx"
+    "tmfx": "tmfx",
+    "vignetteColor": "vignetteColor"
   }
 }

@@ -13,6 +13,7 @@ import {
   getModifier,
   getToleranceEffectIds,
   getToleranceEnabled,
+  getVignetteColor,
   isSubstance,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
@@ -573,7 +574,15 @@ function buildWithdrawalPayload(template, item) {
   const data = template.toObject();
   delete data._id;
   data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = { ...(data.flags[MODULE_ID] ?? {}), [FLAGS.sourceSubstanceId]: item.id };
+  // vignetteColor is render-only metadata read by the screen-edge overlay;
+  // it lives on the AE flag (NOT a Change), inherited from the substance at
+  // application time so future substance edits don't retroactively recolor
+  // already-applied AEs.
+  data.flags[MODULE_ID] = {
+    ...(data.flags[MODULE_ID] ?? {}),
+    [FLAGS.sourceSubstanceId]: item.id,
+    [FLAGS.vignetteColor]: getVignetteColor(item) ?? "#b91c1c",
+  };
   data.origin = item.uuid;
   data.disabled = false;
   data.transfer = false;

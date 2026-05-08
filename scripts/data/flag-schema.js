@@ -350,6 +350,15 @@ export const getTmfx = (item) => item?.getFlag?.(MODULE_ID, FLAGS.tmfx) ?? null;
 
 export const setTmfx = (item, value) => item.setFlag(MODULE_ID, FLAGS.tmfx, value);
 
+// ─── Substance flag (vignetteColor) ──────────────────────────────────────────
+
+/** @param {Item} item @returns {string|null} */
+export const getVignetteColor = (item) =>
+  item?.getFlag?.(MODULE_ID, FLAGS.vignetteColor) ?? null;
+
+export const setVignetteColor = (item, value) =>
+  item.setFlag(MODULE_ID, FLAGS.vignetteColor, value);
+
 // ─── Paraphernalia flag (addictionSaveBypass) ────────────────────────────────
 
 /** @param {Item} item @returns {AddictionSaveBypassBlock|null} */

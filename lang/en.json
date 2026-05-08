@@ -213,6 +213,8 @@
   "FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip": "Don't duplicate poisoned (disadv on attacks/checks). Escalate: exhaustion, disadv on saves, speed reduction, stat penalty.",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.CreateTooltip": "Create a new withdrawal effect",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.AeName.Default": "{item} Withdrawal",
+  "FISHUT.DetailsTab.VignetteColor.Label": "Withdrawal Vignette Color",
+  "FISHUT.DetailsTab.VignetteColor.Hint": "Screen-edge color shown to a player while their actor is in withdrawal from this substance. Owner-only. Captured onto the AE at application time, so editing it here later won't recolor existing withdrawals.",
   "FISHUT.DetailsTab.Overdose.Header": "Overdose",
   "FISHUT.DetailsTab.Overdose.Enabled": "Roll for overdose on each consumption",
   "FISHUT.DetailsTab.Overdose.ChancePercent": "Chance (d100, 1–100)",
