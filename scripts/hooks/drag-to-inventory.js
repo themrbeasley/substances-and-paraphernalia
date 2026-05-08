@@ -19,10 +19,17 @@ import { MODULE_ID, FLAGS } from "../config.js";
 import {
   isSubstance,
   getAddiction,
-  getAddictionEffectId,
+  getAddictionEffectIds,
+  getWithdrawalEffectIds,
+  getOverdose,
+  getOverdoseEffectIds,
+  getToleranceEffectIds,
+  getWithdrawalMod,
   setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
 import { computeRestsRemaining } from "../data/withdrawal.js";
+import { applyOrIncrementToleranceStack } from "./addiction.js";
+import { applyOverdoseEffect } from "./overdose.js";
 import { logger } from "../logger.js";
 
 const DIALOG_TEMPLATE = `modules/${MODULE_ID}/templates/drag-to-inventory-dialog.hbs`;
@@ -182,7 +189,7 @@ export async function applyDragOutcome(actor, item, choice) {
         logger.warn(`addicted: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const wMod = Number(addiction.withdrawalMod) || 0;
+      const wMod = Number(getWithdrawalMod(item)) || 0;
       const rests = computeRestsRemaining(wMod, conMod(actor));
       await applyAddictionEffect(actor, item);
       await setActorWithdrawalEntry(actor, item.id, {
@@ -205,7 +212,7 @@ export async function applyDragOutcome(actor, item, choice) {
         logger.warn(`withdrawing: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const wMod = Number(addiction.withdrawalMod) || 0;
+      const wMod = Number(getWithdrawalMod(item)) || 0;
       const rests = computeRestsRemaining(wMod, conMod(actor));
       await setActorWithdrawalEntry(actor, item.id, {
         restsRemaining: rests,
@@ -221,10 +228,30 @@ export async function applyDragOutcome(actor, item, choice) {
       return { applied: "withdrawing", restsRemaining: rests };
     }
 
-    case CHOICES.TOLERANT:
+    case CHOICES.TOLERANT: {
+      const effect = await applyOrIncrementToleranceStack(actor, item);
+      const stacks = Number(effect?.flags?.[MODULE_ID]?.stacks) || 1;
+      await chat(
+        game.i18n.format("FISHUT.DragInventory.Applied.Tolerant", {
+          actor: actor.name,
+          item: item.name,
+          stacks,
+        }),
+      );
+      return { applied: "tolerant", stacks };
+    }
+
     case CHOICES.OVERDOSED: {
-      ui.notifications?.info(game.i18n.localize("FISHUT.DragInventory.Toast.ComingInV04"));
-      return { applied: "stub" };
+      const block = getOverdose(item);
+      const effect = await applyOverdoseEffect(actor, item, block);
+      await chat(
+        game.i18n.format("FISHUT.DragInventory.Applied.Overdosed", {
+          actor: actor.name,
+          item: item.name,
+          description: block?.description ?? "",
+        }),
+      );
+      return { applied: "overdosed", effectId: effect?.id ?? null };
     }
 
     default:
@@ -238,12 +265,21 @@ function conMod(actor) {
 }
 
 async function applyBenefitEffects(actor, item) {
-  const addictionId = getAddictionEffectId(item);
+  const reservedIds = new Set([
+    ...getAddictionEffectIds(item),
+    ...getWithdrawalEffectIds(item),
+    ...getOverdoseEffectIds(item),
+    ...getToleranceEffectIds(item),
+  ]);
   const effects = item?.effects ? [...item.effects] : [];
   const benefits = effects.filter((e) => {
     const id = e.id ?? e._id;
-    if (id && id === addictionId) return false;
-    if (/addict/i.test(e.name ?? "")) return false;
+    if (id && reservedIds.has(id)) return false;
+    const name = e.name ?? "";
+    if (/addict/i.test(name)) return false;
+    if (/withdraw/i.test(name)) return false;
+    if (/overdose/i.test(name)) return false;
+    if (/tolerance/i.test(name)) return false;
     return true;
   });
   if (benefits.length === 0) return [];
@@ -268,37 +304,47 @@ async function applyBenefitEffects(actor, item) {
 }
 
 async function applyAddictionEffect(actor, item) {
-  const template = findAddictionTemplate(item);
-  if (!template) {
+  const templates = findAddictionTemplates(item);
+  if (templates.length === 0) {
     logger.warn(`addiction template not found on ${item.name}; chat-only fail outcome`);
     return null;
   }
-  const data = typeof template.toObject === "function" ? template.toObject() : { ...template };
-  delete data._id;
-  data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = {
-    ...(data.flags[MODULE_ID] ?? {}),
-    [FLAGS.sourceSubstanceId]: item.id,
-  };
-  data.origin = item.uuid;
-  data.disabled = false;
-  if (data.duration) {
-    data.duration.rounds = undefined;
-    data.duration.seconds = undefined;
-  }
-  const created = await actor.createEmbeddedDocuments("ActiveEffect", [data]);
+  const payloads = templates.map((template) => {
+    const data = typeof template.toObject === "function" ? template.toObject() : { ...template };
+    delete data._id;
+    data.flags = data.flags ?? {};
+    data.flags[MODULE_ID] = {
+      ...(data.flags[MODULE_ID] ?? {}),
+      [FLAGS.sourceSubstanceId]: item.id,
+    };
+    data.origin = item.uuid;
+    data.disabled = false;
+    if (data.duration) {
+      data.duration.rounds = undefined;
+      data.duration.seconds = undefined;
+    }
+    return data;
+  });
+  const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
   return created?.[0] ?? null;
 }
 
-function findAddictionTemplate(item) {
-  const id = getAddictionEffectId(item);
+function findAddictionTemplates(item) {
   const effects = item?.effects;
-  if (!effects) return null;
-  if (id) {
-    const direct = effects.get?.(id) ?? [...effects].find((e) => e.id === id || e._id === id);
-    if (direct) return direct;
+  if (!effects) return [];
+  const list = [...effects];
+  const ids = getAddictionEffectIds(item);
+  const resolved = [];
+  const seen = new Set();
+  for (const id of ids) {
+    const found = effects.get?.(id) ?? list.find((e) => e.id === id || e._id === id);
+    if (found && !seen.has(found.id ?? found._id)) {
+      resolved.push(found);
+      seen.add(found.id ?? found._id);
+    }
   }
-  return [...effects].find((e) => /addict/i.test(e.name ?? "")) ?? null;
+  if (resolved.length > 0) return resolved;
+  return list.filter((e) => /addict/i.test(e.name ?? ""));
 }
 
 async function chat(content) {

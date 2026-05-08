@@ -1,0 +1,36 @@
+<section class="fishut-simulate-dose">
+  <div class="form-group">
+    <label for="fishut-sim-conMod">{{localize "FISHUT.SimulateDose.ConMod"}}</label>
+    <input id="fishut-sim-conMod" type="number" name="conMod" value="0" step="1" />
+  </div>
+
+  <fieldset class="form-group fishut-sim-state">
+    <legend>{{localize "FISHUT.SimulateDose.AddictionState.Label"}}</legend>
+    <label>
+      <input type="radio" name="addictionState" value="none" checked />
+      {{localize "FISHUT.SimulateDose.AddictionState.None"}}
+    </label>
+    <label>
+      <input type="radio" name="addictionState" value="addicted" />
+      {{localize "FISHUT.SimulateDose.AddictionState.Addicted"}}
+    </label>
+    <label>
+      <input type="radio" name="addictionState" value="withdrawing" />
+      {{localize "FISHUT.SimulateDose.AddictionState.Withdrawing"}}
+    </label>
+  </fieldset>
+
+  <fieldset class="form-group fishut-sim-subtypes">
+    <legend>{{localize "FISHUT.SimulateDose.ReadySubtypes.Label"}}</legend>
+    {{#if hasSubtypes}}
+      {{#each requiredSubtypes}}
+        <label>
+          <input type="checkbox" name="readySubtypes" value="{{this.id}}" checked />
+          {{this.id}}
+        </label>
+      {{/each}}
+    {{else}}
+      <p class="hint">{{localize "FISHUT.SimulateDose.ReadySubtypes.Empty"}}</p>
+    {{/if}}
+  </fieldset>
+</section>

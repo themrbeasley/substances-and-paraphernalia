@@ -3,17 +3,49 @@
   {{#if paraphernalia.bypass.present}}
     <div class="form-group">
       <label>{{labels.bypassType}}</label>
-      <span class="fishut-readonly">{{paraphernalia.bypass.typeLabel}}</span>
+      <select data-fishut-flag="bypass.type">
+        {{#each paraphernalia.bypass.typeOptions}}
+          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+        {{/each}}
+      </select>
     </div>
     <div class="form-group">
       <label>{{labels.bypassAppliesTo}}</label>
-      <span class="fishut-readonly">{{paraphernalia.bypass.appliesToText}}</span>
+      <div class="fishut-details-bypass__applies-to">
+        {{#each paraphernalia.bypass.appliesToOptions}}
+          <label class="checkbox">
+            <dnd5e-checkbox
+              data-fishut-flag="bypass.appliesTo"
+              data-fishut-bypass-admin="{{this.id}}"
+              {{#if this.checked}}checked{{/if}}
+            ></dnd5e-checkbox>
+            {{this.label}}
+          </label>
+        {{/each}}
+      </div>
     </div>
     <div class="form-group">
       <label>{{labels.bypassUsesPerDay}}</label>
-      <span class="fishut-readonly">{{paraphernalia.bypass.usesPerDayText}}</span>
+      <input
+        type="number"
+        min="0"
+        step="1"
+        data-fishut-flag="bypass.usesPerDay"
+        value="{{paraphernalia.bypass.usesPerDayValue}}"
+        placeholder="{{labels.bypassUsesPerDayPlaceholder}}"
+      />
     </div>
-    <p class="hint">{{labels.bypassManageOnEffectsTab}}</p>
+    {{#if paraphernalia.bypass.isPlusN}}
+      <div class="form-group">
+        <label>{{labels.bypassBonus}}</label>
+        <input
+          type="number"
+          step="1"
+          data-fishut-flag="bypass.bonus"
+          value="{{paraphernalia.bypass.bonusValue}}"
+        />
+      </div>
+    {{/if}}
   {{else}}
     <p class="hint">{{labels.bypassNoneHint}}</p>
     <button type="button" class="fishut-btn-text" data-fishut-action="grant-bypass">

@@ -1,0 +1,21 @@
+name: Wiki link check
+
+on:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch wiki home
+        run: |
+          set -euo pipefail
+          url="https://github.com/themrbeasley/substances-and-paraphernalia/wiki"
+          status=$(curl -sS -o /dev/null -w "%{http_code}" -L "$url")
+          echo "GET $url -> $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::Wiki home returned HTTP $status (expected 200)"
+            exit 1
+          fi

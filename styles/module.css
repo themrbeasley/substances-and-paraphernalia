@@ -76,19 +76,6 @@
   flex: 1 1 auto;
 }
 
-.fishut.fishut-item-settings .fishut-effect-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.2rem 0;
-  border-bottom: 1px dotted var(--color-border-light-tertiary, #ccc);
-}
-
-.fishut.fishut-item-settings .fishut-effect-row:last-child {
-  border-bottom: none;
-}
-
 .fishut.fishut-item-settings .fishut-btn-icon {
   flex: 0 0 auto;
   width: 1.6rem;
@@ -123,3 +110,200 @@
   color: var(--color-text-dark-secondary, #666);
   margin: 0.15rem 0 0 12rem;
 }
+
+/* Paraphernalia Subtype Manager — chip-cloud UX */
+
+.fishut-paraphernalia-subtypes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fishut-paraphernalia-subtypes__intro p {
+  margin: 0;
+  font-size: var(--font-size-12, 12px);
+  color: var(--color-text-dark-secondary, #555);
+}
+
+.fishut-paraphernalia-subtypes__cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 1px solid var(--color-border-light-tertiary, #999);
+  border-radius: 4px;
+  background: var(--color-bg-option, rgba(0, 0, 0, 0.04));
+  min-height: 3.5rem;
+  align-content: flex-start;
+}
+
+.fishut-paraphernalia-subtypes__empty {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-text-dark-secondary, #777);
+  font-size: var(--font-size-12, 12px);
+}
+
+.fishut-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light-tertiary, #999);
+  background: var(--color-bg, #fff);
+  color: var(--color-text-primary, #eee);
+  font-size: var(--font-size-12, 12px);
+  line-height: 1.3;
+}
+
+.fishut-chip--builtin {
+  background: rgba(255, 255, 255, 0.04);
+  border-style: dashed;
+  color: var(--color-text-secondary, #bbb);
+}
+
+.fishut-chip--custom {
+  background: rgba(120, 175, 255, 0.18);
+  border-color: rgba(120, 175, 255, 0.55);
+  color: var(--color-text-emphatic, #fff);
+}
+
+.fishut-chip__lock {
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+
+.fishut-chip__label {
+  font-weight: 600;
+}
+
+.fishut-chip__id {
+  font-size: 0.85em;
+  opacity: 0.85;
+  padding: 0.05rem 0.35rem;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.25);
+  font-family: var(--font-mono, monospace);
+}
+
+.fishut-chip--builtin .fishut-chip__id {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.fishut-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.fishut-chip__remove:hover {
+  background: var(--color-warm-2, rgba(200, 0, 0, 0.15));
+  color: var(--color-warm-1, #b00);
+}
+
+.fishut-paraphernalia-subtypes__add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fishut-paraphernalia-subtypes__new-id {
+  flex: 0 0 12rem;
+  font-family: var(--font-mono, monospace);
+}
+
+.fishut-paraphernalia-subtypes__new-label {
+  flex: 1 1 auto;
+}
+
+.fishut-paraphernalia-subtypes__add {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.fishut-paraphernalia-subtypes__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.fishut-paraphernalia-subtypes__save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Details-tab Bypass section: appliesTo administration multi-checkbox */
+
+.fishut-details-bypass__applies-to {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  flex: 1 1 auto;
+}
+
+.fishut-details-bypass__applies-to > label.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: normal;
+}
+
+/* Details-tab Required Subtypes: chip-cloud picker (Regions-style) */
+
+.fishut-details-required-subtypes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fishut-required-subtypes__cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  min-height: 2.4rem;
+  border: 1px solid var(--color-border-light-tertiary, #999);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.fishut-required-subtypes__empty {
+  font-style: italic;
+  color: var(--color-text-secondary, #999);
+  font-size: var(--font-size-12, 12px);
+}
+
+.fishut-required-subtypes__add {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fishut-required-subtypes__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fishut-required-subtypes__add-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+

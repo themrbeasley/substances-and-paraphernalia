@@ -1,5 +1,6 @@
-import { MODULE_ID, SCHEMA } from "../config.js";
+import { MODULE_ID } from "../config.js";
 import { isSubstance, getRequiredSubtypes } from "../data/flag-schema.js";
+import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
 import { evaluateSubtypeRequirements } from "../data/subtype-requirements.js";
 import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
@@ -109,7 +110,11 @@ function formatReason(reason) {
 }
 
 function subtypeLabel(subtype) {
-  const entry = SCHEMA?.paraphernaliaSubtypes?.find?.((e) => e.id === subtype);
+  const composed = getEffectiveParaphernaliaSubtypes();
+  const entry = composed.find((e) => e.id === subtype);
   if (!entry) return subtype;
-  return game.i18n.localize(entry.labelKey);
+  if (entry.source === "builtin" && entry.labelKey) {
+    return game.i18n.localize(entry.labelKey);
+  }
+  return entry.label ?? subtype;
 }

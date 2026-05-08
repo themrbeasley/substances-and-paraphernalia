@@ -1,0 +1,169 @@
+{
+  "_id": "fhSubMemwire0001",
+  "_key": "!items!fhSubMemwire0001",
+  "name": "Memorywire",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhSubSciFi000001",
+  "system": {
+    "description": {
+      "value": "<p>A single-shot polymer thread, injected at the base of the skull, that overlays raw sense-data from compromised neural archives onto the user's perception. Slicers use it to read systems like books; the comedown is paranoid and fragmentary.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have advantage on Intelligence (Investigation) checks made to discern hidden patterns, encoded data, or surveillance feeds.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Memorywire (see below).</p><p><strong><em>Addicted from Memorywire.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (you tend to narrate other people's intentions before they do).</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Syringe.</em></p>"
+    },
+    "type": {
+      "value": "poison",
+      "subtype": "injury"
+    },
+    "rarity": "uncommon",
+    "weight": {
+      "value": 0.05,
+      "units": "lb"
+    },
+    "price": {
+      "value": 120,
+      "denomination": "gp"
+    },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": true
+    },
+    "activities": {
+      "fhActMemwire0001": {
+        "type": "utility",
+        "_id": "fhActMemwire0001",
+        "sort": 0,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "minute",
+          "value": "10",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEMemwire01Ben"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
+        "name": ""
+      }
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "substance",
+      "category": "mindAltering",
+      "setting": "sciFi",
+      "requiredSubtypes": [
+        "syringe"
+      ],
+      "addiction": {
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 13
+        },
+        "addictionEffectIds": ["fhAEMemwire01Adc"]
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 3
+      },
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAEMemwire01Ben",
+      "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Ben",
+      "name": "Altered by Memorywire",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {
+        "seconds": 600
+      },
+      "description": "<p>Advantage on Intelligence (Investigation) checks for hidden patterns, encoded data, or surveillance feeds.</p>",
+      "changes": [],
+      "flags": {}
+    },
+    {
+      "_id": "fhAEMemwire01Adc",
+      "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Adc",
+      "name": "Memorywire Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned"
+      ],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on Charisma checks until withdrawal completes.</p>",
+      "changes": [],
+      "flags": {}
+    }
+  ],
+  "ownership": {
+    "default": 0
+  }
+}

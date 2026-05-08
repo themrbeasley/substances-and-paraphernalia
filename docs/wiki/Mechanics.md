@@ -1,0 +1,55 @@
+# Mechanics
+
+This page covers the four mechanical systems the module layers on top of dnd5e: the **consumption gate**, the **addiction loop**, **withdrawal**, **tolerance**, and **overdose**.
+
+## Consumption gate (`preUseActivity`)
+
+Each substance can declare a flat `requiredSubtypes` list of paraphernalia subtype ids. When the substance is used, the gate checks that the actor possesses a *ready* paraphernalia for every required subtype:
+
+- **Equipment** — must be equipped.
+- **Consumable** — must have `quantity > 0`.
+- **Attunement-required** — must be attuned on the actor's copy.
+
+If any required subtype is unmet, the user sees a *Missing paraphernalia* dialog with a **Use anyway** override. The dialog is visible to all users (player or GM); the override is intentional.
+
+The world setting **Enforce paraphernalia requirements** (default on) is the master switch. With it off, gating is bypassed but addiction automation continues to fire.
+
+## Addiction (`postUseActivity`)
+
+After a substance is used, the module rolls a Constitution save (DC and ability are authored on the substance). On a failed save, the addiction Active Effect template on the substance is cloned onto the actor.
+
+- The applied AE is keyed back to the substance via `flags["substances-and-paraphernalia"].sourceSubstanceId`.
+- The actor flag `flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { restsRemaining, appliedAt }` is the canonical state — the AE is a UI mirror.
+- AE name **must contain** the substring `addict` (case-insensitive). The Remove Addiction macro uses `*addict*` as a fallback when source-flag matching misses.
+
+Re-using a substance you're already addicted to does not reroll. It extends withdrawal to `max(currentRestsRemaining, newComputed)` — bingeing while addicted prolongs withdrawal but never shortens it.
+
+## Withdrawal (`restCompleted`)
+
+`restsRemaining = max(withdrawalMod − ConMod, ⌈withdrawalMod/2⌉)`, minimum 1. The `⌈Y/2⌉` term is the **floor clamp** — a high-Constitution character can never wave off withdrawal entirely.
+
+The long-rest tick is fired by `dnd5e.restCompleted` with `longRest: true`. To prevent multi-client double-ticks, only the active GM (`game.users.activeGM === game.user`) decrements. Each entry's `restsRemaining` drops by 1; on reaching zero the matching AE is removed and the flag entry cleared. Short rests do nothing.
+
+The withdrawal AE itself is selected per substance via the `withdrawalEffectId` flag. Author it on the substance's Active Effects tab, give it a name containing `withdraw`, and pick it in the Details tab. The validator warns if the AE imposes disadvantage on attacks or checks — that duplicates *poisoned*. Escalate instead with exhaustion, disadvantage on saves, speed reduction, or a stat penalty.
+
+## Tolerance
+
+Each successful addiction save applies (or stacks) a tolerance Active Effect on the actor. Tolerance is authored on the substance as a template AE with the modifier flag block:
+
+```js
+flags["substances-and-paraphernalia"].modifier = {
+  kind: "tolerance",
+  substanceId: "<itemId>",
+  attenuateAltered: { durationFactor: 0.1, modifierFactor: 0.1, dropAdvantage: false },
+  addictionDcBump: 1,
+  withdrawalAmplify: { durationFactor: 0.1, modifierFactor: 0.1, addDisadvantage: false }
+};
+```
+
+A single AE per (actor, substance) tracks stacks via `flags.stacks`. Per-stack effects sum on the result — three stacks of `addictionDcBump: 1` become +3 DC; three stacks of `durationFactor: 0.1` become 70% of the base duration. AE name **must contain** `tolerance`.
+
+## Overdose
+
+Each consumption rolls d100 against the substance's `chancePercent`. On a hit, a marker AE *Overdosed on {Substance}* is applied and the authored description is posted to chat. Overdose runs alongside the addiction save — both can fire on the same dose. AE name **must contain** `overdose`.
+
+Author it via the overdose fieldset on the Details tab: enable, set the percent, write a description.

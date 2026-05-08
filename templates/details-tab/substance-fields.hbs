@@ -9,64 +9,313 @@
     </select>
   </div>
 
-  <div class="form-group">
-    <label>{{labels.saveAbility}}</label>
-    <select data-fishut-flag="save.ability">
-      {{#each substance.save.abilityOptions}}
-        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-      {{/each}}
-    </select>
-  </div>
+  <fieldset class="fishut-details-addiction">
+    <legend>{{labels.addictionHeader}}</legend>
 
-  <div class="form-group">
-    <label>{{labels.saveDc}}</label>
-    <input type="number" data-fishut-flag="save.dc" value="{{substance.save.dc}}" min="1" step="1" />
-  </div>
+    <div class="form-group">
+      <label class="checkbox">
+        <dnd5e-checkbox data-fishut-flag="addiction.enabled"
+          {{#if substance.addiction.enabled}}checked{{/if}}></dnd5e-checkbox>
+        {{labels.addictionEnabled}}
+      </label>
+    </div>
 
-  <div class="form-group">
-    <label>{{labels.withdrawalMod}}</label>
-    <input type="number" data-fishut-flag="withdrawalMod" value="{{substance.withdrawalMod}}" min="0" step="1" />
-  </div>
+    <div class="form-group">
+      <label>{{labels.saveAbility}}</label>
+      <select data-fishut-flag="save.ability"
+              {{#if substance.addiction.fieldsDisabled}}disabled{{/if}}>
+        {{#each substance.addiction.save.abilityOptions}}
+          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+        {{/each}}
+      </select>
+    </div>
 
-  <div class="form-group">
-    <label>{{labels.addictionEffect}}</label>
-    <select data-fishut-flag="addictionEffectId">
-      {{#each substance.addictionEffectOptions}}
-        <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-      {{/each}}
-    </select>
-  </div>
+    <div class="form-group">
+      <label>{{labels.saveDc}}</label>
+      <input type="number" data-fishut-flag="save.dc" value="{{substance.addiction.save.dc}}" min="1" step="1"
+             {{#if substance.addiction.fieldsDisabled}}disabled{{/if}} />
+    </div>
+
+    <fieldset>
+      <legend>
+        <span>{{labels.addictionEffect}}</span>
+        <button type="button" class="unbutton control-button"
+                data-fishut-action="create-addiction-ae"
+                data-tooltip="{{labels.addictionEffectCreateTooltip}}"
+                aria-label="{{labels.addictionEffectCreateTooltip}}"
+                {{#if substance.addiction.fieldsDisabled}}disabled{{/if}}>
+          <i class="fas fa-plus" inert></i>
+        </button>
+      </legend>
+      <multi-select data-fishut-multi="addiction.effectIds" class="hidden-tags"
+                    {{#if substance.addiction.fieldsDisabled}}disabled{{/if}}>
+        {{#each substance.addiction.availableEffects}}
+          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
+        {{/each}}
+      </multi-select>
+      <ul class="separated-list effects-list flexcol unlist">
+        {{#each substance.addiction.attachedEffects}}
+          <li data-effect-id="{{this.id}}"{{#if this.isStale}} class="stale"{{/if}}>
+            <div class="details flexrow">
+              <img class="gold-icon" src="{{this.img}}" alt="{{this.name}}" />
+              <span class="name">{{this.name}}</span>
+              <div class="list-controls flexrow">
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="dissociate-addiction-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDissociate}}"
+                        aria-label="{{../labels.effectDissociate}}">
+                  <i class="fa-solid fa-minus" inert></i>
+                </button>
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="delete-addiction-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDelete}}"
+                        aria-label="{{../labels.effectDelete}}">
+                  <i class="fa-solid fa-trash" inert></i>
+                </button>
+              </div>
+            </div>
+          </li>
+        {{else}}
+          <li class="empty">{{../labels.effectEmpty}}</li>
+        {{/each}}
+      </ul>
+    </fieldset>
+  </fieldset>
+
+  <fieldset class="fishut-details-withdrawal">
+    <legend>{{labels.withdrawalHeader}}</legend>
+
+    <div class="form-group">
+      <label class="checkbox">
+        <dnd5e-checkbox data-fishut-flag="withdrawal.enabled"
+          {{#if substance.withdrawal.enabled}}checked{{/if}}></dnd5e-checkbox>
+        {{labels.withdrawalEnabled}}
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>{{labels.withdrawalMod}}</label>
+      <input type="number" data-fishut-flag="withdrawal.mod" value="{{substance.withdrawal.mod}}" min="0" step="1"
+             {{#if substance.withdrawal.fieldsDisabled}}disabled{{/if}} />
+    </div>
+
+    <fieldset>
+      <legend>
+        <span>{{labels.withdrawalEffect}}</span>
+        <button type="button" class="unbutton control-button"
+                data-fishut-action="create-withdrawal-ae"
+                data-tooltip="{{labels.withdrawalEffectCreateTooltip}}"
+                aria-label="{{labels.withdrawalEffectCreateTooltip}}"
+                {{#if substance.withdrawal.fieldsDisabled}}disabled{{/if}}>
+          <i class="fas fa-plus" inert></i>
+        </button>
+      </legend>
+      <multi-select data-fishut-multi="withdrawal.effectIds" class="hidden-tags"
+                    {{#if substance.withdrawal.fieldsDisabled}}disabled{{/if}}>
+        {{#each substance.withdrawal.availableEffects}}
+          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
+        {{/each}}
+      </multi-select>
+      <ul class="separated-list effects-list flexcol unlist">
+        {{#each substance.withdrawal.attachedEffects}}
+          <li data-effect-id="{{this.id}}"{{#if this.isStale}} class="stale"{{/if}}>
+            <div class="details flexrow">
+              <img class="gold-icon" src="{{this.img}}" alt="{{this.name}}" />
+              <span class="name">{{this.name}}</span>
+              <div class="list-controls flexrow">
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="dissociate-withdrawal-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDissociate}}"
+                        aria-label="{{../labels.effectDissociate}}">
+                  <i class="fa-solid fa-minus" inert></i>
+                </button>
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="delete-withdrawal-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDelete}}"
+                        aria-label="{{../labels.effectDelete}}">
+                  <i class="fa-solid fa-trash" inert></i>
+                </button>
+              </div>
+            </div>
+          </li>
+        {{else}}
+          <li class="empty">{{../labels.effectEmpty}}</li>
+        {{/each}}
+      </ul>
+    </fieldset>
+  </fieldset>
+
+  <fieldset class="fishut-details-overdose">
+    <legend>{{labels.overdoseHeader}}</legend>
+
+    <div class="form-group">
+      <label class="checkbox">
+        <dnd5e-checkbox data-fishut-flag="overdose.enabled"
+          {{#if substance.overdose.enabled}}checked{{/if}}></dnd5e-checkbox>
+        {{labels.overdoseEnabled}}
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>{{labels.overdoseChancePercent}}</label>
+      <input type="number" data-fishut-flag="overdose.chancePercent"
+             value="{{substance.overdose.chancePercent}}"
+             min="1" max="100" step="1"
+             {{#if substance.overdose.fieldsDisabled}}disabled{{/if}} />
+    </div>
+
+    <div class="form-group">
+      <label>
+        {{labels.overdoseDescription}}
+        <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.overdoseTooltip}}"></i>
+      </label>
+      <textarea data-fishut-flag="overdose.description" rows="3"
+                {{#if substance.overdose.fieldsDisabled}}disabled{{/if}}>{{substance.overdose.description}}</textarea>
+    </div>
+
+    <fieldset>
+      <legend>
+        <span>{{labels.overdoseEffect}}</span>
+        <button type="button" class="unbutton control-button"
+                data-fishut-action="create-overdose-ae"
+                data-tooltip="{{labels.overdoseEffectCreateTooltip}}"
+                aria-label="{{labels.overdoseEffectCreateTooltip}}"
+                {{#if substance.overdose.fieldsDisabled}}disabled{{/if}}>
+          <i class="fas fa-plus" inert></i>
+        </button>
+      </legend>
+      <multi-select data-fishut-multi="overdose.effectIds" class="hidden-tags"
+                    {{#if substance.overdose.fieldsDisabled}}disabled{{/if}}>
+        {{#each substance.overdose.availableEffects}}
+          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
+        {{/each}}
+      </multi-select>
+      <ul class="separated-list effects-list flexcol unlist">
+        {{#each substance.overdose.attachedEffects}}
+          <li data-effect-id="{{this.id}}"{{#if this.isStale}} class="stale"{{/if}}>
+            <div class="details flexrow">
+              <img class="gold-icon" src="{{this.img}}" alt="{{this.name}}" />
+              <span class="name">{{this.name}}</span>
+              <div class="list-controls flexrow">
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="dissociate-overdose-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDissociate}}"
+                        aria-label="{{../labels.effectDissociate}}">
+                  <i class="fa-solid fa-minus" inert></i>
+                </button>
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="delete-overdose-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDelete}}"
+                        aria-label="{{../labels.effectDelete}}">
+                  <i class="fa-solid fa-trash" inert></i>
+                </button>
+              </div>
+            </div>
+          </li>
+        {{else}}
+          <li class="empty">{{../labels.effectEmpty}}</li>
+        {{/each}}
+      </ul>
+    </fieldset>
+  </fieldset>
+
+  <fieldset class="fishut-details-tolerance">
+    <legend>{{labels.toleranceHeader}}</legend>
+
+    <div class="form-group">
+      <label class="checkbox">
+        <dnd5e-checkbox data-fishut-flag="tolerance.enabled"
+          {{#if substance.tolerance.enabled}}checked{{/if}}></dnd5e-checkbox>
+        {{labels.toleranceEnabled}}
+      </label>
+    </div>
+
+    <fieldset>
+      <legend>
+        <span>{{labels.toleranceEffect}}</span>
+        <button type="button" class="unbutton control-button"
+                data-fishut-action="create-tolerance-ae"
+                data-tooltip="{{labels.toleranceEffectCreateTooltip}}"
+                aria-label="{{labels.toleranceEffectCreateTooltip}}"
+                {{#if substance.tolerance.fieldsDisabled}}disabled{{/if}}>
+          <i class="fas fa-plus" inert></i>
+        </button>
+      </legend>
+      <multi-select data-fishut-multi="tolerance.effectIds" class="hidden-tags"
+                    {{#if substance.tolerance.fieldsDisabled}}disabled{{/if}}>
+        {{#each substance.tolerance.availableEffects}}
+          <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
+        {{/each}}
+      </multi-select>
+      <ul class="separated-list effects-list flexcol unlist">
+        {{#each substance.tolerance.attachedEffects}}
+          <li data-effect-id="{{this.id}}"{{#if this.isStale}} class="stale"{{/if}}>
+            <div class="details flexrow">
+              <img class="gold-icon" src="{{this.img}}" alt="{{this.name}}" />
+              <span class="name">{{this.name}}</span>
+              <div class="list-controls flexrow">
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="dissociate-tolerance-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDissociate}}"
+                        aria-label="{{../labels.effectDissociate}}">
+                  <i class="fa-solid fa-minus" inert></i>
+                </button>
+                <button type="button" class="unbutton control-button"
+                        data-fishut-action="delete-tolerance-ae"
+                        data-fishut-effect-id="{{this.id}}"
+                        data-tooltip="{{../labels.effectDelete}}"
+                        aria-label="{{../labels.effectDelete}}">
+                  <i class="fa-solid fa-trash" inert></i>
+                </button>
+              </div>
+            </div>
+          </li>
+        {{else}}
+          <li class="empty">{{../labels.effectEmpty}}</li>
+        {{/each}}
+      </ul>
+    </fieldset>
+  </fieldset>
 
   <fieldset class="fishut-details-required-subtypes">
     <legend>{{labels.requiredSubtypes}}</legend>
 
-    {{#if substance.requiredSubtypes.length}}
-      <ul class="fishut-subtype-chips">
-        {{#each substance.requiredSubtypes}}
-          <li class="fishut-subtype-chip">
-            <span class="fishut-subtype-chip-label">{{this.label}}</span>
-            <button type="button" class="fishut-btn-icon"
-                    data-fishut-action="remove-required-subtype"
-                    data-fishut-subtype="{{this.id}}"
-                    title="{{../labels.requiredSubtypesRemove}}">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </li>
-        {{/each}}
-      </ul>
-    {{else}}
-      <p class="fishut-subtype-empty">{{labels.requiredSubtypesEmpty}}</p>
-    {{/if}}
+    <div class="fishut-required-subtypes__cloud" role="list">
+      {{#each substance.requiredSubtypes}}
+        <span class="fishut-chip fishut-chip--custom" data-id="{{this.id}}" role="listitem">
+          <span class="fishut-chip__label">{{this.label}}</span>
+          <button type="button"
+                  class="fishut-chip__remove"
+                  data-fishut-action="remove-required-subtype"
+                  data-fishut-subtype="{{this.id}}"
+                  aria-label="{{../labels.requiredSubtypesRemove}}">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </span>
+      {{/each}}
+      {{#unless substance.requiredSubtypes.length}}
+        <span class="fishut-required-subtypes__empty">{{labels.requiredSubtypesEmpty}}</span>
+      {{/unless}}
+    </div>
 
-    <div class="fishut-subtype-add">
-      <select data-fishut-add-subtype="select">
+    <div class="fishut-required-subtypes__add">
+      <select data-fishut-add-subtype="select" class="fishut-required-subtypes__select">
         <option value="">—</option>
         {{#each substance.subtypeAddOptions}}
           <option value="{{this.id}}">{{this.label}}</option>
         {{/each}}
       </select>
-      <button type="button" class="fishut-btn-text" data-fishut-action="add-required-subtype">
-        <i class="fa-solid fa-plus"></i>
+      <button type="button"
+              class="fishut-required-subtypes__add-btn"
+              data-fishut-action="add-required-subtype">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
         {{labels.requiredSubtypesAdd}}
       </button>
     </div>

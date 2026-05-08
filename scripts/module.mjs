@@ -9,19 +9,41 @@ import {
   evaluateSubstance,
 } from "./data/subtype-requirements.js";
 import { registerActivityGating } from "./hooks/activity-gating.js";
-import { registerAddictionHooks, rollSaveAndApply, applyOutcome } from "./hooks/addiction.js";
+import {
+  registerAddictionHooks,
+  rollSaveAndApply,
+  applyOutcome,
+  applyOrIncrementToleranceStack,
+  applyWithdrawalEffect,
+  applyAddictionEffect,
+  isAppliedAddictionEffect,
+  onPreDeleteActiveEffect,
+} from "./hooks/addiction.js";
+import { registerOverdoseHooks, rollOverdoseAndApply } from "./hooks/overdose.js";
 import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
+import {
+  registerLongRestAbstain,
+  applyAbstainPreDecrement,
+} from "./hooks/long-rest-abstain.js";
 import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
 import { isActive, listMissingIntegrations } from "./integrations/index.js";
 import { registerDetailsTab } from "./ui/details-tab.js";
+import {
+  registerSimulateDose,
+  runSimulation,
+  sweepOrphanedTestActors,
+} from "./ui/simulate-dose.js";
 
 Hooks.once("init", () => {
   registerMigrationSettings();
   registerSettings();
   registerActivityGating();
   registerAddictionHooks();
+  registerOverdoseHooks();
   registerDragToInventory();
+  registerLongRestAbstain();
   registerDetailsTab();
+  registerSimulateDose();
   registerQuenchSuiteIfActive();
   logger.log("init complete");
 });
@@ -42,8 +64,19 @@ Hooks.once("ready", async () => {
       flagSchema,
       references: { actorHasSubtype, inspectSubtypeOnActor },
       requirements: { evaluateSubtypeRequirements, evaluateSubstance },
-      addiction: { rollSaveAndApply, applyOutcome },
+      addiction: {
+        rollSaveAndApply,
+        applyOutcome,
+        applyOrIncrementToleranceStack,
+        applyWithdrawalEffect,
+        applyAddictionEffect,
+        isAppliedAddictionEffect,
+        onPreDeleteActiveEffect,
+      },
+      overdose: { rollOverdoseAndApply },
       saveBypass: { consumeBypassIfAvailable },
+      abstain: { applyAbstainPreDecrement },
+      simulateDose: { runSimulation, sweepOrphanedTestActors },
       integrations: { isActive, listMissingIntegrations },
     };
   }
