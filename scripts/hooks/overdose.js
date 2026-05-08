@@ -63,24 +63,46 @@ export async function rollOverdoseAndApply(actor, item, block, { randomFn } = {}
  * Test seam — exported so other flows (e.g. the drag-to-inventory dialog) can
  * apply the marker directly without a d100 roll.
  *
+ * If `block.effectId` resolves to an AE template on the item, that template is
+ * cloned (preserving authored Changes / icon / description). Otherwise a
+ * minimal marker AE is built inline.
+ *
  * @param {Actor} actor
  * @param {Item}  item
- * @param {{ description?: string } | null | undefined} block
+ * @param {{ description?: string, effectId?: string } | null | undefined} block
  */
 export async function applyOverdoseEffect(actor, item, block) {
   const name = game.i18n.format("FISHUT.Overdose.EffectName", { item: item.name });
   const description = block?.description ?? "";
+  const template = block?.effectId ? item.effects?.get?.(block.effectId) ?? null : null;
+
+  const base = template
+    ? template.toObject()
+    : {
+        name,
+        img: item.img ?? "icons/svg/poison.svg",
+        description,
+        disabled: false,
+        transfer: false,
+      };
+
   const data = {
+    ...base,
     name,
-    img: item.img ?? "icons/svg/poison.svg",
-    description,
+    description: description || base.description || "",
     origin: item.uuid,
     disabled: false,
     transfer: false,
     flags: {
-      [MODULE_ID]: { [FLAGS.sourceSubstanceId]: item.id },
+      ...(base.flags ?? {}),
+      [MODULE_ID]: {
+        ...(base.flags?.[MODULE_ID] ?? {}),
+        [FLAGS.sourceSubstanceId]: item.id,
+      },
     },
   };
+  delete data._id;
+
   const created = await actor.createEmbeddedDocuments("ActiveEffect", [data]);
   return created?.[0] ?? null;
 }

@@ -187,6 +187,9 @@ export const setWithdrawalEffectId = (item, value) => {
  * @property {boolean} enabled
  * @property {number}  chancePercent  Integer 1–100; per-consumption d100 chance.
  * @property {string}  description    Free-text shown in the chat card on hit.
+ * @property {string}  [effectId]     `_id` of an overdose marker AE template on
+ *   the same item; cloned onto the actor when overdose fires. If unset, a
+ *   minimal marker AE is built inline.
  */
 
 /** @param {Item} item @returns {OverdoseBlock|null} */
@@ -195,6 +198,52 @@ export const getOverdose = (item) =>
 
 export const setOverdose = (item, value) =>
   item.setFlag(MODULE_ID, FLAGS.overdose, value);
+
+/** @param {Item} item @returns {string|null} */
+export const getOverdoseEffectId = (item) => getOverdose(item)?.effectId ?? null;
+
+export const setOverdoseEffectId = (item, value) => {
+  const block = getOverdose(item) ?? {};
+  return setOverdose(item, { ...block, effectId: value });
+};
+
+// ─── Substance flags (tolerance) ─────────────────────────────────────────────
+
+/**
+ * @typedef {Object} ToleranceBlock
+ * @property {boolean} [enabled]   Defaults to true when omitted; false skips
+ *   the auto-stack on save pass.
+ * @property {string}  [effectId]  `_id` of a tolerance AE template on the same
+ *   item; cloned onto the actor (with `flags.stacks: 1`) on the first save
+ *   pass. If unset, falls back to the built-in default tolerance template
+ *   discovered via name regex.
+ */
+
+/** @param {Item} item @returns {ToleranceBlock|null} */
+export const getTolerance = (item) =>
+  item?.getFlag?.(MODULE_ID, FLAGS.tolerance) ?? null;
+
+export const setTolerance = (item, value) =>
+  item.setFlag(MODULE_ID, FLAGS.tolerance, value);
+
+/**
+ * Whether tolerance auto-stacking runs on save pass. Undefined defaults to true.
+ * @param {Item} item @returns {boolean}
+ */
+export const getToleranceEnabled = (item) => getTolerance(item)?.enabled !== false;
+
+export const setToleranceEnabled = (item, value) => {
+  const block = getTolerance(item) ?? {};
+  return setTolerance(item, { ...block, enabled: !!value });
+};
+
+/** @param {Item} item @returns {string|null} */
+export const getToleranceEffectId = (item) => getTolerance(item)?.effectId ?? null;
+
+export const setToleranceEffectId = (item, value) => {
+  const block = getTolerance(item) ?? {};
+  return setTolerance(item, { ...block, effectId: value });
+};
 
 // ─── Paraphernalia flag (addictionSaveBypass) ────────────────────────────────
 

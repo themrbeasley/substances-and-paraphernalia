@@ -11,6 +11,8 @@ import {
   setActorWithdrawalEntry,
   clearActorWithdrawalEntry,
   getModifier,
+  getToleranceEffectId,
+  getToleranceEnabled,
   isSubstance,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
@@ -404,6 +406,7 @@ async function chat(content) {
  * @param {Item}  item
  */
 export async function applyOrIncrementToleranceStack(actor, item) {
+  if (!getToleranceEnabled(item)) return null;
   const existing = findAppliedToleranceEffect(actor, item.id);
   if (existing) {
     const currentStacks = Number(existing.flags?.[MODULE_ID]?.stacks) || 1;
@@ -464,6 +467,11 @@ function formatToleranceName(item, stacks) {
 function findToleranceTemplate(item) {
   const effects = item?.effects;
   if (!effects) return null;
+  const authoredId = getToleranceEffectId(item);
+  if (authoredId) {
+    const authored = effects.get?.(authoredId) ?? null;
+    if (authored) return authored;
+  }
   const list = [...effects];
   const byModifier = list.find((e) => getModifier(e)?.kind === "tolerance");
   if (byModifier) return byModifier;

@@ -9,6 +9,9 @@ import {
   getWithdrawalMod,
   getWithdrawalEffectId,
   getOverdose,
+  getOverdoseEffectId,
+  getToleranceEnabled,
+  getToleranceEffectId,
   getRequiredSubtypes,
   getSubtype,
   getModifier,
@@ -21,6 +24,9 @@ import {
   setWithdrawalMod,
   setWithdrawalEffectId,
   setOverdose,
+  setOverdoseEffectId,
+  setToleranceEnabled,
+  setToleranceEffectId,
   setRequiredSubtypes,
   setSubtype,
   setModifier,
@@ -225,6 +231,14 @@ function buildLabels() {
     overdoseChancePercent: L("FISHUT.DetailsTab.Overdose.ChancePercent"),
     overdoseDescription: L("FISHUT.DetailsTab.Overdose.Description"),
     overdoseTooltip: L("FISHUT.DetailsTab.Overdose.Tooltip"),
+    overdoseEffect: L("FISHUT.DetailsTab.Field.OverdoseEffect.Label"),
+    overdoseEffectTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.Tooltip"),
+    overdoseEffectCreateTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.CreateTooltip"),
+    toleranceHeader: L("FISHUT.DetailsTab.Tolerance.Header"),
+    toleranceEnabled: L("FISHUT.DetailsTab.Tolerance.Enabled"),
+    toleranceEffect: L("FISHUT.DetailsTab.Field.ToleranceEffect.Label"),
+    toleranceEffectTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.Tooltip"),
+    toleranceEffectCreateTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.CreateTooltip"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
     requiredSubtypes: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Label"),
@@ -292,6 +306,7 @@ function buildSubstanceContext(item) {
     addiction: buildAddictionContext(item),
     withdrawal: buildWithdrawalContext(item),
     overdose: buildOverdoseContext(item),
+    tolerance: buildToleranceContext(item),
     requiredSubtypes,
     subtypeAddOptions,
   };
@@ -388,11 +403,82 @@ function buildOverdoseContext(item) {
   // off and re-on.
   const chancePercent = Number.isFinite(rawChance) ? rawChance : 5;
   const description = typeof block.description === "string" ? block.description : "";
+
+  const overdoseEffectId = getOverdoseEffectId(item);
+  const allEffects = Array.from(item.effects ?? []);
+  // Overdose-effect picker only lists AEs whose name contains "overdose"
+  // (case-insensitive) per the AE-naming contract. Stale ids preserved as a
+  // synthetic option so renames don't silently drop the pointer.
+  const noneLabel = L("FISHUT.DetailsTab.Field.OverdoseEffect.None");
+  const overdoseAes = allEffects.filter((e) => /overdose/i.test(e.name ?? ""));
+  const overdoseEffectOptions = [
+    { id: "", label: noneLabel, selected: !overdoseEffectId },
+    ...overdoseAes.map((e) => ({
+      id: e.id,
+      label: e.name,
+      selected: e.id === overdoseEffectId,
+    })),
+  ];
+  if (
+    overdoseEffectId &&
+    !overdoseEffectOptions.some((o) => o.id === overdoseEffectId)
+  ) {
+    const stale = allEffects.find((e) => e.id === overdoseEffectId);
+    overdoseEffectOptions.push({
+      id: overdoseEffectId,
+      label: stale?.name ?? overdoseEffectId,
+      selected: true,
+    });
+  }
+
   return {
     enabled,
     chancePercent,
     description,
     fieldsDisabled: !enabled,
+    overdoseEffectOptions,
+  };
+}
+
+function buildToleranceContext(item) {
+  // Tolerance defaults to enabled when the flag is unset (legacy compat) —
+  // matches the auto-stack-on-save-pass behavior the engine has shipped with.
+  const enabled = getToleranceEnabled(item);
+  const toleranceEffectId = getToleranceEffectId(item);
+
+  const allEffects = Array.from(item.effects ?? []);
+  // Tolerance-effect picker lists AEs whose name contains "tolerance"
+  // (case-insensitive) OR carry a `modifier.kind === "tolerance"` flag block —
+  // either heuristic is sufficient to mark the AE as a tolerance template.
+  const noneLabel = L("FISHUT.DetailsTab.Field.ToleranceEffect.None");
+  const toleranceAes = allEffects.filter((e) => {
+    if (/tolerance/i.test(e.name ?? "")) return true;
+    return getModifier(e)?.kind === "tolerance";
+  });
+  const toleranceEffectOptions = [
+    { id: "", label: noneLabel, selected: !toleranceEffectId },
+    ...toleranceAes.map((e) => ({
+      id: e.id,
+      label: e.name,
+      selected: e.id === toleranceEffectId,
+    })),
+  ];
+  if (
+    toleranceEffectId &&
+    !toleranceEffectOptions.some((o) => o.id === toleranceEffectId)
+  ) {
+    const stale = allEffects.find((e) => e.id === toleranceEffectId);
+    toleranceEffectOptions.push({
+      id: toleranceEffectId,
+      label: stale?.name ?? toleranceEffectId,
+      selected: true,
+    });
+  }
+
+  return {
+    enabled,
+    fieldsDisabled: !enabled,
+    toleranceEffectOptions,
   };
 }
 
@@ -545,6 +631,12 @@ export async function persistField(item, field, rawValue, target) {
     }
     case "overdose.description":
       return persistOverdoseField(item, "description", rawValue ?? "");
+    case "overdose.effectId":
+      return setOverdoseEffectId(item, rawValue || null);
+    case "tolerance.enabled":
+      return setToleranceEnabled(item, rawValue === "true");
+    case "tolerance.effectId":
+      return setToleranceEffectId(item, rawValue || null);
     case "subtype": {
       const id = (rawValue ?? "").trim();
       if (!id) return setSubtype(item, null);
@@ -594,6 +686,12 @@ async function dispatchAction(button, wrapper, item) {
   }
   if (action === "create-withdrawal-ae") {
     return createWithdrawalStubAE(item);
+  }
+  if (action === "create-overdose-ae") {
+    return createOverdoseStubAE(item);
+  }
+  if (action === "create-tolerance-ae") {
+    return createToleranceStubAE(item);
   }
   if (action === "add-required-subtype") {
     const select = wrapper.querySelector('[data-fishut-add-subtype="select"]');
@@ -685,6 +783,57 @@ export async function createWithdrawalStubAE(item) {
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
   const effect = created?.[0] ?? null;
   if (effect?.id) await setWithdrawalEffectId(item, effect.id);
+  return effect;
+}
+
+// Create a blank overdose-marker AE on the substance item and auto-select it
+// as the active overdose effect. `transfer: false` because the marker is
+// applied programmatically on a d100 hit in the postUseActivity flow. Name
+// must contain `overdose` (case-insensitive) per the AE-naming contract.
+export async function createOverdoseStubAE(item) {
+  const name = game.i18n.format("FISHUT.DetailsTab.Field.OverdoseEffect.AeName.Default", {
+    item: item.name,
+  });
+  const data = [
+    {
+      name,
+      img: item.img ?? "icons/svg/poison.svg",
+      transfer: false,
+      changes: [],
+    },
+  ];
+  const created = await item.createEmbeddedDocuments("ActiveEffect", data);
+  const effect = created?.[0] ?? null;
+  if (effect?.id) await setOverdoseEffectId(item, effect.id);
+  return effect;
+}
+
+// Create a blank tolerance-template AE on the substance item, pre-stamped with
+// the modifier flag block so the engine recognises it as a tolerance template
+// and so the Effects tab surfaces the per-stack tunables (addictionDcBump,
+// withdrawalAmplify, attenuateAltered) as editable Changes for the GM to
+// extend. `transfer: false` because tolerance is applied programmatically on
+// addiction-save pass. Name must contain `tolerance` (case-insensitive).
+export async function createToleranceStubAE(item) {
+  const name = game.i18n.format("FISHUT.DetailsTab.Field.ToleranceEffect.AeName.Default", {
+    item: item.name,
+  });
+  const data = [
+    {
+      name,
+      img: item.img ?? "icons/svg/aura.svg",
+      transfer: false,
+      changes: [],
+      flags: {
+        [MODULE_ID]: {
+          modifier: { kind: "tolerance", substanceId: item.id },
+        },
+      },
+    },
+  ];
+  const created = await item.createEmbeddedDocuments("ActiveEffect", data);
+  const effect = created?.[0] ?? null;
+  if (effect?.id) await setToleranceEffectId(item, effect.id);
   return effect;
 }
 

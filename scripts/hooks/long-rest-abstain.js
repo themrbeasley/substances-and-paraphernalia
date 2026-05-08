@@ -29,25 +29,42 @@ async function onPreRestCompleted(actor, result, _config) {
   const ids = Object.keys(map);
   if (ids.length === 0) return;
 
-  for (const substanceId of ids) {
+  const rows = ids
+    .map((id) => buildRow(actor, id, map[id]))
+    .filter((row) => row !== null);
+  if (rows.length === 0) return;
+
+  let selectedIds;
+  try {
+    selectedIds = await promptCombinedAbstain(actor.name, rows);
+  } catch (err) {
+    logger.error("abstain prompt failed", err);
+    return;
+  }
+  if (!selectedIds || selectedIds.length === 0) return;
+
+  for (const substanceId of selectedIds) {
     try {
-      await processAbstainForSubstance(actor, substanceId, map[substanceId]);
+      const row = rows.find((r) => r.substanceId === substanceId);
+      if (!row) continue;
+      await processAbstainSave(actor, row);
     } catch (err) {
       logger.error(`abstain flow failed for substance ${substanceId}`, err);
     }
   }
 }
 
-async function processAbstainForSubstance(actor, substanceId, entry) {
-  if (!entry) return;
+function buildRow(actor, substanceId, entry) {
+  if (!entry) return null;
   const item = actor.items?.get?.(substanceId) ?? null;
   const wMod = Number(getAddiction(item)?.withdrawalMod) || 0;
   const dc = defaultAbstainDc(wMod);
   const itemName = item?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
+  return { substanceId, itemName, dc, entry };
+}
 
-  const wantsAbstain = await promptAbstain(actor.name, itemName, dc);
-  if (!wantsAbstain) return;
-
+async function processAbstainSave(actor, row) {
+  const { substanceId, itemName, dc, entry } = row;
   const passed = await rollAbstainSave(actor, dc);
   if (passed === null) return;
 
@@ -99,42 +116,56 @@ function isAbstainEnabled() {
   }
 }
 
-async function promptAbstain(actorName, itemName, dc) {
+async function promptCombinedAbstain(actorName, rows) {
   const DialogV2 = foundry?.applications?.api?.DialogV2;
   if (!DialogV2) {
     logger.warn("DialogV2 not available; skipping abstain prompt");
-    return false;
+    return [];
   }
   const title = game.i18n.localize("FISHUT.LongRestAbstain.Title");
-  const content = `<p>${game.i18n.format("FISHUT.LongRestAbstain.Prompt", {
-    actor: actorName,
-    item: itemName,
-    dc,
-  })}</p>`;
+  const intro = game.i18n.format("FISHUT.LongRestAbstain.Intro", { actor: actorName });
+  const rowsHtml = rows
+    .map((r) => {
+      const label = game.i18n.format("FISHUT.LongRestAbstain.Row", {
+        item: foundry.utils.escapeHTML?.(r.itemName) ?? r.itemName,
+        dc: r.dc,
+      });
+      return `<div class="form-group"><label class="checkbox"><input type="checkbox" name="fishut-abstain" value="${r.substanceId}" /> ${label}</label></div>`;
+    })
+    .join("");
+  const content = `<p>${intro}</p>${rowsHtml}`;
+
   try {
     const result = await DialogV2.wait({
       window: { title },
       content,
       buttons: [
         {
-          action: "abstain",
-          label: game.i18n.localize("FISHUT.LongRestAbstain.Roll"),
-          callback: () => true,
+          action: "confirm",
+          label: game.i18n.localize("FISHUT.LongRestAbstain.Confirm"),
+          default: true,
+          callback: (_event, _button, dialog) => collectChecked(dialog),
         },
         {
           action: "skip",
           label: game.i18n.localize("FISHUT.LongRestAbstain.Skip"),
-          default: true,
-          callback: () => false,
+          callback: () => [],
         },
       ],
       rejectClose: false,
     });
-    return result === true;
+    return Array.isArray(result) ? result : [];
   } catch (err) {
     logger.error("abstain prompt failed", err);
-    return false;
+    return [];
   }
+}
+
+function collectChecked(dialog) {
+  const root = dialog?.element ?? dialog?.form ?? null;
+  if (!root) return [];
+  const inputs = root.querySelectorAll?.('input[name="fishut-abstain"]:checked') ?? [];
+  return Array.from(inputs).map((el) => el.value);
 }
 
 async function rollAbstainSave(actor, dc) {

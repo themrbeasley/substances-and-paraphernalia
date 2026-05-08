@@ -127,6 +127,66 @@
       <textarea data-fishut-flag="overdose.description" rows="3"
                 {{#if substance.overdose.fieldsDisabled}}disabled{{/if}}>{{substance.overdose.description}}</textarea>
     </div>
+
+    <div class="form-group fishut-details-overdose-effect">
+      <label>
+        {{labels.overdoseEffect}}
+        <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.overdoseEffectTooltip}}"></i>
+      </label>
+      <div class="fishut-effect-picker">
+        <select class="fishut-effect-picker__select"
+                data-fishut-flag="overdose.effectId"
+                {{#if substance.overdose.fieldsDisabled}}disabled{{/if}}>
+          {{#each substance.overdose.overdoseEffectOptions}}
+            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+        <button type="button"
+                class="fishut-effect-picker__add"
+                data-fishut-action="create-overdose-ae"
+                data-tooltip="{{labels.overdoseEffectCreateTooltip}}"
+                aria-label="{{labels.overdoseEffectCreateTooltip}}"
+                {{#if substance.overdose.fieldsDisabled}}disabled{{/if}}>
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="fishut-details-tolerance">
+    <legend>{{labels.toleranceHeader}}</legend>
+
+    <div class="form-group">
+      <label class="checkbox">
+        <dnd5e-checkbox data-fishut-flag="tolerance.enabled"
+          {{#if substance.tolerance.enabled}}checked{{/if}}></dnd5e-checkbox>
+        {{labels.toleranceEnabled}}
+      </label>
+    </div>
+
+    <div class="form-group fishut-details-tolerance-effect">
+      <label>
+        {{labels.toleranceEffect}}
+        <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.toleranceEffectTooltip}}"></i>
+      </label>
+      <div class="fishut-effect-picker">
+        <select class="fishut-effect-picker__select"
+                data-fishut-flag="tolerance.effectId"
+                {{#if substance.tolerance.fieldsDisabled}}disabled{{/if}}>
+          {{#each substance.tolerance.toleranceEffectOptions}}
+            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+        <button type="button"
+                class="fishut-effect-picker__add"
+                data-fishut-action="create-tolerance-ae"
+                data-tooltip="{{labels.toleranceEffectCreateTooltip}}"
+                aria-label="{{labels.toleranceEffectCreateTooltip}}"
+                {{#if substance.tolerance.fieldsDisabled}}disabled{{/if}}>
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
   </fieldset>
 
   <fieldset class="fishut-details-required-subtypes">

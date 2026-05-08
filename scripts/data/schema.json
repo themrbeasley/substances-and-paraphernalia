@@ -105,6 +105,7 @@
     "withdrawal": "withdrawal",
     "schemaVersion": "schemaVersion",
     "modifier": "modifier",
-    "overdose": "overdose"
+    "overdose": "overdose",
+    "tolerance": "tolerance"
   }
 }
