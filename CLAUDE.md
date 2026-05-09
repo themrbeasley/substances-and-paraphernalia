@@ -84,16 +84,22 @@ AE names **must contain** the relevant substring (case-insensitive): addiction A
 
 This split means turning `enforceParaphernalia` off disables the gate but leaves addiction automation intact (intentional).
 
+### Admin-type gate (no per-substance `requiredSubtypes`)
+
+The paraphernalia gate keys off the dnd5e Poison subtype on the consumable (`item.system.type.subtype` ∈ `contact | ingested | inhaled | injury`) — substances do **not** carry a `requiredSubtypes` list. Paraphernalia items advertise an `appliesTo` array of admin types in their flag block; the gate passes when the actor owns at least one ready paraphernalia whose `appliesTo` includes the substance's admin. `scripts/data/admin-match.js` `actorSatisfiesAdmin(owned, admin)` is the pure helper; `scripts/hooks/activity-gating.js` is the Foundry wrapper.
+
+Paraphernalia readiness comes from `scripts/data/references.js` `inspectParaphernaliaItem(item)` — checks the equipped/attuned/uses-remaining state per the item's flag block. Authoring of `appliesTo` happens on the Details-tab "Paraphernalia Properties" fieldset as admin-type checkboxes.
+
 ### Save bypass lookup
 
-`scripts/data/save-bypass.js` `consumeBypassIfAvailable(actor, item)`:
+`scripts/data/modifier-pipeline.js` `consumeBypassIfAvailable(actor, substance)`:
 
-1. Reads `getAdministration(item)` (e.g. `"inhaled"`).
-2. Walks `requiredParaphernalia` groups; calls `inspectParaphernalia(actor, ref)` per `anyOf` entry to enumerate ready candidates.
-3. Filters to candidates whose `addictionSaveBypass.appliesTo` includes the substance's administration AND have `system.uses.value > 0`.
-4. Picks first match (deterministic), decrements `system.uses.spent`, returns `{ bypassed: true, paraphernalia, type }`.
+1. Reads the substance's admin from `system.type.subtype` (same source the gate uses).
+2. Walks `actor.appliedEffects` for AEs whose `flags[MODULE_ID].modifier` block has `kind: "bypass"`. Resolves each AE's source item via `effect.origin`; if the source is paraphernalia, requires its `appliesTo` to include the admin.
+3. Composes contributors via `pickBypassResolution`: `auto-pass > advantage > +N`. Within `auto-pass` / `advantage`, deterministic ascending-by-AE-id picks one. Within `+N`, ALL eligible AEs contribute and their `bonus` values sum.
+4. For each contributing AE whose source item has a `system.uses` config, increments `system.uses.spent` by 1.
 
-Bypass-granting paraphernalia must be a gate-satisfying paraphernalia for the substance — the bypass isn't a free aura. Per-day uses ride on dnd5e's native `system.uses.recovery = [{ period: "day", type: "recoverAll" }]`; we don't write our own recovery hook.
+Bypass-granting paraphernalia must satisfy the gate's `appliesTo` for the substance's admin — the bypass isn't a free aura. Per-day uses ride on dnd5e's native `system.uses.recovery = [{ period: "day", type: "recoverAll" }]`; we don't write our own recovery hook.
 
 ### Long-rest tick is GM-arbitrated
 
@@ -113,6 +119,14 @@ The TMFX (Token Magic FX) overlay on `Altered by *` AEs is dispatched via DAE's 
 - There is no Details-tab TMFX selector and no `flags[…].tmfx` block. Authoring happens directly on the AE's Changes table (Foundry's standard AE editor) — same surface authors already use for any other AE Change.
 
 When adding a new substance with TMFX visuals, append a `macro.execute` Change row to its benefit AE pointing at one of the shipped macros, or at a user-authored macro UUID.
+
+### Withdrawal vignette is an authored AE Change
+
+The per-owner CSS withdrawal vignette (red screen-edge bloom mounted to `#interface`) reads its color from `actor.flags.substances-and-paraphernalia.vignetteColor`. That flag is set by an AE Change row on the **withdrawal AE** itself — `key: "flags.substances-and-paraphernalia.vignetteColor"`, `mode: 5` (OVERRIDE), `value: "<#hex>"`, `priority: 20`. No color-inheritance step at apply time; the color rides on the AE.
+
+Each shipped substance carries an authored withdrawal AE template in its item's `effects` array (matched into the addiction system via `flags[…].withdrawal.effectIds`). Authors who want a custom vignette color hand-edit the Change row's `value` on the template; `applyWithdrawalEffect` clones the template onto the actor when the addiction lands. The default fallback template (built by `buildDefaultWithdrawalTemplate` when an item has no `effectIds`) carries `#a02020`.
+
+Note: the addiction AE already carries the `poisoned` status — the withdrawal AE deliberately does not, because `validate-content` warns on the duplicate. Withdrawal AEs ship with `statuses: []`.
 
 ### Withdrawal formula
 

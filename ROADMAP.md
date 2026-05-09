@@ -25,23 +25,31 @@ cell), three new Remove-X macros (Tolerance, Overdose, Withdrawal),
 and the Paraphernalia Subtype Manager settings sub-menu.
 
 v0.5 is shipped: Theme 4 (TokenMagic FX integration — `Altered by *`
-AE drives a TMFX preset or macro-mode dispatch via the new
-`fishut-illicit-macros` compendium of 9 setting × category macros;
-authored on the Details tab via mode `none` / `preset` / `macro`),
-per-integration boolean settings (`daeIntegration`,
-`midiqolIntegration`, `timesUpIntegration`, `tmfxIntegration`;
-default-on, off-state ignores the integration even when installed),
-the per-owner CSS withdrawal vignette (mounted to `#interface`,
-color inherited onto the AE flag from the substance at
-`applyWithdrawalEffect` time), Theme 6 round 3 paraphernalia
-(ritual incense burner / pill cutter / neural shunt, paired into
-Coalshade Powder / Ironhour Caps / Memorywire respectively), and
-the pre-sprint integration license audit
+AEs carry a `macro.execute` Change row pointing at one of the 9
+setting × category macros in the new `fishut-illicit-macros`
+compendium; DAE invokes the macro on apply/remove. There is no
+TMFX-aware hook and no `flags[…].tmfx` block — authoring happens
+directly on the AE Changes table), per-integration boolean settings
+(`daeIntegration`, `midiqolIntegration`, `timesUpIntegration`,
+`tmfxIntegration`; default-on, off-state ignores the integration
+even when installed), admin-type paraphernalia gating (gate keys
+off the dnd5e Poison subtype on the substance — `system.type.subtype`
+∈ contact/ingested/inhaled/injury — and matches against paraphernalia
+`appliesTo`; substances no longer carry `requiredSubtypes`,
+authoring is a Details-tab "Paraphernalia Properties" fieldset of
+admin-type checkboxes), the per-owner CSS withdrawal vignette
+(mounted to `#interface`, color sourced from an authored AE Change
+row on each substance's withdrawal AE template — `key:
+"flags.substances-and-paraphernalia.vignetteColor"`, mode 5
+OVERRIDE, hand-picked hex per substance), Theme 6 round 3
+paraphernalia (ritual incense burner / pill cutter / neural shunt,
+paired into Coalshade Powder / Ironhour Caps / Memorywire
+respectively), and the pre-sprint integration license audit
 (`docs/INTEGRATION-LICENSES.md`). JB2A integration was dropped
 from v0.5 — the audit could not clear CC-BY-NC-SA-4.0 for our
 distribution model and there is no signed clearance from JB2A's
 authors. Users who own JB2A can still drive Sequencer effects via
-a world-local macro through the `tmfx.macroUuid` field.
+a world-local macro UUID in the `macro.execute` Change row.
 
 ---
 
@@ -355,19 +363,27 @@ worlds before the next lands.
   d100, withdrawal-bite picker, voluntary-abstain dialog, poisoned-
   coupling tri-state setting, simulate-dose 3-dot menu, three
   Remove-X macros, and the Paraphernalia Subtype Manager.
-- **0.5 — shipped.** Theme 4 (TokenMagic FX integration with
-  preset/macro mode + 9-macro setting × category palette in the
-  new `fishut-illicit-macros` compendium) + per-integration
-  boolean settings pattern (`daeIntegration`, `midiqolIntegration`,
-  `timesUpIntegration`, `tmfxIntegration`; deferred from v0.3 and
-  TMFX is its first real consumer) + per-owner CSS withdrawal
-  vignette mounted to `#interface` with color inherited onto the
-  AE at apply time + Theme 6 round 3 (ritual incense burner / pill
-  cutter / neural shunt, paired into Coalshade Powder / Ironhour
-  Caps / Memorywire) + pre-sprint integration license audit
-  (`docs/INTEGRATION-LICENSES.md`). JB2A integration dropped —
-  CC-BY-NC-SA-4.0 vs. author Patreon ambiguity, no signed
-  clearance; revisit if licensing posture changes.
+- **0.5 — shipped.** Theme 4 (TokenMagic FX integration via DAE
+  `macro.execute` Change rows on `Altered by *` benefit AEs; 9-macro
+  setting × category palette in the new `fishut-illicit-macros`
+  compendium; no custom TMFX hook, no `flags[…].tmfx` block) +
+  per-integration boolean settings pattern (`daeIntegration`,
+  `midiqolIntegration`, `timesUpIntegration`, `tmfxIntegration`;
+  deferred from v0.3 and TMFX is its first real consumer) +
+  admin-type paraphernalia gate (substances key off
+  `system.type.subtype`; paraphernalia advertise `appliesTo` admin
+  types via Details-tab checkboxes; substances no longer carry
+  `requiredSubtypes`) + per-owner CSS withdrawal vignette mounted
+  to `#interface` with color from an authored AE Change row on each
+  substance's withdrawal AE template (mode 5 OVERRIDE applying to
+  `flags.substances-and-paraphernalia.vignetteColor`; hand-picked
+  hex per substance; default fallback `#a02020`) + Theme 6 round 3
+  (ritual incense burner / pill cutter / neural shunt, paired into
+  Coalshade Powder / Ironhour Caps / Memorywire) + pre-sprint
+  integration license audit (`docs/INTEGRATION-LICENSES.md`). JB2A
+  integration dropped — CC-BY-NC-SA-4.0 vs. author Patreon
+  ambiguity, no signed clearance; revisit if licensing posture
+  changes.
 - **0.6** — Theme 3 finish (`reroll-on-fail`) + Theme 5 first
   cut (on-use macro hook).
 - **1.0** — stability pass + Foundry package registry submission.
