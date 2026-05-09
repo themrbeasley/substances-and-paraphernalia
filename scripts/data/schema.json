@@ -109,7 +109,6 @@
     "schemaVersion": "schemaVersion",
     "modifier": "modifier",
     "overdose": "overdose",
-    "tolerance": "tolerance",
-    "vignetteColor": "vignetteColor"
+    "tolerance": "tolerance"
   }
 }

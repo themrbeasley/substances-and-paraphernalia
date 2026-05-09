@@ -23,7 +23,6 @@ import {
   getSetting,
   getSubtype,
   getTmfx,
-  getVignetteColor,
   getWithdrawalMod,
   getActorWithdrawal,
   getActorWithdrawalEntry,
@@ -31,7 +30,6 @@ import {
   isSubstance,
   setActorWithdrawalEntry,
   setRequiredSubtypes,
-  setVignetteColor,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
@@ -1503,31 +1501,6 @@ function withdrawalTemplateBatch(context) {
       const withdrawalAE = findAppliedWithdrawalAE(sub.id);
       assert.ok(withdrawalAE, "default withdrawal AE should be applied");
       assert.match(withdrawalAE.name ?? "", /withdraw/i);
-    });
-
-    it("inherits substance vignetteColor onto applied withdrawal AE flag", async () => {
-      const sub = await makeSubstance("Withdrawal Test G", "Withdrawal — G");
-      await setVignetteColor(sub, "#3366ff");
-      assert.equal(getVignetteColor(sub), "#3366ff");
-      const result = await api().addiction.applyWithdrawalEffect(actor, sub);
-      assert.ok(result, "withdrawal AE should be created");
-      assert.equal(
-        result.flags?.[MODULE_ID]?.[FLAGS.vignetteColor],
-        "#3366ff",
-        "AE flag must capture substance color at apply time",
-      );
-    });
-
-    it("falls back to default color when substance vignetteColor unset", async () => {
-      const sub = await makeSubstance("Withdrawal Test H", "Withdrawal — H");
-      assert.equal(getVignetteColor(sub), null);
-      const result = await api().addiction.applyWithdrawalEffect(actor, sub);
-      assert.ok(result, "withdrawal AE should be created");
-      assert.equal(
-        result.flags?.[MODULE_ID]?.[FLAGS.vignetteColor],
-        "#b91c1c",
-        "AE flag must default to module fallback color",
-      );
     });
 
     it("long-rest tick at restsRemaining=0 removes both addiction and withdrawal AEs", async () => {

@@ -337,15 +337,6 @@ export const getToleranceEffectId = (item) => getToleranceEffectIds(item)[0] ?? 
 export const setToleranceEffectId = (item, value) =>
   setToleranceEffectIds(item, value ? [value] : []);
 
-// ─── Substance flag (vignetteColor) ──────────────────────────────────────────
-
-/** @param {Item} item @returns {string|null} */
-export const getVignetteColor = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.vignetteColor) ?? null;
-
-export const setVignetteColor = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.vignetteColor, value);
-
 // ─── Paraphernalia flag (addictionSaveBypass) ────────────────────────────────
 
 /** @param {Item} item @returns {AddictionSaveBypassBlock|null} */
