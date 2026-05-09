@@ -158,9 +158,9 @@
           "priority": 20
         },
         {
-          "key": "macro.execute",
+          "key": "macro.tokenMagic",
           "mode": 0,
-          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxSciPerf",
+          "value": "fishut-tmfx-scifi-performance-enhancing",
           "priority": 20
         }
       ],

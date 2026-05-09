@@ -111,14 +111,16 @@ The `restCompleted` handler in `addiction.js` early-returns unless `game.users.a
 
 ### TMFX integration is DAE-driven, not a custom hook
 
-The TMFX (Token Magic FX) overlay on `Altered by *` AEs is dispatched via DAE's `macro.execute` Active Effect Change mode — **we do not ship a TMFX-aware hook**. The pattern:
+The TMFX (Token Magic FX) overlay on `Altered by *` AEs is dispatched via DAE's `macro.tokenMagic` Active Effect Change mode — **we do not ship a TMFX-aware hook**. The pattern:
 
-- The substance's benefit AE (e.g. `Altered by Coalshade Powder`) carries a Change row with `key: "macro.execute"`, `mode: 0` (CUSTOM), `value: "<MacroUuid>"`. The CUSTOM mode is the implicit "this AE needs DAE" signal that `aeRequiresDae` already detects.
-- DAE invokes the referenced macro twice: once with `args[0] === "on"` when the AE is applied, once with `args[0] === "off"` when it's removed. The last entry of `args` is a context object with `tokenId` / `actor` / `effectId`.
-- The `fishut-illicit-macros` compendium ships a 3×3 palette (setting × category) of TMFX wrappers following that signature. Authors can reference these by UUID, override with their own macro UUID, or omit the macro.execute Change to opt out of TMFX entirely.
-- There is no Details-tab TMFX selector and no `flags[…].tmfx` block. Authoring happens directly on the AE's Changes table (Foundry's standard AE editor) — same surface authors already use for any other AE Change.
+- `scripts/integrations/tmfx.js` `registerTmfxPresets()` runs at `ready` and registers a 3×3 palette of presets (setting × category) into TMFX's `tmfx-main` library via `TokenMagic.addPreset({ name, library: "tmfx-main" }, params, /* silent */ true)`. Names are `fishut-tmfx-{setting}-{category}` (e.g. `fishut-tmfx-fantasy-stimulant`). `addPreset` is idempotent on name+library collision (replaces), so re-registering on every load is fine. Gated on `game.user.isGM` (preset registry is a world setting), `isIntegrationEnabled("tokenmagic")`, and `globalThis.TokenMagic` presence.
+- The substance's benefit AE (e.g. `Altered by Coalshade Powder`) carries a Change row with `key: "macro.tokenMagic"`, `mode: 0` (CUSTOM), `value: "<preset-name>"`. The CUSTOM mode is the implicit "this AE needs DAE" signal that `aeRequiresDae` already detects.
+- DAE forwards `change.value` verbatim to `TokenMagic.addFilters(token, value)` on apply and removes the matching filter on remove. TMFX overwrites each param's `filterId` with the preset name during registration, so add/remove key cleanly off the same string.
+- There is no Details-tab TMFX selector and no `flags[…].tmfx` / `flags[…].tmfxFilterParams` block. Authoring happens directly on the AE's Changes table (Foundry's standard AE editor) — same surface authors already use for any other AE Change.
 
-When adding a new substance with TMFX visuals, append a `macro.execute` Change row to its benefit AE pointing at one of the shipped macros, or at a user-authored macro UUID.
+Why a preset library and not a compendium of macros: DAE's `macro.execute` keypath does name-only lookup against `game.macros` (the world directory), not UUID resolution against compendia, so an earlier compendium-macro design silently no-op'd. `macro.tokenMagic` sidesteps the macro indirection entirely.
+
+When adding a new substance with TMFX visuals, append a `macro.tokenMagic` Change row to its benefit AE with `value` set to one of the registered preset names, or to a user-authored preset registered separately.
 
 ### Withdrawal vignette is an authored AE Change
 

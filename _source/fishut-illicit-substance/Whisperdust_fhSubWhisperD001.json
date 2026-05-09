@@ -146,9 +146,9 @@
       "description": "<p>Advantage on Wisdom (Insight) checks and on hearing-based Wisdom (Perception) checks.</p>",
       "changes": [
         {
-          "key": "macro.execute",
+          "key": "macro.tokenMagic",
           "mode": 0,
-          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxModMind",
+          "value": "fishut-tmfx-modern-mind-altering",
           "priority": 20
         }
       ],

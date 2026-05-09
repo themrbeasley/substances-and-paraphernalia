@@ -28,6 +28,7 @@ import {
   isIntegrationSettingEnabled,
   listMissingIntegrations,
 } from "./integrations/index.js";
+import { registerTmfxPresets } from "./integrations/tmfx.js";
 import { registerDetailsTab } from "./ui/details-tab.js";
 import { registerWithdrawalVignette } from "./ui/withdrawal-vignette.js";
 import {
@@ -46,6 +47,7 @@ Hooks.once("init", () => {
   registerLongRestAbstain();
   registerDetailsTab();
   registerSimulateDose();
+  registerTmfxPresets();
   registerQuenchSuiteIfActive();
   logger.log("init complete");
 });

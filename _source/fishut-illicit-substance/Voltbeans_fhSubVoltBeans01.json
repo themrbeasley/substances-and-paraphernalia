@@ -152,9 +152,9 @@
           "priority": 20
         },
         {
-          "key": "macro.execute",
+          "key": "macro.tokenMagic",
           "mode": 0,
-          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxModStim",
+          "value": "fishut-tmfx-modern-stimulant",
           "priority": 20
         }
       ],

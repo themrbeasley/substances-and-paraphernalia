@@ -146,9 +146,9 @@
       "description": "<p>Advantage on Charisma (Persuasion) checks for small or beautiful things.</p>",
       "changes": [
         {
-          "key": "macro.execute",
+          "key": "macro.tokenMagic",
           "mode": 0,
-          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxFanMind",
+          "value": "fishut-tmfx-fantasy-mind-altering",
           "priority": 20
         }
       ],
