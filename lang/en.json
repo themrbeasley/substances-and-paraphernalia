@@ -189,7 +189,6 @@
   "FISHUT.LongRestAbstain.Pass": "{actor} successfully abstained from <strong>{item}</strong> (DC {dc}); withdrawal advances 2 long rests.",
   "FISHUT.LongRestAbstain.Fail": "{actor} failed to abstain from <strong>{item}</strong> (DC {dc}); standard 1 long rest of progress.",
 
-  "FISHUT.DetailsTab.SectionHeader": "Substances & Paraphernalia",
   "FISHUT.DetailsTab.Toggle.Substance": "Illicit Substance",
   "FISHUT.DetailsTab.Toggle.Paraphernalia": "Paraphernalia",
   "FISHUT.DetailsTab.Field.Category.Label": "Category",
@@ -230,6 +229,7 @@
   "FISHUT.DetailsTab.Field.Subtype.Label": "Subtype",
   "FISHUT.DetailsTab.Field.Subtype.None": "(none)",
   "FISHUT.DetailsTab.ParaphernaliaProperties.FieldsetLegend": "Paraphernalia Properties",
+  "FISHUT.DetailsTab.SubstanceProperties.FieldsetLegend": "Substance Properties",
   "FISHUT.DetailsTab.AppliesTo.Label": "Applies to",
   "FISHUT.DetailsTab.AppliesTo.Hint": "This paraphernalia satisfies the gate for any substance whose poison administration (system.type.subtype) is checked here. Leaving all unchecked makes this paraphernalia gate-irrelevant.",
   "FISHUT.DetailsTab.EffectPicker.Empty": "No effects attached.",
@@ -240,7 +240,6 @@
   "FISHUT.DetailsTab.Bypass.GrantButton": "Grant save modifier via Active Effect",
   "FISHUT.DetailsTab.Bypass.AeName.Default": "{item} — Save Modifier",
   "FISHUT.DetailsTab.Bypass.Type": "Type",
-  "FISHUT.DetailsTab.Bypass.AppliesTo.Label": "Applies to",
   "FISHUT.DetailsTab.Bypass.UsesPerDay.Label": "Uses per day",
   "FISHUT.DetailsTab.Bypass.UsesPerDay.Placeholder": "Unlimited",
   "FISHUT.DetailsTab.Bypass.Bonus.Label": "Bonus",

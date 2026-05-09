@@ -212,7 +212,6 @@ function L(key) {
 
 function buildLabels() {
   return {
-    sectionHeader: L("FISHUT.DetailsTab.SectionHeader"),
     category: L("FISHUT.DetailsTab.Field.Category.Label"),
     categoryAny: L("FISHUT.DetailsTab.Field.Category.Any"),
     addictionHeader: L("FISHUT.DetailsTab.Addiction.Header"),
@@ -243,13 +242,13 @@ function buildLabels() {
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
     paraphernaliaPropertiesHeader: L("FISHUT.DetailsTab.ParaphernaliaProperties.FieldsetLegend"),
+    substancePropertiesHeader: L("FISHUT.DetailsTab.SubstanceProperties.FieldsetLegend"),
     appliesTo: L("FISHUT.DetailsTab.AppliesTo.Label"),
     appliesToHint: L("FISHUT.DetailsTab.AppliesTo.Hint"),
     bypassHeader: L("FISHUT.DetailsTab.Bypass.Header"),
     bypassNoneHint: L("FISHUT.DetailsTab.Bypass.None.Hint"),
     bypassGrantButton: L("FISHUT.DetailsTab.Bypass.GrantButton"),
     bypassType: L("FISHUT.DetailsTab.Bypass.Type"),
-    bypassAppliesTo: L("FISHUT.DetailsTab.Bypass.AppliesTo.Label"),
     bypassUsesPerDay: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Label"),
     bypassUsesPerDayPlaceholder: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Placeholder"),
     bypassBonus: L("FISHUT.DetailsTab.Bypass.Bonus.Label"),
@@ -516,13 +515,6 @@ function buildBypassDisplay(match) {
     selected: t.id === currentType,
   }));
 
-  const appliesToList = Array.isArray(block.appliesTo) ? block.appliesTo : [];
-  const appliesToOptions = SCHEMA.administrations.map((a) => ({
-    id: a.id,
-    label: L(a.labelKey),
-    checked: appliesToList.includes(a.id),
-  }));
-
   const usesPerDay = block.usesPerDay;
   const usesPerDayValue =
     usesPerDay === undefined || usesPerDay === null ? "" : String(usesPerDay);
@@ -534,7 +526,6 @@ function buildBypassDisplay(match) {
   return {
     present: true,
     typeOptions,
-    appliesToOptions,
     usesPerDayValue,
     isPlusN,
     bonusValue,
@@ -619,9 +610,8 @@ function readMultiSelectValue(target) {
  *   overdose.* | tolerance.enabled | bypass.*
  * @param {string} rawValue
  * @param {HTMLElement} [target]
- *   The form control whose change fired. Required for `bypass.appliesTo`,
- *   which encodes the administration id in `data-fishut-bypass-admin` and
- *   reports a checked/unchecked toggle (not a value).
+ *   The form control whose change fired. Reserved for future toggles that
+ *   need to read additional data attributes off the control.
  */
 export async function persistField(item, field, rawValue, target) {
   switch (field) {
@@ -690,12 +680,6 @@ export async function persistField(item, field, rawValue, target) {
         return persistBypassField(item, "bonus", null);
       }
       return persistBypassField(item, "bonus", parseIntOrNull(rawValue));
-    }
-    case "bypass.appliesTo": {
-      const adminId = target?.dataset?.fishutBypassAdmin;
-      if (!adminId) return null;
-      const checked = rawValue === "true";
-      return persistBypassAppliesTo(item, adminId, checked);
     }
     default:
       logger.warn?.("details-tab persistField: unknown field", field);
@@ -989,19 +973,3 @@ async function persistAppliesTo(item, adminId, checked) {
   return setAppliesTo(item, next);
 }
 
-// Toggle membership of `adminId` in the bypass AE's `appliesTo` array.
-async function persistBypassAppliesTo(item, adminId, checked) {
-  const match = findBypassEffect(item);
-  if (!match) {
-    logger.warn?.("details-tab persistBypassAppliesTo: no bypass AE on item");
-    return null;
-  }
-  const { effect, block } = match;
-  const current = Array.isArray(block.appliesTo) ? block.appliesTo : [];
-  const has = current.includes(adminId);
-  let next;
-  if (checked && !has) next = [...current, adminId];
-  else if (!checked && has) next = current.filter((a) => a !== adminId);
-  else return null;
-  return setModifier(effect, { ...block, appliesTo: next });
-}

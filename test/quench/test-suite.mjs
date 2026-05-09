@@ -733,6 +733,7 @@ function bypassBatch(context) {
         flags: {
           [MODULE_ID]: {
             [FLAGS.subtype]: "pipe",
+            [FLAGS.appliesTo]: appliesTo,
           },
         },
         effects: [
@@ -865,7 +866,7 @@ function bypassBatch(context) {
           attuned: true,
           uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
         },
-        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe", [FLAGS.appliesTo]: ["inhaled"] } },
         effects: [
           {
             name: "Advantage Pipe — Bypass",
@@ -988,7 +989,7 @@ function bypassBatch(context) {
           attuned: true,
           uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
         },
-        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe", [FLAGS.appliesTo]: appliesTo } },
         effects: [
           {
             name: `${name} — Bypass`,
@@ -1074,7 +1075,7 @@ function bypassBatch(context) {
           attuned: true,
           uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
         },
-        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe", [FLAGS.appliesTo]: ["inhaled"] } },
         effects: [
           {
             name: "Auto Pipe — Bypass",

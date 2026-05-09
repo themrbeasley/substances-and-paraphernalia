@@ -300,9 +300,12 @@ export function checkParaphernalia(file, opts = {}) {
         `${aeTag}: modifier.type must be one of ${[...MODIFIER_TYPES].join("|")} (got ${modifier.type})`,
       );
     }
-    if (!Array.isArray(modifier.appliesTo) || modifier.appliesTo.length === 0) {
-      errors.push(`${aeTag}: modifier.appliesTo must be a non-empty array`);
-    } else {
+    // appliesTo on the bypass AE is no longer authored — paraphernalia's
+    // own `flags[…].appliesTo` is the canonical filter at resolution time.
+    // We still validate the AE-side array's *values* if it happens to be
+    // present (legacy authored content) so a typo'd administration string
+    // doesn't slip through silently.
+    if (Array.isArray(modifier.appliesTo)) {
       for (const a of modifier.appliesTo) {
         if (!ADMIN_VALUES.has(a)) {
           errors.push(`${aeTag}: modifier.appliesTo contains invalid administration "${a}"`);

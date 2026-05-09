@@ -39,7 +39,9 @@
  *     flags["substances-and-paraphernalia"].modifier:
  *       - kind === "bypass"
  *       - type is one of "auto-pass" | "advantage" | "+N"
- *       - appliesTo is a non-empty array of valid administration strings
+ *       - appliesTo is optional — paraphernalia's own `appliesTo` is the
+ *         canonical filter at resolution time; values are still validated
+ *         when present so typo'd administration strings can't slip through
  *     and when usesPerDay is declared the host item must have
  *     system.uses.recovery including a day/recoverAll entry
  */
