@@ -124,32 +124,13 @@ export function checkSubstance(file) {
 
   if (flags.requiredParaphernalia !== undefined) {
     err(
-      `legacy "requiredParaphernalia" flag is removed in v0.3 — declare a flat "requiredSubtypes" array of paraphernalia subtype ids instead`,
+      `legacy "requiredParaphernalia" flag is removed in v0.3 — paraphernalia gating now keys on system.type.subtype matched against paraphernalia appliesTo`,
     );
   }
   if (flags.requiredSubtypes !== undefined) {
-    if (!Array.isArray(flags.requiredSubtypes)) {
-      err(`requiredSubtypes must be an array (entries may be subtype id strings or non-empty arrays of subtype id strings for OR-groups)`);
-    } else {
-      for (const entry of flags.requiredSubtypes) {
-        if (typeof entry === "string") {
-          if (!KEBAB.test(entry)) {
-            err(`requiredSubtypes string entry must be a kebab-case subtype id (got ${JSON.stringify(entry)})`);
-          }
-        } else if (Array.isArray(entry)) {
-          if (entry.length === 0) {
-            err(`requiredSubtypes OR-group entry must be a non-empty array (got [])`);
-          }
-          for (const s of entry) {
-            if (typeof s !== "string" || !KEBAB.test(s)) {
-              err(`requiredSubtypes OR-group member must be a kebab-case string (got ${JSON.stringify(s)})`);
-            }
-          }
-        } else {
-          err(`requiredSubtypes entry must be a string or array of strings (got ${JSON.stringify(entry)})`);
-        }
-      }
-    }
+    err(
+      `legacy "requiredSubtypes" flag is removed in v0.5 — paraphernalia gating now keys on system.type.subtype (poison administration) matched against paraphernalia appliesTo`,
+    );
   }
 
   // v0.4 — overdose flag shape.

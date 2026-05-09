@@ -116,9 +116,6 @@
       "kind": "substance",
       "category": "mindAltering",
       "setting": "sciFi",
-      "requiredSubtypes": [
-        "inhaler"
-      ],
       "addiction": {
         "enabled": true,
         "save": {

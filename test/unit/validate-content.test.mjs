@@ -228,81 +228,13 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
   });
 });
 
-describe("checkSubstance — requiredSubtypes shape (v0.5 OR-groups)", () => {
-  it("accepts a flat array of bare kebab-case subtype id strings (AND only)", () => {
+describe("checkSubstance — requiredSubtypes removal (v0.5)", () => {
+  it("errors when the legacy requiredSubtypes flag is present", () => {
     const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = ["pipe", "snuff-horn"];
-    const { errors } = checkSubstance(file);
-    assert.deepEqual(errors, []);
-  });
-
-  it("accepts an OR-group entry (array of strings) inside the top-level array", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = [["snuff-horn", "incense-burner"]];
-    const { errors } = checkSubstance(file);
-    assert.deepEqual(errors, []);
-  });
-
-  it("accepts a mix of bare strings and OR-groups", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = ["syringe", ["snuff-horn", "incense-burner"]];
-    const { errors } = checkSubstance(file);
-    assert.deepEqual(errors, []);
-  });
-
-  it("errors when requiredSubtypes is not an array at the top level", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = "snuff-horn";
-    const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /requiredSubtypes must be an array/.test(e)), true);
-  });
-
-  it("errors when an OR-group is empty", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = [[]];
+    file.data.flags[SCOPE].requiredSubtypes = ["pipe"];
     const { errors } = checkSubstance(file);
     assert.equal(
-      errors.some((e) => /OR-group entry must be a non-empty array/.test(e)),
-      true,
-    );
-  });
-
-  it("errors when an OR-group contains a non-kebab-case member", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = [["snuff-horn", "Incense Burner"]];
-    const { errors } = checkSubstance(file);
-    assert.equal(
-      errors.some((e) => /OR-group member must be a kebab-case string/.test(e)),
-      true,
-    );
-  });
-
-  it("errors when an OR-group contains a non-string", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = [["snuff-horn", 42]];
-    const { errors } = checkSubstance(file);
-    assert.equal(
-      errors.some((e) => /OR-group member must be a kebab-case string/.test(e)),
-      true,
-    );
-  });
-
-  it("errors when a bare string entry is not kebab-case", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = ["Snuff Horn"];
-    const { errors } = checkSubstance(file);
-    assert.equal(
-      errors.some((e) => /string entry must be a kebab-case subtype id/.test(e)),
-      true,
-    );
-  });
-
-  it("errors when an entry is neither a string nor an array", () => {
-    const file = baseSubstance();
-    file.data.flags[SCOPE].requiredSubtypes = [{ subtype: "pipe" }];
-    const { errors } = checkSubstance(file);
-    assert.equal(
-      errors.some((e) => /entry must be a string or array of strings/.test(e)),
+      errors.some((e) => /legacy "requiredSubtypes" flag is removed in v0\.5/.test(e)),
       true,
     );
   });

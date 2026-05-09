@@ -4,10 +4,6 @@ import { registerSettings } from "./settings.js";
 import { registerMigrationSettings, runMigrations } from "./migrations.js";
 import * as flagSchema from "./data/flag-schema.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "./data/references.js";
-import {
-  evaluateSubtypeRequirements,
-  evaluateSubstance,
-} from "./data/subtype-requirements.js";
 import { registerActivityGating } from "./hooks/activity-gating.js";
 import {
   registerAddictionHooks,
@@ -69,7 +65,6 @@ Hooks.once("ready", async () => {
       schema: SCHEMA,
       flagSchema,
       references: { actorHasSubtype, inspectSubtypeOnActor },
-      requirements: { evaluateSubtypeRequirements, evaluateSubstance },
       addiction: {
         rollSaveAndApply,
         applyOutcome,

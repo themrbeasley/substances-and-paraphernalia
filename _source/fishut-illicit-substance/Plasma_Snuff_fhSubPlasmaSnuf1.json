@@ -113,9 +113,6 @@
       "kind": "substance",
       "category": "stimulant",
       "setting": "sciFi",
-      "requiredSubtypes": [
-        "snuff-horn"
-      ],
       "addiction": {
         "enabled": true,
         "save": {

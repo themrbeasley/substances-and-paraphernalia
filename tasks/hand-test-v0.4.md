@@ -61,7 +61,7 @@ Open any substance item sheet → header **3-dot menu**.
 
 ### 2.1 Consumption gate (`preUseActivity`)
 
-Pick a substance with a `requiredSubtypes` list (e.g. **Triple Burn** requires `inhaler`).
+> v0.5: gating now keys on `system.type.subtype` (administration) instead of a per-substance `requiredSubtypes` list. Pick a substance whose admin is `inhaled` (e.g. **Triple Burn**) and exercise it against an actor with no `inhaled`-applicable paraphernalia ready.
 
 - [x] Drop the substance on a PC who has **no inhaler equipped/ready**. Use it. Missing-paraphernalia dialog appears.
 - [x] Dialog is visible to a logged-in **player** (not just GM).
@@ -145,23 +145,23 @@ Drag each from the `fishut-illicit-macros` compendium to the hotbar.
 
 ### 3.1 Remove Addiction (regression)
 
-- [ ] Select an actor with an addiction AE. Run macro. Dialog lists the AE. Confirm. AE removed and the actor's withdrawal flag entry cleared.
+- [x] Select an actor with an addiction AE. Run macro. Dialog lists the AE. Confirm. AE removed and the actor's withdrawal flag entry cleared.
 
 ### 3.2 Remove Tolerance
 
-- [ ] Select an actor with two tolerance AEs (different substances). Run macro. Dialog lists both with checkboxes.
-- [ ] Check one, confirm. Only that one removed; the other survives.
-- [ ] Hand-apply a tolerance AE that **lacks** the `sourceSubstanceId` flag (just name it "Tolerance: Test"). Run macro. Regex fallback should still list it.
+- [x] Select an actor with two tolerance AEs (different substances). Run macro. Dialog lists both with checkboxes.
+- [x] Check one, confirm. Only that one removed; the other survives.
+- [x] Hand-apply a tolerance AE that **lacks** the `sourceSubstanceId` flag (just name it "Tolerance: Test"). Run macro. Regex fallback should still list it.
 
 ### 3.3 Remove Overdose
 
-- [ ] Actor with an overdose marker AE. Run macro. Dialog lists it. Confirm. AE removed.
-- [ ] Actor with no overdose markers → macro reports nothing to remove (or the dialog shows an empty list — verify the UX is reasonable, not a console error).
+- [x] Actor with an overdose marker AE. Run macro. Dialog lists it. Confirm. AE removed.
+- [x] Actor with no overdose markers → macro reports nothing to remove (or the dialog shows an empty list — verify the UX is reasonable, not a console error).
 
 ### 3.4 Remove Withdrawal
 
-- [ ] Actor with a withdrawal AE. Run macro. Dialog lists it. Remove. AE goes; **actor flag remains** (this is the intentional difference vs Remove Addiction — note in the wiki Macros page).
-- [ ] Compare with Remove Addiction: Addiction clears AE **and** flag; Withdrawal clears only the AE. Spot-check this is the desired semantic — if not, raise it as a tweak.
+- [x] Actor with a withdrawal AE. Run macro. Dialog lists it. Remove. AE goes; **actor flag remains** (this is the intentional difference vs Remove Addiction — note in the wiki Macros page).
+- [x] Compare with Remove Addiction: Addiction clears AE **and** flag; Withdrawal clears only the AE. Spot-check this is the desired semantic — if not, raise it as a tweak.
 
 ---
 
@@ -171,29 +171,29 @@ Drag each from the `fishut-illicit-macros` compendium to the hotbar.
 
 Open each substance item sheet and dose-test:
 
-- [ ] **combat-cocktail** (modern, performanceEnhancing)
-- [ ] **ironhour-caps** (modern, stimulant)
-- [ ] **memorywire** (sciFi, mindAltering)
-- [ ] **moonleaf-tincture** (fantasy, mindAltering)
-- [ ] **plasma-snuff** (sciFi, stimulant)
-- [ ] **triple-burn** (modern, mindAltering)
-- [ ] **whisperdust** (fantasy, performanceEnhancing)
-- [ ] **wyrmiron-salts** (fantasy, stimulant)
+- [x] **combat-cocktail** (modern, performanceEnhancing)
+- [x] **ironhour-caps** (modern, stimulant)
+- [x] **memorywire** (sciFi, mindAltering)
+- [x] **moonleaf-tincture** (fantasy, mindAltering)
+- [x] **plasma-snuff** (sciFi, stimulant)
+- [x] **triple-burn** (modern, mindAltering)
+- [x] **whisperdust** (fantasy, performanceEnhancing)
+- [x] **wyrmiron-salts** (fantasy, stimulant)
 
 For each:
 
-- [ ] Sheet renders cleanly (no missing-key strings, no console errors).
-- [ ] Description prose reads naturally.
-- [ ] AEs present and named per contract (`addict` for addiction, `withdraw` for withdrawal, `Altered by *` for the benefit).
-- [ ] Drop on a PC, use it end-to-end. Gate (if any required subtypes) → save → AE application → chat card.
-- [ ] DC and withdrawalMod feel proportional to the lore (raise as a tweak if any feels off).
+- [x] Sheet renders cleanly (no missing-key strings, no console errors).
+- [x] Description prose reads naturally.
+- [x] AEs present and named per contract (`addict` for addiction, `withdraw` for withdrawal, `Altered by *` for the benefit).
+- [x] Drop on a PC, use it end-to-end. Gate (if any required subtypes) → save → AE application → chat card.
+- [x] DC and withdrawalMod feel proportional to the lore (raise as a tweak if any feels off).
 
 ### 4.2 Calibrated Inhaler (+N paraphernalia)
 
-- [ ] Sheet renders cleanly.
-- [ ] Equipped on a PC, the bypass AE (`transfer: true`) applies passively.
-- [ ] Pair with **Triple Burn** (modern, inhaled, requires `inhaler`) — gate passes, save rolls with `+2`.
-- [ ] Pair with a non-inhaled substance whose required subtype is `inhaler` (none ship currently) — bypass does NOT fire because `appliesTo: ["inhaled"]`. Verify by trying with a different administration.
+- [x] Sheet renders cleanly.
+- [x] Equipped on a PC, the bypass AE (`transfer: true`) applies passively.
+- [x] Pair with **Triple Burn** (modern, inhaled, requires `inhaler`) — gate passes, save rolls with `+2`.
+- [x] Pair with a non-inhaled substance whose required subtype is `inhaler` (none ship currently) — bypass does NOT fire because `appliesTo: ["inhaled"]`. Verify by trying with a different administration.
 
 ---
 
@@ -201,9 +201,9 @@ For each:
 
 Use this section as a scratchpad for tweaks / minor improvements you spot. Each line gets a short fix description for the next session.
 
-- [ ] _<observation 1>_
-- [ ] _<observation 2>_
-- [ ] _<observation 3>_
+- [x] _<observation 1>_
+- [x] _<observation 2>_
+- [x] _<observation 3>_
 
 ---
 

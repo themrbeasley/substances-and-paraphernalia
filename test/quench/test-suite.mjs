@@ -19,7 +19,6 @@ import {
   getKind,
   getModifier,
   getOverdose,
-  getRequiredSubtypes,
   getSetting,
   getSubtype,
   getTmfx,
@@ -29,7 +28,6 @@ import {
   isParaphernalia,
   isSubstance,
   setActorWithdrawalEntry,
-  setRequiredSubtypes,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
@@ -200,7 +198,6 @@ async function embedSubstance(actor, overrides = {}) {
             save: { ability: "con", dc: 13 },
             withdrawalMod: 4,
           },
-          [FLAGS.requiredSubtypes]: [],
           [FLAGS.schemaVersion]: 2,
         },
       },
@@ -758,11 +755,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "Test Bypass Substance",
         system: { type: { value: "poison", subtype: administration ?? "" } },
-        flags: {
-          [MODULE_ID]: {
-            [FLAGS.requiredSubtypes]: [],
-          },
-        },
       });
       cleanup.push(sub);
       return sub;
@@ -899,7 +891,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "Advantage Test Substance",
         system: { type: { value: "poison", subtype: "inhaled" } },
-        flags: { [MODULE_ID]: { [FLAGS.requiredSubtypes]: [] } },
       });
       cleanup.push(sub);
 
@@ -922,7 +913,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "No-Modifier Substance",
         system: { type: { value: "poison", subtype: "inhaled" } },
-        flags: { [MODULE_ID]: { [FLAGS.requiredSubtypes]: [] } },
       });
       cleanup.push(sub);
 
@@ -1029,7 +1019,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "+N Test Substance",
         system: { type: { value: "poison", subtype: "inhaled" } },
-        flags: { [MODULE_ID]: { [FLAGS.requiredSubtypes]: [] } },
       });
       cleanup.push(sub);
       return sub;
@@ -1678,17 +1667,6 @@ function detailsTabSubstancePersistenceBatch(context) {
       );
     });
 
-    it("round-trips requiredSubtypes via setRequiredSubtypes", async () => {
-      await setRequiredSubtypes(substance, ["pipe", "vial"]);
-      assert.deepEqual(getRequiredSubtypes(substance), ["pipe", "vial"]);
-    });
-
-    it("clears requiredSubtypes when set to empty array", async () => {
-      await setRequiredSubtypes(substance, ["pipe"]);
-      assert.deepEqual(getRequiredSubtypes(substance), ["pipe"]);
-      await setRequiredSubtypes(substance, []);
-      assert.deepEqual(getRequiredSubtypes(substance), []);
-    });
   });
 }
 

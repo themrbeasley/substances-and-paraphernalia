@@ -7,6 +7,15 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+### Breaking
+- **Per-substance `requiredSubtypes` callout removed.** Paraphernalia gating
+  no longer keys on a substance-authored list of subtype ids. Going forward
+  the gate keys on the dnd5e Poison administration type at
+  `system.type.subtype` (`contact` | `ingested` | `inhaled` | `injury`)
+  matched against a paraphernalia-side `appliesTo` admin list (Phase 3+).
+  The legacy `requiredSubtypes` flag is now a hard validator error. Pre-1.0
+  clean break — no migration shim.
+
 ## [0.3.0] — 2026-05-07
 
 ### Breaking

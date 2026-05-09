@@ -100,7 +100,6 @@
     "category": "category",
     "setting": "setting",
     "subtype": "subtype",
-    "requiredSubtypes": "requiredSubtypes",
     "requiresDae": "requiresDae",
     "addiction": "addiction",
     "addictionSaveBypass": "addictionSaveBypass",

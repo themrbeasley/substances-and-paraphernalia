@@ -113,9 +113,6 @@
       "kind": "substance",
       "category": "mindAltering",
       "setting": "modern",
-      "requiredSubtypes": [
-        "rolling-papers"
-      ],
       "addiction": {
         "enabled": true,
         "save": {

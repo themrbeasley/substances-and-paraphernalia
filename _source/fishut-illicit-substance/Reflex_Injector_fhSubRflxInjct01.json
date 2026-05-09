@@ -113,9 +113,6 @@
       "kind": "substance",
       "category": "performanceEnhancing",
       "setting": "sciFi",
-      "requiredSubtypes": [
-        "syringe"
-      ],
       "addiction": {
         "enabled": true,
         "save": {

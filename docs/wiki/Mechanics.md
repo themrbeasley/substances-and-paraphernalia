@@ -4,15 +4,17 @@ This page covers the four mechanical systems the module layers on top of dnd5e: 
 
 ## Consumption gate (`preUseActivity`)
 
-Each substance can declare a flat `requiredSubtypes` list of paraphernalia subtype ids. When the substance is used, the gate checks that the actor possesses a *ready* paraphernalia for every required subtype:
+Each substance carries a dnd5e Poison administration type at `system.type.subtype` (one of `contact` / `ingested` / `inhaled` / `injury`). When the substance is used, the gate checks that the actor possesses a *ready* paraphernalia whose `appliesTo` admin list contains that administration. Readiness:
 
 - **Equipment** — must be equipped.
 - **Consumable** — must have `quantity > 0`.
 - **Attunement-required** — must be attuned on the actor's copy.
 
-If any required subtype is unmet, the user sees a *Missing paraphernalia* dialog with a **Use anyway** override. The dialog is visible to all users (player or GM); the override is intentional.
+If no paraphernalia matches the substance's administration, the user sees a *Missing paraphernalia* dialog with a **Use anyway** override. The dialog is visible to all users (player or GM); the override is intentional.
 
 The world setting **Enforce paraphernalia requirements** (default on) is the master switch. With it off, gating is bypassed but addiction automation continues to fire.
+
+> **v0.5 note.** The earlier per-substance `requiredSubtypes` callout (a flat list of subtype ids) was removed in v0.5; gating now keys on the dnd5e administration type instead. Phase 4 of the v0.5 dig-out lands the live admin-type gate; until then the gate stub allows substances through unconditionally (DAE-strict guard intact).
 
 ## Addiction (`postUseActivity`)
 

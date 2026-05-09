@@ -16,12 +16,6 @@ import {
  *   Open enum: schema.json seeds well-known ids ("pipe", "snuff-horn", …) but
  *   GMs may mint custom subtypes ad-hoc.
  *
- * @typedef {ParaphernaliaSubtype | ParaphernaliaSubtype[]} RequiredSubtypeEntry
- *   A single subtype id (required outright) or a non-empty array of subtype ids
- *   (OR-group: any one satisfies that slot, mirroring `requiredParaphernalia.anyOf`
- *   at the subtype level). A substance is satisfied when the actor owns a ready
- *   paraphernalia matching every entry in `requiredSubtypes`.
- *
  * @typedef {Object} AddictionSave
  * @property {string} ability    Standard 5e ability key (defaults to "con").
  * @property {number} dc
@@ -62,7 +56,6 @@ import {
  * @property {Category} [category]
  * @property {Setting} [setting]
  * @property {ParaphernaliaSubtype} [subtype]              Only when kind === "paraphernalia".
- * @property {RequiredSubtypeEntry[]} [requiredSubtypes]   Only when kind === "substance".
  * @property {AddictionBlock} [addiction]                  Only when kind === "substance".
  * @property {AddictionSaveBypassBlock} [addictionSaveBypass] Only when kind === "paraphernalia".
  * @property {number} [schemaVersion]
@@ -91,9 +84,6 @@ const DEFAULT_SAVE_ABILITY = "con";
 /** @param {Item} item */ export const getSubtype = (item) =>
   item?.getFlag?.(MODULE_ID, FLAGS.subtype) ?? null;
 
-/** @param {Item} item @returns {RequiredSubtypeEntry[]} */ export const getRequiredSubtypes = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.requiredSubtypes) ?? [];
-
 /** @param {Item} item */ export const isSubstance = (item) => getKind(item) === "substance";
 
 /** @param {Item} item */ export const isParaphernalia = (item) =>
@@ -103,8 +93,6 @@ export const setKind = (item, value) => item.setFlag(MODULE_ID, FLAGS.kind, valu
 export const setCategory = (item, value) => item.setFlag(MODULE_ID, FLAGS.category, value);
 export const setSetting = (item, value) => item.setFlag(MODULE_ID, FLAGS.setting, value);
 export const setSubtype = (item, value) => item.setFlag(MODULE_ID, FLAGS.subtype, value);
-export const setRequiredSubtypes = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.requiredSubtypes, value);
 
 // ─── Substance flags (addiction) ─────────────────────────────────────────────
 

@@ -17,7 +17,6 @@
  *   - withdrawal.mod is a positive integer; withdrawal.enabled boolean when present
  *   - addiction.addictionEffectId points to an AE on the same item whose name
  *     contains /addict/i
- *   - requiredSubtypes (if present) is a flat array of kebab-case subtype ids
  *   - flags[…].overdose: when `enabled`, requires integer chancePercent 1..100
  *     and non-empty `description`
  *   - flags[…].withdrawal.effectId (if set): must resolve to AE on the same

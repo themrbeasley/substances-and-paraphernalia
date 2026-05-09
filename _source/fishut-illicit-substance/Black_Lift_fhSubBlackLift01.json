@@ -113,10 +113,6 @@
       "kind": "substance",
       "category": "performanceEnhancing",
       "setting": "modern",
-      "requiredSubtypes": [
-        "tincture-dropper",
-        "athletes-logbook"
-      ],
       "addiction": {
         "enabled": true,
         "save": {

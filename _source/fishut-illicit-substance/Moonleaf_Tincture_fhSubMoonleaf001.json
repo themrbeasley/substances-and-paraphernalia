@@ -113,9 +113,6 @@
       "kind": "substance",
       "category": "mindAltering",
       "setting": "fantasy",
-      "requiredSubtypes": [
-        "tincture-dropper"
-      ],
       "addiction": {
         "enabled": true,
         "save": {

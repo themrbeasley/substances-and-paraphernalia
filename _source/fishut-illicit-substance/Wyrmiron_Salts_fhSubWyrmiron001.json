@@ -113,9 +113,6 @@
       "kind": "substance",
       "category": "performanceEnhancing",
       "setting": "fantasy",
-      "requiredSubtypes": [
-        "snuff-horn"
-      ],
       "addiction": {
         "enabled": true,
         "save": {

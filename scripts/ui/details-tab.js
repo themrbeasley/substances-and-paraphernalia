@@ -12,7 +12,6 @@ import {
   getOverdoseEffectIds,
   getToleranceEnabled,
   getToleranceEffectIds,
-  getRequiredSubtypes,
   getSubtype,
   getModifier,
   setKind,
@@ -27,7 +26,6 @@ import {
   setOverdoseEffectIds,
   setToleranceEnabled,
   setToleranceEffectIds,
-  setRequiredSubtypes,
   setSubtype,
   setModifier,
 } from "../data/flag-schema.js";
@@ -242,10 +240,6 @@ function buildLabels() {
     toleranceEffectCreateTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.CreateTooltip"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
-    requiredSubtypes: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Label"),
-    requiredSubtypesAdd: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Add"),
-    requiredSubtypesEmpty: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Empty"),
-    requiredSubtypesRemove: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Remove"),
     bypassHeader: L("FISHUT.DetailsTab.Bypass.Header"),
     bypassNoneHint: L("FISHUT.DetailsTab.Bypass.None.Hint"),
     bypassGrantButton: L("FISHUT.DetailsTab.Bypass.GrantButton"),
@@ -285,7 +279,6 @@ function buildSubtypeOptions(currentId) {
 
 function buildSubstanceContext(item) {
   const category = getCategory(item);
-  const requiredSubtypeIds = getRequiredSubtypes(item) ?? [];
 
   const categories = SCHEMA.categories.map((c) => ({
     id: c.id,
@@ -293,26 +286,12 @@ function buildSubstanceContext(item) {
     selected: c.id === category,
   }));
 
-  const subtypeCatalog = buildSubtypeOptions(null);
-  const subtypeLabelById = new Map(subtypeCatalog.map((o) => [o.id, o.label]));
-  const usedIds = new Set(requiredSubtypeIds);
-  const requiredSubtypes = requiredSubtypeIds.map((id, idx) => ({
-    idx,
-    id,
-    label: subtypeLabelById.get(id) ?? id,
-  }));
-  const subtypeAddOptions = subtypeCatalog
-    .filter((o) => !usedIds.has(o.id))
-    .map((o) => ({ id: o.id, label: o.label }));
-
   return {
     categories,
     addiction: buildAddictionContext(item),
     withdrawal: buildWithdrawalContext(item),
     overdose: buildOverdoseContext(item),
     tolerance: buildToleranceContext(item),
-    requiredSubtypes,
-    subtypeAddOptions,
   };
 }
 
@@ -763,22 +742,6 @@ async function dispatchAction(button, wrapper, item) {
     const effectId = button.dataset.fishutEffectId;
     if (!effectId) return null;
     return mutateEffectListForSlot(item, slot, effectId, op);
-  }
-
-  if (action === "add-required-subtype") {
-    const select = wrapper.querySelector('[data-fishut-add-subtype="select"]');
-    const id = (select?.value ?? "").trim();
-    if (!id) return null;
-    const current = getRequiredSubtypes(item) ?? [];
-    if (current.includes(id)) return null;
-    return setRequiredSubtypes(item, [...current, id]);
-  }
-  if (action === "remove-required-subtype") {
-    const id = button.dataset.fishutSubtype;
-    if (!id) return null;
-    const current = getRequiredSubtypes(item) ?? [];
-    const next = current.filter((s) => s !== id);
-    return setRequiredSubtypes(item, next);
   }
 
   logger.warn?.("details-tab dispatchAction: unknown action", action);
