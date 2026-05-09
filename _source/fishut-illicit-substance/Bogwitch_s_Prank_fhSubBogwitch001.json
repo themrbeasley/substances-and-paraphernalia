@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 2
+        "mod": 2,
+        "effectIds": [
+          "fhAEBogwitchWit1"
+        ]
       },
       "schemaVersion": 2
     }
@@ -141,7 +144,14 @@
         "seconds": 3600
       },
       "description": "<p>Advantage on Charisma (Performance) checks. Disadvantage on sight-based Wisdom (Perception) checks.</p>",
-      "changes": [],
+      "changes": [
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxFanMind",
+          "priority": 20
+        }
+      ],
       "flags": {},
       "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchBen1"
     },
@@ -159,6 +169,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchAdc1"
+    },
+    {
+      "_id": "fhAEBogwitchWit1",
+      "name": "Withdrawal from Bogwitch's Prank",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#4f6b3a",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchWit1"
     }
   ],
   "ownership": {

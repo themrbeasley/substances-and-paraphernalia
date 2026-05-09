@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 3
+        "mod": 3,
+        "effectIds": [
+          "fhAEVoltBeansWit"
+        ]
       },
       "schemaVersion": 2
     }
@@ -147,6 +150,12 @@
           "mode": 2,
           "value": "+2",
           "priority": 20
+        },
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxModStim",
+          "priority": 20
         }
       ],
       "flags": {},
@@ -166,6 +175,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubVoltBeans01.fhAEVoltBeansAdc"
+    },
+    {
+      "_id": "fhAEVoltBeansWit",
+      "name": "Withdrawal from Voltbeans",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#a8b020",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubVoltBeans01.fhAEVoltBeansWit"
     }
   ],
   "ownership": {

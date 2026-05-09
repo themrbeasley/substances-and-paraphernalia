@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 3
+        "mod": 3,
+        "effectIds": [
+          "fhAEIronHourWit1"
+        ]
       },
       "schemaVersion": 2
     }
@@ -141,7 +144,14 @@
         "seconds": 3600
       },
       "description": "<p>Advantage on Strength (Athletics) checks; carrying capacity doubled.</p>",
-      "changes": [],
+      "changes": [
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxModPerf",
+          "priority": 20
+        }
+      ],
       "flags": {},
       "_key": "!items.effects!fhSubIronHour001.fhAEIronHourBen1"
     },
@@ -159,6 +169,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubIronHour001.fhAEIronHourAdc1"
+    },
+    {
+      "_id": "fhAEIronHourWit1",
+      "name": "Withdrawal from Ironhour Caps",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#536878",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubIronHour001.fhAEIronHourWit1"
     }
   ],
   "ownership": {

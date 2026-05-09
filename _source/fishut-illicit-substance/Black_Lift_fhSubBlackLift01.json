@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 6
+        "mod": 6,
+        "effectIds": [
+          "fhAEBlackLiftWit"
+        ]
       },
       "schemaVersion": 2
     }
@@ -191,6 +194,25 @@
       ],
       "flags": {},
       "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftAdc"
+    },
+    {
+      "_id": "fhAEBlackLiftWit",
+      "name": "Withdrawal from Black Lift",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#8a1a1a",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftWit"
     }
   ],
   "ownership": {

@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 4
+        "mod": 4,
+        "effectIds": [
+          "fhAECmbtCockWit1"
+        ]
       },
       "schemaVersion": 2
     }
@@ -141,7 +144,14 @@
         "seconds": 60
       },
       "description": "<p>+1d4 to weapon attack rolls and damage rolls for the duration.</p>",
-      "changes": [],
+      "changes": [
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxSciPerf",
+          "priority": 20
+        }
+      ],
       "flags": {},
       "_key": "!items.effects!fhSubCmbtCock001.fhAECmbtCockBen1"
     },
@@ -159,6 +169,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubCmbtCock001.fhAECmbtCockAdc1"
+    },
+    {
+      "_id": "fhAECmbtCockWit1",
+      "name": "Withdrawal from Combat Cocktail",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#c84d22",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubCmbtCock001.fhAECmbtCockWit1"
     }
   ],
   "ownership": {

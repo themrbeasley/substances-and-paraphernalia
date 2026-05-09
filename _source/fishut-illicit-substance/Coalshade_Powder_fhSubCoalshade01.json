@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 4
+        "mod": 4,
+        "effectIds": [
+          "fhAECoalshadeWit"
+        ]
       },
       "schemaVersion": 2
     }
@@ -178,6 +181,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubCoalshade01.fhAECoalshadeAdc"
+    },
+    {
+      "_id": "fhAECoalshadeWit",
+      "name": "Withdrawal from Coalshade Powder",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#a25a1a",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubCoalshade01.fhAECoalshadeWit"
     }
   ],
   "ownership": {

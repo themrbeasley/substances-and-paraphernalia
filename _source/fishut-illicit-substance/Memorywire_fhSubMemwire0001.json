@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 3
+        "mod": 3,
+        "effectIds": [
+          "fhAEMemwire01Wit"
+        ]
       },
       "schemaVersion": 2
     }
@@ -141,7 +144,14 @@
         "seconds": 600
       },
       "description": "<p>Advantage on Intelligence (Investigation) checks for hidden patterns, encoded data, or surveillance feeds.</p>",
-      "changes": [],
+      "changes": [
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxSciMind",
+          "priority": 20
+        }
+      ],
       "flags": {},
       "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Ben"
     },
@@ -159,6 +169,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Adc"
+    },
+    {
+      "_id": "fhAEMemwire01Wit",
+      "name": "Withdrawal from Memorywire",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#1f5d99",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Wit"
     }
   ],
   "ownership": {

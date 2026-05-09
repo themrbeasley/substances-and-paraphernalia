@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 3
+        "mod": 3,
+        "effectIds": [
+          "fhAEPlasSnufWit1"
+        ]
       },
       "schemaVersion": 2
     }
@@ -147,6 +150,12 @@
           "mode": 2,
           "value": "+10",
           "priority": 20
+        },
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxSciStim",
+          "priority": 20
         }
       ],
       "flags": {},
@@ -166,6 +175,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubPlasmaSnuf1.fhAEPlasSnufAdc1"
+    },
+    {
+      "_id": "fhAEPlasSnufWit1",
+      "name": "Withdrawal from Plasma Snuff",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#d12a5e",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubPlasmaSnuf1.fhAEPlasSnufWit1"
     }
   ],
   "ownership": {

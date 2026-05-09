@@ -128,7 +128,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 3
+        "mod": 3,
+        "effectIds": [
+          "fhAEStellMistWit"
+        ]
       },
       "schemaVersion": 2
     }
@@ -194,6 +197,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubStellarMist.fhAEStellMistAdc"
+    },
+    {
+      "_id": "fhAEStellMistWit",
+      "name": "Withdrawal from Stellar Mist",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#4a2a7a",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubStellarMist.fhAEStellMistWit"
     }
   ],
   "ownership": {

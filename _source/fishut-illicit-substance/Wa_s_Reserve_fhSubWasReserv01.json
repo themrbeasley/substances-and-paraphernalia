@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 3
+        "mod": 3,
+        "effectIds": [
+          "fhAEWasReservWit"
+        ]
       },
       "schemaVersion": 2
     }
@@ -153,6 +156,12 @@
           "mode": 2,
           "value": "+2",
           "priority": 20
+        },
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxFanStim",
+          "priority": 20
         }
       ],
       "flags": {},
@@ -172,6 +181,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubWasReserv01.fhAEWasReservAdc"
+    },
+    {
+      "_id": "fhAEWasReservWit",
+      "name": "Withdrawal from Wa's Reserve",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#a87522",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubWasReserv01.fhAEWasReservWit"
     }
   ],
   "ownership": {

@@ -591,14 +591,25 @@ function buildWithdrawalPayload(template, item) {
 }
 
 function buildDefaultWithdrawalTemplate(item) {
+  // Default withdrawal AE drives the vignette via an AE Change row applying
+  // to `actor.flags.<scope>.vignetteColor`. The addiction AE already carries
+  // the `poisoned` status so we don't re-apply it here (validate-content warns
+  // on the duplicate).
   return {
     name: game.i18n.format("FISHUT.DetailsTab.Field.WithdrawalEffect.AeName.Default", {
       item: item.name,
     }),
     img: item.img ?? "icons/svg/blood.svg",
-    statuses: [POISONED_STATUS],
+    statuses: [],
     description: "",
-    changes: [],
+    changes: [
+      {
+        key: `flags.${MODULE_ID}.vignetteColor`,
+        mode: 5,
+        value: "#a02020",
+        priority: 20,
+      },
+    ],
     flags: {},
   };
 }

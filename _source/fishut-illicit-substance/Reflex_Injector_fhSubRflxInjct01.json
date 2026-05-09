@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 5
+        "mod": 5,
+        "effectIds": [
+          "fhAERflxInjctWit"
+        ]
       },
       "schemaVersion": 2
     }
@@ -153,6 +156,12 @@
           "mode": 2,
           "value": "+10",
           "priority": 20
+        },
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxSciPerf",
+          "priority": 20
         }
       ],
       "flags": {},
@@ -179,6 +188,25 @@
       ],
       "flags": {},
       "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctAdc"
+    },
+    {
+      "_id": "fhAERflxInjctWit",
+      "name": "Withdrawal from Reflex Injector",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#2da566",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctWit"
     }
   ],
   "ownership": {

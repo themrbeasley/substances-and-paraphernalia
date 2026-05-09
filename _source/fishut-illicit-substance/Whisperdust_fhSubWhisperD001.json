@@ -125,7 +125,10 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 2
+        "mod": 2,
+        "effectIds": [
+          "fhAEWhisperWit01"
+        ]
       },
       "schemaVersion": 2
     }
@@ -141,7 +144,14 @@
         "seconds": 1800
       },
       "description": "<p>Advantage on Wisdom (Insight) checks and on hearing-based Wisdom (Perception) checks.</p>",
-      "changes": [],
+      "changes": [
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxModMind",
+          "priority": 20
+        }
+      ],
       "flags": {},
       "_key": "!items.effects!fhSubWhisperD001.fhAEWhisperBen01"
     },
@@ -159,6 +169,25 @@
       "changes": [],
       "flags": {},
       "_key": "!items.effects!fhSubWhisperD001.fhAEWhisperAdc01"
+    },
+    {
+      "_id": "fhAEWhisperWit01",
+      "name": "Withdrawal from Whisperdust",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#6a4a78",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubWhisperD001.fhAEWhisperWit01"
     }
   ],
   "ownership": {
