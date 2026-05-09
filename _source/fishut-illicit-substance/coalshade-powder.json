@@ -115,8 +115,7 @@
       "category": "stimulant",
       "setting": "fantasy",
       "requiredSubtypes": [
-        "snuff-horn",
-        "incense-burner"
+        ["snuff-horn", "incense-burner"]
       ],
       "addiction": {
         "enabled": true,
@@ -129,10 +128,6 @@
       "withdrawal": {
         "enabled": true,
         "mod": 4
-      },
-      "tmfx": {
-        "mode": "macro",
-        "macroUuid": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxFanStim"
       },
       "schemaVersion": 2
     }
@@ -160,6 +155,12 @@
           "key": "system.skills.slt.bonuses.check",
           "mode": 2,
           "value": "+2",
+          "priority": 20
+        },
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxFanStim",
           "priority": 20
         }
       ],

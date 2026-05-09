@@ -5,7 +5,7 @@
   "type": "script",
   "scope": "global",
   "img": "icons/svg/blood.svg",
-  "command": "// Fantasy performance-enhancing — battle-rage red glow that pulses.\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nif (!token) return;\nconst filterId = \"fishut-tmfx-fantasy-performance-enhancing\";\nif (mode === \"remove\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"glow\",\n  filterId,\n  color: 0xcc2200,\n  distance: 12,\n  outerStrength: 5,\n  innerStrength: 1,\n  quality: 0.5,\n  padding: 10,\n  animated: { distance: { active: true, loopDuration: 1800, animType: \"syncCosOscillation\", val1: 8, val2: 14 } }\n}]);",
+  "command": "// Fantasy performance-enhancing — battle-rage red glow that pulses.\n// DAE Active Effect macro.execute callback.\n// args = [\"on\"|\"off\", lastArg] where lastArg has { actor, actorUuid, tokenId, tokenUuid, effectId, ... }\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nconst state = args?.[0];\nconst lastArg = args?.[args.length - 1];\nconst token = canvas.tokens.get(lastArg?.tokenId) ?? canvas.tokens.controlled[0];\nif (!token) return;\nconst filterId = \"fishut-tmfx-fantasy-performance-enhancing\";\nif (state === \"off\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"glow\",\n  filterId,\n  color: 0xcc2200,\n  distance: 12,\n  outerStrength: 5,\n  innerStrength: 1,\n  quality: 0.5,\n  padding: 10,\n  animated: { distance: { active: true, loopDuration: 1800, animType: \"syncCosOscillation\", val1: 8, val2: 14 } }\n}]);",
   "author": null,
   "ownership": { "default": 0 },
   "flags": {}

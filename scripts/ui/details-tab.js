@@ -15,8 +15,6 @@ import {
   getRequiredSubtypes,
   getSubtype,
   getModifier,
-  getTmfx,
-  setTmfx,
   getVignetteColor,
   setVignetteColor,
   setKind,
@@ -37,7 +35,6 @@ import {
 } from "../data/flag-schema.js";
 import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
 import { writeModifierAsChanges } from "../data/modifier-flag.js";
-import { isActive } from "../integrations/index.js";
 import { logger } from "../logger.js";
 
 const SECTION_TEMPLATE = `modules/${MODULE_ID}/templates/details-tab/section.hbs`;
@@ -247,15 +244,6 @@ function buildLabels() {
     toleranceEffect: L("FISHUT.DetailsTab.Field.ToleranceEffect.Label"),
     toleranceEffectTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.Tooltip"),
     toleranceEffectCreateTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.CreateTooltip"),
-    tmfxHeader: L("FISHUT.DetailsTab.Tmfx.Header"),
-    tmfxHint: L("FISHUT.DetailsTab.Tmfx.Hint"),
-    tmfxMode: L("FISHUT.DetailsTab.Tmfx.Mode"),
-    tmfxPresetName: L("FISHUT.DetailsTab.Tmfx.PresetName"),
-    tmfxPresetPlaceholder: L("FISHUT.DetailsTab.Tmfx.PresetPlaceholder"),
-    tmfxPickPreset: L("FISHUT.DetailsTab.Tmfx.PickPreset"),
-    tmfxPickPresetTooltip: L("FISHUT.DetailsTab.Tmfx.PickPresetTooltip"),
-    tmfxMacroUuid: L("FISHUT.DetailsTab.Tmfx.MacroUuid"),
-    tmfxMacroUuidPlaceholder: L("FISHUT.DetailsTab.Tmfx.MacroUuidPlaceholder"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
     requiredSubtypes: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Label"),
@@ -327,44 +315,8 @@ function buildSubstanceContext(item) {
     withdrawal: buildWithdrawalContext(item),
     overdose: buildOverdoseContext(item),
     tolerance: buildToleranceContext(item),
-    tmfx: buildTmfxContext(item),
     requiredSubtypes,
     subtypeAddOptions,
-  };
-}
-
-// TMFX selector context: three modes (none / preset / macro). The preset row
-// shows a "Pick from TMFX library" button only when the TokenMagic module is
-// active so author flow degrades gracefully when TMFX isn't installed. Mode
-// is read from the substance's tmfx flag via parseTmfxConfig — but we read
-// the raw flag here rather than the parser because the author may be mid-edit
-// (e.g. switched to "preset" but hasn't typed a name yet) and we still want
-// the preset row to render so they can type into it.
-function buildTmfxContext(item) {
-  const raw = getTmfx(item);
-  const mode =
-    raw?.mode === "preset" || raw?.mode === "macro" ? raw.mode : "none";
-  const presetName = typeof raw?.presetName === "string" ? raw.presetName : "";
-  const macroUuid = typeof raw?.macroUuid === "string" ? raw.macroUuid : "";
-
-  const modeOptions = [
-    { id: "none", labelKey: "FISHUT.DetailsTab.Tmfx.ModeNone" },
-    { id: "preset", labelKey: "FISHUT.DetailsTab.Tmfx.ModePreset" },
-    { id: "macro", labelKey: "FISHUT.DetailsTab.Tmfx.ModeMacro" },
-  ].map((o) => ({
-    id: o.id,
-    label: L(o.labelKey),
-    selected: o.id === mode,
-  }));
-
-  return {
-    mode,
-    isPreset: mode === "preset",
-    isMacro: mode === "macro",
-    presetName,
-    macroUuid,
-    modeOptions,
-    tmfxActive: isActive("tokenmagic"),
   };
 }
 
@@ -731,12 +683,6 @@ export async function persistField(item, field, rawValue, target) {
       return persistOverdoseField(item, "description", rawValue ?? "");
     case "tolerance.enabled":
       return setToleranceEnabled(item, rawValue === "true");
-    case "tmfx.mode":
-      return persistTmfxField(item, "mode", rawValue);
-    case "tmfx.presetName":
-      return persistTmfxField(item, "presetName", rawValue ?? "");
-    case "tmfx.macroUuid":
-      return persistTmfxField(item, "macroUuid", rawValue ?? "");
     case "subtype": {
       const id = (rawValue ?? "").trim();
       if (!id) return setSubtype(item, null);
@@ -818,9 +764,6 @@ async function dispatchAction(button, wrapper, item) {
   }
   if (action === "create-tolerance-ae") {
     return createToleranceStubAE(item);
-  }
-  if (action === "pick-tmfx-preset") {
-    return pickTmfxPreset(item);
   }
 
   // Multi-attach effect-list controls. Each `<li>` row in the picker emits
@@ -1067,52 +1010,6 @@ async function persistBypassField(item, key, value) {
     merged[key] = value;
   }
   return setModifier(effect, merged);
-}
-
-// Open TMFX's built-in preset selector and persist the chosen preset name.
-// TMFX exposes `TokenMagic.dialogs.openPresetSelector()` (returns a Promise
-// resolving to the preset name) on recent versions; older builds expose a
-// world macro instead. We probe the API surface and degrade to a Foundry
-// prompt dialog if neither path is available so the author still has a way
-// to type the name without leaving the sheet.
-async function pickTmfxPreset(item) {
-  const TMFX = globalThis.TokenMagic;
-  const opener =
-    TMFX?.dialogs?.openPresetSelector ??
-    TMFX?.openPresetSelector ??
-    null;
-  let chosen = null;
-  if (typeof opener === "function") {
-    try {
-      chosen = await opener.call(TMFX);
-    } catch (err) {
-      logger.error("details-tab pickTmfxPreset: TMFX selector threw", err);
-    }
-  }
-  if (typeof chosen !== "string" || !chosen.trim()) return null;
-  const current = getTmfx(item) ?? { mode: "preset" };
-  await setTmfx(item, { ...current, mode: "preset", presetName: chosen.trim() });
-  // Re-render the open sheet so the new preset name shows up in the input.
-  item.sheet?.render?.(false);
-  return null;
-}
-
-// Patch a single key on the substance's TMFX flag block. Switching to mode
-// "none" clears the entire block so future authors don't see stale preset/
-// macro values lingering after they've turned the integration off for this
-// substance.
-async function persistTmfxField(item, key, value) {
-  const current = getTmfx(item) ?? {};
-  if (key === "mode") {
-    if (value !== "preset" && value !== "macro") {
-      return setTmfx(item, { mode: "none" });
-    }
-    return setTmfx(item, { ...current, mode: value });
-  }
-  // String fields (presetName / macroUuid). Trim and persist as-is — the
-  // parser degrades empty strings to mode:"none" at dispatch time.
-  const trimmed = typeof value === "string" ? value.trim() : "";
-  return setTmfx(item, { ...current, [key]: trimmed });
 }
 
 // Toggle membership of `adminId` in the bypass AE's `appliesTo` array.

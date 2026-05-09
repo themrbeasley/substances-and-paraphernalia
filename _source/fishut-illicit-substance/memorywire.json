@@ -115,8 +115,7 @@
       "category": "mindAltering",
       "setting": "sciFi",
       "requiredSubtypes": [
-        "syringe",
-        "neural-shunt"
+        ["syringe", "neural-shunt"]
       ],
       "addiction": {
         "enabled": true,

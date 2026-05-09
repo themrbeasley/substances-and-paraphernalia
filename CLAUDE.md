@@ -103,6 +103,17 @@ The `restCompleted` handler in `addiction.js` early-returns unless `game.users.a
 
 `scripts/integrations/index.js` `isActive(id)` is `game.modules.get(id)?.active === true`. No version negotiation, no API calls. DAE-required detection (`scripts/integrations/dae.js` `aeRequiresDae(effect)`) is **per-AE** — scans `effect.changes` for DAE-only modes — not item-level. Don't reintroduce an item-level `requiresDae` flag check; it's been removed.
 
+### TMFX integration is DAE-driven, not a custom hook
+
+The TMFX (Token Magic FX) overlay on `Altered by *` AEs is dispatched via DAE's `macro.execute` Active Effect Change mode — **we do not ship a TMFX-aware hook**. The pattern:
+
+- The substance's benefit AE (e.g. `Altered by Coalshade Powder`) carries a Change row with `key: "macro.execute"`, `mode: 0` (CUSTOM), `value: "<MacroUuid>"`. The CUSTOM mode is the implicit "this AE needs DAE" signal that `aeRequiresDae` already detects.
+- DAE invokes the referenced macro twice: once with `args[0] === "on"` when the AE is applied, once with `args[0] === "off"` when it's removed. The last entry of `args` is a context object with `tokenId` / `actor` / `effectId`.
+- The `fishut-illicit-macros` compendium ships a 3×3 palette (setting × category) of TMFX wrappers following that signature. Authors can reference these by UUID, override with their own macro UUID, or omit the macro.execute Change to opt out of TMFX entirely.
+- There is no Details-tab TMFX selector and no `flags[…].tmfx` block. Authoring happens directly on the AE's Changes table (Foundry's standard AE editor) — same surface authors already use for any other AE Change.
+
+When adding a new substance with TMFX visuals, append a `macro.execute` Change row to its benefit AE pointing at one of the shipped macros, or at a user-authored macro UUID.
+
 ### Withdrawal formula
 
 `restsRemaining = max(withdrawalMod − ConMod, ⌈withdrawalMod/2⌉)`, minimum 1. The `⌈Y/2⌉` term is the **floor clamp** — high-Con characters can never wave off withdrawal entirely. Lives in `scripts/data/withdrawal.js` as a pure function so the unit test can hit it without Foundry globals.

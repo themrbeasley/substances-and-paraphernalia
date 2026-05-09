@@ -132,10 +132,6 @@
         "enabled": true,
         "mod": 3
       },
-      "tmfx": {
-        "mode": "macro",
-        "macroUuid": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxSciMind"
-      },
       "schemaVersion": 2
     }
   },
@@ -151,7 +147,14 @@
         "seconds": 3600
       },
       "description": "<p>Advantage on Intelligence (Investigation) checks. Disadvantage on Wisdom saving throws.</p>",
-      "changes": [],
+      "changes": [
+        {
+          "key": "macro.execute",
+          "mode": 0,
+          "value": "Compendium.substances-and-paraphernalia.fishut-illicit-macros.Macro.fhMacTmfxSciMind",
+          "priority": 20
+        }
+      ],
       "flags": {}
     },
     {

@@ -14,8 +14,13 @@ import {
  *   at `system.type.subtype`, not as a module flag.
  * @typedef {string} ParaphernaliaSubtype
  *   Open enum: schema.json seeds well-known ids ("pipe", "snuff-horn", …) but
- *   GMs may mint custom subtypes ad-hoc. A substance is satisfied when the
- *   actor owns a ready paraphernalia for each subtype in `requiredSubtypes`.
+ *   GMs may mint custom subtypes ad-hoc.
+ *
+ * @typedef {ParaphernaliaSubtype | ParaphernaliaSubtype[]} RequiredSubtypeEntry
+ *   A single subtype id (required outright) or a non-empty array of subtype ids
+ *   (OR-group: any one satisfies that slot, mirroring `requiredParaphernalia.anyOf`
+ *   at the subtype level). A substance is satisfied when the actor owns a ready
+ *   paraphernalia matching every entry in `requiredSubtypes`.
  *
  * @typedef {Object} AddictionSave
  * @property {string} ability    Standard 5e ability key (defaults to "con").
@@ -57,7 +62,7 @@ import {
  * @property {Category} [category]
  * @property {Setting} [setting]
  * @property {ParaphernaliaSubtype} [subtype]              Only when kind === "paraphernalia".
- * @property {ParaphernaliaSubtype[]} [requiredSubtypes]   Only when kind === "substance".
+ * @property {RequiredSubtypeEntry[]} [requiredSubtypes]   Only when kind === "substance".
  * @property {AddictionBlock} [addiction]                  Only when kind === "substance".
  * @property {AddictionSaveBypassBlock} [addictionSaveBypass] Only when kind === "paraphernalia".
  * @property {number} [schemaVersion]
@@ -86,7 +91,7 @@ const DEFAULT_SAVE_ABILITY = "con";
 /** @param {Item} item */ export const getSubtype = (item) =>
   item?.getFlag?.(MODULE_ID, FLAGS.subtype) ?? null;
 
-/** @param {Item} item @returns {string[]} */ export const getRequiredSubtypes = (item) =>
+/** @param {Item} item @returns {RequiredSubtypeEntry[]} */ export const getRequiredSubtypes = (item) =>
   item?.getFlag?.(MODULE_ID, FLAGS.requiredSubtypes) ?? [];
 
 /** @param {Item} item */ export const isSubstance = (item) => getKind(item) === "substance";
@@ -331,24 +336,6 @@ export const getToleranceEffectId = (item) => getToleranceEffectIds(item)[0] ?? 
 /** @deprecated Use {@link setToleranceEffectIds}. Replaces the entire list with `[value]`. */
 export const setToleranceEffectId = (item, value) =>
   setToleranceEffectIds(item, value ? [value] : []);
-
-// ─── Substance flag (tmfx) ───────────────────────────────────────────────────
-
-/**
- * @typedef {Object} TmfxBlock
- * @property {"none"|"preset"|"macro"} mode
- * @property {string} [presetName]   Required when mode === "preset".
- * @property {string} [macroUuid]    Required when mode === "macro".
- *
- * Render-only metadata read by the TMFX integration when an `Altered by *`
- * benefit AE is applied. Stored shape may be raw — `parseTmfxConfig` is the
- * canonical normalizer; getters/setters here are dumb pass-throughs.
- */
-
-/** @param {Item} item @returns {TmfxBlock|null} */
-export const getTmfx = (item) => item?.getFlag?.(MODULE_ID, FLAGS.tmfx) ?? null;
-
-export const setTmfx = (item, value) => item.setFlag(MODULE_ID, FLAGS.tmfx, value);
 
 // ─── Substance flag (vignetteColor) ──────────────────────────────────────────
 

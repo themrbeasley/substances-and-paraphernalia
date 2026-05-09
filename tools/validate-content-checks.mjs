@@ -129,11 +129,24 @@ export function checkSubstance(file) {
   }
   if (flags.requiredSubtypes !== undefined) {
     if (!Array.isArray(flags.requiredSubtypes)) {
-      err(`requiredSubtypes must be an array of subtype id strings`);
+      err(`requiredSubtypes must be an array (entries may be subtype id strings or non-empty arrays of subtype id strings for OR-groups)`);
     } else {
-      for (const s of flags.requiredSubtypes) {
-        if (typeof s !== "string" || !KEBAB.test(s)) {
-          err(`requiredSubtypes entry must be a kebab-case string (got ${JSON.stringify(s)})`);
+      for (const entry of flags.requiredSubtypes) {
+        if (typeof entry === "string") {
+          if (!KEBAB.test(entry)) {
+            err(`requiredSubtypes string entry must be a kebab-case subtype id (got ${JSON.stringify(entry)})`);
+          }
+        } else if (Array.isArray(entry)) {
+          if (entry.length === 0) {
+            err(`requiredSubtypes OR-group entry must be a non-empty array (got [])`);
+          }
+          for (const s of entry) {
+            if (typeof s !== "string" || !KEBAB.test(s)) {
+              err(`requiredSubtypes OR-group member must be a kebab-case string (got ${JSON.stringify(s)})`);
+            }
+          }
+        } else {
+          err(`requiredSubtypes entry must be a string or array of strings (got ${JSON.stringify(entry)})`);
         }
       }
     }
@@ -210,30 +223,6 @@ export function checkSubstance(file) {
     }
     if (!/tolerance/i.test(toleranceAe.name ?? "")) {
       err(`tolerance AE name "${toleranceAe.name}" must contain "tolerance"`);
-    }
-  }
-
-  // v0.5 — tmfx integration block. Author-facing guidance only (warn-only):
-  // when mode is "macro", macroUuid must be a Foundry UUID-shaped string;
-  // when mode is "preset", presetName must be non-empty. mode "none" or
-  // missing block is fine.
-  if (flags.tmfx !== undefined && flags.tmfx !== null) {
-    const t = flags.tmfx;
-    if (typeof t !== "object" || Array.isArray(t)) {
-      warn(`tmfx flag must be an object (got ${typeof t})`);
-    } else if (t.mode === "macro") {
-      const uuid = t.macroUuid;
-      if (typeof uuid !== "string" || uuid.length === 0) {
-        warn(`tmfx.macroUuid must be a non-empty string when mode is "macro"`);
-      } else if (!/^(Compendium\.|Macro\.)/.test(uuid)) {
-        warn(
-          `tmfx.macroUuid should start with "Compendium." or "Macro." (got ${JSON.stringify(uuid)})`,
-        );
-      }
-    } else if (t.mode === "preset") {
-      if (typeof t.presetName !== "string" || t.presetName.length === 0) {
-        warn(`tmfx.presetName must be a non-empty string when mode is "preset"`);
-      }
     }
   }
 

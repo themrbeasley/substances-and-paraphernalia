@@ -1440,11 +1440,17 @@ function withdrawalTemplateBatch(context) {
       return null;
     }
 
-    it("returns null when withdrawalEffectId is unset (v0.3 fallback preserved)", async () => {
+    it("falls back to a default withdrawal AE when no template authored (v0.5)", async () => {
       const sub = await makeSubstance("Withdrawal Test A");
       const result = await api().addiction.applyWithdrawalEffect(actor, sub);
-      assert.equal(result, null);
-      assert.equal(findAppliedWithdrawalAE(sub.id), null);
+      assert.ok(result, "default withdrawal AE should be created");
+      assert.match(result.name ?? "", /withdraw/i);
+      assert.equal(result.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId], sub.id);
+      assert.ok(
+        (result.statuses ?? []).includes?.("poisoned") || result.statuses?.has?.("poisoned"),
+        "default withdrawal AE should carry the poisoned status",
+      );
+      assert.equal(findAppliedWithdrawalAE(sub.id)?.id, result.id);
     });
 
     it("applies the authored withdrawal AE when withdrawalEffectId is set", async () => {
@@ -1456,7 +1462,7 @@ function withdrawalTemplateBatch(context) {
       assert.equal(findAppliedWithdrawalAE(sub.id)?.id, result.id);
     });
 
-    it("logs warning + skips when authored template name lacks 'withdraw'", async () => {
+    it("skips authored templates whose name lacks 'withdraw' and falls back to default", async () => {
       const sub = await embedSubstance(actor, { name: "Withdrawal Test C" });
       cleanup.push(sub);
       const [ae] = await sub.createEmbeddedDocuments("ActiveEffect", [
@@ -1472,8 +1478,9 @@ function withdrawalTemplateBatch(context) {
       ]);
       await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawal}.effectId`]: ae.id });
       const result = await api().addiction.applyWithdrawalEffect(actor, sub);
-      assert.equal(result, null, "should skip when name contract violated");
-      assert.equal(findAppliedWithdrawalAE(sub.id), null);
+      assert.ok(result, "default AE should be applied when authored template is invalid");
+      assert.match(result.name ?? "", /withdraw/i);
+      assert.notEqual(result.name, "Bad Template (no keyword)");
     });
 
     it("applyOutcome on saveResult=fail also applies authored withdrawal AE", async () => {
@@ -1489,15 +1496,13 @@ function withdrawalTemplateBatch(context) {
       assert.notEqual(addictionAE.id, withdrawalAE.id);
     });
 
-    it("applyOutcome on saveResult=fail applies no withdrawal AE when unset (v0.3)", async () => {
+    it("applyOutcome on saveResult=fail applies default withdrawal AE when no template authored", async () => {
       const sub = await makeSubstance("Withdrawal Test E");
       await api().addiction.applyOutcome(actor, sub, { saveResult: "fail" });
       assert.ok(findAppliedAddictionEffect(actor, sub.id), "addiction AE still applies");
-      assert.equal(
-        findAppliedWithdrawalAE(sub.id),
-        null,
-        "no withdrawal AE without withdrawalEffectId",
-      );
+      const withdrawalAE = findAppliedWithdrawalAE(sub.id);
+      assert.ok(withdrawalAE, "default withdrawal AE should be applied");
+      assert.match(withdrawalAE.name ?? "", /withdraw/i);
     });
 
     it("inherits substance vignetteColor onto applied withdrawal AE flag", async () => {
