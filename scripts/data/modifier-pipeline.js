@@ -1,5 +1,5 @@
 import { MODULE_ID } from "../config.js";
-import { getModifier } from "./flag-schema.js";
+import { getAppliesTo, getModifier, isParaphernalia } from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
 import { composeTolerance } from "./tolerance.js";
 
@@ -49,11 +49,15 @@ export async function consumeBypassIfAvailable(actor, substance) {
     if (!block) continue;
     if (block.kind !== "bypass") continue;
 
-    let sourceItem = null;
+    const sourceItem = resolveSourceItem(actor, effect);
+    if (sourceItem && isParaphernalia(sourceItem)) {
+      const ownerAppliesTo = getAppliesTo(sourceItem);
+      if (!Array.isArray(ownerAppliesTo) || !ownerAppliesTo.includes(administration)) continue;
+    }
+
     let hasUsesConfig = false;
     let usesRemaining;
     if (block.usesPerDay !== undefined) {
-      sourceItem = resolveSourceItem(actor, effect);
       const uses = sourceItem?.system?.uses;
       hasUsesConfig =
         !!uses &&

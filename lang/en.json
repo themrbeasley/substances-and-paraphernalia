@@ -79,14 +79,10 @@
   "FISHUT.ParaphernaliaManager.Error.Duplicate": "Row {index}: id is duplicated within the custom list.",
   "FISHUT.ParaphernaliaManager.Error.Generic": "Row {index}: invalid entry.",
 
-  "FISHUT.Gating.Group.Joiner": " or ",
   "FISHUT.Gating.Group.Separator": "; ",
-  "FISHUT.Gating.Group.Annotated": "{candidates} ({reason})",
-  "FISHUT.Gating.Reason.Unequipped": "not equipped",
-  "FISHUT.Gating.Reason.Unattuned": "not attuned",
 
   "FISHUT.Gating.Blocked.Title": "Missing paraphernalia",
-  "FISHUT.Gating.Blocked.Body": "<p><strong>{item}</strong> requires paraphernalia that isn't ready.</p><p>Missing: {missing}</p>",
+  "FISHUT.Gating.Blocked.Body": "<p><strong>{item}</strong> is an {admin} substance, but you have no ready paraphernalia that applies to {admin} substances.</p>",
   "FISHUT.Gating.Blocked.Override": "Use anyway",
   "FISHUT.Gating.Blocked.Cancel": "Cancel",
 
