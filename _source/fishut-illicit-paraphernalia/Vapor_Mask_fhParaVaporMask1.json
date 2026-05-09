@@ -1,0 +1,37 @@
+{
+  "_id": "fhParaVaporMask1",
+  "name": "Vapor Mask",
+  "type": "equipment",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhParaSciFi00001",
+  "system": {
+    "description": {
+      "value": "<p>A close-fitting respirator that aerosolizes liquid charges into breathable vapor. An older delivery method, but it works on anyone with lungs.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "common",
+    "weight": {
+      "value": 0.5,
+      "units": "lb"
+    },
+    "price": {
+      "value": 75,
+      "denomination": "gp"
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "sciFi",
+      "subtype": "inhaler",
+      "schemaVersion": 2
+    }
+  },
+  "effects": [],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaVaporMask1"
+}

@@ -1,0 +1,62 @@
+{
+  "_id": "fhParaNeurShnt01",
+  "name": "Neural Shunt",
+  "type": "equipment",
+  "img": "icons/svg/aura.svg",
+  "folder": "fhParaSciFi00001",
+  "system": {
+    "description": {
+      "value": "<p>A subdermal port with an implant-grade microvalve. Injectables route through the shunt's filtration ring before entering the bloodstream — most of the carrier-payload reaches receptors, but the body's reward circuits register the metered dose, not the spike.</p><p><strong>Attunement.</strong> Requires attunement.</p><p><strong>Filtered uptake.</strong> While attuned, you have advantage on Constitution saving throws against addiction to injury-administered substances delivered through the shunt.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "rare",
+    "attunement": "required",
+    "attuned": false,
+    "weight": {
+      "value": 0.05,
+      "units": "lb"
+    },
+    "price": {
+      "value": 1500,
+      "denomination": "gp"
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "sciFi",
+      "subtype": "neural-shunt",
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAENeurShntByp",
+      "name": "Neural Shunt — Save Modifier",
+      "img": "icons/svg/aura.svg",
+      "transfer": true,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Grants advantage on Constitution saving throws against addiction to injury-administered substances delivered through the shunt.</p>",
+      "changes": [],
+      "flags": {
+        "substances-and-paraphernalia": {
+          "modifier": {
+            "kind": "bypass",
+            "type": "advantage",
+            "appliesTo": [
+              "injury"
+            ]
+          }
+        }
+      },
+      "_key": "!items.effects!fhParaNeurShnt01.fhAENeurShntByp"
+    }
+  ],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaNeurShnt01"
+}

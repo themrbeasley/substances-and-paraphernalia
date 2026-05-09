@@ -70,6 +70,7 @@ async function loadJsonFiles(relDir) {
       out.push({ relPath: `${relDir}/${name}`, parseError: e.message });
       continue;
     }
+    if (typeof data?._key === "string" && data._key.startsWith("!folders!")) continue;
     out.push({ relPath: `${relDir}/${name}`, data });
   }
   return out;

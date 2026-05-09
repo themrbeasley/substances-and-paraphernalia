@@ -1,0 +1,14 @@
+{
+  "_id": "fhMacTmfxModStim",
+  "name": "TMFX · Modern · Stimulant",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/lightning.svg",
+  "command": "// Modern stimulant — clinical bright bloom pulse.\n// DAE Active Effect macro.execute callback.\n// args = [\"on\"|\"off\", lastArg] where lastArg has { actor, actorUuid, tokenId, tokenUuid, effectId, ... }\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nconst state = args?.[0];\nconst lastArg = args?.[args.length - 1];\nconst token = canvas.tokens.get(lastArg?.tokenId) ?? canvas.tokens.controlled[0];\nif (!token) return;\nconst filterId = \"fishut-tmfx-modern-stimulant\";\nif (state === \"off\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"bloom\",\n  filterId,\n  blur: 4,\n  bloomScale: 1.4,\n  threshold: 0.5,\n  animated: { bloomScale: { active: true, loopDuration: 1500, animType: \"syncCosOscillation\", val1: 1.0, val2: 1.6 } }\n}]);",
+  "author": null,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_key": "!macros!fhMacTmfxModStim"
+}

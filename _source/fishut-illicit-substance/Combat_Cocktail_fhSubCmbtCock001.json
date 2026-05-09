@@ -1,0 +1,171 @@
+{
+  "_id": "fhSubCmbtCock001",
+  "name": "Combat Cocktail",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhSubSciFi000001",
+  "system": {
+    "description": {
+      "value": "<p>A pre-loaded auto-injector blending battlefield analgesics with off-label muscle accelerators. Issued unofficially to private military contractors; recovered routinely from the dead. The label warns of cardiac risk in fine print no one reads.</p><p><strong><em>Desired effects on use.</em></strong> For 1 minute you gain a +1d4 bonus to weapon attack rolls and damage rolls (single die rolled at apply, applied throughout the duration).</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Combat Cocktail (see below).</p><p><strong><em>Addicted from Combat Cocktail.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma saving throws (you can't shake the post-firefight jitter).</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Syringe.</em></p>"
+    },
+    "type": {
+      "value": "poison",
+      "subtype": "injury"
+    },
+    "rarity": "rare",
+    "weight": {
+      "value": 0.1,
+      "units": "lb"
+    },
+    "price": {
+      "value": 280,
+      "denomination": "gp"
+    },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": true
+    },
+    "activities": {
+      "fhActCmbtCock001": {
+        "type": "utility",
+        "_id": "fhActCmbtCock001",
+        "sort": 0,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "minute",
+          "value": "1",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAECmbtCockBen1"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
+        "name": ""
+      }
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "substance",
+      "category": "performanceEnhancing",
+      "setting": "sciFi",
+      "requiredSubtypes": [
+        "syringe"
+      ],
+      "addiction": {
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 14
+        },
+        "addictionEffectIds": [
+          "fhAECmbtCockAdc1"
+        ]
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 4
+      },
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAECmbtCockBen1",
+      "name": "Altered by Combat Cocktail",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {
+        "seconds": 60
+      },
+      "description": "<p>+1d4 to weapon attack rolls and damage rolls for the duration.</p>",
+      "changes": [],
+      "flags": {},
+      "_key": "!items.effects!fhSubCmbtCock001.fhAECmbtCockBen1"
+    },
+    {
+      "_id": "fhAECmbtCockAdc1",
+      "name": "Combat Cocktail Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned"
+      ],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on Charisma saving throws until withdrawal completes.</p>",
+      "changes": [],
+      "flags": {},
+      "_key": "!items.effects!fhSubCmbtCock001.fhAECmbtCockAdc1"
+    }
+  ],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhSubCmbtCock001"
+}

@@ -1,0 +1,174 @@
+{
+  "_id": "fhSubIronHour001",
+  "name": "Ironhour Caps",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhSubModern00001",
+  "system": {
+    "description": {
+      "value": "<p>Sealed glass vials of black-coated capsules sold under counter as \"jobsite supplements.\" The label is a knockoff of a defunct legitimate brand. Used by movers, longshoremen, and the desperate.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have advantage on Strength (Athletics) checks and your carrying capacity is doubled.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Ironhour Caps (see below).</p><p><strong><em>Addicted from Ironhour Caps.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity saving throws (your reflexes feel a half-second slow).</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Vial.</em></p>"
+    },
+    "type": {
+      "value": "poison",
+      "subtype": "ingested"
+    },
+    "rarity": "uncommon",
+    "weight": {
+      "value": 0.1,
+      "units": "lb"
+    },
+    "price": {
+      "value": 90,
+      "denomination": "gp"
+    },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": true
+    },
+    "activities": {
+      "fhActIronHour001": {
+        "type": "utility",
+        "_id": "fhActIronHour001",
+        "sort": 0,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "hour",
+          "value": "1",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEIronHourBen1"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
+        "name": ""
+      }
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "substance",
+      "category": "performanceEnhancing",
+      "setting": "modern",
+      "requiredSubtypes": [
+        [
+          "vial",
+          "pill-cutter"
+        ]
+      ],
+      "addiction": {
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 13
+        },
+        "addictionEffectIds": [
+          "fhAEIronHourAdc1"
+        ]
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 3
+      },
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAEIronHourBen1",
+      "name": "Altered by Ironhour Caps",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {
+        "seconds": 3600
+      },
+      "description": "<p>Advantage on Strength (Athletics) checks; carrying capacity doubled.</p>",
+      "changes": [],
+      "flags": {},
+      "_key": "!items.effects!fhSubIronHour001.fhAEIronHourBen1"
+    },
+    {
+      "_id": "fhAEIronHourAdc1",
+      "name": "Ironhour Caps Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned"
+      ],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on Dexterity saving throws until withdrawal completes.</p>",
+      "changes": [],
+      "flags": {},
+      "_key": "!items.effects!fhSubIronHour001.fhAEIronHourAdc1"
+    }
+  ],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhSubIronHour001"
+}

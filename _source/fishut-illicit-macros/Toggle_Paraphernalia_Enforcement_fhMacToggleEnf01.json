@@ -1,0 +1,14 @@
+{
+  "_id": "fhMacToggleEnf01",
+  "name": "Toggle Paraphernalia Enforcement",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/clockwork.svg",
+  "command": "const MODULE_ID = \"substances-and-paraphernalia\";\nif (!game.user.isGM) {\n  ui.notifications.warn(\"Only the GM can toggle paraphernalia enforcement.\");\n  return;\n}\nconst current = game.settings.get(MODULE_ID, \"enforceParaphernalia\");\nconst next = !current;\nawait game.settings.set(MODULE_ID, \"enforceParaphernalia\", next);\nui.notifications.info(`Paraphernalia enforcement is now ${next ? \"ON\" : \"OFF\"}.`);",
+  "author": null,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_key": "!macros!fhMacToggleEnf01"
+}

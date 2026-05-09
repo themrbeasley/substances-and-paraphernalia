@@ -1,0 +1,14 @@
+{
+  "_id": "fhMacTmfxModPerf",
+  "name": "TMFX · Modern · Performance-Enhancing",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/combat.svg",
+  "command": "// Modern performance-enhancing — gym-energy red outline with a heartbeat pulse.\n// DAE Active Effect macro.execute callback.\n// args = [\"on\"|\"off\", lastArg] where lastArg has { actor, actorUuid, tokenId, tokenUuid, effectId, ... }\nif (!game.modules.get(\"tokenmagic\")?.active) return;\nconst state = args?.[0];\nconst lastArg = args?.[args.length - 1];\nconst token = canvas.tokens.get(lastArg?.tokenId) ?? canvas.tokens.controlled[0];\nif (!token) return;\nconst filterId = \"fishut-tmfx-modern-performance-enhancing\";\nif (state === \"off\") { await TokenMagic.deleteFiltersOnToken(token, filterId); return; }\nawait TokenMagic.addUpdateFiltersOnToken(token, [{\n  filterType: \"outline\",\n  filterId,\n  color: 0xff1a1a,\n  thickness: 2,\n  quality: 5,\n  padding: 4,\n  animated: { thickness: { active: true, loopDuration: 1200, animType: \"syncCosOscillation\", val1: 1, val2: 3 } }\n}]);",
+  "author": null,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_key": "!macros!fhMacTmfxModPerf"
+}

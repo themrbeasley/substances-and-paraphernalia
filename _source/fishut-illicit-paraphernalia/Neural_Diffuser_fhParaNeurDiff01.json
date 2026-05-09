@@ -1,0 +1,37 @@
+{
+  "_id": "fhParaNeurDiff01",
+  "name": "Neural Diffuser",
+  "type": "equipment",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhParaSciFi00001",
+  "system": {
+    "description": {
+      "value": "<p>A pocket-sized atomizer that disperses programmable mist through cortical implant ports. Inhalation is bypassed; uptake is direct.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "uncommon",
+    "weight": {
+      "value": 0.25,
+      "units": "lb"
+    },
+    "price": {
+      "value": 250,
+      "denomination": "gp"
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "sciFi",
+      "subtype": "inhaler",
+      "schemaVersion": 2
+    }
+  },
+  "effects": [],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaNeurDiff01"
+}

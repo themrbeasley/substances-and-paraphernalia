@@ -1,0 +1,61 @@
+{
+  "_id": "fhParaCalibInh01",
+  "name": "Calibrated Inhaler",
+  "type": "equipment",
+  "img": "icons/svg/aura.svg",
+  "folder": "fhParaModern0001",
+  "system": {
+    "description": {
+      "value": "<p>A medical-grade metered inhaler retrofitted for off-label substances. The dose-calibration ring lets a careful user keep below the body's panic threshold — the chemistry hits with the same edge but slightly less of the wallop.</p><p><strong>Buffered intake.</strong> Provides a +2 bonus to Constitution saving throws against addiction from inhaled substances administered through this inhaler.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "uncommon",
+    "weight": {
+      "value": 0.2,
+      "units": "lb"
+    },
+    "price": {
+      "value": 150,
+      "denomination": "gp"
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "modern",
+      "subtype": "inhaler",
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAECalibInhByp",
+      "name": "Calibrated Inhaler — Save Modifier",
+      "img": "icons/svg/aura.svg",
+      "transfer": true,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Grants a +2 bonus to Constitution saving throws against addiction to inhaled substances administered through the Calibrated Inhaler.</p>",
+      "changes": [],
+      "flags": {
+        "substances-and-paraphernalia": {
+          "modifier": {
+            "kind": "bypass",
+            "type": "+N",
+            "bonus": 2,
+            "appliesTo": [
+              "inhaled"
+            ]
+          }
+        }
+      },
+      "_key": "!items.effects!fhParaCalibInh01.fhAECalibInhByp"
+    }
+  ],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaCalibInh01"
+}
