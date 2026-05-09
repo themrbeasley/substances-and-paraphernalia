@@ -26,6 +26,7 @@
       "kind": "paraphernalia",
       "setting": "fantasy",
       "subtype": "snuff-horn",
+      "appliesTo": ["inhaled"],
       "schemaVersion": 2
     }
   },

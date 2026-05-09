@@ -94,6 +94,23 @@ export const setCategory = (item, value) => item.setFlag(MODULE_ID, FLAGS.catego
 export const setSetting = (item, value) => item.setFlag(MODULE_ID, FLAGS.setting, value);
 export const setSubtype = (item, value) => item.setFlag(MODULE_ID, FLAGS.subtype, value);
 
+// ─── Paraphernalia flag (appliesTo: gate-link admin list) ────────────────────
+
+const VALID_ADMINS = new Set(["contact", "ingested", "inhaled", "injury"]);
+
+/** @param {Item} item @returns {Administration[]} */
+export const getAppliesTo = (item) => {
+  const value = item?.getFlag?.(MODULE_ID, FLAGS.appliesTo);
+  if (!Array.isArray(value)) return [];
+  return value.filter((v) => VALID_ADMINS.has(v));
+};
+
+/** @param {Item} item @param {Administration[]} admins */
+export const setAppliesTo = (item, admins) => {
+  const cleaned = (Array.isArray(admins) ? admins : []).filter((v) => VALID_ADMINS.has(v));
+  return item.setFlag(MODULE_ID, FLAGS.appliesTo, cleaned);
+};
+
 // ─── Substance flags (addiction) ─────────────────────────────────────────────
 
 /** @param {Item} item @returns {AddictionBlock|null} */

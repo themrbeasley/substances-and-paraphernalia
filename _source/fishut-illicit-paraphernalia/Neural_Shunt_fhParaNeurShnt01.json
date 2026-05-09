@@ -28,6 +28,7 @@
       "kind": "paraphernalia",
       "setting": "sciFi",
       "subtype": "neural-shunt",
+      "appliesTo": ["injury"],
       "schemaVersion": 2
     }
   },

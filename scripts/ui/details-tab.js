@@ -13,6 +13,7 @@ import {
   getToleranceEnabled,
   getToleranceEffectIds,
   getSubtype,
+  getAppliesTo,
   getModifier,
   setKind,
   setCategory,
@@ -27,6 +28,7 @@ import {
   setToleranceEnabled,
   setToleranceEffectIds,
   setSubtype,
+  setAppliesTo,
   setModifier,
 } from "../data/flag-schema.js";
 import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
@@ -240,6 +242,9 @@ function buildLabels() {
     toleranceEffectCreateTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.CreateTooltip"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
+    paraphernaliaPropertiesHeader: L("FISHUT.DetailsTab.ParaphernaliaProperties.FieldsetLegend"),
+    appliesTo: L("FISHUT.DetailsTab.AppliesTo.Label"),
+    appliesToHint: L("FISHUT.DetailsTab.AppliesTo.Hint"),
     bypassHeader: L("FISHUT.DetailsTab.Bypass.Header"),
     bypassNoneHint: L("FISHUT.DetailsTab.Bypass.None.Hint"),
     bypassGrantButton: L("FISHUT.DetailsTab.Bypass.GrantButton"),
@@ -478,9 +483,17 @@ export function buildParaphernaliaContext(item) {
     selected: o.id === subtype,
   }));
 
+  const applied = new Set(getAppliesTo(item));
+  const adminOptions = SCHEMA.administrations.map(({ id, labelKey }) => ({
+    id,
+    label: L(labelKey),
+    checked: applied.has(id),
+  }));
+
   return {
     subtype,
     subtypeSelectOptions,
+    adminOptions,
     bypass: buildBypassDisplay(findBypassEffect(item)),
   };
 }
@@ -654,6 +667,12 @@ export async function persistField(item, field, rawValue, target) {
         return null;
       }
       return setSubtype(item, id);
+    }
+    case "appliesTo": {
+      const adminId = target?.dataset?.fishutAdmin;
+      if (!adminId) return null;
+      const checked = rawValue === "true";
+      return persistAppliesTo(item, adminId, checked);
     }
     case "bypass.type":
       return persistBypassField(item, "type", rawValue || "+N");
@@ -957,6 +976,17 @@ async function persistBypassField(item, key, value) {
     merged[key] = value;
   }
   return setModifier(effect, merged);
+}
+
+// Toggle membership of `adminId` in the paraphernalia item's `appliesTo` flag.
+async function persistAppliesTo(item, adminId, checked) {
+  const current = getAppliesTo(item);
+  const has = current.includes(adminId);
+  let next;
+  if (checked && !has) next = [...current, adminId];
+  else if (!checked && has) next = current.filter((a) => a !== adminId);
+  else return null;
+  return setAppliesTo(item, next);
 }
 
 // Toggle membership of `adminId` in the bypass AE's `appliesTo` array.

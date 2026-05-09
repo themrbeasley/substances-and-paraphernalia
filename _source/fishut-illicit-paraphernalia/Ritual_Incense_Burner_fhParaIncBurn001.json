@@ -26,6 +26,7 @@
       "kind": "paraphernalia",
       "setting": "fantasy",
       "subtype": "incense-burner",
+      "appliesTo": ["inhaled"],
       "schemaVersion": 2
     }
   },
