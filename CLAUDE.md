@@ -74,7 +74,7 @@ Paraphernalia subtypes are an exception: the legal list is **runtime-composed** 
 
 ### AE naming contract
 
-AE names **must contain** the relevant substring (case-insensitive): addiction AEs → `addict`, withdrawal AEs → `withdraw`, overdose AEs → `overdose`, tolerance AEs → `tolerance`. The `Remove {X}` macros use the matching substring as a regex fallback when source-flag matching fails. Benefit AEs follow `Altered by {Substance}` for uniformity.
+AE names **must contain** the relevant substring (case-insensitive): addiction AEs → `addict`, withdrawal AEs → `withdraw`, overdose AEs → `overdose`, tolerance AEs → `tolerance`, benefit AEs → `altered`. The `Remove {X}` macros use the matching substring as a regex fallback when source-flag matching fails. Benefit AEs follow `Altered by {Substance}` for uniformity.
 
 ### Gate vs save are independent
 
@@ -109,12 +109,14 @@ The `restCompleted` handler in `addiction.js` early-returns unless `game.users.a
 
 `scripts/integrations/index.js` `isActive(id)` is `game.modules.get(id)?.active === true`. No version negotiation, no API calls. DAE-required detection (`scripts/integrations/dae.js` `aeRequiresDae(effect)`) is **per-AE** — scans `effect.changes` for DAE-only modes — not item-level. Don't reintroduce an item-level `requiresDae` flag check; it's been removed.
 
+As of v0.5.1, **`dae`, `midi-qol`, and `tokenmagic` are declared `relationships.requires`** in `module.json` — Foundry refuses to activate the module when any are missing. The `KNOWN_INTEGRATIONS` "missing modules" notice list intentionally drops `dae` and `midi-qol`; `tokenmagic` stays in the list only because the `tmfxIntegration` world setting is still a per-world visuals opt-out, even though TMFX itself is required. Do not add fallback paths that assume any of these three could be absent at runtime.
+
 ### TMFX integration is DAE-driven, not a custom hook
 
 The TMFX (Token Magic FX) overlay on `Altered by *` AEs is dispatched via DAE's `macro.tokenMagic` Active Effect Change mode — **we do not ship a TMFX-aware hook**. The pattern:
 
-- `scripts/integrations/tmfx.js` `registerTmfxPresets()` runs at `ready` and registers a 3×3 palette of presets (setting × category) into TMFX's `tmfx-main` library via `TokenMagic.addPreset({ name, library: "tmfx-main" }, params, /* silent */ true)`. Names are `fishut-tmfx-{setting}-{category}` (e.g. `fishut-tmfx-fantasy-stimulant`). `addPreset` is idempotent on name+library collision (replaces), so re-registering on every load is fine. Gated on `game.user.isGM` (preset registry is a world setting), `isIntegrationEnabled("tokenmagic")`, and `globalThis.TokenMagic` presence.
-- The substance's benefit AE (e.g. `Altered by Coalshade Powder`) carries a Change row with `key: "macro.tokenMagic"`, `mode: 0` (CUSTOM), `value: "<preset-name>"`. The CUSTOM mode is the implicit "this AE needs DAE" signal that `aeRequiresDae` already detects.
+- `scripts/integrations/tmfx.js` `registerTmfxPresets()` runs at `ready` and registers a 3×3 palette of presets (setting × category) into TMFX's `tmfx-main` library via `TokenMagic.addPreset({ name, library: "tmfx-main" }, params, /* silent */ true)`. Names are `fishut-tmfx-{setting}-{category}` (e.g. `fishut-tmfx-fantasy-stimulant`). `addPreset` is **first-write-wins** on `{name, library}` collision (it warns and returns false), so the registration loop calls `deletePreset` first to make re-registration idempotent and let us push tuning updates without churning preset names. Gated on `game.user.isGM` (preset registry is a world setting) and `isIntegrationEnabled("tokenmagic")`. TMFX binds `globalThis.TokenMagic` inside its own `ready` handler; if our `ready` runs first we defer to `canvasReady` (which fires strictly after every module's `ready` work). A diagnostic helper `verifyTmfxPresets()` is exposed at `module.api.integrations.verifyTmfxPresets` — returns `{registered, missing}` so a GM can triage from the console.
+- The substance's benefit AE (e.g. `Altered by Coalshade Powder`) carries a Change row with `key: "macro.tokenMagic"`, `mode: 0` (CUSTOM), `value: "<preset-name>"`. The CUSTOM mode is the implicit "this AE needs DAE" signal that `aeRequiresDae` already detects. Filter params are validated against TMFX 0.7.6.3+; **unknown params are silently ignored at construction time**, so silently-misnamed authoring (e.g. `amplitude` on `wave`) renders with default uniforms and looks like nothing happened — when adding a new filter, cross-check param names against the TMFX filter source.
 - DAE forwards `change.value` verbatim to `TokenMagic.addFilters(token, value)` on apply and removes the matching filter on remove. TMFX overwrites each param's `filterId` with the preset name during registration, so add/remove key cleanly off the same string.
 - There is no Details-tab TMFX selector and no `flags[…].tmfx` / `flags[…].tmfxFilterParams` block. Authoring happens directly on the AE's Changes table (Foundry's standard AE editor) — same surface authors already use for any other AE Change.
 

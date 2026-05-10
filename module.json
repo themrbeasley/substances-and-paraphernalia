@@ -42,11 +42,11 @@
         }
       }
     ],
-    "recommends": [
+    "requires": [
       {
         "id": "dae",
         "type": "module",
-        "reason": "Custom Active Effect modes used by some substances."
+        "reason": "Custom Active Effect modes and macro.tokenMagic forwarding used throughout the substance content."
       },
       {
         "id": "midi-qol",
@@ -54,14 +54,16 @@
         "reason": "Automated saves and chained workflow effects."
       },
       {
+        "id": "tokenmagic",
+        "type": "module",
+        "reason": "Visual filters dispatched from substance Altered AEs via DAE's macro.tokenMagic."
+      }
+    ],
+    "recommends": [
+      {
         "id": "times-up",
         "type": "module",
         "reason": "Reliable Active Effect expiration."
-      },
-      {
-        "id": "tokenmagic",
-        "type": "module",
-        "reason": "Visual filters tied to substance effects."
       }
     ]
   },

@@ -39,6 +39,7 @@ import {
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
+import { PRESETS, PRESET_LIBRARY, verifyTmfxPresets } from "../../scripts/integrations/tmfx.js";
 
 const BATCH_PREFIX = "substances-and-paraphernalia";
 
@@ -142,6 +143,11 @@ export function registerQuenchSuite() {
       `${BATCH_PREFIX}.withdrawal-vignette`,
       withdrawalVignetteBatch,
       { displayName: "S&P · Withdrawal vignette mounts to #interface" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.tmfx-presets`,
+      tmfxPresetsBatch,
+      { displayName: "S&P · TMFX preset round-trip" },
     );
   });
 }
@@ -2562,6 +2568,85 @@ function withdrawalVignetteBatch(context) {
       // z-index 1 keeps the vignette above the canvas but below Foundry app
       // windows / notifications which render at much higher layers.
       assert.equal(cs.zIndex, "1");
+    });
+  });
+}
+
+// ─── Batch: TMFX preset round-trip ──────────────────────────────────────────
+
+function tmfxPresetsBatch(context) {
+  const { describe, it, assert, before, after } = context;
+
+  describe("TMFX presets are registered into the tmfx-main library", () => {
+    let tm;
+    let token;
+    const addedFilterIds = [];
+
+    before(() => {
+      tm = globalThis.TokenMagic;
+    });
+
+    after(async () => {
+      // Strip any filter we added so the test never leaves residue on a
+      // canvas token. Filters are keyed by filterId, which TMFX overwrites
+      // with the preset name during registration.
+      if (token && tm && typeof tm.deleteFilters === "function") {
+        for (const filterId of addedFilterIds) {
+          try {
+            await tm.deleteFilters(token, filterId);
+          } catch {
+            // Filter already gone or never landed — fine.
+          }
+        }
+      }
+    });
+
+    it("TokenMagic global is bound (TMFX is required, so this must be true)", () => {
+      assert.ok(tm, "globalThis.TokenMagic must be defined when TMFX is active");
+      assert.equal(typeof tm.getPreset, "function", "TokenMagic.getPreset must exist");
+      assert.equal(typeof tm.addPreset, "function", "TokenMagic.addPreset must exist");
+    });
+
+    it("verifyTmfxPresets reports all 9 presets registered, none missing", () => {
+      const { registered, missing } = verifyTmfxPresets();
+      assert.equal(
+        registered.length,
+        Object.keys(PRESETS).length,
+        `expected ${Object.keys(PRESETS).length} registered, got ${registered.length}`,
+      );
+      assert.equal(
+        missing.length,
+        0,
+        `presets missing from tmfx-main: ${missing.join(", ") || "(none)"}`,
+      );
+    });
+
+    for (const name of Object.keys(PRESETS)) {
+      it(`preset "${name}" is retrievable via TokenMagic.getPreset`, () => {
+        const preset = tm.getPreset({ name, library: PRESET_LIBRARY });
+        assert.ok(preset, `getPreset returned null/undefined for ${name}`);
+      });
+    }
+
+    it("addFilters round-trip lands the preset on a canvas token (skips if no token)", async () => {
+      const candidate = canvas?.tokens?.placeables?.[0];
+      if (!candidate) {
+        // No token on canvas — skip cleanly. Quench prints `it` as passing
+        // but we surface the skip via a self-documenting assert message.
+        assert.ok(true, "no token on canvas — round-trip skipped");
+        return;
+      }
+      token = candidate;
+      const presetName = "fishut-tmfx-fantasy-stimulant";
+
+      await tm.addFilters(token, presetName);
+      addedFilterIds.push(presetName);
+
+      const hasFilter =
+        typeof tm.hasFilterId === "function"
+          ? tm.hasFilterId(token, presetName)
+          : Boolean(token.TMFXhasFilterId?.(presetName));
+      assert.ok(hasFilter, `token should have filter ${presetName} after addFilters`);
     });
   });
 }
