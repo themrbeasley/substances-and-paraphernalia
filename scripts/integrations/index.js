@@ -1,16 +1,16 @@
 import { MODULE_ID } from "../config.js";
 
-// Optional integrations the module knows about. Each entry is a Foundry
-// module id with a corresponding lang label key and the world-setting key
-// that toggles whether this module wires into it. The order here drives the
-// order in the ready-time "missing modules" notification.
+// Integrations the module knows about. Each entry is a Foundry module id
+// with a corresponding lang label key and the world-setting key that toggles
+// whether this module wires into it. The order here drives the order in the
+// ready-time "missing modules" notification.
+//
+// dae and midi-qol are declared as `relationships.requires` in module.json —
+// Foundry refuses to activate without them, so they can never be "missing"
+// and have no setting toggle. tokenmagic is also `requires` (the Altered AE
+// visuals need it), but its `tmfxIntegration` toggle is kept so a GM can
+// disable our preset registration while leaving TMFX otherwise active.
 export const KNOWN_INTEGRATIONS = Object.freeze([
-  { id: "dae", labelKey: "FISHUT.Integrations.Module.Dae", settingKey: "daeIntegration" },
-  {
-    id: "midi-qol",
-    labelKey: "FISHUT.Integrations.Module.MidiQol",
-    settingKey: "midiqolIntegration",
-  },
   {
     id: "times-up",
     labelKey: "FISHUT.Integrations.Module.TimesUp",

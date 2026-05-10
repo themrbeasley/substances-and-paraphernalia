@@ -49,10 +49,6 @@
   "FISHUT.Settings.VoluntaryAbstainEnabled.Name": "Allow voluntary abstain on long rest",
   "FISHUT.Settings.VoluntaryAbstainEnabled.Hint": "When on, actors with active withdrawal may attempt a Wisdom save during a long rest to skip an extra rest. Pass: -2 rests. Fail: normal -1 rest, no penalty.",
 
-  "FISHUT.Settings.DaeIntegration.Name": "Wire into Dynamic Active Effects (DAE)",
-  "FISHUT.Settings.DaeIntegration.Hint": "Disable to make this module ignore DAE even if it's installed. Suppresses DAE-aware effect detection and the missing-DAE warning.",
-  "FISHUT.Settings.MidiqolIntegration.Name": "Wire into Midi-QoL",
-  "FISHUT.Settings.MidiqolIntegration.Hint": "Disable to make this module ignore Midi-QoL even if it's installed.",
   "FISHUT.Settings.TimesUpIntegration.Name": "Wire into Times Up",
   "FISHUT.Settings.TimesUpIntegration.Hint": "Disable to make this module ignore Times Up even if it's installed.",
   "FISHUT.Settings.TmfxIntegration.Name": "Wire into Token Magic FX",
@@ -86,8 +82,6 @@
   "FISHUT.Gating.Blocked.Override": "Use anyway",
   "FISHUT.Gating.Blocked.Cancel": "Cancel",
 
-  "FISHUT.Integrations.Module.Dae": "Dynamic Active Effects (dae)",
-  "FISHUT.Integrations.Module.MidiQol": "Midi-QoL (midi-qol)",
   "FISHUT.Integrations.Module.TimesUp": "Times Up (times-up)",
   "FISHUT.Integrations.Module.Tokenmagic": "Token Magic FX (tokenmagic)",
   "FISHUT.Integrations.Missing.Notice": "Substances and Paraphernalia recommends modules that aren't active: {missing}. Disable this notice in the module settings.",
@@ -147,6 +141,13 @@
   "FISHUT.RemoveWithdrawal.RowDetail": "{name} — source: {sourceId}, withdrawal: {rests} LR",
   "FISHUT.RemoveWithdrawal.Removed": "Removed <strong>{count}</strong> withdrawal effect(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveWithdrawal.LogTitle": "Removed withdrawal (paste-restore JSON)",
+
+  "FISHUT.RemoveAltered.Title": "Remove Altered",
+  "FISHUT.RemoveAltered.NoCandidates": "{actor} has no Altered effects to remove.",
+  "FISHUT.RemoveAltered.PreviewIntro": "<p>Choose Altered effects to remove from <strong>{actor}</strong>.</p>",
+  "FISHUT.RemoveAltered.RowDetail": "{name} — source: {sourceId}",
+  "FISHUT.RemoveAltered.Removed": "Removed <strong>{count}</strong> Altered effect(s) from <strong>{actor}</strong>.",
+  "FISHUT.RemoveAltered.LogTitle": "Removed Altered (paste-restore JSON)",
 
   "FISHUT.DragInventory.Title": "Inject state — {item}",
   "FISHUT.DragInventory.Body": "<p>Select the state to apply to <strong>{actor}</strong> from <strong>{item}</strong>.</p>",

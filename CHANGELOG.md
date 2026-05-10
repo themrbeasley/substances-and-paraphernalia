@@ -16,6 +16,63 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   The legacy `requiredSubtypes` flag is now a hard validator error. Pre-1.0
   clean break — no migration shim.
 
+## [0.5.1] — 2026-05-10
+
+### Breaking
+- **`dae`, `midi-qol`, and `tokenmagic` are now `relationships.requires`.**
+  Foundry refuses to activate the module on a world without all three. The
+  `daeIntegration` and `midiqolIntegration` world settings have been
+  removed (their off-states would silently break the addiction pipeline
+  and weren't honest options). The `tmfxIntegration` toggle remains as a
+  per-world visuals opt-out. Existing v0.5.0 worlds will hit Foundry's
+  required-modules dialog on next load — install/activate the prereqs.
+
+### Fixed
+- **TMFX preset palette now actually registers under TMFX 0.7.6.3+.**
+  Three preset bugs that silently no-op'd against the maintained TMFX
+  fork (Feu-Secret/Tokenmagic):
+  - `fishut-tmfx-modern-stimulant` declared `filterType: "bloom"` — the
+    real enum is `xbloom`.
+  - `fishut-tmfx-fantasy-mind-altering` (`wave`) used `amplitude` /
+    `wavelength` — the actual `wave` filter takes `strength` /
+    `frequency`.
+  - `fishut-tmfx-scifi-mind-altering` (`ray`) used `intensity` /
+    `amplitude` / `blend` / `divergence` — the actual `ray` filter
+    takes `divisor` / `alpha`.
+  Unknown filter types and unknown params are silently ignored by TMFX
+  at construction time, which is exactly why this slipped past v0.5.0.
+- **Preset registration is now truly idempotent.** `addPreset` is
+  first-write-wins on `{name, library}` collision (returns false and
+  keeps the original), so once a world had loaded any version of v0.5
+  no preset tuning could ever reach users. Registration now calls
+  `deletePreset` before each `addPreset`, so re-loads pick up the
+  latest params.
+- **Ready-hook ordering race repaired.** TMFX binds
+  `globalThis.TokenMagic` inside its own `ready` handler. If our
+  `ready` handler fired first, registration silently early-returned.
+  We now defer to `canvasReady` when the global isn't yet bound, and
+  warn-log if it's still missing then.
+
+### Added
+- `Remove Altered` macro in the `fishut-illicit-macros` compendium —
+  fills the gap left by v0.4: the four other lifecycle removers
+  (Addiction, Withdrawal, Tolerance, Overdose) all shipped, but the
+  benefit AE (`Altered by *`) had no companion remover. Same UX as the
+  other removers (preview list, per-AE checkboxes, paste-restore JSON
+  whisper). Matches case-insensitively on `/altered/i` per the AE name
+  contract.
+- `module.api.integrations.verifyTmfxPresets()` — diagnostic helper
+  that walks the preset palette, calls `TokenMagic.getPreset` on each
+  entry, and returns `{registered, missing}`. Useful for triage from
+  the GM console without reloading.
+- Unit tests for the preset palette
+  (`test/unit/tmfx-presets.test.mjs`) — pin every preset's `filterType`
+  to TMFX 0.7.6.3+'s registered filter list so an invalid type fails
+  CI rather than the live world.
+- Quench round-trip suite (`S&P · TMFX preset round-trip`) — asserts
+  every preset is retrievable from the `tmfx-main` library and
+  optionally exercises `addFilters` against a canvas token.
+
 ## [0.3.0] — 2026-05-07
 
 ### Breaking

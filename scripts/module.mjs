@@ -28,7 +28,7 @@ import {
   isIntegrationSettingEnabled,
   listMissingIntegrations,
 } from "./integrations/index.js";
-import { registerTmfxPresets } from "./integrations/tmfx.js";
+import { registerTmfxPresets, verifyTmfxPresets } from "./integrations/tmfx.js";
 import { registerDetailsTab } from "./ui/details-tab.js";
 import { registerWithdrawalVignette } from "./ui/withdrawal-vignette.js";
 import {
@@ -85,6 +85,7 @@ Hooks.once("ready", async () => {
         isIntegrationEnabled,
         isIntegrationSettingEnabled,
         listMissingIntegrations,
+        verifyTmfxPresets,
       },
     };
   }
