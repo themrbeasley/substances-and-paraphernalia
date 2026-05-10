@@ -19,9 +19,7 @@ import {
   getKind,
   getModifier,
   getOverdose,
-  getSetting,
   getSubtype,
-  getTmfx,
   getWithdrawalMod,
   getActorWithdrawal,
   getActorWithdrawalEntry,
@@ -1533,13 +1531,6 @@ function detailsTabSubstancePersistenceBatch(context) {
       if (substance && actor.items.get(substance.id)) await substance.delete();
     });
 
-    it("persists setting and clears on empty value", async () => {
-      await persistField(substance, "setting", "modern");
-      assert.equal(getSetting(substance), "modern");
-      await persistField(substance, "setting", "");
-      assert.equal(getSetting(substance), null);
-    });
-
     it("persists category and clears on empty value", async () => {
       await persistField(substance, "category", "performanceEnhancing");
       assert.equal(getCategory(substance), "performanceEnhancing");
@@ -1573,13 +1564,13 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getAddictionSave(substance)?.dc, null);
     });
 
-    it("persists withdrawalMod as integer", async () => {
-      await persistField(substance, "withdrawalMod", "6");
+    it("persists withdrawal.mod as integer", async () => {
+      await persistField(substance, "withdrawal.mod", "6");
       assert.equal(getWithdrawalMod(substance), 6);
     });
 
-    it("clears withdrawalMod when value is empty", async () => {
-      await persistField(substance, "withdrawalMod", "");
+    it("clears withdrawal.mod when value is empty", async () => {
+      await persistField(substance, "withdrawal.mod", "");
       assert.equal(getWithdrawalMod(substance), null);
     });
 
@@ -1636,38 +1627,6 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getOverdose(substance)?.description, "");
     });
 
-    it("persists tmfx preset mode + presetName round-trip", async () => {
-      await persistField(substance, "tmfx.mode", "preset");
-      await persistField(substance, "tmfx.presetName", "Glow Red");
-      const block = getTmfx(substance);
-      assert.equal(block?.mode, "preset");
-      assert.equal(block?.presetName, "Glow Red");
-    });
-
-    it("clears the tmfx block when mode switches to none", async () => {
-      await persistField(substance, "tmfx.mode", "preset");
-      await persistField(substance, "tmfx.presetName", "Glow Red");
-      await persistField(substance, "tmfx.mode", "none");
-      const block = getTmfx(substance);
-      assert.equal(block?.mode, "none");
-      assert.equal(block?.presetName, undefined);
-    });
-
-    it("persists tmfx macro mode + macroUuid round-trip", async () => {
-      await persistField(substance, "tmfx.mode", "macro");
-      await persistField(
-        substance,
-        "tmfx.macroUuid",
-        "Compendium.substances-and-paraphernalia.fishut-illicit-macros.abc",
-      );
-      const block = getTmfx(substance);
-      assert.equal(block?.mode, "macro");
-      assert.equal(
-        block?.macroUuid,
-        "Compendium.substances-and-paraphernalia.fishut-illicit-macros.abc",
-      );
-    });
-
   });
 }
 
@@ -1696,13 +1655,6 @@ function detailsTabParaphernaliaPersistenceBatch(context) {
 
     afterEach(async () => {
       if (paraphernalia && actor.items.get(paraphernalia.id)) await paraphernalia.delete();
-    });
-
-    it("persists setting and clears on empty value", async () => {
-      await persistField(paraphernalia, "setting", "modern");
-      assert.equal(getSetting(paraphernalia), "modern");
-      await persistField(paraphernalia, "setting", "");
-      assert.equal(getSetting(paraphernalia), null);
     });
 
     it("persists category and clears on empty value (category=any)", async () => {
