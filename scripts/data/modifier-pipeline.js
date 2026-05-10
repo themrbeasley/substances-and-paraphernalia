@@ -1,5 +1,5 @@
 import { MODULE_ID } from "../config.js";
-import { getModifier } from "./flag-schema.js";
+import { getAppliesTo, getModifier, isParaphernalia } from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
 import { composeTolerance } from "./tolerance.js";
 
@@ -17,10 +17,14 @@ import { composeTolerance } from "./tolerance.js";
 const NONE = Object.freeze({ resolution: "none" });
 
 /**
- * Walk the actor's applied AEs, find any whose modifier flag block matches
- * (`kind: "bypass"`, `appliesTo` includes the substance's administration,
- * uses available on the source item), pick the strongest by composition rule,
- * and consume one use on each contributing AE's source item if it tracks uses.
+ * Walk the actor's applied AEs, find any whose modifier flag block has
+ * `kind: "bypass"`, derive each candidate's `appliesTo` from its source —
+ * the paraphernalia item's `appliesTo` for paraphernalia-sourced bypasses
+ * (the canonical case), the AE block's `appliesTo` for non-paraphernalia
+ * sources (extension path). `pickBypassResolution` then filters by the
+ * substance's administration, picks the strongest by composition rule, and
+ * one use is consumed on each contributing AE's source item if it tracks
+ * uses.
  *
  * Composition: auto-pass > advantage > +N. Within auto-pass / advantage,
  * deterministic ascending by AE id picks one. Within +N, ALL eligible AEs
@@ -49,11 +53,21 @@ export async function consumeBypassIfAvailable(actor, substance) {
     if (!block) continue;
     if (block.kind !== "bypass") continue;
 
-    let sourceItem = null;
+    const sourceItem = resolveSourceItem(actor, effect);
+    // Paraphernalia is the only authored bypass source — its `appliesTo`
+    // is the canonical filter for resolution. Non-paraphernalia sources
+    // fall back to the AE block's `appliesTo` (extension path; nothing
+    // we ship uses it).
+    let appliesTo;
+    if (sourceItem && isParaphernalia(sourceItem)) {
+      appliesTo = getAppliesTo(sourceItem);
+    } else {
+      appliesTo = block.appliesTo;
+    }
+
     let hasUsesConfig = false;
     let usesRemaining;
     if (block.usesPerDay !== undefined) {
-      sourceItem = resolveSourceItem(actor, effect);
       const uses = sourceItem?.system?.uses;
       hasUsesConfig =
         !!uses &&
@@ -71,7 +85,7 @@ export async function consumeBypassIfAvailable(actor, substance) {
       id,
       kind: block.kind,
       type: block.type,
-      appliesTo: block.appliesTo,
+      appliesTo,
       bonus: Number(block.bonus) || 0,
       hasUsesConfig,
       usesRemaining,

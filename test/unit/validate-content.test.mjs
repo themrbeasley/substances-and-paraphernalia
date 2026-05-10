@@ -228,6 +228,18 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
   });
 });
 
+describe("checkSubstance — requiredSubtypes removal (v0.5)", () => {
+  it("errors when the legacy requiredSubtypes flag is present", () => {
+    const file = baseSubstance();
+    file.data.flags[SCOPE].requiredSubtypes = ["pipe"];
+    const { errors } = checkSubstance(file);
+    assert.equal(
+      errors.some((e) => /legacy "requiredSubtypes" flag is removed in v0\.5/.test(e)),
+      true,
+    );
+  });
+});
+
 describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
   it("errors when a tolerance AE on the substance lacks substanceId", () => {
     const file = baseSubstance();

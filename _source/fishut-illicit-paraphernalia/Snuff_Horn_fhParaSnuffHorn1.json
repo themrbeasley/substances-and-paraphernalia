@@ -1,0 +1,38 @@
+{
+  "_id": "fhParaSnuffHorn1",
+  "name": "Snuff Horn",
+  "type": "equipment",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhParaFantasy001",
+  "system": {
+    "description": {
+      "value": "<p>A small carved horn used to administer powdered substances. The bowl end is hollowed for snuff; the tapered end inhales it cleanly.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "common",
+    "weight": {
+      "value": 0.1,
+      "units": "lb"
+    },
+    "price": {
+      "value": 5,
+      "denomination": "gp"
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "fantasy",
+      "subtype": "snuff-horn",
+      "appliesTo": ["inhaled"],
+      "schemaVersion": 2
+    }
+  },
+  "effects": [],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaSnuffHorn1"
+}

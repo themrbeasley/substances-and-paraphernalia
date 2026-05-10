@@ -36,4 +36,4 @@ The Details-tab subtype select on **paraphernalia** items composes built-ins + c
 
 ## Removing a custom subtype
 
-If you delete a custom subtype that's already referenced by an authored item's `requiredSubtypes` or paraphernalia `subtype`, the validator will surface that as an error on the next `npm run validate:content`. Update the affected items first or restore the subtype.
+If you delete a custom subtype that's already referenced by an authored paraphernalia's `subtype`, the validator will surface that as an error on the next `npm run validate:content`. Update the affected items first or restore the subtype.

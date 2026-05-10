@@ -12,8 +12,8 @@ import {
   getOverdoseEffectIds,
   getToleranceEnabled,
   getToleranceEffectIds,
-  getRequiredSubtypes,
   getSubtype,
+  getAppliesTo,
   getModifier,
   setKind,
   setCategory,
@@ -27,8 +27,8 @@ import {
   setOverdoseEffectIds,
   setToleranceEnabled,
   setToleranceEffectIds,
-  setRequiredSubtypes,
   setSubtype,
+  setAppliesTo,
   setModifier,
 } from "../data/flag-schema.js";
 import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
@@ -212,7 +212,6 @@ function L(key) {
 
 function buildLabels() {
   return {
-    sectionHeader: L("FISHUT.DetailsTab.SectionHeader"),
     category: L("FISHUT.DetailsTab.Field.Category.Label"),
     categoryAny: L("FISHUT.DetailsTab.Field.Category.Any"),
     addictionHeader: L("FISHUT.DetailsTab.Addiction.Header"),
@@ -242,15 +241,14 @@ function buildLabels() {
     toleranceEffectCreateTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.CreateTooltip"),
     subtype: L("FISHUT.DetailsTab.Field.Subtype.Label"),
     subtypeNone: L("FISHUT.DetailsTab.Field.Subtype.None"),
-    requiredSubtypes: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Label"),
-    requiredSubtypesAdd: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Add"),
-    requiredSubtypesEmpty: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Empty"),
-    requiredSubtypesRemove: L("FISHUT.DetailsTab.Field.RequiredSubtypes.Remove"),
+    paraphernaliaPropertiesHeader: L("FISHUT.DetailsTab.ParaphernaliaProperties.FieldsetLegend"),
+    substancePropertiesHeader: L("FISHUT.DetailsTab.SubstanceProperties.FieldsetLegend"),
+    appliesTo: L("FISHUT.DetailsTab.AppliesTo.Label"),
+    appliesToHint: L("FISHUT.DetailsTab.AppliesTo.Hint"),
     bypassHeader: L("FISHUT.DetailsTab.Bypass.Header"),
     bypassNoneHint: L("FISHUT.DetailsTab.Bypass.None.Hint"),
     bypassGrantButton: L("FISHUT.DetailsTab.Bypass.GrantButton"),
     bypassType: L("FISHUT.DetailsTab.Bypass.Type"),
-    bypassAppliesTo: L("FISHUT.DetailsTab.Bypass.AppliesTo.Label"),
     bypassUsesPerDay: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Label"),
     bypassUsesPerDayPlaceholder: L("FISHUT.DetailsTab.Bypass.UsesPerDay.Placeholder"),
     bypassBonus: L("FISHUT.DetailsTab.Bypass.Bonus.Label"),
@@ -285,7 +283,6 @@ function buildSubtypeOptions(currentId) {
 
 function buildSubstanceContext(item) {
   const category = getCategory(item);
-  const requiredSubtypeIds = getRequiredSubtypes(item) ?? [];
 
   const categories = SCHEMA.categories.map((c) => ({
     id: c.id,
@@ -293,26 +290,12 @@ function buildSubstanceContext(item) {
     selected: c.id === category,
   }));
 
-  const subtypeCatalog = buildSubtypeOptions(null);
-  const subtypeLabelById = new Map(subtypeCatalog.map((o) => [o.id, o.label]));
-  const usedIds = new Set(requiredSubtypeIds);
-  const requiredSubtypes = requiredSubtypeIds.map((id, idx) => ({
-    idx,
-    id,
-    label: subtypeLabelById.get(id) ?? id,
-  }));
-  const subtypeAddOptions = subtypeCatalog
-    .filter((o) => !usedIds.has(o.id))
-    .map((o) => ({ id: o.id, label: o.label }));
-
   return {
     categories,
     addiction: buildAddictionContext(item),
     withdrawal: buildWithdrawalContext(item),
     overdose: buildOverdoseContext(item),
     tolerance: buildToleranceContext(item),
-    requiredSubtypes,
-    subtypeAddOptions,
   };
 }
 
@@ -499,9 +482,17 @@ export function buildParaphernaliaContext(item) {
     selected: o.id === subtype,
   }));
 
+  const applied = new Set(getAppliesTo(item));
+  const adminOptions = SCHEMA.administrations.map(({ id, labelKey }) => ({
+    id,
+    label: L(labelKey),
+    checked: applied.has(id),
+  }));
+
   return {
     subtype,
     subtypeSelectOptions,
+    adminOptions,
     bypass: buildBypassDisplay(findBypassEffect(item)),
   };
 }
@@ -524,13 +515,6 @@ function buildBypassDisplay(match) {
     selected: t.id === currentType,
   }));
 
-  const appliesToList = Array.isArray(block.appliesTo) ? block.appliesTo : [];
-  const appliesToOptions = SCHEMA.administrations.map((a) => ({
-    id: a.id,
-    label: L(a.labelKey),
-    checked: appliesToList.includes(a.id),
-  }));
-
   const usesPerDay = block.usesPerDay;
   const usesPerDayValue =
     usesPerDay === undefined || usesPerDay === null ? "" : String(usesPerDay);
@@ -542,7 +526,6 @@ function buildBypassDisplay(match) {
   return {
     present: true,
     typeOptions,
-    appliesToOptions,
     usesPerDayValue,
     isPlusN,
     bonusValue,
@@ -627,9 +610,8 @@ function readMultiSelectValue(target) {
  *   overdose.* | tolerance.enabled | bypass.*
  * @param {string} rawValue
  * @param {HTMLElement} [target]
- *   The form control whose change fired. Required for `bypass.appliesTo`,
- *   which encodes the administration id in `data-fishut-bypass-admin` and
- *   reports a checked/unchecked toggle (not a value).
+ *   The form control whose change fired. Reserved for future toggles that
+ *   need to read additional data attributes off the control.
  */
 export async function persistField(item, field, rawValue, target) {
   switch (field) {
@@ -676,6 +658,12 @@ export async function persistField(item, field, rawValue, target) {
       }
       return setSubtype(item, id);
     }
+    case "appliesTo": {
+      const adminId = target?.dataset?.fishutAdmin;
+      if (!adminId) return null;
+      const checked = rawValue === "true";
+      return persistAppliesTo(item, adminId, checked);
+    }
     case "bypass.type":
       return persistBypassField(item, "type", rawValue || "+N");
     case "bypass.usesPerDay": {
@@ -692,12 +680,6 @@ export async function persistField(item, field, rawValue, target) {
         return persistBypassField(item, "bonus", null);
       }
       return persistBypassField(item, "bonus", parseIntOrNull(rawValue));
-    }
-    case "bypass.appliesTo": {
-      const adminId = target?.dataset?.fishutBypassAdmin;
-      if (!adminId) return null;
-      const checked = rawValue === "true";
-      return persistBypassAppliesTo(item, adminId, checked);
     }
     default:
       logger.warn?.("details-tab persistField: unknown field", field);
@@ -763,22 +745,6 @@ async function dispatchAction(button, wrapper, item) {
     const effectId = button.dataset.fishutEffectId;
     if (!effectId) return null;
     return mutateEffectListForSlot(item, slot, effectId, op);
-  }
-
-  if (action === "add-required-subtype") {
-    const select = wrapper.querySelector('[data-fishut-add-subtype="select"]');
-    const id = (select?.value ?? "").trim();
-    if (!id) return null;
-    const current = getRequiredSubtypes(item) ?? [];
-    if (current.includes(id)) return null;
-    return setRequiredSubtypes(item, [...current, id]);
-  }
-  if (action === "remove-required-subtype") {
-    const id = button.dataset.fishutSubtype;
-    if (!id) return null;
-    const current = getRequiredSubtypes(item) ?? [];
-    const next = current.filter((s) => s !== id);
-    return setRequiredSubtypes(item, next);
   }
 
   logger.warn?.("details-tab dispatchAction: unknown action", action);
@@ -996,19 +962,14 @@ async function persistBypassField(item, key, value) {
   return setModifier(effect, merged);
 }
 
-// Toggle membership of `adminId` in the bypass AE's `appliesTo` array.
-async function persistBypassAppliesTo(item, adminId, checked) {
-  const match = findBypassEffect(item);
-  if (!match) {
-    logger.warn?.("details-tab persistBypassAppliesTo: no bypass AE on item");
-    return null;
-  }
-  const { effect, block } = match;
-  const current = Array.isArray(block.appliesTo) ? block.appliesTo : [];
+// Toggle membership of `adminId` in the paraphernalia item's `appliesTo` flag.
+async function persistAppliesTo(item, adminId, checked) {
+  const current = getAppliesTo(item);
   const has = current.includes(adminId);
   let next;
   if (checked && !has) next = [...current, adminId];
   else if (!checked && has) next = current.filter((a) => a !== adminId);
   else return null;
-  return setModifier(effect, { ...block, appliesTo: next });
+  return setAppliesTo(item, next);
 }
+

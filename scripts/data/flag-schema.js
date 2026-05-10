@@ -14,8 +14,7 @@ import {
  *   at `system.type.subtype`, not as a module flag.
  * @typedef {string} ParaphernaliaSubtype
  *   Open enum: schema.json seeds well-known ids ("pipe", "snuff-horn", …) but
- *   GMs may mint custom subtypes ad-hoc. A substance is satisfied when the
- *   actor owns a ready paraphernalia for each subtype in `requiredSubtypes`.
+ *   GMs may mint custom subtypes ad-hoc.
  *
  * @typedef {Object} AddictionSave
  * @property {string} ability    Standard 5e ability key (defaults to "con").
@@ -57,7 +56,6 @@ import {
  * @property {Category} [category]
  * @property {Setting} [setting]
  * @property {ParaphernaliaSubtype} [subtype]              Only when kind === "paraphernalia".
- * @property {ParaphernaliaSubtype[]} [requiredSubtypes]   Only when kind === "substance".
  * @property {AddictionBlock} [addiction]                  Only when kind === "substance".
  * @property {AddictionSaveBypassBlock} [addictionSaveBypass] Only when kind === "paraphernalia".
  * @property {number} [schemaVersion]
@@ -86,9 +84,6 @@ const DEFAULT_SAVE_ABILITY = "con";
 /** @param {Item} item */ export const getSubtype = (item) =>
   item?.getFlag?.(MODULE_ID, FLAGS.subtype) ?? null;
 
-/** @param {Item} item @returns {string[]} */ export const getRequiredSubtypes = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.requiredSubtypes) ?? [];
-
 /** @param {Item} item */ export const isSubstance = (item) => getKind(item) === "substance";
 
 /** @param {Item} item */ export const isParaphernalia = (item) =>
@@ -98,8 +93,23 @@ export const setKind = (item, value) => item.setFlag(MODULE_ID, FLAGS.kind, valu
 export const setCategory = (item, value) => item.setFlag(MODULE_ID, FLAGS.category, value);
 export const setSetting = (item, value) => item.setFlag(MODULE_ID, FLAGS.setting, value);
 export const setSubtype = (item, value) => item.setFlag(MODULE_ID, FLAGS.subtype, value);
-export const setRequiredSubtypes = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.requiredSubtypes, value);
+
+// ─── Paraphernalia flag (appliesTo: gate-link admin list) ────────────────────
+
+const VALID_ADMINS = new Set(["contact", "ingested", "inhaled", "injury"]);
+
+/** @param {Item} item @returns {Administration[]} */
+export const getAppliesTo = (item) => {
+  const value = item?.getFlag?.(MODULE_ID, FLAGS.appliesTo);
+  if (!Array.isArray(value)) return [];
+  return value.filter((v) => VALID_ADMINS.has(v));
+};
+
+/** @param {Item} item @param {Administration[]} admins */
+export const setAppliesTo = (item, admins) => {
+  const cleaned = (Array.isArray(admins) ? admins : []).filter((v) => VALID_ADMINS.has(v));
+  return item.setFlag(MODULE_ID, FLAGS.appliesTo, cleaned);
+};
 
 // ─── Substance flags (addiction) ─────────────────────────────────────────────
 

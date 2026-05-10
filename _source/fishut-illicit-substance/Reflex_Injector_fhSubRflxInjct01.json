@@ -1,0 +1,216 @@
+{
+  "_id": "fhSubRflxInjct01",
+  "name": "Reflex Injector",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhSubSciFi000001",
+  "system": {
+    "description": {
+      "value": "<p>A spring-loaded combat injector preloaded with synthetic adrenocortical accelerant. Strapped to the thigh, deployed under fire. Brand-name stocks are mil-spec; the gray-market versions occasionally crystallize.</p><p><strong><em>Desired effects on use.</em></strong> For 1 minute you have a +2 bonus to Dexterity (initiative is rolled with this bonus if used as a reaction at the start of combat) and your walking speed increases by 10 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Reflex Injector (see below).</p><p><strong><em>Addicted from Reflex Injector.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on saving throws against being frightened, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal Modifier: 5.</em></strong> Withdrawal lasts max(5 &minus; your Constitution modifier, 3) long rests, minimum 1.</p><p><em>Requires: Syringe.</em></p>"
+    },
+    "type": {
+      "value": "poison",
+      "subtype": "injury"
+    },
+    "rarity": "rare",
+    "weight": {
+      "value": 0.25,
+      "units": "lb"
+    },
+    "price": {
+      "value": 500,
+      "denomination": "gp"
+    },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": true
+    },
+    "activities": {
+      "fhActRflxInjct01": {
+        "type": "utility",
+        "_id": "fhActRflxInjct01",
+        "sort": 0,
+        "activation": {
+          "type": "bonus",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "minute",
+          "value": "1",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAERflxInjctBen"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "self",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "choice": false,
+            "type": "self"
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
+        "name": ""
+      }
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "substance",
+      "category": "performanceEnhancing",
+      "setting": "sciFi",
+      "addiction": {
+        "enabled": true,
+        "save": {
+          "ability": "con",
+          "dc": 15
+        },
+        "addictionEffectIds": [
+          "fhAERflxInjctAdc"
+        ]
+      },
+      "withdrawal": {
+        "enabled": true,
+        "mod": 5,
+        "effectIds": [
+          "fhAERflxInjctWit"
+        ]
+      },
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAERflxInjctBen",
+      "name": "Altered by Reflex Injector",
+      "img": "icons/svg/aura.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {
+        "seconds": 60
+      },
+      "description": "<p>+2 to Dexterity. Walking speed +10 ft.</p>",
+      "changes": [
+        {
+          "key": "system.abilities.dex.bonuses.check",
+          "mode": 2,
+          "value": "+2",
+          "priority": 20
+        },
+        {
+          "key": "system.attributes.movement.walk",
+          "mode": 2,
+          "value": "+10",
+          "priority": 20
+        },
+        {
+          "key": "macro.tokenMagic",
+          "mode": 0,
+          "value": "fishut-tmfx-scifi-performance-enhancing",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctBen"
+    },
+    {
+      "_id": "fhAERflxInjctAdc",
+      "name": "Reflex Injector Addiction",
+      "img": "icons/svg/poison.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned"
+      ],
+      "duration": {},
+      "description": "<p>Poisoned. Disadvantage on saves vs. frightened. Walking speed &minus;5 ft. until withdrawal completes.</p>",
+      "changes": [
+        {
+          "key": "system.attributes.movement.walk",
+          "mode": 2,
+          "value": "-5",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctAdc"
+    },
+    {
+      "_id": "fhAERflxInjctWit",
+      "name": "Withdrawal from Reflex Injector",
+      "img": "icons/svg/blood.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "changes": [
+        {
+          "key": "flags.substances-and-paraphernalia.vignetteColor",
+          "mode": 5,
+          "value": "#2da566",
+          "priority": 20
+        }
+      ],
+      "flags": {},
+      "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctWit"
+    }
+  ],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhSubRflxInjct01"
+}

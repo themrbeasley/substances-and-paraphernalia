@@ -3,11 +3,11 @@
 // Adds a "Simulate dose…" entry to the substance item-sheet's 3-dot header
 // dropdown (dnd5e 5.2.5 ApplicationV2). Clicking it spawns an ephemeral test
 // actor named `__fishut-test-<uuid>__<substance.name>`, embeds a clone of the
-// substance plus stub paraphernalia for selected subtypes, runs the same test
-// seams the live `dnd5e.postUseActivity` flow uses (`rollSaveAndApply` +
-// `rollOverdoseAndApply`), captures any chat output it produces, and renders
-// a result dialog. The temp actor is reaped on dialog close. A `ready`-time
-// orphan sweep cleans up actors left behind by crashes (GM-arbitrated).
+// substance, runs the same test seams the live `dnd5e.postUseActivity` flow
+// uses (`rollSaveAndApply` + `rollOverdoseAndApply`), captures any chat output
+// it produces, and renders a result dialog. The temp actor is reaped on dialog
+// close. A `ready`-time orphan sweep cleans up actors left behind by crashes
+// (GM-arbitrated).
 //
 // Injection strategy: we lazy-patch the item-sheet ApplicationV2 subclass'
 // `_getHeaderControls()` on its first render and register a matching action
@@ -20,7 +20,6 @@ import { MODULE_ID, FLAGS } from "../config.js";
 import {
   getAddiction,
   getOverdose,
-  getRequiredSubtypes,
   getWithdrawalMod,
   isSubstance,
   setActorWithdrawalEntry,
@@ -131,12 +130,7 @@ export async function openSimulateDoseDialog(item) {
 }
 
 async function openKnobsDialog(item) {
-  const subtypes = getRequiredSubtypes(item) ?? [];
-  const context = {
-    substance: { name: item.name },
-    requiredSubtypes: subtypes.map((id) => ({ id })),
-    hasSubtypes: subtypes.length > 0,
-  };
+  const context = { substance: { name: item.name } };
   const content = await foundry.applications.handlebars.renderTemplate(DIALOG_TEMPLATE, context);
 
   return foundry.applications.api.DialogV2.wait({
@@ -167,14 +161,11 @@ function readFormValues(dialog) {
   if (!root?.querySelector) return null;
   const conModInput = root.querySelector('[name="conMod"]');
   const stateInput = root.querySelector('[name="addictionState"]:checked');
-  const subtypeInputs = root.querySelectorAll('[name="readySubtypes"]:checked');
   const conMod = Number.parseInt(conModInput?.value ?? "0", 10);
   const addictionState = stateInput?.value ?? "none";
-  const readySubtypes = [...subtypeInputs].map((el) => el.value);
   return {
     conMod: Number.isFinite(conMod) ? conMod : 0,
     addictionState,
-    readySubtypes,
   };
 }
 
@@ -215,17 +206,16 @@ async function openResultDialog(item, result) {
 
 /**
  * Run a simulated dose. Creates an ephemeral actor, embeds a clone of the
- * substance + stub paraphernalia for the chosen ready subtypes, optionally
- * pre-seeds an addicted/withdrawing state, then exercises the same test seams
- * the live save/AE/overdose flow uses. Captures `createChatMessage`-emitted
- * content via a temporary listener and reaps captured messages so the
- * simulation does not pollute the live chat log.
+ * substance, optionally pre-seeds an addicted/withdrawing state, then
+ * exercises the same test seams the live save/AE/overdose flow uses.
+ * Captures `createChatMessage`-emitted content via a temporary listener and
+ * reaps captured messages so the simulation does not pollute the live chat
+ * log.
  *
  * @param {object} opts
  * @param {Item}   opts.substance
  * @param {number} [opts.conMod]
  * @param {"none"|"addicted"|"withdrawing"} [opts.addictionState]
- * @param {string[]} [opts.readySubtypes]
  * @returns {Promise<{
  *   ok: boolean,
  *   capturedContent: string,
@@ -237,7 +227,6 @@ export async function runSimulation({
   substance,
   conMod = 0,
   addictionState = "none",
-  readySubtypes = [],
 } = {}) {
   if (!substance || !isSubstance(substance)) {
     return {
@@ -261,7 +250,6 @@ export async function runSimulation({
     if (!testActor) throw new Error("simulate-dose: failed to create test actor");
 
     const embeddedSubstance = await embedSubstanceClone(testActor, substance);
-    await embedStubParaphernalia(testActor, readySubtypes);
 
     if (addictionState === "addicted" || addictionState === "withdrawing") {
       await preSeedAddictionState(testActor, embeddedSubstance, addictionState, conMod);
@@ -365,24 +353,6 @@ async function embedSubstanceClone(actor, sourceItem) {
     await embedded.update(updates);
   }
   return embedded;
-}
-
-async function embedStubParaphernalia(actor, readySubtypes) {
-  if (!Array.isArray(readySubtypes) || readySubtypes.length === 0) return;
-  const payloads = readySubtypes.map((subtypeId) => ({
-    name: `Sim Paraphernalia (${subtypeId})`,
-    type: "equipment",
-    img: "icons/svg/mystery-man.svg",
-    system: { equipped: true },
-    flags: {
-      [MODULE_ID]: {
-        [FLAGS.kind]: "paraphernalia",
-        [FLAGS.subtype]: subtypeId,
-        [FLAGS.schemaVersion]: 2,
-      },
-    },
-  }));
-  await actor.createEmbeddedDocuments("Item", payloads);
 }
 
 async function preSeedAddictionState(actor, item, state, conMod) {

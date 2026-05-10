@@ -1,4 +1,5 @@
 import { MODULE_ID, FLAGS } from "../config.js";
+import { isIntegrationSettingEnabled } from "./index.js";
 
 /**
  * Detect whether an Active Effect needs DAE to apply correctly.
@@ -13,11 +14,19 @@ import { MODULE_ID, FLAGS } from "../config.js";
  *     escape hatch — set on a per-AE basis from the item-settings form for
  *     edge cases the implicit signal misses.
  *
+ * Returns false unconditionally when the user has disabled the DAE
+ * integration via the `daeIntegration` world setting — they've opted out of
+ * DAE-aware gating. The setting-only check here intentionally does not
+ * short-circuit on `!isActive("dae")`: the consumer's missing-DAE warning
+ * needs `aeRequiresDae` to keep returning true for AEs that need DAE while
+ * DAE itself isn't installed.
+ *
  * @param {ActiveEffect} effect
  * @returns {boolean}
  */
 export function aeRequiresDae(effect) {
   if (!effect) return false;
+  if (!isIntegrationSettingEnabled("dae")) return false;
   if (effect.flags?.[MODULE_ID]?.[FLAGS.requiresDae] === true) return true;
   const customMode = CONST?.ACTIVE_EFFECT_MODES?.CUSTOM ?? 0;
   const changes = Array.isArray(effect.changes) ? effect.changes : [];

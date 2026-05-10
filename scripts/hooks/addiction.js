@@ -541,15 +541,16 @@ function findAllAppliedToleranceEffects(actor, substanceId) {
 }
 
 /**
- * Apply the substance's authored withdrawal AE templates to the actor. No-op
- * if `getWithdrawalEffectIds(item)` is empty (v0.3 behavior preserved). Each
- * applied AE name must contain `withdraw`; mismatched templates log a warning
- * and are skipped. Test seam — exported for Quench.
+ * Apply the substance's withdrawal AE templates to the actor. Falls back to a
+ * built-in default template when no authored templates exist, so every
+ * `withdrawal.enabled` substance produces a visible AE (and thus a vignette)
+ * without per-substance authoring. Authored template names must contain
+ * `withdraw`; mismatched templates log a warning and are skipped. Test seam —
+ * exported for Quench.
  *
  * @param {Actor} actor
  * @param {Item}  item
- * @returns {Promise<ActiveEffect|null>} the first applied effect, or null if
- *   no eligible templates were found.
+ * @returns {Promise<ActiveEffect|null>} the first applied effect.
  */
 export async function applyWithdrawalEffect(actor, item) {
   const templates = findWithdrawalTemplates(item);
@@ -563,17 +564,22 @@ export async function applyWithdrawalEffect(actor, item) {
     }
     eligible.push(template);
   }
-  if (eligible.length === 0) return null;
-  const payloads = eligible.map((template) => buildWithdrawalPayload(template, item));
+  // null sentinel → buildWithdrawalPayload uses the default template (matches
+  // the tolerance fallback pattern in applyToleranceEffects).
+  const sources = eligible.length > 0 ? eligible : [null];
+  const payloads = sources.map((template) => buildWithdrawalPayload(template, item));
   const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
   return created?.[0] ?? null;
 }
 
 function buildWithdrawalPayload(template, item) {
-  const data = template.toObject();
+  const data = template ? template.toObject() : buildDefaultWithdrawalTemplate(item);
   delete data._id;
   data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = { ...(data.flags[MODULE_ID] ?? {}), [FLAGS.sourceSubstanceId]: item.id };
+  data.flags[MODULE_ID] = {
+    ...(data.flags[MODULE_ID] ?? {}),
+    [FLAGS.sourceSubstanceId]: item.id,
+  };
   data.origin = item.uuid;
   data.disabled = false;
   data.transfer = false;
@@ -582,6 +588,30 @@ function buildWithdrawalPayload(template, item) {
     data.duration.seconds = undefined;
   }
   return data;
+}
+
+function buildDefaultWithdrawalTemplate(item) {
+  // Default withdrawal AE drives the vignette via an AE Change row applying
+  // to `actor.flags.<scope>.vignetteColor`. The addiction AE already carries
+  // the `poisoned` status so we don't re-apply it here (validate-content warns
+  // on the duplicate).
+  return {
+    name: game.i18n.format("FISHUT.DetailsTab.Field.WithdrawalEffect.AeName.Default", {
+      item: item.name,
+    }),
+    img: item.img ?? "icons/svg/blood.svg",
+    statuses: [],
+    description: "",
+    changes: [
+      {
+        key: `flags.${MODULE_ID}.vignetteColor`,
+        mode: 5,
+        value: "#a02020",
+        priority: 20,
+      },
+    ],
+    flags: {},
+  };
 }
 
 function findWithdrawalTemplates(item) {

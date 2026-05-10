@@ -1,7 +1,7 @@
-import { MODULE_ID } from "../config.js";
-import { isSubstance, getRequiredSubtypes } from "../data/flag-schema.js";
-import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
-import { evaluateSubtypeRequirements } from "../data/subtype-requirements.js";
+import { MODULE_ID, labelKey } from "../config.js";
+import { getAppliesTo, isParaphernalia, isSubstance } from "../data/flag-schema.js";
+import { inspectParaphernaliaItem } from "../data/references.js";
+import { actorSatisfiesAdmin } from "../data/admin-match.js";
 import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
@@ -28,15 +28,15 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
     return true;
   }
 
-  const subtypes = getRequiredSubtypes(item);
-  if (!Array.isArray(subtypes) || subtypes.length === 0) return true;
-
-  const { ok, missing } = evaluateSubtypeRequirements(actor, subtypes);
-  if (!ok) {
-    promptBlocked(activity, usageConfig, dialogConfig, messageConfig, missing).catch((err) =>
-      logger.error("blocked prompt failed", err),
-    );
-    return false;
+  const admin = item?.system?.type?.subtype;
+  if (typeof admin === "string" && admin.length > 0) {
+    const owned = buildOwnedParaphernalia(actor);
+    if (!actorSatisfiesAdmin(owned, admin)) {
+      promptBlocked(activity, usageConfig, dialogConfig, messageConfig, admin).catch((err) =>
+        logger.error("blocked prompt failed", err),
+      );
+      return false;
+    }
   }
 
   if (itemDaeRequiringEffects(item).length > 0 && !isActive("dae")) {
@@ -54,11 +54,27 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
   return true;
 }
 
-async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig, missing) {
+function buildOwnedParaphernalia(actor) {
+  const items = actor?.items;
+  if (!items) return [];
+  const owned = [];
+  for (const item of items) {
+    if (!isParaphernalia(item)) continue;
+    owned.push({
+      id: item.id,
+      appliesTo: getAppliesTo(item),
+      usable: inspectParaphernaliaItem(item).ready,
+    });
+  }
+  return owned;
+}
+
+async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig, admin) {
   const item = activity.item;
+  const adminLabel = adminLabelFor(admin);
   const body = game.i18n.format("FISHUT.Gating.Blocked.Body", {
     item: item.name,
-    missing: formatMissingSubtypes(missing),
+    admin: adminLabel,
   });
 
   const result = await foundry.applications.api.DialogV2.wait({
@@ -91,30 +107,8 @@ async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig,
   }
 }
 
-function formatMissingSubtypes(missing) {
-  const sep = game.i18n.localize("FISHUT.Gating.Group.Separator");
-  return missing.map(formatMissingEntry).join(sep);
-}
-
-function formatMissingEntry({ subtype, reason }) {
-  const candidates = subtypeLabel(subtype);
-  const reasonText = formatReason(reason);
-  if (!reasonText) return candidates;
-  return game.i18n.format("FISHUT.Gating.Group.Annotated", { candidates, reason: reasonText });
-}
-
-function formatReason(reason) {
-  if (reason === "unequipped") return game.i18n.localize("FISHUT.Gating.Reason.Unequipped");
-  if (reason === "unattuned") return game.i18n.localize("FISHUT.Gating.Reason.Unattuned");
-  return null;
-}
-
-function subtypeLabel(subtype) {
-  const composed = getEffectiveParaphernaliaSubtypes();
-  const entry = composed.find((e) => e.id === subtype);
-  if (!entry) return subtype;
-  if (entry.source === "builtin" && entry.labelKey) {
-    return game.i18n.localize(entry.labelKey);
-  }
-  return entry.label ?? subtype;
+function adminLabelFor(admin) {
+  const key = labelKey("administrations", admin);
+  if (!key) return admin;
+  return game.i18n.localize(key).toLowerCase();
 }

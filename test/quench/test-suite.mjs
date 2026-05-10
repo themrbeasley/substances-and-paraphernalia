@@ -19,8 +19,6 @@ import {
   getKind,
   getModifier,
   getOverdose,
-  getRequiredSubtypes,
-  getSetting,
   getSubtype,
   getWithdrawalMod,
   getActorWithdrawal,
@@ -28,7 +26,6 @@ import {
   isParaphernalia,
   isSubstance,
   setActorWithdrawalEntry,
-  setRequiredSubtypes,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
@@ -141,6 +138,11 @@ export function registerQuenchSuite() {
       removeXMacrosBatch,
       { displayName: "S&P · Remove-X macro presence" },
     );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.withdrawal-vignette`,
+      withdrawalVignetteBatch,
+      { displayName: "S&P · Withdrawal vignette mounts to #interface" },
+    );
   });
 }
 
@@ -194,7 +196,6 @@ async function embedSubstance(actor, overrides = {}) {
             save: { ability: "con", dc: 13 },
             withdrawalMod: 4,
           },
-          [FLAGS.requiredSubtypes]: [],
           [FLAGS.schemaVersion]: 2,
         },
       },
@@ -730,6 +731,7 @@ function bypassBatch(context) {
         flags: {
           [MODULE_ID]: {
             [FLAGS.subtype]: "pipe",
+            [FLAGS.appliesTo]: appliesTo,
           },
         },
         effects: [
@@ -752,11 +754,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "Test Bypass Substance",
         system: { type: { value: "poison", subtype: administration ?? "" } },
-        flags: {
-          [MODULE_ID]: {
-            [FLAGS.requiredSubtypes]: [],
-          },
-        },
       });
       cleanup.push(sub);
       return sub;
@@ -867,7 +864,7 @@ function bypassBatch(context) {
           attuned: true,
           uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
         },
-        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe", [FLAGS.appliesTo]: ["inhaled"] } },
         effects: [
           {
             name: "Advantage Pipe — Bypass",
@@ -893,7 +890,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "Advantage Test Substance",
         system: { type: { value: "poison", subtype: "inhaled" } },
-        flags: { [MODULE_ID]: { [FLAGS.requiredSubtypes]: [] } },
       });
       cleanup.push(sub);
 
@@ -916,7 +912,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "No-Modifier Substance",
         system: { type: { value: "poison", subtype: "inhaled" } },
-        flags: { [MODULE_ID]: { [FLAGS.requiredSubtypes]: [] } },
       });
       cleanup.push(sub);
 
@@ -992,7 +987,7 @@ function bypassBatch(context) {
           attuned: true,
           uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
         },
-        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe", [FLAGS.appliesTo]: appliesTo } },
         effects: [
           {
             name: `${name} — Bypass`,
@@ -1023,7 +1018,6 @@ function bypassBatch(context) {
       const sub = await embedSubstance(actor, {
         name: "+N Test Substance",
         system: { type: { value: "poison", subtype: "inhaled" } },
-        flags: { [MODULE_ID]: { [FLAGS.requiredSubtypes]: [] } },
       });
       cleanup.push(sub);
       return sub;
@@ -1079,7 +1073,7 @@ function bypassBatch(context) {
           attuned: true,
           uses: { spent: 0, max: "4", recovery: [{ period: "day", type: "recoverAll" }] },
         },
-        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe" } },
+        flags: { [MODULE_ID]: { [FLAGS.subtype]: "pipe", [FLAGS.appliesTo]: ["inhaled"] } },
         effects: [
           {
             name: "Auto Pipe — Bypass",
@@ -1432,11 +1426,17 @@ function withdrawalTemplateBatch(context) {
       return null;
     }
 
-    it("returns null when withdrawalEffectId is unset (v0.3 fallback preserved)", async () => {
+    it("falls back to a default withdrawal AE when no template authored (v0.5)", async () => {
       const sub = await makeSubstance("Withdrawal Test A");
       const result = await api().addiction.applyWithdrawalEffect(actor, sub);
-      assert.equal(result, null);
-      assert.equal(findAppliedWithdrawalAE(sub.id), null);
+      assert.ok(result, "default withdrawal AE should be created");
+      assert.match(result.name ?? "", /withdraw/i);
+      assert.equal(result.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId], sub.id);
+      assert.ok(
+        (result.statuses ?? []).includes?.("poisoned") || result.statuses?.has?.("poisoned"),
+        "default withdrawal AE should carry the poisoned status",
+      );
+      assert.equal(findAppliedWithdrawalAE(sub.id)?.id, result.id);
     });
 
     it("applies the authored withdrawal AE when withdrawalEffectId is set", async () => {
@@ -1448,7 +1448,7 @@ function withdrawalTemplateBatch(context) {
       assert.equal(findAppliedWithdrawalAE(sub.id)?.id, result.id);
     });
 
-    it("logs warning + skips when authored template name lacks 'withdraw'", async () => {
+    it("skips authored templates whose name lacks 'withdraw' and falls back to default", async () => {
       const sub = await embedSubstance(actor, { name: "Withdrawal Test C" });
       cleanup.push(sub);
       const [ae] = await sub.createEmbeddedDocuments("ActiveEffect", [
@@ -1464,8 +1464,9 @@ function withdrawalTemplateBatch(context) {
       ]);
       await sub.update({ [`flags.${MODULE_ID}.${FLAGS.withdrawal}.effectId`]: ae.id });
       const result = await api().addiction.applyWithdrawalEffect(actor, sub);
-      assert.equal(result, null, "should skip when name contract violated");
-      assert.equal(findAppliedWithdrawalAE(sub.id), null);
+      assert.ok(result, "default AE should be applied when authored template is invalid");
+      assert.match(result.name ?? "", /withdraw/i);
+      assert.notEqual(result.name, "Bad Template (no keyword)");
     });
 
     it("applyOutcome on saveResult=fail also applies authored withdrawal AE", async () => {
@@ -1481,15 +1482,13 @@ function withdrawalTemplateBatch(context) {
       assert.notEqual(addictionAE.id, withdrawalAE.id);
     });
 
-    it("applyOutcome on saveResult=fail applies no withdrawal AE when unset (v0.3)", async () => {
+    it("applyOutcome on saveResult=fail applies default withdrawal AE when no template authored", async () => {
       const sub = await makeSubstance("Withdrawal Test E");
       await api().addiction.applyOutcome(actor, sub, { saveResult: "fail" });
       assert.ok(findAppliedAddictionEffect(actor, sub.id), "addiction AE still applies");
-      assert.equal(
-        findAppliedWithdrawalAE(sub.id),
-        null,
-        "no withdrawal AE without withdrawalEffectId",
-      );
+      const withdrawalAE = findAppliedWithdrawalAE(sub.id);
+      assert.ok(withdrawalAE, "default withdrawal AE should be applied");
+      assert.match(withdrawalAE.name ?? "", /withdraw/i);
     });
 
     it("long-rest tick at restsRemaining=0 removes both addiction and withdrawal AEs", async () => {
@@ -1532,13 +1531,6 @@ function detailsTabSubstancePersistenceBatch(context) {
       if (substance && actor.items.get(substance.id)) await substance.delete();
     });
 
-    it("persists setting and clears on empty value", async () => {
-      await persistField(substance, "setting", "modern");
-      assert.equal(getSetting(substance), "modern");
-      await persistField(substance, "setting", "");
-      assert.equal(getSetting(substance), null);
-    });
-
     it("persists category and clears on empty value", async () => {
       await persistField(substance, "category", "performanceEnhancing");
       assert.equal(getCategory(substance), "performanceEnhancing");
@@ -1572,13 +1564,13 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getAddictionSave(substance)?.dc, null);
     });
 
-    it("persists withdrawalMod as integer", async () => {
-      await persistField(substance, "withdrawalMod", "6");
+    it("persists withdrawal.mod as integer", async () => {
+      await persistField(substance, "withdrawal.mod", "6");
       assert.equal(getWithdrawalMod(substance), 6);
     });
 
-    it("clears withdrawalMod when value is empty", async () => {
-      await persistField(substance, "withdrawalMod", "");
+    it("clears withdrawal.mod when value is empty", async () => {
+      await persistField(substance, "withdrawal.mod", "");
       assert.equal(getWithdrawalMod(substance), null);
     });
 
@@ -1635,17 +1627,6 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getOverdose(substance)?.description, "");
     });
 
-    it("round-trips requiredSubtypes via setRequiredSubtypes", async () => {
-      await setRequiredSubtypes(substance, ["pipe", "vial"]);
-      assert.deepEqual(getRequiredSubtypes(substance), ["pipe", "vial"]);
-    });
-
-    it("clears requiredSubtypes when set to empty array", async () => {
-      await setRequiredSubtypes(substance, ["pipe"]);
-      assert.deepEqual(getRequiredSubtypes(substance), ["pipe"]);
-      await setRequiredSubtypes(substance, []);
-      assert.deepEqual(getRequiredSubtypes(substance), []);
-    });
   });
 }
 
@@ -1674,13 +1655,6 @@ function detailsTabParaphernaliaPersistenceBatch(context) {
 
     afterEach(async () => {
       if (paraphernalia && actor.items.get(paraphernalia.id)) await paraphernalia.delete();
-    });
-
-    it("persists setting and clears on empty value", async () => {
-      await persistField(paraphernalia, "setting", "modern");
-      assert.equal(getSetting(paraphernalia), "modern");
-      await persistField(paraphernalia, "setting", "");
-      assert.equal(getSetting(paraphernalia), null);
     });
 
     it("persists category and clears on empty value (category=any)", async () => {
@@ -2466,6 +2440,128 @@ function removeXMacrosBatch(context) {
           `${name} macro should gate on game.user.isGM`,
         );
       }
+    });
+  });
+}
+
+// ─── Batch: Withdrawal vignette mounts to #interface ────────────────────────
+
+function withdrawalVignetteBatch(context) {
+  const { describe, it, assert, before, after, afterEach } = context;
+
+  describe("withdrawal vignette tracks owned-actor withdrawal AEs", () => {
+    let actor;
+
+    before(async () => {
+      actor = await makeActor("S&P vignette test");
+    });
+
+    after(async () => {
+      // Strip any leftover vignette so subsequent batches start clean.
+      const el = document.querySelector("#interface > .fishut-vignette");
+      if (el) el.remove();
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      const effects = [...(actor.effects ?? [])];
+      for (const e of effects) await e.delete();
+      // Let the microtask-coalesced refresh settle.
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    it("mounts a fixed-position vignette div with data-active=true while a withdrawal AE is owned", async () => {
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      assert.ok(el, "vignette element should be appended to #interface");
+      assert.equal(el.dataset.active, "true");
+    });
+
+    it("flips data-active to false when the withdrawal AE is removed", async () => {
+      const [ae] = await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const onMount = document.querySelector("#interface > .fishut-vignette");
+      assert.ok(onMount, "vignette should mount while AE is present");
+      assert.equal(onMount.dataset.active, "true");
+
+      await ae.delete();
+      await new Promise((r) => setTimeout(r, 50));
+      const afterDelete = document.querySelector("#interface > .fishut-vignette");
+      // Element is intentionally left in DOM so the opacity transition runs;
+      // it just flips inactive.
+      assert.ok(afterDelete, "vignette element stays in DOM (kept for fade-out transition)");
+      assert.equal(afterDelete.dataset.active, "false");
+    });
+
+    it("never matches AEs whose name does not contain 'withdraw'", async () => {
+      // Strip any inactive leftover so we can detect a no-mount cleanly.
+      const stale = document.querySelector("#interface > .fishut-vignette");
+      if (stale) stale.remove();
+
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Some Random AE",
+          img: "icons/svg/aura.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      // No /withdraw/i AE → refresh sees no match → no mount path runs.
+      assert.equal(el, null, "non-withdrawal AE must not trigger the vignette");
+    });
+
+    it("ignores disabled withdrawal AEs", async () => {
+      const stale = document.querySelector("#interface > .fishut-vignette");
+      if (stale) stale.remove();
+
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal (disabled)",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: true,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      assert.equal(el, null, "disabled withdrawal AE must not trigger the vignette");
+    });
+
+    it("vignette CSS is loaded — element computed style sits below dialog stacking", async () => {
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Quench Vignette Withdrawal",
+          img: "icons/svg/poison.svg",
+          changes: [],
+          disabled: false,
+        },
+      ]);
+      await new Promise((r) => setTimeout(r, 50));
+      const el = document.querySelector("#interface > .fishut-vignette");
+      assert.ok(el, "vignette element should exist");
+      const cs = getComputedStyle(el);
+      assert.equal(cs.position, "fixed", "vignette must be position:fixed");
+      assert.equal(cs.pointerEvents, "none", "vignette must not block clicks");
+      // z-index 1 keeps the vignette above the canvas but below Foundry app
+      // windows / notifications which render at much higher layers.
+      assert.equal(cs.zIndex, "1");
     });
   });
 }

@@ -1,0 +1,38 @@
+{
+  "_id": "fhParaLogbook001",
+  "name": "Athlete's Logbook",
+  "type": "equipment",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhParaModern0001",
+  "system": {
+    "description": {
+      "value": "<p>A weathered training journal. Pages of dosing schedules, weight cuts, and recovery notes. The discipline of using a stack safely is recorded here.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "common",
+    "weight": {
+      "value": 0.5,
+      "units": "lb"
+    },
+    "price": {
+      "value": 1,
+      "denomination": "gp"
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "modern",
+      "subtype": "athletes-logbook",
+      "appliesTo": ["ingested", "injury"],
+      "schemaVersion": 2
+    }
+  },
+  "effects": [],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaLogbook001"
+}

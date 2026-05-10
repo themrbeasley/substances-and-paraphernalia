@@ -1,0 +1,62 @@
+{
+  "_id": "fhParaIncBurn001",
+  "name": "Ritual Incense Burner",
+  "type": "equipment",
+  "img": "icons/svg/aura.svg",
+  "folder": "fhParaFantasy001",
+  "system": {
+    "description": {
+      "value": "<p>A small brass censer chased with grounding sigils. When a ritual user smolders a powdered substance over its coals — rather than snorting it raw — the smoke is read through the lungs slowly, and the body has time to brace.</p><p><strong>Slow burn.</strong> Provides a +1 bonus to Constitution saving throws against addiction from inhaled substances administered through this burner.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "uncommon",
+    "weight": {
+      "value": 1,
+      "units": "lb"
+    },
+    "price": {
+      "value": 75,
+      "denomination": "gp"
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "fantasy",
+      "subtype": "incense-burner",
+      "appliesTo": ["inhaled"],
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAEIncBurnByp01",
+      "name": "Ritual Incense Burner — Save Modifier",
+      "img": "icons/svg/aura.svg",
+      "transfer": true,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Grants a +1 bonus to Constitution saving throws against addiction to inhaled substances burned in the censer.</p>",
+      "changes": [],
+      "flags": {
+        "substances-and-paraphernalia": {
+          "modifier": {
+            "kind": "bypass",
+            "type": "+N",
+            "bonus": 1,
+            "appliesTo": [
+              "inhaled"
+            ]
+          }
+        }
+      },
+      "_key": "!items.effects!fhParaIncBurn001.fhAEIncBurnByp01"
+    }
+  ],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaIncBurn001"
+}

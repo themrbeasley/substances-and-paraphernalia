@@ -1,0 +1,43 @@
+{
+  "_id": "fhParaRollPaper1",
+  "name": "Rolling Papers",
+  "type": "consumable",
+  "img": "icons/svg/item-bag.svg",
+  "folder": "fhParaModern0001",
+  "system": {
+    "description": {
+      "value": "<p>A pack of fifty thin, gummed papers. One is consumed per smoked dose; the gate checks remaining count but does not itself decrement (track burn at the table).</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "common",
+    "weight": {
+      "value": 0.05,
+      "units": "lb"
+    },
+    "price": {
+      "value": 1,
+      "denomination": "gp"
+    },
+    "uses": {
+      "spent": 0,
+      "max": "50",
+      "autoDestroy": false
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "modern",
+      "subtype": "rolling-papers",
+      "appliesTo": ["inhaled"],
+      "schemaVersion": 2
+    }
+  },
+  "effects": [],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaRollPaper1"
+}

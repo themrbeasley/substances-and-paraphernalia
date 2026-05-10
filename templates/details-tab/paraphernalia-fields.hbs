@@ -1,4 +1,5 @@
 <fieldset class="fishut-details-paraphernalia">
+  <legend>{{labels.paraphernaliaPropertiesHeader}}</legend>
   <div class="form-group">
     <label>{{labels.subtype}}</label>
     <select data-fishut-flag="subtype">
@@ -8,6 +9,21 @@
       {{/each}}
     </select>
   </div>
-
+  <div class="form-group">
+    <label>{{labels.appliesTo}}</label>
+    <div class="fishut-details-paraphernalia__applies-to">
+      {{#each paraphernalia.adminOptions}}
+        <label class="checkbox">
+          <dnd5e-checkbox
+            data-fishut-flag="appliesTo"
+            data-fishut-admin="{{this.id}}"
+            {{#if this.checked}}checked{{/if}}
+          ></dnd5e-checkbox>
+          {{this.label}}
+        </label>
+      {{/each}}
+    </div>
+    <p class="hint">{{labels.appliesToHint}}</p>
+  </div>
   {{> fishut-details-bypass}}
 </fieldset>

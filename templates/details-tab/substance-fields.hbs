@@ -1,4 +1,5 @@
 <fieldset class="fishut-details-substance">
+  <legend>{{labels.substancePropertiesHeader}}</legend>
   <div class="form-group">
     <label>{{labels.category}}</label>
     <select data-fishut-flag="category">
@@ -282,42 +283,5 @@
         {{/each}}
       </ul>
     </fieldset>
-  </fieldset>
-
-  <fieldset class="fishut-details-required-subtypes">
-    <legend>{{labels.requiredSubtypes}}</legend>
-
-    <div class="fishut-required-subtypes__cloud" role="list">
-      {{#each substance.requiredSubtypes}}
-        <span class="fishut-chip fishut-chip--custom" data-id="{{this.id}}" role="listitem">
-          <span class="fishut-chip__label">{{this.label}}</span>
-          <button type="button"
-                  class="fishut-chip__remove"
-                  data-fishut-action="remove-required-subtype"
-                  data-fishut-subtype="{{this.id}}"
-                  aria-label="{{../labels.requiredSubtypesRemove}}">
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-          </button>
-        </span>
-      {{/each}}
-      {{#unless substance.requiredSubtypes.length}}
-        <span class="fishut-required-subtypes__empty">{{labels.requiredSubtypesEmpty}}</span>
-      {{/unless}}
-    </div>
-
-    <div class="fishut-required-subtypes__add">
-      <select data-fishut-add-subtype="select" class="fishut-required-subtypes__select">
-        <option value="">—</option>
-        {{#each substance.subtypeAddOptions}}
-          <option value="{{this.id}}">{{this.label}}</option>
-        {{/each}}
-      </select>
-      <button type="button"
-              class="fishut-required-subtypes__add-btn"
-              data-fishut-action="add-required-subtype">
-        <i class="fa-solid fa-plus" aria-hidden="true"></i>
-        {{labels.requiredSubtypesAdd}}
-      </button>
-    </div>
   </fieldset>
 </fieldset>

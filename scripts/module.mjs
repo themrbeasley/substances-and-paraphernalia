@@ -4,10 +4,6 @@ import { registerSettings } from "./settings.js";
 import { registerMigrationSettings, runMigrations } from "./migrations.js";
 import * as flagSchema from "./data/flag-schema.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "./data/references.js";
-import {
-  evaluateSubtypeRequirements,
-  evaluateSubstance,
-} from "./data/subtype-requirements.js";
 import { registerActivityGating } from "./hooks/activity-gating.js";
 import {
   registerAddictionHooks,
@@ -26,8 +22,15 @@ import {
   applyAbstainPreDecrement,
 } from "./hooks/long-rest-abstain.js";
 import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
-import { isActive, listMissingIntegrations } from "./integrations/index.js";
+import {
+  isActive,
+  isIntegrationEnabled,
+  isIntegrationSettingEnabled,
+  listMissingIntegrations,
+} from "./integrations/index.js";
+import { registerTmfxPresets } from "./integrations/tmfx.js";
 import { registerDetailsTab } from "./ui/details-tab.js";
+import { registerWithdrawalVignette } from "./ui/withdrawal-vignette.js";
 import {
   registerSimulateDose,
   runSimulation,
@@ -44,6 +47,7 @@ Hooks.once("init", () => {
   registerLongRestAbstain();
   registerDetailsTab();
   registerSimulateDose();
+  registerTmfxPresets();
   registerQuenchSuiteIfActive();
   logger.log("init complete");
 });
@@ -63,7 +67,6 @@ Hooks.once("ready", async () => {
       schema: SCHEMA,
       flagSchema,
       references: { actorHasSubtype, inspectSubtypeOnActor },
-      requirements: { evaluateSubtypeRequirements, evaluateSubstance },
       addiction: {
         rollSaveAndApply,
         applyOutcome,
@@ -77,16 +80,24 @@ Hooks.once("ready", async () => {
       saveBypass: { consumeBypassIfAvailable },
       abstain: { applyAbstainPreDecrement },
       simulateDose: { runSimulation, sweepOrphanedTestActors },
-      integrations: { isActive, listMissingIntegrations },
+      integrations: {
+        isActive,
+        isIntegrationEnabled,
+        isIntegrationSettingEnabled,
+        listMissingIntegrations,
+      },
     };
   }
+  registerWithdrawalVignette();
   notifyMissingIntegrations();
   logger.log("ready complete");
 });
 
 function notifyMissingIntegrations() {
   if (game.settings.get(MODULE_ID, "suppressIntegrationWarnings")) return;
-  const missing = listMissingIntegrations();
+  // The user explicitly opted out of integrations whose setting is false —
+  // don't nag them about modules they've already declined to wire into.
+  const missing = listMissingIntegrations().filter((m) => isIntegrationSettingEnabled(m.id));
   if (missing.length === 0) return;
   const labels = missing.map((m) => game.i18n.localize(m.labelKey));
   const sep = game.i18n.localize("FISHUT.Gating.Group.Separator");

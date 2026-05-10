@@ -1,0 +1,14 @@
+{
+  "_id": "fhMacRemoveOverd01",
+  "name": "Remove Overdose",
+  "type": "script",
+  "scope": "global",
+  "img": "icons/svg/biohazard.svg",
+  "command": "const MODULE_ID = \"substances-and-paraphernalia\";\nconst FLAG_SOURCE = \"sourceSubstanceId\";\nif (!game.user.isGM) { ui.notifications.warn(\"GM only.\"); return; }\nconst actor = canvas.tokens.controlled[0]?.actor ?? game.user.character;\nif (!actor) { ui.notifications.warn(game.i18n.localize(\"FISHUT.RemoveAddiction.NoActor\")); return; }\nconst rows = [];\nfor (const effect of actor.effects) {\n  const sid = effect.flags?.[MODULE_ID]?.[FLAG_SOURCE] ?? null;\n  const nameMatch = /overdose/i.test(effect.name ?? \"\");\n  if (nameMatch) {\n    rows.push({ effect, sourceId: sid });\n  }\n}\nif (rows.length === 0) { ui.notifications.info(game.i18n.format(\"FISHUT.RemoveOverdose.NoCandidates\", { actor: actor.name })); return; }\nconst body = `${game.i18n.format(\"FISHUT.RemoveOverdose.PreviewIntro\", { actor: actor.name })}<ul style=\"list-style:none;padding-left:0;\">${rows.map((r, i) => `<li><label><input type=\"checkbox\" name=\"row-${i}\" checked> ${game.i18n.format(\"FISHUT.RemoveOverdose.RowDetail\", { name: r.effect?.name ?? \"(unknown)\", sourceId: r.sourceId ?? \"(none)\" })}</label></li>`).join(\"\")}</ul>`;\nconst result = await foundry.applications.api.DialogV2.wait({\n  window: { title: game.i18n.localize(\"FISHUT.RemoveOverdose.Title\") },\n  content: body,\n  buttons: [\n    { action: \"confirm\", label: game.i18n.localize(\"FISHUT.RemoveAddiction.Confirm\"), default: true,\n      callback: (event, button) => { const fd = new FormData(button.form); return rows.map((_, i) => fd.has(`row-${i}`)); } },\n    { action: \"cancel\", label: game.i18n.localize(\"FISHUT.RemoveAddiction.Cancel\"), default: false,\n      callback: () => null }\n  ],\n  rejectClose: false, modal: true,\n});\nif (!Array.isArray(result)) return;\nconst removeIds = [];\nlet removed = 0;\nconst log = [];\nfor (let i = 0; i < rows.length; i++) {\n  if (!result[i]) continue;\n  const row = rows[i];\n  if (row.effect) {\n    log.push(row.effect.toObject());\n    removeIds.push(row.effect.id);\n  }\n  removed++;\n}\nif (removeIds.length) await actor.deleteEmbeddedDocuments(\"ActiveEffect\", removeIds, { fishutIntentional: true });\nif (log.length) {\n  await ChatMessage.create({\n    user: game.user.id,\n    whisper: ChatMessage.getWhisperRecipients(\"GM\").map((u) => u.id),\n    content: `<details><summary>${game.i18n.localize(\"FISHUT.RemoveOverdose.LogTitle\")}</summary><pre>${foundry.utils.escapeHTML(JSON.stringify(log, null, 2))}</pre></details>`,\n  });\n}\nui.notifications.info(game.i18n.format(\"FISHUT.RemoveOverdose.Removed\", { actor: actor.name, count: removed }));",
+  "author": null,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_key": "!macros!fhMacRemoveOverd01"
+}

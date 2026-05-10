@@ -124,19 +124,13 @@ export function checkSubstance(file) {
 
   if (flags.requiredParaphernalia !== undefined) {
     err(
-      `legacy "requiredParaphernalia" flag is removed in v0.3 — declare a flat "requiredSubtypes" array of paraphernalia subtype ids instead`,
+      `legacy "requiredParaphernalia" flag is removed in v0.3 — paraphernalia gating now keys on system.type.subtype matched against paraphernalia appliesTo`,
     );
   }
   if (flags.requiredSubtypes !== undefined) {
-    if (!Array.isArray(flags.requiredSubtypes)) {
-      err(`requiredSubtypes must be an array of subtype id strings`);
-    } else {
-      for (const s of flags.requiredSubtypes) {
-        if (typeof s !== "string" || !KEBAB.test(s)) {
-          err(`requiredSubtypes entry must be a kebab-case string (got ${JSON.stringify(s)})`);
-        }
-      }
-    }
+    err(
+      `legacy "requiredSubtypes" flag is removed in v0.5 — paraphernalia gating now keys on system.type.subtype (poison administration) matched against paraphernalia appliesTo`,
+    );
   }
 
   // v0.4 — overdose flag shape.
@@ -306,9 +300,12 @@ export function checkParaphernalia(file, opts = {}) {
         `${aeTag}: modifier.type must be one of ${[...MODIFIER_TYPES].join("|")} (got ${modifier.type})`,
       );
     }
-    if (!Array.isArray(modifier.appliesTo) || modifier.appliesTo.length === 0) {
-      errors.push(`${aeTag}: modifier.appliesTo must be a non-empty array`);
-    } else {
+    // appliesTo on the bypass AE is no longer authored — paraphernalia's
+    // own `flags[…].appliesTo` is the canonical filter at resolution time.
+    // We still validate the AE-side array's *values* if it happens to be
+    // present (legacy authored content) so a typo'd administration string
+    // doesn't slip through silently.
+    if (Array.isArray(modifier.appliesTo)) {
       for (const a of modifier.appliesTo) {
         if (!ADMIN_VALUES.has(a)) {
           errors.push(`${aeTag}: modifier.appliesTo contains invalid administration "${a}"`);

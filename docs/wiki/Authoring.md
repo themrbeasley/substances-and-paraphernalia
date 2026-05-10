@@ -9,7 +9,6 @@ flags["substances-and-paraphernalia"] = {
   kind: "substance",
   category: "stimulant" | "mindAltering" | "performanceEnhancing",
   setting: "fantasy" | "sciFi" | "modern",
-  requiredSubtypes: ["snuff-horn"],          // optional; flat list of paraphernalia subtype ids
   addiction: {
     save: { ability: "con", dc: 13 },
     withdrawalMod: 3,
@@ -25,7 +24,7 @@ flags["substances-and-paraphernalia"] = {
 };
 ```
 
-`system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury` — that's the administration channel the gate and bypass logic key on.
+`system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury` — that's the administration channel the gate and bypass logic key on. (The legacy per-substance `requiredSubtypes` callout was removed in v0.5; gating now keys on this admin type matched against a paraphernalia-side `appliesTo` admin list.)
 
 `system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type *Item Uses* with value 1 so dnd5e auto-destroys the consumable on use.
 

@@ -48,4 +48,4 @@ The validator requires `bonus` to be a non-zero number when `type === "+N"`. If 
 
 ## Bypass paraphernalia must satisfy the gate
 
-A bypass-granting paraphernalia is **not a free aura**. It must be one of the substance's `requiredSubtypes` (gate-satisfying). The +N inhaler only fires its bypass when the substance also requires an `inhaler` paraphernalia.
+A bypass-granting paraphernalia is **not a free aura**. Its top-level `appliesTo` admin list (added in v0.5) must include the substance's administration so the same paraphernalia is the one satisfying the gate. A +N inhaler only fires its bypass when the substance is `inhaled`.

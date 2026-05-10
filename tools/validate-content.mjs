@@ -17,7 +17,6 @@
  *   - withdrawal.mod is a positive integer; withdrawal.enabled boolean when present
  *   - addiction.addictionEffectId points to an AE on the same item whose name
  *     contains /addict/i
- *   - requiredSubtypes (if present) is a flat array of kebab-case subtype ids
  *   - flags[…].overdose: when `enabled`, requires integer chancePercent 1..100
  *     and non-empty `description`
  *   - flags[…].withdrawal.effectId (if set): must resolve to AE on the same
@@ -40,7 +39,9 @@
  *     flags["substances-and-paraphernalia"].modifier:
  *       - kind === "bypass"
  *       - type is one of "auto-pass" | "advantage" | "+N"
- *       - appliesTo is a non-empty array of valid administration strings
+ *       - appliesTo is optional — paraphernalia's own `appliesTo` is the
+ *         canonical filter at resolution time; values are still validated
+ *         when present so typo'd administration strings can't slip through
  *     and when usesPerDay is declared the host item must have
  *     system.uses.recovery including a day/recoverAll entry
  */
@@ -70,6 +71,7 @@ async function loadJsonFiles(relDir) {
       out.push({ relPath: `${relDir}/${name}`, parseError: e.message });
       continue;
     }
+    if (typeof data?._key === "string" && data._key.startsWith("!folders!")) continue;
     out.push({ relPath: `${relDir}/${name}`, data });
   }
   return out;
