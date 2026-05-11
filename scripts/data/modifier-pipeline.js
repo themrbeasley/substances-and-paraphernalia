@@ -4,13 +4,13 @@ import { pickBypassResolution } from "./modifier-resolution.js";
 import { composeTolerance } from "./tolerance.js";
 
 /**
- * @typedef {"auto-pass" | "advantage" | "+N" | "none"} ModifierResolutionType
+ * @typedef {"auto-pass" | "reroll-on-fail" | "advantage" | "+N" | "none"} ModifierResolutionType
  *
  * @typedef {Object} ModifierResolution
  * @property {ModifierResolutionType} resolution
  * @property {ActiveEffect|null}   [source]   Primary contributing AE (first in `sources`).
  *                                            Kept for back-compat with v0.3 callers.
- * @property {ActiveEffect[]}      [sources]  All contributing AEs (auto-pass/advantage: 1, +N: ≥1).
+ * @property {ActiveEffect[]}      [sources]  All contributing AEs (auto-pass/reroll-on-fail/advantage: 1, +N: ≥1).
  * @property {number}              [bonus]    Sum of bonuses for `+N`; 0 otherwise.
  */
 
@@ -26,7 +26,7 @@ const NONE = Object.freeze({ resolution: "none" });
  * one use is consumed on each contributing AE's source item if it tracks
  * uses.
  *
- * Composition: auto-pass > advantage > +N. Within auto-pass / advantage,
+ * Composition: auto-pass > reroll-on-fail > advantage > +N. Within auto-pass / reroll-on-fail / advantage,
  * deterministic ascending by AE id picks one. Within +N, ALL eligible AEs
  * contribute and their `bonus` values are summed. Per-day refresh of
  * `system.uses` rides on dnd5e's native recovery.

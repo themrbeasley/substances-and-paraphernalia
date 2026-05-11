@@ -214,4 +214,66 @@ describe("pickBypassResolution(administration, candidates)", () => {
     assert.equal(r.bonus, 2);
     assert.equal(r.sources.length, 1);
   });
+
+  // ── reroll-on-fail tier — sits between auto-pass and advantage ──────
+  it("returns reroll-on-fail when only a reroll AE matches", () => {
+    const c = candidate({ id: "ae-rr", type: "reroll-on-fail" });
+    const r = pickBypassResolution("inhaled", [c]);
+    assert.equal(r.resolution, "reroll-on-fail");
+    assert.equal(r.sources.length, 1);
+    assert.equal(r.sources[0], c);
+    assert.equal(r.bonus, 0);
+  });
+
+  it("auto-pass beats reroll-on-fail", () => {
+    const auto = candidate({ id: "ae-auto", type: "auto-pass" });
+    const rr = candidate({ id: "ae-rr", type: "reroll-on-fail" });
+    const r = pickBypassResolution("inhaled", [rr, auto]);
+    assert.equal(r.resolution, "auto-pass");
+    assert.equal(r.sources[0], auto);
+  });
+
+  it("reroll-on-fail beats advantage", () => {
+    const adv = candidate({ id: "ae-adv", type: "advantage" });
+    const rr = candidate({ id: "ae-rr", type: "reroll-on-fail" });
+    const r = pickBypassResolution("inhaled", [adv, rr]);
+    assert.equal(r.resolution, "reroll-on-fail");
+    assert.equal(r.sources[0], rr);
+  });
+
+  it("reroll-on-fail beats +N", () => {
+    const pn = candidate({ id: "ae-pn", type: "+N", bonus: 5 });
+    const rr = candidate({ id: "ae-rr", type: "reroll-on-fail" });
+    const r = pickBypassResolution("inhaled", [pn, rr]);
+    assert.equal(r.resolution, "reroll-on-fail");
+    assert.equal(r.sources[0], rr);
+    assert.equal(r.bonus, 0);
+  });
+
+  it("breaks ties within reroll-on-fail tier by ascending id", () => {
+    const z = candidate({ id: "z-rr", type: "reroll-on-fail" });
+    const a = candidate({ id: "a-rr", type: "reroll-on-fail" });
+    const r = pickBypassResolution("inhaled", [z, a]);
+    assert.equal(r.resolution, "reroll-on-fail");
+    assert.equal(r.sources[0], a);
+  });
+
+  it("filters reroll-on-fail when usesRemaining is zero", () => {
+    const c = candidate({
+      id: "ae-rr",
+      type: "reroll-on-fail",
+      hasUsesConfig: true,
+      usesRemaining: 0,
+    });
+    assert.equal(pickBypassResolution("inhaled", [c]), null);
+  });
+
+  it("filters reroll-on-fail when appliesTo doesn't match", () => {
+    const c = candidate({
+      id: "ae-rr",
+      type: "reroll-on-fail",
+      appliesTo: ["contact"],
+    });
+    assert.equal(pickBypassResolution("inhaled", [c]), null);
+  });
 });

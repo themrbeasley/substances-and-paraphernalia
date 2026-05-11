@@ -38,9 +38,6 @@
     { "id": "pill-cutter", "labelKey": "FISHUT.ParaphernaliaSubtype.PillCutter" },
     { "id": "neural-shunt", "labelKey": "FISHUT.ParaphernaliaSubtype.NeuralShunt" }
   ],
-  "addictionSaveBypassTypes": [
-    { "id": "auto-pass", "labelKey": "FISHUT.SaveBypass.Type.AutoPass" }
-  ],
   "modifier": {
     "kinds": [
       { "id": "bypass", "labelKey": "FISHUT.Modifier.Kind.Bypass" },
@@ -48,6 +45,7 @@
     ],
     "types": [
       { "id": "auto-pass", "labelKey": "FISHUT.Modifier.Type.AutoPass" },
+      { "id": "reroll-on-fail", "labelKey": "FISHUT.Modifier.Type.RerollOnFail" },
       { "id": "advantage", "labelKey": "FISHUT.Modifier.Type.Advantage" },
       { "id": "+N", "labelKey": "FISHUT.Modifier.Type.PlusN" }
     ]

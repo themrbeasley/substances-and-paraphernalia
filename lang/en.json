@@ -99,6 +99,9 @@
   "FISHUT.Addiction.Save.FailNoWithdrawal": "{actor} failed to resist <strong>{item}</strong> and gained the Addicted condition.",
   "FISHUT.Addiction.Save.FailNoWithdrawalWithAdvantage": "{actor} failed to resist <strong>{item}</strong> despite advantage from <strong>{source}</strong>; gained the Addicted condition.",
   "FISHUT.Addiction.Save.FailNoWithdrawalWithBonus": "{actor} failed to resist <strong>{item}</strong> despite +{bonus} from <strong>{source}</strong>; gained the Addicted condition.",
+  "FISHUT.Addiction.Save.PassWithReroll": "{actor} resisted the addictive pull of <strong>{item}</strong> (reroll-on-fail from <strong>{source}</strong>).",
+  "FISHUT.Addiction.Save.FailWithReroll": "{actor} failed to resist <strong>{item}</strong> even after rerolling (<strong>{source}</strong>); gained the Addicted condition for {rests} long rest(s).",
+  "FISHUT.Addiction.Save.FailNoWithdrawalWithReroll": "{actor} failed to resist <strong>{item}</strong> even after rerolling (<strong>{source}</strong>); gained the Addicted condition.",
   "FISHUT.Addiction.Save.Bypass": "{actor}'s save against <strong>{item}</strong> addiction was bypassed by <strong>{paraphernalia}</strong>.",
   "FISHUT.Addiction.Already.Extended": "{actor} is already addicted to <strong>{item}</strong>; withdrawal extended to {rests} long rest(s).",
   "FISHUT.Addiction.Already.Maintained": "{actor} is already addicted to <strong>{item}</strong>; withdrawal remains at {rests} long rest(s).",
@@ -245,13 +248,12 @@
   "FISHUT.DetailsTab.Bypass.UsesPerDay.Placeholder": "Unlimited",
   "FISHUT.DetailsTab.Bypass.Bonus.Label": "Bonus",
 
-  "FISHUT.SaveBypass.Type.AutoPass": "Auto-pass",
-
   "FISHUT.Modifier.Kind.Bypass": "Bypass",
   "FISHUT.Modifier.Kind.Tolerance": "Tolerance",
   "FISHUT.Modifier.Type.AutoPass": "Auto-pass",
   "FISHUT.Modifier.Type.Advantage": "Advantage",
   "FISHUT.Modifier.Type.PlusN": "Save Bonus",
+  "FISHUT.Modifier.Type.RerollOnFail": "Reroll on Fail",
 
   "FISHUT.Coupling.Mode.LinkedCascade": "Linked (cascade) — removing poisoned removes addiction",
   "FISHUT.Coupling.Mode.LinkedIsolated": "Linked (isolated) — both apply, but removal is independent",

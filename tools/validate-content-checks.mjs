@@ -11,7 +11,7 @@
 
 export const FLAG_SCOPE = "substances-and-paraphernalia";
 export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]);
-export const MODIFIER_TYPES = new Set(["auto-pass", "advantage", "+N"]);
+export const MODIFIER_TYPES = new Set(["auto-pass", "reroll-on-fail", "advantage", "+N"]);
 export const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
 function flagsOf(data) {
