@@ -37,6 +37,7 @@ import {
   persistMultiField,
 } from "../../scripts/ui/details-tab.js";
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
+import { rollSaveAndApply } from "../../scripts/hooks/addiction.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
 import { PRESETS, PRESET_LIBRARY, verifyTmfxPresets } from "../../scripts/integrations/tmfx.js";
@@ -934,6 +935,163 @@ function bypassBatch(context) {
         assert.ok(game.messages.size > before);
         assert.doesNotMatch(last.content ?? "", /advantage/i, "plain pass message must not mention advantage");
       });
+    });
+  });
+
+  describe("addiction save path with reroll-on-fail modifier", () => {
+    let actor;
+    const cleanup = [];
+
+    before(async () => {
+      actor = await makeActor("S&P reroll save test");
+    });
+
+    after(async () => {
+      await deleteActor(actor);
+    });
+
+    afterEach(async () => {
+      while (cleanup.length) {
+        const item = cleanup.pop();
+        if (item && actor.items.get(item.id)) await item.delete().catch(() => {});
+      }
+      const map = getActorWithdrawal(actor);
+      for (const id of Object.keys(map)) {
+        const ae = findAppliedAddictionEffect(actor, id);
+        if (ae) await ae.delete();
+      }
+      await actor.unsetFlag(MODULE_ID, FLAGS.withdrawal);
+    });
+
+    async function withSavingThrowSequence(totals, fn) {
+      const original = actor.rollSavingThrow ?? actor.rollAbilitySave;
+      const calls = [];
+      let i = 0;
+      const stub = async (config) => {
+        calls.push(config);
+        if (i >= totals.length) {
+          throw new Error(
+            `withSavingThrowSequence: ${i + 1}th save call exceeds provided totals (${totals.length})`,
+          );
+        }
+        return { total: totals[i++] };
+      };
+      actor.rollSavingThrow = stub;
+      actor.rollAbilitySave = stub;
+      try {
+        await fn(calls);
+      } finally {
+        if (original) {
+          actor.rollSavingThrow = original;
+          actor.rollAbilitySave = original;
+        } else {
+          delete actor.rollSavingThrow;
+          delete actor.rollAbilitySave;
+        }
+      }
+    }
+
+    async function makeRerollVial({ appliesTo = ["ingested"], usesMax = "1", spent = 0 } = {}) {
+      const item = await embedParaphernalia(actor, {
+        name: "Reroll Test Vial",
+        system: {
+          equipped: true,
+          attunement: "",
+          attuned: false,
+          uses: {
+            spent,
+            max: usesMax,
+            recovery: [{ period: "day", type: "recoverAll" }],
+          },
+        },
+        flags: {
+          [MODULE_ID]: {
+            [FLAGS.subtype]: "vial",
+            [FLAGS.appliesTo]: appliesTo,
+          },
+        },
+        effects: [
+          {
+            name: "Reroll Test Vial — Bypass",
+            icon: "icons/svg/aura.svg",
+            transfer: true,
+            disabled: false,
+            duration: {},
+            changes: [],
+            flags: {
+              [MODULE_ID]: {
+                [FLAGS.modifier]: {
+                  kind: "bypass",
+                  type: "reroll-on-fail",
+                  appliesTo,
+                  usesPerDay: usesMax,
+                },
+              },
+            },
+          },
+        ],
+      });
+      cleanup.push(item);
+      return item;
+    }
+
+    async function makeIngestedSubstance({ dc = 15 } = {}) {
+      const sub = await embedSubstance(actor, {
+        name: "Reroll Test Substance",
+        system: { type: { value: "poison", subtype: "ingested" } },
+        flags: {
+          [MODULE_ID]: {
+            addiction: { enabled: true, save: { ability: "con", dc } },
+            withdrawal: { enabled: true },
+            withdrawalMod: 2,
+          },
+        },
+      });
+      cleanup.push(sub);
+      return sub;
+    }
+
+    it("rolls a second save when the first fails and uses the second result", async () => {
+      await makeRerollVial();
+      const sub = await makeIngestedSubstance({ dc: 15 });
+      await withSavingThrowSequence([5, 20], async (calls) => {
+        await rollSaveAndApply(actor, sub);
+        assert.equal(calls.length, 2, "expected exactly two save calls");
+        // Neither call should set advantage or carry a bonus parts row.
+        assert.notEqual(calls[0].advantage, true);
+        assert.notEqual(calls[1].advantage, true);
+        assert.equal(calls[0].parts, undefined);
+        assert.equal(calls[1].parts, undefined);
+      });
+    });
+
+    it("stops after the first save when it succeeds", async () => {
+      await makeRerollVial();
+      const sub = await makeIngestedSubstance({ dc: 15 });
+      await withSavingThrowSequence([20], async (calls) => {
+        await rollSaveAndApply(actor, sub);
+        assert.equal(calls.length, 1, "second save must not fire when first passes");
+      });
+    });
+
+    it("consumes exactly one use regardless of whether the reroll fires", async () => {
+      const vial = await makeRerollVial({ usesMax: "1", spent: 0 });
+      const sub = await makeIngestedSubstance({ dc: 15 });
+      await withSavingThrowSequence([5, 20], async () => {
+        await rollSaveAndApply(actor, sub);
+      });
+      assert.equal(actor.items.get(vial.id).system.uses.spent, 1);
+    });
+
+    it("applies the addicted state when both rolls fail", async () => {
+      await makeRerollVial();
+      const sub = await makeIngestedSubstance({ dc: 15 });
+      await withSavingThrowSequence([3, 5], async () => {
+        await rollSaveAndApply(actor, sub);
+      });
+      const entry = getActorWithdrawalEntry(actor, sub.id);
+      assert.ok(entry, "withdrawal entry must exist after both-fail outcome");
+      assert.ok(findAppliedAddictionEffect(actor, sub.id), "addiction AE must be applied");
     });
   });
 
