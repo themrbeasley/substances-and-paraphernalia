@@ -7,6 +7,8 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-11
+
 ### Added
 - **`reroll-on-fail` save-bypass tier.** New `modifier.type` enum entry. When a
   bypass-granting AE with `type: "reroll-on-fail"` wins resolution, the
