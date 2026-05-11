@@ -481,3 +481,37 @@ describe("checkParaphernalia — daily-recovery contract (regression)", () => {
     assert.deepEqual(errors, []);
   });
 });
+
+describe("MODIFIER_TYPES (reroll-on-fail)", () => {
+  it("accepts a bypass AE with type 'reroll-on-fail'", async () => {
+    const file = baseParaphernalia({
+      system: {
+        uses: { spent: 0, max: "1", recovery: [{ period: "day", type: "recoverAll" }] },
+      },
+      effects: [
+        {
+          _id: "ae-reroll-test",
+          name: "Reroll Test — Bypass",
+          transfer: true,
+          changes: [],
+          flags: {
+            [SCOPE]: {
+              modifier: {
+                kind: "bypass",
+                type: "reroll-on-fail",
+                appliesTo: ["ingested"],
+                usesPerDay: "1",
+              },
+            },
+          },
+        },
+      ],
+    });
+    const { errors } = checkParaphernalia(file);
+    assert.equal(
+      errors.find((e) => /modifier\.type must be one of/.test(e)),
+      undefined,
+      `unexpected modifier.type error: ${errors.join(" | ")}`,
+    );
+  });
+});
