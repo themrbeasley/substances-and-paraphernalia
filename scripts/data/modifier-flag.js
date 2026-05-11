@@ -17,8 +17,8 @@
  *   v0.4 adds "tolerance" — actor-side stack-counted state (no per-shot consumption).
  *   "bypass" is the original paraphernalia-grants-save-relief pipeline.
  *
- * @typedef {"auto-pass" | "advantage" | "+N"} ModifierType
- *   For `kind: "bypass"` only. Tier strength: auto-pass > advantage > +N.
+ * @typedef {"auto-pass" | "reroll-on-fail" | "advantage" | "+N"} ModifierType
+ *   For `kind: "bypass"` only. Tier strength: auto-pass > reroll-on-fail > advantage > +N.
  *
  * @typedef {Object} ToleranceFactor
  * @property {number}  [durationFactor]   Per-stack additive delta on a 1.0 baseline.

@@ -19,7 +19,7 @@
  * @typedef {Object} BypassResolution
  * @property {ModifierResolutionType} resolution
  * @property {ModifierCandidate[]} sources
- *   Contributing candidates. Length 1 for auto-pass / advantage, ≥1 for +N.
+ *   Contributing candidates. Length 1 for auto-pass / reroll-on-fail / advantage, ≥1 for +N.
  * @property {number} bonus  Sum of `bonus` over `+N` sources; 0 otherwise.
  */
 
@@ -41,7 +41,7 @@ const TIER_RANK = Object.freeze({
  * Filter:
  *  1. `kind === "bypass"`
  *  2. `appliesTo` is an array including `administration`
- *  3. `type` is a known tier (`auto-pass` / `advantage` / `+N`)
+ *  3. `type` is a known tier (`auto-pass` / `reroll-on-fail` / `advantage` / `+N`)
  *  4. if `hasUsesConfig`, `usesRemaining > 0` (otherwise treat as unlimited)
  *
  * Composition:
