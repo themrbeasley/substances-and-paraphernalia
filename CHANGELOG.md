@@ -7,15 +7,6 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
-### Breaking
-- **Per-substance `requiredSubtypes` callout removed.** Paraphernalia gating
-  no longer keys on a substance-authored list of subtype ids. Going forward
-  the gate keys on the dnd5e Poison administration type at
-  `system.type.subtype` (`contact` | `ingested` | `inhaled` | `injury`)
-  matched against a paraphernalia-side `appliesTo` admin list (Phase 3+).
-  The legacy `requiredSubtypes` flag is now a hard validator error. Pre-1.0
-  clean break — no migration shim.
-
 ## [0.5.1] — 2026-05-10
 
 ### Breaking
@@ -72,6 +63,71 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - Quench round-trip suite (`S&P · TMFX preset round-trip`) — asserts
   every preset is retrievable from the `tmfx-main` library and
   optionally exercises `addFilters` against a canvas token.
+
+## [0.5.0] — 2026-05-09
+
+### Breaking
+- **Per-substance `requiredSubtypes` removed; admin-type paraphernalia gating
+  introduced.** Paraphernalia gating no longer keys on a substance-authored
+  list of subtype ids. The gate now keys off the dnd5e Poison administration
+  type at `system.type.subtype` (`contact` | `ingested` | `inhaled` |
+  `injury`) matched against a paraphernalia-side `appliesTo` admin list
+  authored via new Details-tab "Paraphernalia Properties" admin-type
+  checkboxes. The legacy `requiredSubtypes` flag is a hard validator error.
+  Pre-1.0 clean break — no migration shim. Re-import paraphernalia from the
+  shipped compendium.
+
+### Added
+- **TokenMagic FX integration via DAE `macro.tokenMagic` Change rows.**
+  `Altered by *` benefit AEs carry a `macro.tokenMagic` Change (mode 0
+  CUSTOM); DAE forwards the preset name to TMFX on apply/remove. Nine preset
+  filters (3 settings × 3 categories) registered into the `tmfx-main`
+  library under names `fishut-tmfx-{setting}-{category}` at `ready` /
+  `canvasReady`. No custom TMFX hook and no `flags[…].tmfx` block — authoring
+  is directly on the AE Changes table. `module.api.integrations.verifyTmfxPresets()`
+  diagnostic helper exposed for GM console triage.
+- **Per-integration boolean world settings** (`daeIntegration`,
+  `midiqolIntegration`, `timesUpIntegration`, `tmfxIntegration`; default-on).
+- **Per-owner CSS withdrawal vignette** (red screen-edge bloom mounted to
+  `#interface`). Color sourced from an authored AE Change row on each
+  substance's withdrawal AE template: `key: "flags.substances-and-paraphernalia.vignetteColor"`,
+  mode 5 OVERRIDE, hand-picked hex per substance; default fallback `#a02020`.
+- **Theme 6 round 3 paraphernalia:** ritual incense burner (Coalshade
+  Powder), pill cutter (Ironhour Caps), neural shunt (Memorywire).
+- **Integration license audit** at `docs/INTEGRATION-LICENSES.md`.
+
+### Removed
+- **JB2A integration dropped.** CC-BY-NC-SA-4.0 vs. distribution model
+  incompatibility; no signed clearance from JB2A authors. Users who own JB2A
+  can drive Sequencer effects via a world-local macro UUID in the
+  `macro.tokenMagic` Change row.
+
+## [0.4.0] — 2026-05-08
+
+### Added
+- **`+N` save-bypass type** added to the modifier pipeline (completes Theme
+  3). `bonus` field on the modifier block; all eligible `+N` AEs sum their
+  bonus values.
+- **Theme 6 round 2 content:** ≥2 substances per 3×3 setting × category
+  matrix cell, plus a `+N`-bypass paraphernalia item.
+- **Theme 1 — GM Guide moved to GitHub wiki.** In-world journal reduced to a
+  single pointer page; CI link-check added.
+- **Tolerance auto-stacking** on addiction save pass — tolerance AE applied
+  and stacks automatically.
+- **Overdose d100 per consumption** with a marker Active Effect on the actor.
+- **Withdrawal-bite AE template picker** — substance items carry an authored
+  withdrawal AE template; `applyWithdrawalEffect` clones it onto the actor.
+- **Voluntary-abstain long-rest dialog button** — GM/player can opt a
+  character into voluntary abstinence from the rest dialog.
+- **Poisoned-coupling tri-state world setting** (`linked-cascade`,
+  `linked-isolated`, `independent`) governing how addiction AEs interact with
+  the 5e Poisoned condition.
+- **Simulate-dose 3-dot menu entry** on substance items for playtesting
+  without consuming uses.
+- **Three new Remove-X macros:** Remove Tolerance, Remove Overdose, Remove
+  Withdrawal (same UX pattern as the existing Remove Addiction macro).
+- **Paraphernalia Subtype Manager** settings sub-menu for adding/removing
+  custom paraphernalia subtypes as a world setting.
 
 ## [0.3.0] — 2026-05-07
 
