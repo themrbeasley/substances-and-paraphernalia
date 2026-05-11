@@ -82,7 +82,8 @@ export async function rollSaveAndApply(actor, item) {
   const dc = addiction.save.dc;
   const advantage = modifier.resolution === "advantage";
   const bonus = modifier.resolution === "+N" ? Number(modifier.bonus) || 0 : 0;
-  const saveRoll = await rollSave(actor, ability, dc, { advantage, bonus });
+  const reroll = modifier.resolution === "reroll-on-fail";
+  const saveRoll = await rollSave(actor, ability, dc, { advantage, bonus, reroll });
   if (!saveRoll) return;
   const saveResult = saveRoll.total >= dc ? "success" : "fail";
   return applyOutcome(actor, item, { saveResult, saveTotal: saveRoll.total, modifier });
@@ -98,6 +99,7 @@ export async function rollSaveAndApply(actor, item) {
  * @param {boolean} [outcome.alreadyAddicted]
  * @param {import("../data/modifier-pipeline.js").ModifierResolution} [outcome.modifier]
  *   `resolution === "auto-pass"`: save is skipped, chat cites `source.name`.
+ *   `resolution === "reroll-on-fail"`: save was rolled twice (second only if first failed); chat cites `source.name`.
  *   `resolution === "advantage"`: combined with `saveResult`, chat cites `source.name`.
  *   `resolution === "+N"`: save was rolled with `+bonus`; chat cites all `sources`.
  * @param {"success"|"fail"} [outcome.saveResult]
@@ -143,16 +145,21 @@ export async function applyOutcome(actor, item, outcome) {
   const isPlusN = outcome?.modifier?.resolution === "+N";
   const bonusValue = isPlusN ? Number(outcome.modifier.bonus) || 0 : 0;
   const bonusSources = isPlusN ? joinSourceNames(outcome.modifier) : "";
+  const rerollSource =
+    outcome?.modifier?.resolution === "reroll-on-fail"
+      ? (outcome.modifier.source?.name ?? "")
+      : "";
 
   if (outcome?.saveResult === "success") {
     let key = "FISHUT.Addiction.Save.Pass";
-    if (advantageSource) key = "FISHUT.Addiction.Save.PassWithAdvantage";
+    if (rerollSource) key = "FISHUT.Addiction.Save.PassWithReroll";
+    else if (advantageSource) key = "FISHUT.Addiction.Save.PassWithAdvantage";
     else if (isPlusN) key = "FISHUT.Addiction.Save.PassWithBonus";
     await chat(
       game.i18n.format(key, {
         actor: actor.name,
         item: item.name,
-        source: advantageSource || bonusSources,
+        source: rerollSource || advantageSource || bonusSources,
         bonus: bonusValue,
       }),
     );
@@ -179,9 +186,12 @@ export async function applyOutcome(actor, item, outcome) {
     }
     let key;
     if (!withdrawalEnabled) {
-      if (advantageSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithAdvantage";
+      if (rerollSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithReroll";
+      else if (advantageSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithAdvantage";
       else if (isPlusN) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithBonus";
       else key = "FISHUT.Addiction.Save.FailNoWithdrawal";
+    } else if (rerollSource) {
+      key = "FISHUT.Addiction.Save.FailWithReroll";
     } else if (advantageSource) {
       key = "FISHUT.Addiction.Save.FailWithAdvantage";
     } else if (isPlusN) {
@@ -194,7 +204,7 @@ export async function applyOutcome(actor, item, outcome) {
         actor: actor.name,
         item: item.name,
         rests: newComputed,
-        source: advantageSource || bonusSources,
+        source: rerollSource || advantageSource || bonusSources,
         bonus: bonusValue,
       }),
     );
@@ -216,7 +226,7 @@ function conMod(actor) {
   return typeof mod === "number" ? mod : 0;
 }
 
-async function rollSave(actor, ability, dc, { advantage = false, bonus = 0 } = {}) {
+async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, reroll = false } = {}) {
   if (typeof actor.rollAbilitySave !== "function" && typeof actor.rollSavingThrow !== "function") {
     logger.warn("actor has no rollAbilitySave/rollSavingThrow; skipping save");
     return null;
@@ -224,14 +234,27 @@ async function rollSave(actor, ability, dc, { advantage = false, bonus = 0 } = {
   // dnd5e 4.x prefers `rollSavingThrow` (the 3.x `rollAbilitySave` still
   // exists as an alias on most builds). Try the modern name first.
   const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
-  const config = {
+  // reroll-on-fail wins outright over advantage/+N at resolution time, so
+  // those modifiers can never co-fire on the same call. Build a clean config
+  // and roll once; if it fails the DC, roll a second time with the same
+  // clean config and return that result.
+  const baseConfig = {
     ability,
     target: dc,
     targetValue: dc,
-    advantage,
     fastForward: false,
     chatMessage: true,
   };
+  if (reroll) {
+    const first = await fn.call(actor, { ...baseConfig });
+    const firstRoll = Array.isArray(first) ? (first[0] ?? null) : (first ?? null);
+    if (!firstRoll) return null;
+    if (firstRoll.total >= dc) return firstRoll;
+    const second = await fn.call(actor, { ...baseConfig });
+    const secondRoll = Array.isArray(second) ? (second[0] ?? null) : (second ?? null);
+    return secondRoll ?? firstRoll;
+  }
+  const config = { ...baseConfig, advantage };
   if (Number.isFinite(bonus) && bonus !== 0) config.parts = [String(bonus)];
   const roll = await fn.call(actor, config);
   // Handle both single-roll and array-roll return shapes.
