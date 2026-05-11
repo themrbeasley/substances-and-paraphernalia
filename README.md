@@ -6,67 +6,83 @@ categories (Stimulant, Mind-Altering, Performance-Enhancing), an Activity-flow
 gate that blocks consumption when the right gear isn't ready, and a save-on-use
 addiction loop with paraphernalia-granted bypasses.
 
-> Status: pre-1.0, work in progress. Compatibility target is FoundryVTT V13 and
-> dnd5e 4.0+. v0.2 is a clean break from v0.1 — see [CHANGELOG.md](CHANGELOG.md).
+> **Status:** pre-1.0, work in progress.
+> Compatibility target: **FoundryVTT V13** and **dnd5e 5.2.5**.
 > Not yet on the Foundry package registry.
+
+## Requirements
+
+| Module | Role | Required? |
+|--------|------|-----------|
+| [Dynamic Active Effects (DAE)](https://foundryvtt.com/packages/dae) | Powers AE Changes that use DAE-only modes (e.g. `macro.tokenMagic`) | **Yes** |
+| [Midi-QoL](https://foundryvtt.com/packages/midi-qol) | Intercepts the addiction save dialog and drives the save workflow | **Yes** |
+| [Token Magic FX](https://foundryvtt.com/packages/tokenmagic) | Visual overlays on substance benefit AEs (`Altered by *`) | **Yes** |
+| [Times Up](https://foundryvtt.com/packages/times-up) | Automatic AE duration expiry | No (recommended) |
+
+Foundry refuses to activate the module without DAE, Midi-QoL, and Token Magic FX
+installed and active.
 
 ## What ships
 
-- Compendium of substances (consumables) with addiction tuning, administration
-  modes, and required-paraphernalia flags.
-- Compendium of paraphernalia (equipment and one-shot consumables), including
-  legendary items that grant addiction-save bypasses.
-- A GM Guide journal explaining the gating rules, addiction mechanics, save
-  bypass rules, and authoring schema.
-- A `Toggle Paraphernalia Enforcement` macro and a GM-only `Remove Addiction`
-  macro for the hotbar.
-- A `dnd5e.preUseActivity` hook that blocks substance use when required
-  paraphernalia is missing or unready, with a `Use anyway` override.
-- A `dnd5e.postUseActivity` hook that rolls a Constitution save against the
-  substance's DC, applies an Addicted Active Effect on a failed save, and
-  consults equipped paraphernalia for matching auto-pass bypasses first.
-- A `dnd5e.restCompleted` long-rest tick (GM-arbitrated) that decrements
-  withdrawal and removes the AE when the count reaches zero.
-- An item-sheet **Substance/Paraphernalia** entry in the 3-dot context menu
-  for authoring substances and paraphernalia without hand-editing JSON.
+### Compendium packs (under "Illicit Compendia")
 
-Optional modules — Dynamic Active Effects, Midi-QoL, Times Up, Token Magic FX —
-are detected at ready and warned about if missing. None are required.
+- **Illicit Substances** — 19+ consumables across the 3x3 setting x category
+  matrix, each with addiction tuning, benefit AE, addiction AE, and withdrawal
+  AE templates.
+- **Illicit Paraphernalia** — 11+ equipment and consumable items with subtype,
+  administration-type matching (`appliesTo`), and optional save-bypass AEs.
+- **Illicit Macros** — Remove Addiction, Remove Altered, Remove Overdose,
+  Remove Tolerance, Remove Withdrawal, and Toggle Paraphernalia Enforcement.
+- **GM Guide** — single-page journal pointing to the
+  [GitHub wiki](https://github.com/themrbeasley/substances-and-paraphernalia/wiki)
+  for full documentation.
+
+### Automation hooks
+
+- **`dnd5e.preUseActivity` gate** — blocks substance use when matching
+  paraphernalia is missing or unready. The gate keys off the dnd5e Poison
+  subtype on the substance (`system.type.subtype`) and matches against
+  paraphernalia `appliesTo`. "Use anyway" override available to all users.
+- **`dnd5e.postUseActivity` addiction loop** — rolls a Constitution save
+  against the substance's DC, consults the modifier pipeline for save bypasses
+  (`auto-pass > advantage > +N`), and applies the Addiction AE on failure.
+- **`dnd5e.restCompleted` long-rest tick** — GM-arbitrated: decrements
+  withdrawal counters, removes addiction/withdrawal AEs when the count reaches
+  zero, and prompts voluntary abstain.
+
+### Additional mechanics
+
+- **Tolerance** — auto-stacks on a passed addiction save.
+- **Overdose** — d100 roll per consumption with a marker AE.
+- **Poisoned coupling** — three modes (`linked-cascade`, `linked-isolated`,
+  `independent`) controlling how the Poisoned condition interacts with addiction.
+- **Voluntary abstain** — long-rest dialog button to voluntarily skip a substance.
+- **Withdrawal vignette** — per-owner CSS overlay with per-substance colors
+  authored on the withdrawal AE template.
+- **Simulate-dose** — 3-dot menu dry-run on substance items.
+- **Paraphernalia Subtype Manager** — settings menu for adding custom subtypes
+  beyond the built-in list.
+- **Drag-to-inventory dialog** — state-injection when substances are dropped
+  onto actors (GM/ASSISTANT).
+- **TMFX visual overlays** — DAE-driven `macro.tokenMagic` Change rows on
+  `Altered by *` benefit AEs, with nine setting x category preset filters.
 
 ## Authoring
 
-The recommended path is the **Substance/Paraphernalia** entry in the item
-sheet's 3-dot context menu. It opens a form rooted at the item that writes
-every flag the module reads, including the addiction block, administration
-mode, required paraphernalia (AND-of-OR groups), and the optional
-addiction-save bypass on paraphernalia.
+Substances and paraphernalia are authored on the dnd5e item sheet's
+**Details tab**. The wiki has the full authoring guide:
 
-Full schema and worked examples live in
-[docs/flag-schema.md](docs/flag-schema.md). The short version:
+- **[Authoring](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Authoring)** —
+  Details-tab fields, flag shapes, AE conventions, worked examples.
+- **[Save Bypass Tiers](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Save-Bypass-Tiers)** —
+  `auto-pass > advantage > +N` pipeline.
+- **[Mechanics](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Mechanics)** —
+  full mechanics reference.
 
-```js
-flags["substances-and-paraphernalia"] = {
-  kind: "substance" | "paraphernalia",
-  setting: "fantasy" | "sciFi" | "modern",
-  // substance:
-  category: "stimulant" | "mindAltering" | "performanceEnhancing",
-  administration: "inhaled" | "ingested" | "injected" | "sublingual" | "topical",
-  addiction: {
-    save: { ability: "con", dc: 13 },
-    withdrawalMod: 4,
-    addictionEffectId: "<aeId on this item>"
-  },
-  requiredParaphernalia: [{ anyOf: ["slug-or-Compendium.UUID"] }],
-  // paraphernalia:
-  paraphernaliaId: "kebab-case-slug",
-  addictionSaveBypass: { type: "auto-pass", appliesTo: ["inhaled"], usesPerDay: "@prof" },
-  schemaVersion: 2
-};
-```
-
-Active Effect naming is a contract: substance addictions are named
-`{Substance} Addiction` (the substring `addict` must appear,
-case-insensitive); benefit AEs are named `Altered by {Substance}`.
+Active Effect naming is a contract: addiction AEs contain `addict`,
+withdrawal AEs contain `withdraw`, overdose AEs contain `overdose`,
+tolerance AEs contain `tolerance`, benefit AEs follow
+`Altered by {Substance}` (all case-insensitive).
 
 ## Development
 
