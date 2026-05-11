@@ -7,6 +7,28 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-05-11
+
+### Fixed
+- **GM Guide macro list incomplete.** Added "Toggle Paraphernalia Enforcement"
+  to the in-world journal's macro reference (missing since v0.4 wiki migration).
+
+### Changed
+- **README rewritten for v0.5.x.** The README described v0.2 exclusively —
+  wrong dependency info, removed 3-dot authoring form, obsolete flag shapes,
+  and zero coverage of v0.3+ features. Rewritten to reflect current reality
+  with wiki pointers for authoring details.
+- **`docs/flag-schema.md` replaced with wiki redirect.** The v0.2 flag-schema
+  reference described removed concepts. Replaced with pointers to the wiki's
+  Authoring, Mechanics, and Save Bypass Tiers pages.
+- **Backfilled CHANGELOG for v0.4.0 and v0.5.0.** The log jumped from 0.3.0
+  to 0.5.1; added entries from the shipped-version summaries in `ROADMAP.md`.
+
+### Clarified
+- **Duplicate "Remove Withdrawal" macro in compendium.** The `_source/` directory
+  has always had exactly one copy. The duplicate observed in a live world was
+  stale LevelDB data from a prior pack build; a fresh `npm run pack` resolves it.
+
 ## [0.5.1] — 2026-05-10
 
 ### Breaking
