@@ -12,6 +12,9 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 ### Fixed
 - **GM Guide macro list incomplete.** Added "Toggle Paraphernalia Enforcement"
   to the in-world journal's macro reference (missing since v0.4 wiki migration).
+- **Duplicate "Remove Withdrawal" macro in compendium.** The `_source/` directory
+  has always had exactly one copy. The duplicate observed in a live world was
+  stale LevelDB data from a prior pack build; a fresh `npm run pack` resolves it.
 
 ### Changed
 - **README rewritten for v0.5.x.** The README described v0.2 exclusively —
@@ -23,11 +26,6 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   Authoring, Mechanics, and Save Bypass Tiers pages.
 - **Backfilled CHANGELOG for v0.4.0 and v0.5.0.** The log jumped from 0.3.0
   to 0.5.1; added entries from the shipped-version summaries in `ROADMAP.md`.
-
-### Clarified
-- **Duplicate "Remove Withdrawal" macro in compendium.** The `_source/` directory
-  has always had exactly one copy. The duplicate observed in a live world was
-  stale LevelDB data from a prior pack build; a fresh `npm run pack` resolves it.
 
 ## [0.5.1] — 2026-05-10
 
