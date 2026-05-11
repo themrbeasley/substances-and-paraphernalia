@@ -7,6 +7,17 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+### Added
+- **`reroll-on-fail` save-bypass tier.** New `modifier.type` enum entry. When a
+  bypass-granting AE with `type: "reroll-on-fail"` wins resolution, the
+  addiction save is rolled once; if the roll fails the DC, a second save is
+  rolled with the same clean configuration (no advantage, no bonus) and that
+  result is canonical. Sits between `auto-pass` and `advantage` in tier order
+  (`auto-pass > reroll-on-fail > advantage > +N`). Use is consumed once per
+  consumption attempt regardless of whether the reroll fires.
+- `Tongue of the Oracle` paraphernalia (fantasy / ingested / `tincture-dropper`)
+  — once-per-day reroll-on-fail vial; canonical example of the new tier.
+
 ### Breaking
 - **Per-substance `requiredSubtypes` callout removed.** Paraphernalia gating
   no longer keys on a substance-authored list of subtype ids. Going forward
@@ -15,6 +26,10 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   matched against a paraphernalia-side `appliesTo` admin list (Phase 3+).
   The legacy `requiredSubtypes` flag is now a hard validator error. Pre-1.0
   clean break — no migration shim.
+- **Dead `addictionSaveBypassTypes` enum removed from `scripts/data/schema.json`.**
+  A v0.2-era array kept alongside the canonical `modifier.types`; nothing
+  read it post-v0.3. Removed alongside its dead localization key
+  `FISHUT.SaveBypass.Type.AutoPass`.
 
 ## [0.5.1] — 2026-05-10
 
