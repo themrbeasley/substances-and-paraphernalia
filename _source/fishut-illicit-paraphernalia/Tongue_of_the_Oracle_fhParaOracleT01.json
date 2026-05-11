@@ -1,0 +1,75 @@
+{
+  "_id": "fhParaOracleT01",
+  "name": "Tongue of the Oracle",
+  "type": "equipment",
+  "img": "icons/svg/regen.svg",
+  "folder": "fhParaFantasy001",
+  "system": {
+    "description": {
+      "value": "<p>A small silvered vial set with a hinged dropper carved from agate. Tradition holds that a drop placed under the tongue lets a poisoner's hand falter — once. The body, briefly, gets to ask whether it really wants to be poisoned.</p><p><em>Functions only with substances designed to be drawn through this dropper before swallowing.</em></p><p><strong>Attunement.</strong> Requires attunement.</p><p><strong>Second Sip.</strong> While attuned, once per day, when you would fail a Constitution saving throw against addiction to an ingested substance, you may take a single drop from this vial and re-roll the save; you must use the new roll. Uses recover at the end of a long rest.</p>"
+    },
+    "type": {
+      "value": "trinket"
+    },
+    "rarity": "rare",
+    "attunement": "required",
+    "attuned": false,
+    "weight": {
+      "value": 0.2,
+      "units": "lb"
+    },
+    "price": {
+      "value": 3500,
+      "denomination": "gp"
+    },
+    "uses": {
+      "spent": 0,
+      "max": "1",
+      "autoDestroy": false,
+      "recovery": [
+        {
+          "period": "day",
+          "type": "recoverAll"
+        }
+      ]
+    }
+  },
+  "flags": {
+    "substances-and-paraphernalia": {
+      "kind": "paraphernalia",
+      "setting": "fantasy",
+      "subtype": "tincture-dropper",
+      "appliesTo": ["ingested"],
+      "schemaVersion": 2
+    }
+  },
+  "effects": [
+    {
+      "_id": "fhAEOracleTByp",
+      "name": "Tongue of the Oracle — Save Modifier",
+      "img": "icons/svg/regen.svg",
+      "transfer": true,
+      "disabled": false,
+      "duration": {},
+      "description": "<p>Grants a single daily reroll on a failed Constitution saving throw against addiction to ingested substances taken through this dropper. Uses recover at the end of a long rest, tracked on the vial's native uses pool.</p>",
+      "changes": [],
+      "flags": {
+        "substances-and-paraphernalia": {
+          "modifier": {
+            "kind": "bypass",
+            "type": "reroll-on-fail",
+            "appliesTo": [
+              "ingested"
+            ],
+            "usesPerDay": "1"
+          }
+        }
+      },
+      "_key": "!items.effects!fhParaOracleT01.fhAEOracleTByp"
+    }
+  ],
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fhParaOracleT01"
+}
