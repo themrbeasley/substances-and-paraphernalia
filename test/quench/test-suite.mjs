@@ -173,6 +173,11 @@ export function registerQuenchSuite() {
       abstainFailConsumesBatch,
       { displayName: "S&P · Voluntary Abstain · fail triggers consumption" },
     );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.abstain-fail-soft`,
+      abstainFailSoftBatch,
+      { displayName: "S&P · Voluntary Abstain · fail soft-fail" },
+    );
   });
 }
 
@@ -3057,6 +3062,42 @@ function abstainFailConsumesBatch(context) {
       await new Promise((r) => setTimeout(r, 100));
       const after = Number(actor.items.get(substance.id).system.uses.value);
       assert.equal(after, before - 1, "consumption fired and decremented uses by 1");
+    });
+  });
+}
+
+// ─── Batch: Voluntary Abstain — fail with no inventory soft-fails ───────────
+
+function abstainFailSoftBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · Voluntary Abstain · fail with no inventory soft-fails", () => {
+    let actor;
+
+    beforeEach(async () => {
+      const cls = CONFIG.Actor.documentClass;
+      actor = await cls.create({ name: "Quench Abstain SoftFail", type: "character" });
+    });
+
+    afterEach(async () => {
+      if (actor) await deleteActor(actor);
+    });
+
+    it("missing inventory item posts FailNoSubstance and does not throw", async () => {
+      const row = {
+        substanceId: "nonexistent-item-id",
+        itemName: "Coalshade Powder",
+        dc: 99,
+        withdrawalMod: 4,
+      };
+      // Should resolve without throwing.
+      await processAbstainFailure(actor, row);
+      // Inspect the recent chat history for the FailNoSubstance message.
+      const recent = game.messages?.contents?.slice(-3) ?? [];
+      const hit = recent.some(
+        (m) => m.content?.includes?.("reached for") || m.content?.includes?.("found none"),
+      );
+      assert.ok(hit, "FailNoSubstance chat card emitted");
     });
   });
 }
