@@ -7,7 +7,7 @@ import {
 import { defaultAbstainDc } from "../data/abstain.js";
 import { SETTING_KEYS } from "../settings.js";
 import { logger } from "../logger.js";
-import { registerForcedUseBypass } from "./activity-gating.js";
+import { clearForcedUseBypass, registerForcedUseBypass } from "./activity-gating.js";
 
 /**
  * Voluntary abstain — long-rest dialog hook.
@@ -139,7 +139,12 @@ export async function processAbstainFailure(actor, row) {
     }),
   );
 
-  await activity.use({ event: null }, { fastForward: true, chatMessage: true });
+  try {
+    await activity.use({ event: null }, { fastForward: true, chatMessage: true });
+  } catch (err) {
+    clearForcedUseBypass(activity.id);
+    throw err;
+  }
 }
 
 /**

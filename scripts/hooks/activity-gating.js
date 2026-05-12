@@ -26,6 +26,20 @@ export function registerForcedUseBypass(activityId) {
   }
 }
 
+/**
+ * Clear a previously-registered forced-use bypass for an activity id.
+ * Used by external callers (e.g. `long-rest-abstain.js`) to roll back
+ * the bypass if their `activity.use()` call throws before the next
+ * `preUseActivity` consumes it — symmetric with `registerForcedUseBypass`.
+ *
+ * @param {string} activityId
+ */
+export function clearForcedUseBypass(activityId) {
+  if (typeof activityId === "string" && activityId.length > 0) {
+    bypassOnce.delete(activityId);
+  }
+}
+
 export function registerActivityGating() {
   Hooks.on("dnd5e.preUseActivity", onPreUseActivity);
 }

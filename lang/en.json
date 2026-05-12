@@ -192,10 +192,7 @@
 
   "FISHUT.LongRestAbstain.Title": "Voluntary abstain",
   "FISHUT.LongRestAbstain.Prompt": "{actor} is in withdrawal from <strong>{item}</strong>. Attempt to abstain (Wis save DC {dc})?",
-  "FISHUT.LongRestAbstain.Intro": "{actor} is in withdrawal from the substances below. Check any to attempt a Wisdom save to abstain — pass advances withdrawal by an extra rest, fail leaves the standard 1-rest progress unchanged.",
-  "FISHUT.LongRestAbstain.Row": "{item} — Wis save DC {dc}",
-  "FISHUT.LongRestAbstain.Confirm": "Roll selected saves",
-  "FISHUT.LongRestAbstain.Roll": "Roll save",
+  "FISHUT.LongRestAbstain.Intro": "Withdrawal pulls {actor} toward each substance below. For any craving, attempt a Wisdom save to resist — on a failure, {actor} gives in and consumes a dose.",
   "FISHUT.LongRestAbstain.Skip": "Skip",
   "FISHUT.LongRestAbstain.Pass": "{actor} resisted the urge to use {item} (DC {dc} Wisdom save). Withdrawal eases by 2 rests.",
   "FISHUT.LongRestAbstain.FailGiveIn": "{actor} failed to resist the craving for {item} (DC {dc} Wisdom save). The substance is consumed.",
