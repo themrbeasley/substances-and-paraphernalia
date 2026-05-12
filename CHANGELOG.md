@@ -21,6 +21,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - Authoring controls on the Details tab (dropdown + magnitude input + hint).
 - Mechanics wiki section "Overdose × Tolerance Interaction".
 - `module.api.data.computeAdjustedOverdoseChance` (via export of `scripts/data/overdose-interaction.js`).
+- `module.api.abstain.processAbstainFailure` exposed for Quench coverage of the forced-use failure branch.
 
 ### Changed
 - Bumped `flags.schemaVersion` 2 → 3 (additive; sheet-level read-with-default handles in-place migration).

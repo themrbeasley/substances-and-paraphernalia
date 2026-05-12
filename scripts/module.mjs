@@ -20,8 +20,10 @@ import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
 import {
   registerLongRestAbstain,
   applyAbstainPreDecrement,
+  processAbstainFailure,
 } from "./hooks/long-rest-abstain.js";
 import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
+import { computeAdjustedOverdoseChance } from "./data/overdose-interaction.js";
 import {
   isActive,
   isIntegrationEnabled,
@@ -78,7 +80,8 @@ Hooks.once("ready", async () => {
       },
       overdose: { rollOverdoseAndApply },
       saveBypass: { consumeBypassIfAvailable },
-      abstain: { applyAbstainPreDecrement },
+      abstain: { applyAbstainPreDecrement, processAbstainFailure },
+      data: { computeAdjustedOverdoseChance },
       simulateDose: { runSimulation, sweepOrphanedTestActors },
       integrations: {
         isActive,
