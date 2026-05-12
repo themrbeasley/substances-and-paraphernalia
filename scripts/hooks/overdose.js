@@ -103,6 +103,7 @@ export async function applyOverdoseEffect(actor, item, block) {
         [MODULE_ID]: {
           ...(base.flags?.[MODULE_ID] ?? {}),
           [FLAGS.sourceSubstanceId]: item.id,
+          aeRole: "overdose",
         },
       },
     };
