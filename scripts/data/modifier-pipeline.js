@@ -1,5 +1,11 @@
 import { MODULE_ID } from "../config.js";
-import { getAeRole, getAppliesTo, getModifier, isParaphernalia } from "./flag-schema.js";
+import {
+  getAeRole,
+  getAppliesTo,
+  getModifier,
+  getToleranceCaps,
+  isParaphernalia,
+} from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
 import { composeTolerance } from "./tolerance.js";
 
@@ -137,6 +143,8 @@ export async function consumeBypassIfAvailable(actor, substance) {
  */
 export function consumeToleranceForSubstance(actor, substanceId) {
   if (!actor || !substanceId) return null;
+  const substance = actor.items?.get?.(substanceId);
+  const caps = substance ? getToleranceCaps(substance) : undefined;
   const effects = actor.appliedEffects ?? actor.effects ?? [];
   const candidates = [];
   for (const effect of effects) {
@@ -148,7 +156,7 @@ export function consumeToleranceForSubstance(actor, substanceId) {
     candidates.push({ ...block, stacks });
   }
   if (candidates.length === 0) return null;
-  return composeTolerance(candidates);
+  return composeTolerance(candidates, caps);
 }
 
 function readStacks(effect) {

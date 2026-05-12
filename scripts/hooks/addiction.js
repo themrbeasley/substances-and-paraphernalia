@@ -11,6 +11,7 @@ import {
   setActorWithdrawalEntry,
   clearActorWithdrawalEntry,
   getModifier,
+  getToleranceCaps,
   getToleranceEffectIds,
   getToleranceEnabled,
   findEffectsByRole,
@@ -465,6 +466,22 @@ export async function applyOrIncrementToleranceStack(actor, item) {
   if (!getToleranceEnabled(item)) return null;
   const existing = findAllAppliedToleranceEffects(actor, item.id);
   if (existing.length > 0) {
+    // Soft-cap guard: existing AEs are kept in lockstep by the loop below, so
+    // checking any one suffices. When already at `maxStacks`, refuse to push
+    // further — silent no-op (no toast). First-time application (existing
+    // empty) skips this branch entirely, so a substance with maxStacks=1
+    // still gets its stacks=1 AE created on the first save pass.
+    const caps = getToleranceCaps(item);
+    const maxStacks = caps?.maxStacks;
+    if (Number.isFinite(maxStacks)) {
+      const currentStacks = Number(existing[0].flags?.[MODULE_ID]?.stacks) || 1;
+      if (currentStacks >= maxStacks) {
+        logger.log(
+          `tolerance cap reached for ${item.name} (stacks=${currentStacks} >= maxStacks=${maxStacks}); not incrementing`,
+        );
+        return existing[0];
+      }
+    }
     let firstUpdated = null;
     for (const effect of existing) {
       const currentStacks = Number(effect.flags?.[MODULE_ID]?.stacks) || 1;

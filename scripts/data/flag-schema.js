@@ -5,6 +5,7 @@ import {
   readModifierFromChanges,
   mergeModifierIntoChanges,
 } from "./modifier-flag.js";
+import { TOLERANCE_DEFAULT_CAPS } from "./tolerance.js";
 
 /**
  * @typedef {"substance" | "paraphernalia"} Kind
@@ -307,6 +308,20 @@ export const getTolerance = (item) =>
 
 export const setTolerance = (item, value) =>
   item.setFlag(MODULE_ID, FLAGS.tolerance, value);
+
+/**
+ * Resolve the effective tolerance caps for a substance — merges the
+ * substance's authored `tolerance.caps` (if any) over engine defaults from
+ * {@link TOLERANCE_DEFAULT_CAPS}. Authored fields win; un-authored fields
+ * fall through to the default.
+ *
+ * @param {Item} substance
+ * @returns {typeof TOLERANCE_DEFAULT_CAPS}
+ */
+export const getToleranceCaps = (substance) => {
+  const authored = getTolerance(substance)?.caps ?? {};
+  return { ...TOLERANCE_DEFAULT_CAPS, ...authored };
+};
 
 /**
  * Whether tolerance auto-stacking runs on save pass. Undefined defaults to true.
