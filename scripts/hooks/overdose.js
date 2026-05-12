@@ -61,12 +61,14 @@ export async function rollOverdoseAndApply(actor, item, block, { randomFn } = {}
   const toleranceEffects = findEffectsByRole(actor, "tolerance").filter(
     (e) => getSourceSubstanceId(e) === item.id,
   );
-  const stacks = toleranceEffects.reduce(
-    (sum, e) => sum + (Number(e.flags?.[MODULE_ID]?.stacks) || 1),
-    0,
-  );
+  const stacks = toleranceEffects.reduce((sum, e) => {
+    const raw = Number(e.flags?.[MODULE_ID]?.stacks);
+    if (!Number.isFinite(raw)) return sum + 1; // missing/garbage → default 1
+    return sum + Math.max(0, raw);
+  }, 0);
   const mode = block.toleranceInteraction ?? "none";
-  const magnitude = Number(block.toleranceInteractionMagnitude) || 0;
+  const rawMagnitude = Number(block.toleranceInteractionMagnitude);
+  const magnitude = Number.isFinite(rawMagnitude) ? rawMagnitude : 0;
   const adjustedChance = computeAdjustedOverdoseChance(baseChance, stacks, mode, magnitude);
   if (adjustedChance <= 0) return null;
 
