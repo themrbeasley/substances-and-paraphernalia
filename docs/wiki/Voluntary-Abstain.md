@@ -1,32 +1,55 @@
 # Voluntary Abstain
 
-A character in withdrawal can **try harder** during a long rest to push past it faster — at the cost of a save that, if failed, gives them a normal night's progress and nothing more.
+When a character has an active **withdrawal** AE, the long-rest dialog
+offers a per-substance button: **"Resist the urge to use {item}"**.
 
-## How it works
+## The Wisdom save
 
-When the world setting **Voluntary Abstain** is enabled and the actor has at least one active withdrawal AE, the long-rest dialog shows an **Abstain this rest** button per active withdrawal.
+The character makes a Wisdom save against DC = 8 + the substance's
+`withdrawalMod`. The Wisdom save represents the character using
+willpower to resist the craving the body is producing during a long
+rest, when withdrawal symptoms peak.
 
-Clicking it rolls a Wisdom save:
+## Pass
 
-- **DC** = `8 + withdrawalMod` (withdrawalMod is authored on the substance).
-- **Pass:** `restsRemaining -= 2` (clamped at 0; AE removed when it hits 0).
-- **Fail:** `restsRemaining -= 1` — same as a normal long rest. **No additional penalty.**
+> "{actor} resisted the urge to use {item} (DC {dc} Wisdom save).
+> Withdrawal eases by 2 rests."
 
-In other words: abstaining is a free shot at progressing twice as fast. The downside of a failed save is just "you got the normal rest progress you would have gotten anyway."
+The withdrawal counter advances by 2 (instead of the standard 1) and
+the long rest completes normally.
 
-## Why no penalty on a failed abstain
+## Fail (with substance in inventory)
 
-The plan's design rationale: this is the addict trying to white-knuckle through a rest. Either it works, or it doesn't and the night was just the night. We don't pile on extra fiction just because the save flopped.
+The character gives in: the substance is **consumed automatically** at
+the long rest, via its real activity (paraphernalia gate bypassed
+exactly once). The full post-use chain runs:
 
-If you want a penalty (extra exhaustion, vivid dreams, intrusive cravings), narrate it at the table — the mechanic doesn't enforce one.
+1. Constitution save against the substance's addiction DC.
+2. On addiction-save fail, the addiction AE applies (and a tolerance
+   stack accrues).
+3. The overdose roll fires (per-substance `chancePercent`, modulated
+   by tolerance per §"Overdose × Tolerance").
 
-## Setting
+> "{actor} failed to resist the craving for {item} (DC {dc} Wisdom
+> save). The substance is consumed."
 
-The setting is **on by default**. Toggle it via *Game Settings → Module Settings → Voluntary Abstain*. With the setting off, no abstain button appears regardless of state.
+## Fail (with no substance in inventory)
 
-## Implementation notes
+Soft-fails to the standard pace — no consumption, withdrawal continues
+on the normal -1 tick.
 
-- DC computation lives in `scripts/data/abstain.js` `defaultAbstainDc(withdrawalMod)`.
-- Outcome math lives in `applyAbstainOutcome(passed, currentRests)` — pure helper, unit-tested.
-- The hook is `scripts/hooks/long-rest-abstain.js`. The button only appears for the actor's owner; the save is rolled on the actor.
-- Multiple active withdrawals each get their own button (one save per substance, independent rolls).
+> "{actor} reached for {item} but found none. The withdrawal continues
+> at the standard pace."
+
+## Design rationale
+
+The Wis save represents *willpower vs. craving*, not "Will save to
+escape this effect". The teeth of the failed save are not a flat
+penalty — they are the realistic narrative consequence: the addicted
+character goes and gets a hit. From there, the substance's own
+mechanics (addiction, tolerance, overdose) determine what that hit
+costs.
+
+DC tuning is held until post-v0.7 playtest (the spec acknowledges the
+formula may need to escalate with consumption count). See the v0.7
+spec §3.5 for the held-item rationale.

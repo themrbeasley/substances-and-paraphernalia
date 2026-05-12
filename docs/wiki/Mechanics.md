@@ -112,3 +112,7 @@ moment the d100 fires (not at AE apply time) — see the v0.7 spec
 The maximum modulation envelope is bounded by `tolerance.caps.maxStacks`
 (default 5). Combined with the default magnitude of 0 in the schema,
 existing pre-v0.7 substances keep their pre-v0.7 behavior.
+
+## Voluntary Abstain
+
+See [Voluntary-Abstain.md](Voluntary-Abstain.md) for the willpower/craving mechanic and the failure-path consumption flow.
