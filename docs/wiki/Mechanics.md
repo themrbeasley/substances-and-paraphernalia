@@ -90,3 +90,25 @@ explicitly.
 Each consumption rolls d100 against the substance's `chancePercent`. On a hit, a marker AE *Overdosed on {Substance}* is applied and the authored description is posted to chat. Overdose runs alongside the addiction save — both can fire on the same dose. AE name **must contain** `overdose`.
 
 Author it via the overdose fieldset on the Details tab: enable, set the percent, write a description.
+
+## Overdose × Tolerance Interaction
+
+The `overdose.toleranceInteraction` field on each substance chooses
+how the d100 overdose chance modulates with the actor's current
+tolerance-stack count:
+
+- **None (default):** Tolerance and overdose are mechanically unrelated.
+  d100 rolls against the raw `chancePercent` always.
+- **Mitigate:** The body adapts. Each tolerance stack reduces overdose
+  chance by `toleranceInteractionMagnitude` percentage points.
+- **Compound:** Users escalate doses to chase the diminishing buff.
+  Each tolerance stack raises overdose chance by
+  `toleranceInteractionMagnitude` percentage points.
+
+The adjusted chance is clamped to `[0, 100]`. Stacks are read at the
+moment the d100 fires (not at AE apply time) — see the v0.7 spec
+§2.4 for why.
+
+The maximum modulation envelope is bounded by `tolerance.caps.maxStacks`
+(default 5). Combined with the default magnitude of 0 in the schema,
+existing pre-v0.7 substances keep their pre-v0.7 behavior.
