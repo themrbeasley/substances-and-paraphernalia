@@ -12,6 +12,20 @@ import { logger } from "../logger.js";
 // the gate exactly once.
 const bypassOnce = new Set();
 
+/**
+ * Register an activity id so the next `preUseActivity` for that id
+ * skips the paraphernalia gate. Used by `long-rest-abstain.js` to drive
+ * a forced consumption when a Wis save fails, and by the gate's own
+ * "Use anyway" dialog branch (already in-tree).
+ *
+ * @param {string} activityId
+ */
+export function registerForcedUseBypass(activityId) {
+  if (typeof activityId === "string" && activityId.length > 0) {
+    bypassOnce.add(activityId);
+  }
+}
+
 export function registerActivityGating() {
   Hooks.on("dnd5e.preUseActivity", onPreUseActivity);
 }
