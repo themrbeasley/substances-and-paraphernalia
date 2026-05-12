@@ -7,6 +7,7 @@ import {
 import { defaultAbstainDc } from "../data/abstain.js";
 import { SETTING_KEYS } from "../settings.js";
 import { logger } from "../logger.js";
+import { registerForcedUseBypass } from "./activity-gating.js";
 
 /**
  * Voluntary abstain — long-rest dialog hook.
@@ -69,13 +70,7 @@ async function processAbstainSave(actor, row) {
   if (passed === null) return;
 
   if (!passed) {
-    await chat(
-      game.i18n.format("FISHUT.LongRestAbstain.Fail", {
-        actor: actor.name,
-        item: itemName,
-        dc,
-      }),
-    );
+    await processAbstainFailure(actor, row);
     return;
   }
 
@@ -87,6 +82,67 @@ async function processAbstainSave(actor, row) {
       dc,
     }),
   );
+}
+
+/**
+ * Failed-Wis-save handler for voluntary abstain.
+ *
+ * If the substance is in inventory with uses remaining, register a
+ * forced-use bypass and call `activity.use()` so the substance flows
+ * through its real post-use chain (save → addiction AE → tolerance
+ * stack → overdose roll). Soft-fail when the substance is missing or
+ * exhausted.
+ *
+ * @param {Actor} actor
+ * @param {{substanceId: string, itemName?: string, withdrawalMod?: number, dc: number}} row
+ */
+export async function processAbstainFailure(actor, row) {
+  const item = actor.items.get(row.substanceId);
+  if (!item) {
+    await chat(
+      game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
+        actor: actor.name,
+        item: row.itemName ?? game.i18n.localize("FISHUT.Kind.Substance"),
+      }),
+    );
+    return;
+  }
+
+  const activities = item.system?.activities?.contents ?? [];
+  const activity =
+    activities.find((a) => a.type === "utility" || a.type === "save") ?? activities[0];
+  if (!activity) {
+    await chat(
+      game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
+        actor: actor.name,
+        item: item.name,
+      }),
+    );
+    return;
+  }
+
+  const usesValue = item.system?.uses?.value;
+  if (usesValue !== undefined && Number(usesValue) <= 0) {
+    await chat(
+      game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
+        actor: actor.name,
+        item: item.name,
+      }),
+    );
+    return;
+  }
+
+  registerForcedUseBypass(activity.id);
+
+  await chat(
+    game.i18n.format("FISHUT.LongRestAbstain.FailGiveIn", {
+      actor: actor.name,
+      item: item.name,
+      dc: row.dc,
+    }),
+  );
+
+  await activity.use({ event: null }, { fastForward: true, chatMessage: true });
 }
 
 /**
