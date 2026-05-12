@@ -197,8 +197,10 @@
   "FISHUT.LongRestAbstain.Confirm": "Roll selected saves",
   "FISHUT.LongRestAbstain.Roll": "Roll save",
   "FISHUT.LongRestAbstain.Skip": "Skip",
-  "FISHUT.LongRestAbstain.Pass": "{actor} successfully abstained from <strong>{item}</strong> (DC {dc}); withdrawal advances 2 long rests.",
-  "FISHUT.LongRestAbstain.Fail": "{actor} failed to abstain from <strong>{item}</strong> (DC {dc}); standard 1 long rest of progress.",
+  "FISHUT.LongRestAbstain.Pass": "{actor} resisted the urge to use {item} (DC {dc} Wisdom save). Withdrawal eases by 2 rests.",
+  "FISHUT.LongRestAbstain.FailGiveIn": "{actor} failed to resist the craving for {item} (DC {dc} Wisdom save). The substance is consumed.",
+  "FISHUT.LongRestAbstain.FailNoSubstance": "{actor} reached for {item} but found none. The withdrawal continues at the standard pace.",
+  "FISHUT.LongRestAbstain.ButtonResistUrge": "Resist the urge to use {item}",
 
   "FISHUT.DetailsTab.Toggle.Substance": "Illicit Substance",
   "FISHUT.DetailsTab.Toggle.Paraphernalia": "Paraphernalia",
