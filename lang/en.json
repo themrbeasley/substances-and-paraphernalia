@@ -18,6 +18,13 @@
   "FISHUT.Administration.Inhaled": "Inhaled",
   "FISHUT.Administration.Injury": "Injury",
 
+  "FISHUT.AERole.Addiction": "Addiction",
+  "FISHUT.AERole.Withdrawal": "Withdrawal",
+  "FISHUT.AERole.Altered": "Altered",
+  "FISHUT.AERole.Tolerance": "Tolerance",
+  "FISHUT.AERole.Overdose": "Overdose",
+  "FISHUT.AERole.Bypass": "Bypass",
+
   "FISHUT.ParaphernaliaSubtype.Pipe": "Pipe",
   "FISHUT.ParaphernaliaSubtype.SnuffHorn": "Snuff Horn",
   "FISHUT.ParaphernaliaSubtype.Syringe": "Syringe",
