@@ -207,6 +207,7 @@
   "FISHUT.DetailsTab.Addiction.Header": "Addiction",
   "FISHUT.DetailsTab.Addiction.Enabled": "This substance is addictive",
   "FISHUT.DetailsTab.Field.SaveAbility": "Save Ability",
+  "FISHUT.Details.SaveAbility.Hint": "By convention: stimulants and performance-enhancers use Constitution (physical dependence). Mind-altering substances use Wisdom (psychic compulsion). Override freely for your design.",
   "FISHUT.DetailsTab.Field.SaveDc": "Addictiveness DC",
   "FISHUT.DetailsTab.Field.AddictionEffect.Label": "Addiction Effect",
   "FISHUT.DetailsTab.Field.AddictionEffect.None": "(none)",

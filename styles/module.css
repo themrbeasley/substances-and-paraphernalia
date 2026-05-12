@@ -111,6 +111,15 @@
   margin: 0.15rem 0 0 12rem;
 }
 
+.fishut.fishut-item-settings .form-group > .fishut-hint {
+  display: block;
+  flex: 1 1 100%;
+  margin: 0.25rem 0 0 12rem;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--color-text-dark-secondary, #666);
+}
+
 /* Paraphernalia Subtype Manager — chip-cloud UX */
 
 .fishut-paraphernalia-subtypes {
