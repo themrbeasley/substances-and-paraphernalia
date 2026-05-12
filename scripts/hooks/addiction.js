@@ -607,6 +607,7 @@ function buildWithdrawalPayload(template, item) {
   data.flags[MODULE_ID] = {
     ...(data.flags[MODULE_ID] ?? {}),
     [FLAGS.sourceSubstanceId]: item.id,
+    aeRole: "withdrawal",
   };
   data.origin = item.uuid;
   data.disabled = false;
@@ -638,7 +639,11 @@ function buildDefaultWithdrawalTemplate(item) {
         priority: 20,
       },
     ],
-    flags: {},
+    flags: {
+      [MODULE_ID]: {
+        aeRole: "withdrawal",
+      },
+    },
   };
 }
 
