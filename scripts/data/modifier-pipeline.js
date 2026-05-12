@@ -1,5 +1,5 @@
 import { MODULE_ID } from "../config.js";
-import { getAppliesTo, getModifier, isParaphernalia } from "./flag-schema.js";
+import { getAeRole, getAppliesTo, getModifier, isParaphernalia } from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
 import { composeTolerance } from "./tolerance.js";
 
@@ -49,9 +49,17 @@ export async function consumeBypassIfAvailable(actor, substance) {
   const links = new Map();
 
   for (const effect of effects) {
-    const block = getModifier(effect);
-    if (!block) continue;
-    if (block.kind !== "bypass") continue;
+    const rawBlock = getModifier(effect);
+    const role = getAeRole(effect);
+
+    const isBypass = rawBlock?.kind === "bypass" || role === "bypass";
+    if (!isBypass) continue;
+
+    // Default to an empty block so the rest of the loop can read
+    // type/bonus/appliesTo/usesPerDay safely when only `aeRole` admitted
+    // the AE. `pickBypassResolution` will reject it for a missing `type`,
+    // which is the intended behavior for malformed AEs.
+    const block = rawBlock ?? {};
 
     const sourceItem = resolveSourceItem(actor, effect);
     // Paraphernalia is the only authored bypass source — its `appliesTo`
