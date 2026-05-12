@@ -13,6 +13,7 @@ import {
   getModifier,
   getToleranceEffectIds,
   getToleranceEnabled,
+  findEffectsByRole,
   isSubstance,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
@@ -352,16 +353,11 @@ function findAppliedAddictionEffect(actor, substanceId) {
 }
 
 function findAllAppliedAddictionEffects(actor, substanceId) {
-  if (!actor?.effects) return [];
-  const matches = [];
-  for (const effect of actor.effects) {
-    if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    // Tolerance and withdrawal AEs share the sourceSubstanceId flag — disambiguate by name.
-    if (/tolerance/i.test(effect.name ?? "")) continue;
-    if (/withdraw/i.test(effect.name ?? "")) continue;
-    matches.push(effect);
-  }
-  return matches;
+  const matches = findEffectsByRole(actor, "addiction");
+  if (substanceId === undefined) return matches;
+  return matches.filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
 }
 
 /**
@@ -557,15 +553,11 @@ function findToleranceTemplates(item) {
 }
 
 function findAllAppliedToleranceEffects(actor, substanceId) {
-  if (!actor?.effects) return [];
-  const matches = [];
-  for (const effect of actor.effects) {
-    if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    if (getModifier(effect)?.kind === "tolerance" || /tolerance/i.test(effect.name ?? "")) {
-      matches.push(effect);
-    }
-  }
-  return matches;
+  const matches = findEffectsByRole(actor, "tolerance");
+  if (substanceId === undefined) return matches;
+  return matches.filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
 }
 
 /**
@@ -666,11 +658,9 @@ function findWithdrawalTemplates(item) {
 }
 
 function findAllAppliedWithdrawalEffects(actor, substanceId) {
-  if (!actor?.effects) return [];
-  const matches = [];
-  for (const effect of actor.effects) {
-    if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    if (/withdraw/i.test(effect.name ?? "")) matches.push(effect);
-  }
-  return matches;
+  const matches = findEffectsByRole(actor, "withdrawal");
+  if (substanceId === undefined) return matches;
+  return matches.filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
 }
