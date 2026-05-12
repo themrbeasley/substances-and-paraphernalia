@@ -14,6 +14,30 @@ export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]
 export const MODIFIER_TYPES = new Set(["auto-pass", "reroll-on-fail", "advantage", "+N"]);
 export const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
+const ROLE_PATTERNS = {
+  addiction: /addict/i,
+  withdrawal: /withdraw/i,
+  altered: /altered/i,
+  tolerance: /tolerance/i,
+  overdose: /overdose/i,
+  bypass: /bypass/i,
+};
+
+function checkAeRole(effect, ownerLabel, errors) {
+  const name = effect?.name ?? "";
+  const role = effect?.flags?.[FLAG_SCOPE]?.aeRole;
+  for (const [expected, re] of Object.entries(ROLE_PATTERNS)) {
+    if (re.test(name)) {
+      if (role !== expected) {
+        errors.push(
+          `${ownerLabel} AE "${name}" matches role "${expected}" by name but aeRole flag is ${role ?? "missing"}`,
+        );
+      }
+      return; // first match wins
+    }
+  }
+}
+
 function flagsOf(data) {
   return data?.flags?.[FLAG_SCOPE] ?? null;
 }
@@ -57,8 +81,8 @@ export function checkSubstance(file) {
     err(`kind must be "substance" (got ${flags.kind})`);
     return { errors, warnings };
   }
-  if (flags.schemaVersion !== 2) {
-    err(`schemaVersion must be 2 (got ${flags.schemaVersion})`);
+  if (flags.schemaVersion !== 3) {
+    err(`schemaVersion must be 3 (got ${flags.schemaVersion})`);
   }
   if (flags.administration !== undefined) {
     err(
@@ -211,6 +235,7 @@ export function checkSubstance(file) {
   for (const ae of effectsOf(data)) {
     const modErrs = checkModifierShape(ae, tag);
     errors.push(...modErrs);
+    checkAeRole(ae, tag, errors);
   }
 
   return { errors, warnings };
@@ -244,8 +269,8 @@ export function checkParaphernalia(file, opts = {}) {
     err(`kind must be "paraphernalia" (got ${flags.kind})`);
     return { errors, warnings };
   }
-  if (flags.schemaVersion !== 2) {
-    err(`schemaVersion must be 2 (got ${flags.schemaVersion})`);
+  if (flags.schemaVersion !== 3) {
+    err(`schemaVersion must be 3 (got ${flags.schemaVersion})`);
   }
   if (typeof flags.subtype !== "string" || !KEBAB.test(flags.subtype)) {
     err(`subtype must be a kebab-case string (got ${JSON.stringify(flags.subtype)})`);
@@ -285,6 +310,7 @@ export function checkParaphernalia(file, opts = {}) {
   for (const ae of effects) {
     const modErrs = checkModifierShape(ae, tag);
     errors.push(...modErrs);
+    checkAeRole(ae, tag, errors);
   }
 
   if (bypassEffects.length === 0) return { errors, warnings };
