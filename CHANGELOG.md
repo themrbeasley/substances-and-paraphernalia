@@ -14,6 +14,9 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - Save Ability convention hint under the Details-tab dropdown.
 - "Choosing a Save Ability" section in the Authoring wiki.
 - GM Guide journal pointer paragraph.
+- Tolerance soft caps in `scripts/data/tolerance.js`: `maxStacks=5`, `modifierFactorFloor=0.25`, `addictionDcBumpCap=5`, `withdrawalDurationFactorCap=2.0`. Engine clamps stack effects at the caps; per-substance `tolerance.caps` overrides allowed.
+- `validate-content` warns (not errors) when a per-substance override loosens a cap beyond the engine default.
+- Mechanics wiki section "Tolerance: Bounds and Authoring Guidance".
 
 ### Changed
 - Bumped `flags.schemaVersion` 2 → 3 (additive; sheet-level read-with-default handles in-place migration).
