@@ -505,6 +505,7 @@ function buildTolerancePayload(template, item) {
     kind: "tolerance",
     substanceId: item.id,
   };
+  moduleFlags.aeRole = "tolerance";
   baseData.flags[MODULE_ID] = moduleFlags;
   baseData.name = formatToleranceName(item, 1);
   baseData.origin = item.uuid;
