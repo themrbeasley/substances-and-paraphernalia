@@ -25,9 +25,15 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 ### Changed
 - Bumped `flags.schemaVersion` 2 → 3 (additive; sheet-level read-with-default handles in-place migration).
 - Modifier pipeline, all five Remove-X macros, and all internal AE scanners read `aeRole` first, fall back to substring.
+- **Voluntary Abstain failure path:** a failed Wisdom save now triggers automatic consumption of the substance through its real activity (paraphernalia gate bypassed once), running the full post-use chain (Constitution save → addiction AE → tolerance stack → overdose roll). When the substance is missing or exhausted from inventory, the failure soft-fails to the standard -1 tick. **Breaking behavior** for any GM relying on the previous no-penalty failure branch.
+- Long-rest dialog button label: "Resist the urge to use {item}" (per-substance, willpower-themed).
+- Chat strings reworded to willpower/craving language (`Pass`, `FailGiveIn`, `FailNoSubstance`).
 
 ### Deferred
 - Shipped-content rewrite to apply Wisdom-saves convention to every mind-altering substance — deferred to v0.9 / Item 12.
+
+### Held / Deferred
+- DC tuning for the abstain Wis save (consider escalating DC with consumption count) — held until post-v0.7 playtest per spec §3.5.
 
 ## [0.6.0] — 2026-05-11
 
