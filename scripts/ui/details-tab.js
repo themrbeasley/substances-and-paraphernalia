@@ -217,6 +217,7 @@ function buildLabels() {
     addictionHeader: L("FISHUT.DetailsTab.Addiction.Header"),
     addictionEnabled: L("FISHUT.DetailsTab.Addiction.Enabled"),
     saveAbility: L("FISHUT.DetailsTab.Field.SaveAbility"),
+    saveAbilityHint: L("FISHUT.Details.SaveAbility.Hint"),
     saveDc: L("FISHUT.DetailsTab.Field.SaveDc"),
     addictionEffect: L("FISHUT.DetailsTab.Field.AddictionEffect.Label"),
     addictionEffectCreateTooltip: L("FISHUT.DetailsTab.Field.AddictionEffect.CreateTooltip"),

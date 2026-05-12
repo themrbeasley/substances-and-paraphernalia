@@ -111,7 +111,7 @@
   margin: 0.15rem 0 0 12rem;
 }
 
-.fishut.fishut-item-settings .form-group > .fishut-hint {
+.fishut-details-substance .form-group > .fishut-hint {
   display: block;
   flex: 1 1 100%;
   margin: 0.25rem 0 0 12rem;
