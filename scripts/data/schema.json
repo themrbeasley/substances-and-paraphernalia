@@ -50,6 +50,14 @@
       { "id": "+N", "labelKey": "FISHUT.Modifier.Type.PlusN" }
     ]
   },
+  "tolerance": {
+    "caps": {
+      "maxStacks": 5,
+      "modifierFactorFloor": 0.25,
+      "addictionDcBumpCap": 5,
+      "withdrawalDurationFactorCap": 2.0
+    }
+  },
   "coupling": {
     "modes": [
       { "id": "linked-cascade", "labelKey": "FISHUT.Coupling.Mode.LinkedCascade" },

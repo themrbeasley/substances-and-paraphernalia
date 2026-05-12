@@ -14,6 +14,16 @@ export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]
 export const MODIFIER_TYPES = new Set(["auto-pass", "reroll-on-fail", "advantage", "+N"]);
 export const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
+// Mirror of TOLERANCE_DEFAULT_CAPS in scripts/data/tolerance.js. Keep in
+// sync — this file is build-time only and cannot import the runtime module
+// without dragging Foundry globals into Node validation.
+const TOLERANCE_CAP_DEFAULTS = {
+  maxStacks: 5,
+  modifierFactorFloor: 0.25,
+  addictionDcBumpCap: 5,
+  withdrawalDurationFactorCap: 2.0,
+};
+
 const ROLE_PATTERNS = {
   addiction: /addict/i,
   withdrawal: /withdraw/i,
@@ -238,6 +248,9 @@ export function checkSubstance(file) {
     checkAeRole(ae, tag, errors);
   }
 
+  // v0.7 — warn when authored tolerance.caps loosen an engine default.
+  checkToleranceCapsOverride(data, warn);
+
   return { errors, warnings };
 }
 
@@ -402,6 +415,37 @@ function checkModifierShape(ae, tag) {
 
 function isObject(v) {
   return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/**
+ * Warn (not error) when a per-substance `tolerance.caps` override loosens an
+ * engine default. Tolerance is designed for diminishing returns — overrides
+ * exist so authors who want true escalation can opt in explicitly. The
+ * modifier-factor floor is a *lower* bound (smaller = looser); the other caps
+ * are *upper* bounds (larger = looser).
+ */
+function checkToleranceCapsOverride(data, warn) {
+  const caps = data?.flags?.[FLAG_SCOPE]?.tolerance?.caps;
+  if (!caps || typeof caps !== "object") return;
+  for (const [key, defaultVal] of Object.entries(TOLERANCE_CAP_DEFAULTS)) {
+    const authored = caps[key];
+    if (typeof authored !== "number") continue;
+    if (key === "modifierFactorFloor") {
+      // floor: lower = looser
+      if (authored < defaultVal) {
+        warn(
+          `tolerance.caps.${key} (${authored}) is below engine default (${defaultVal}) — buffs can drop further than usual`,
+        );
+      }
+    } else {
+      // upper caps: higher = looser
+      if (authored > defaultVal) {
+        warn(
+          `tolerance.caps.${key} (${authored}) exceeds engine default (${defaultVal}) — tolerance can stack further than usual`,
+        );
+      }
+    }
+  }
 }
 
 /**
