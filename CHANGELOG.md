@@ -11,10 +11,16 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - `aeRole` flag on every module-created Active Effect (`addiction`, `withdrawal`, `altered`, `tolerance`, `overdose`, `bypass`). Substring matching against the AE name remains as a warn-logged fallback for hand-authored AEs.
 - `findEffectsByRole(actor, role)` helper exposed at `module.api.flagSchema.findEffectsByRole`.
 - Content invariant in `validate-content.mjs`: every AE whose name matches a role substring must carry the matching `aeRole` flag.
+- Save Ability convention hint under the Details-tab dropdown.
+- "Choosing a Save Ability" section in the Authoring wiki.
+- GM Guide journal pointer paragraph.
 
 ### Changed
 - Bumped `flags.schemaVersion` 2 → 3 (additive; sheet-level read-with-default handles in-place migration).
 - Modifier pipeline, all five Remove-X macros, and all internal AE scanners read `aeRole` first, fall back to substring.
+
+### Deferred
+- Shipped-content rewrite to apply Wisdom-saves convention to every mind-altering substance — deferred to v0.9 / Item 12.
 
 ## [0.6.0] — 2026-05-11
 
