@@ -57,8 +57,8 @@ export async function consumeBypassIfAvailable(actor, substance) {
 
     // Default to an empty block so the rest of the loop can read
     // type/bonus/appliesTo/usesPerDay safely when only `aeRole` admitted
-    // the AE. `pickBypassResolution` will reject it for a missing `type`,
-    // which is the intended behavior for malformed AEs.
+    // the AE. `pickBypassResolution` will then reject it for missing
+    // `kind`/`type`, which is the intended behavior for malformed AEs.
     const block = rawBlock ?? {};
 
     const sourceItem = resolveSourceItem(actor, effect);
