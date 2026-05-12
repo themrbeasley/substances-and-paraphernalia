@@ -5,9 +5,7 @@ format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/) once it
 reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
-## [Unreleased]
-
-## [0.6.0] — 2026-05-11
+## [0.7.0] — 2026-05-12
 
 ### Added
 - `aeRole` flag on every module-created Active Effect (`addiction`, `withdrawal`, `altered`, `tolerance`, `overdose`, `bypass`). Substring matching against the AE name remains as a warn-logged fallback for hand-authored AEs.
