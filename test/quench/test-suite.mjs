@@ -38,6 +38,7 @@ import {
 } from "../../scripts/ui/details-tab.js";
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { rollSaveAndApply } from "../../scripts/hooks/addiction.js";
+import { rollOverdoseAndApply } from "../../scripts/hooks/overdose.js";
 import { logger } from "../../scripts/logger.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
@@ -161,78 +162,78 @@ export function registerQuenchSuite() {
       aeRoleFallbackWarnBatch,
       { displayName: "S&P · aeRole — hand-authored AE without flag warn-logs" },
     );
-    quench.registerBatch("substances-and-paraphernalia.overdose-tolerance-interaction", (context) => {
-      const { describe, it, assert, beforeEach, afterEach } = context;
-      describe("S&P · Overdose × Tolerance — adjusted d100 reflects mode + stacks", () => {
-        let actor, substance;
-        beforeEach(async () => {
-          const cls = CONFIG.Actor.documentClass;
-          actor = await cls.create({ name: "Quench OD×Tol", type: "character" });
-          // Build an in-memory substance with overdose enabled + tolerance interaction.
-          const data = {
-            name: "Quench Mitigate Substance",
-            type: "consumable",
-            system: { type: { value: "poison", subtype: "ingested" } },
-            flags: {
-              "substances-and-paraphernalia": {
-                kind: "substance",
-                schemaVersion: 3,
-                overdose: {
-                  enabled: true,
-                  chancePercent: 50,
-                  toleranceInteraction: "mitigate",
-                  toleranceInteractionMagnitude: 10,
-                },
-                addiction: { enabled: false },
-              },
-            },
-          };
-          [substance] = await actor.createEmbeddedDocuments("Item", [data]);
-          // Pre-stage 3 tolerance stacks.
-          await actor.createEmbeddedDocuments("ActiveEffect", [
-            {
-              name: "Tolerance: Quench Mitigate Substance",
-              icon: "icons/svg/poison.svg",
-              flags: {
-                "substances-and-paraphernalia": {
-                  aeRole: "tolerance",
-                  sourceSubstanceId: substance.id,
-                  stacks: 3,
-                },
-              },
-            },
-          ]);
-        });
-        afterEach(async () => {
-          if (actor) await actor.delete();
-        });
+    quench.registerBatch(
+      `${BATCH_PREFIX}.overdose-tolerance-interaction`,
+      overdoseToleranceInteractionBatch,
+      { displayName: "S&P · Overdose × Tolerance — adjusted d100" },
+    );
+  });
+}
 
-        it("mitigate × 3 stacks × 10 magnitude reduces 50% → 20%; a roll of 30 misses", async () => {
-          const api = game.modules.get("substances-and-paraphernalia").api;
-          const block = api.flagSchema.getOverdose(substance);
-          // Stub randomFn so the d100 returns exactly 30 (= 0.30 in [0,1)).
-          const result = await api.addiction.__rollOverdoseAndApply?.(actor, substance, block, {
-            randomFn: () => 0.30,
-          }) ?? await (async () => {
-            const mod = await import("/modules/substances-and-paraphernalia/scripts/hooks/overdose.js");
-            return mod.rollOverdoseAndApply(actor, substance, block, { randomFn: () => 0.30 });
-          })();
-          assert.ok(result, "rollOverdoseAndApply returns a result object");
-          assert.equal(result.hit, false, "roll 30 vs adjusted 20% must miss (50 − 30 = 20)");
-        });
+// ─── Batch: Overdose × Tolerance interaction ────────────────────────────────
 
-        it("compound × 3 stacks × 10 magnitude raises 50% → 80%; a roll of 70 hits", async () => {
-          await substance.update({
-            "flags.substances-and-paraphernalia.overdose.toleranceInteraction": "compound",
-          });
-          const api = game.modules.get("substances-and-paraphernalia").api;
-          const block = api.flagSchema.getOverdose(substance);
-          const mod = await import("/modules/substances-and-paraphernalia/scripts/hooks/overdose.js");
-          const result = await mod.rollOverdoseAndApply(actor, substance, block, { randomFn: () => 0.70 });
-          assert.equal(result.hit, true, "roll 70 vs adjusted 80% must hit (50 + 30 = 80)");
-        });
+function overdoseToleranceInteractionBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+  describe("S&P · Overdose × Tolerance — adjusted d100 reflects mode + stacks", () => {
+    let actor, substance;
+    beforeEach(async () => {
+      const cls = CONFIG.Actor.documentClass;
+      actor = await cls.create({ name: "Quench OD×Tol", type: "character" });
+      // Build an in-memory substance with overdose enabled + tolerance interaction.
+      const data = {
+        name: "Quench Mitigate Substance",
+        type: "consumable",
+        system: { type: { value: "poison", subtype: "ingested" } },
+        flags: {
+          "substances-and-paraphernalia": {
+            kind: "substance",
+            schemaVersion: 3,
+            overdose: {
+              enabled: true,
+              chancePercent: 50,
+              toleranceInteraction: "mitigate",
+              toleranceInteractionMagnitude: 10,
+            },
+            addiction: { enabled: false },
+          },
+        },
+      };
+      [substance] = await actor.createEmbeddedDocuments("Item", [data]);
+      // Pre-stage 3 tolerance stacks.
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Tolerance: Quench Mitigate Substance",
+          icon: "icons/svg/poison.svg",
+          flags: {
+            "substances-and-paraphernalia": {
+              aeRole: "tolerance",
+              sourceSubstanceId: substance.id,
+              stacks: 3,
+            },
+          },
+        },
+      ]);
+    });
+    afterEach(async () => {
+      if (actor) await actor.delete();
+    });
+
+    it("mitigate × 3 stacks × 10 magnitude reduces 50% → 20%; a roll of 30 misses", async () => {
+      const block = game.modules.get("substances-and-paraphernalia").api.flagSchema.getOverdose(substance);
+      // Stub randomFn so the d100 returns exactly 30 (= floor(0.29 * 100) + 1).
+      const result = await rollOverdoseAndApply(actor, substance, block, { randomFn: () => 0.29 });
+      assert.ok(result, "rollOverdoseAndApply returns a result object");
+      assert.equal(result.hit, false, "roll 30 vs adjusted 20% must miss (50 − 30 = 20)");
+    });
+
+    it("compound × 3 stacks × 10 magnitude raises 50% → 80%; a roll of 70 hits", async () => {
+      await substance.update({
+        "flags.substances-and-paraphernalia.overdose.toleranceInteraction": "compound",
       });
-    }, { displayName: "S&P · Overdose × Tolerance — adjusted d100" });
+      const block = game.modules.get("substances-and-paraphernalia").api.flagSchema.getOverdose(substance);
+      const result = await rollOverdoseAndApply(actor, substance, block, { randomFn: () => 0.69 });
+      assert.equal(result.hit, true, "roll 70 vs adjusted 80% must hit (50 + 30 = 80)");
+    });
   });
 }
 
