@@ -38,6 +38,7 @@ import {
 } from "../../scripts/ui/details-tab.js";
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { rollSaveAndApply } from "../../scripts/hooks/addiction.js";
+import { logger } from "../../scripts/logger.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
 import { PRESETS, PRESET_LIBRARY, verifyTmfxPresets } from "../../scripts/integrations/tmfx.js";
@@ -154,6 +155,11 @@ export function registerQuenchSuite() {
       `${BATCH_PREFIX}.ae-role-rename`,
       aeRoleRenameBatch,
       { displayName: "S&P · aeRole — renamed AE still removable" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.ae-role-fallback-warn`,
+      aeRoleFallbackWarnBatch,
+      { displayName: "S&P · aeRole — hand-authored AE without flag warn-logs" },
     );
   });
 }
@@ -2862,6 +2868,58 @@ function aeRoleRenameBatch(context) {
         (e) => e.flags?.[MODULE_ID]?.aeRole === "addiction",
       );
       assert.equal(remaining.length, 0, "AE should be removed after delete");
+    });
+  });
+}
+
+// ─── Batch: aeRole — hand-authored AE warn-logs on substring fallback ───────
+
+function aeRoleFallbackWarnBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · aeRole — hand-authored AE without flag warn-logs", () => {
+    let actor, originalWarn, warnCalls;
+
+    beforeEach(async () => {
+      actor = await makeActor("Quench Fallback Warn");
+      warnCalls = [];
+      // Spy on the module logger's `warn`. The logger object is a plain
+      // exported singleton (see scripts/logger.js), so reassigning its
+      // `warn` property is observable from the helper at the call site.
+      originalWarn = logger.warn;
+      logger.warn = (...args) => {
+        warnCalls.push(args);
+        originalWarn.apply(logger, args);
+      };
+    });
+
+    afterEach(async () => {
+      logger.warn = originalWarn;
+      await deleteActor(actor);
+    });
+
+    it("findEffectsByRole emits a warn when matching via substring fallback", async () => {
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Hand-authored Withdrawal AE",
+          icon: "icons/svg/poison.svg",
+          changes: [],
+          duration: {},
+        },
+      ]);
+
+      const found = api().flagSchema.findEffectsByRole(actor, "withdrawal");
+      assert.equal(found.length, 1, "substring fallback must match the hand-authored AE");
+      assert.equal(found[0].name, "Hand-authored Withdrawal AE");
+
+      // Secondary: the logger spy should have captured at least one warn.
+      // If the logger module ever switches to a frozen export the spy will
+      // silently no-op — fall back to inspecting `actor.effects` only via
+      // the primary `found.length` assert above.
+      assert.ok(
+        warnCalls.length >= 1,
+        `expected at least one logger.warn for substring fallback (got ${warnCalls.length})`,
+      );
     });
   });
 }
