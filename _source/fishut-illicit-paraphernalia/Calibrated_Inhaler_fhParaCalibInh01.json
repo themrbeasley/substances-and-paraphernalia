@@ -27,7 +27,7 @@
       "setting": "modern",
       "subtype": "inhaler",
       "appliesTo": ["inhaled"],
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [
@@ -42,6 +42,7 @@
       "changes": [],
       "flags": {
         "substances-and-paraphernalia": {
+          "aeRole": "bypass",
           "modifier": {
             "kind": "bypass",
             "type": "+N",

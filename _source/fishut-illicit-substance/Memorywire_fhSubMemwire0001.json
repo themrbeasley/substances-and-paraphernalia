@@ -130,7 +130,7 @@
           "fhAEMemwire01Wit"
         ]
       },
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [
@@ -152,7 +152,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "altered"
+        }
+      },
       "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Ben"
     },
     {
@@ -167,7 +171,11 @@
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Charisma checks until withdrawal completes.</p>",
       "changes": [],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "addiction"
+        }
+      },
       "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Adc"
     },
     {
@@ -186,7 +194,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "withdrawal"
+        }
+      },
       "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Wit"
     }
   ],

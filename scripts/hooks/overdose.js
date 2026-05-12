@@ -1,6 +1,13 @@
 import { MODULE_ID, FLAGS } from "../config.js";
-import { getOverdose, getOverdoseEffectIds, isSubstance } from "../data/flag-schema.js";
+import {
+  getOverdose,
+  getOverdoseEffectIds,
+  isSubstance,
+  findEffectsByRole,
+  getSourceSubstanceId,
+} from "../data/flag-schema.js";
 import { rollOverdose } from "../data/overdose.js";
+import { computeAdjustedOverdoseChance } from "../data/overdose-interaction.js";
 import { logger } from "../logger.js";
 
 /**
@@ -29,16 +36,43 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
 /**
  * Test seam — Quench calls this directly with a deterministic `randomFn`.
  *
+ * The returned `chancePercent` reflects the **post-adjustment** chance — i.e.
+ * the value the d100 was rolled against after tolerance modulation, not the
+ * authored `block.chancePercent`.
+ *
  * @param {Actor} actor
  * @param {Item}  item
- * @param {{ enabled?: boolean, chancePercent?: number, description?: string }} block
+ * @param {{ enabled?: boolean, chancePercent?: number, description?: string,
+ *          toleranceInteraction?: "none"|"mitigate"|"compound",
+ *          toleranceInteractionMagnitude?: number }} block
  * @param {{ randomFn?: () => number }} [opts]
  */
 export async function rollOverdoseAndApply(actor, item, block, { randomFn } = {}) {
   if (!block || block.enabled !== true) return null;
-  const chance = Number(block.chancePercent) || 0;
-  if (chance <= 0) return null;
-  const result = rollOverdose(chance, randomFn ?? Math.random);
+  const baseChance = Number(block.chancePercent) || 0;
+  if (baseChance <= 0) return null;
+
+  // Read tolerance stacks at roll time, NOT at AE apply time — per spec §2.4,
+  // the addiction-AE listener and this overdose listener fire in the same
+  // postUseActivity cycle and listener order is not guaranteed. Reading here
+  // means we see the *prior* stack count if addiction's stack-increment has
+  // not yet run; that's intentional (the new stack only takes effect from
+  // the next consumption forward, which matches "tolerance grows over time").
+  const toleranceEffects = findEffectsByRole(actor, "tolerance").filter(
+    (e) => getSourceSubstanceId(e) === item.id,
+  );
+  const stacks = toleranceEffects.reduce((sum, e) => {
+    const raw = Number(e.flags?.[MODULE_ID]?.stacks);
+    if (!Number.isFinite(raw)) return sum + 1; // missing/garbage → default 1
+    return sum + Math.max(0, raw);
+  }, 0);
+  const mode = block.toleranceInteraction ?? "none";
+  const rawMagnitude = Number(block.toleranceInteractionMagnitude);
+  const magnitude = Number.isFinite(rawMagnitude) ? rawMagnitude : 0;
+  const adjustedChance = computeAdjustedOverdoseChance(baseChance, stacks, mode, magnitude);
+  if (adjustedChance <= 0) return null;
+
+  const result = rollOverdose(adjustedChance, randomFn ?? Math.random);
   if (!result.hit) return { hit: false, roll: result.roll, chancePercent: result.chancePercent };
 
   const effect = await applyOverdoseEffect(actor, item, block);
@@ -103,6 +137,7 @@ export async function applyOverdoseEffect(actor, item, block) {
         [MODULE_ID]: {
           ...(base.flags?.[MODULE_ID] ?? {}),
           [FLAGS.sourceSubstanceId]: item.id,
+          aeRole: "overdose",
         },
       },
     };

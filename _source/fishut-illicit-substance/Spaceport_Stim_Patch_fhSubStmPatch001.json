@@ -130,7 +130,7 @@
           "fhAEStmPatch01Wt"
         ]
       },
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [
@@ -152,7 +152,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "altered"
+        }
+      },
       "_key": "!items.effects!fhSubStmPatch001.fhAEStmPatch01Bn"
     },
     {
@@ -167,7 +171,11 @@
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom (Perception) checks relying on hearing until withdrawal completes.</p>",
       "changes": [],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "addiction"
+        }
+      },
       "_key": "!items.effects!fhSubStmPatch001.fhAEStmPatch01Ad"
     },
     {
@@ -186,7 +194,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "withdrawal"
+        }
+      },
       "_key": "!items.effects!fhSubStmPatch001.fhAEStmPatch01Wt"
     }
   ],

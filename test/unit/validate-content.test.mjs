@@ -17,7 +17,7 @@ function baseSubstance(overrides = {}) {
       flags: {
         [SCOPE]: {
           kind: "substance",
-          schemaVersion: 2,
+          schemaVersion: 3,
           category: "stimulant",
           setting: "fantasy",
           addiction: {
@@ -32,7 +32,7 @@ function baseSubstance(overrides = {}) {
           _id: "ae-addict-001",
           name: "Addicted to Test Substance",
           changes: [],
-          flags: {},
+          flags: { [SCOPE]: { aeRole: "addiction" } },
         },
       ],
       ...overrides,
@@ -50,7 +50,7 @@ function baseParaphernalia(overrides = {}) {
       flags: {
         [SCOPE]: {
           kind: "paraphernalia",
-          schemaVersion: 2,
+          schemaVersion: 3,
           subtype: "pipe",
         },
       },
@@ -190,7 +190,7 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
       changes: [
         { key: "system.attributes.exhaustion", mode: 2, value: "1", priority: 20 },
       ],
-      flags: {},
+      flags: { [SCOPE]: { aeRole: "withdrawal" } },
     });
     const { errors, warnings } = checkSubstance(file);
     assert.deepEqual(errors, []);
@@ -205,7 +205,7 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
       changes: [
         { key: "system.bonuses.msak.attack", mode: 2, value: "disadvantage", priority: 20 },
       ],
-      flags: {},
+      flags: { [SCOPE]: { aeRole: "withdrawal" } },
     });
     const { errors, warnings } = checkSubstance(file);
     assert.deepEqual(errors, []);
@@ -220,7 +220,7 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
       name: "Withdrawing from Test",
       changes: [],
       statuses: ["poisoned"],
-      flags: {},
+      flags: { [SCOPE]: { aeRole: "withdrawal" } },
     });
     const { warnings } = checkSubstance(file);
     assert.equal(warnings.length, 1);
@@ -284,6 +284,7 @@ describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
       changes: [],
       flags: {
         [SCOPE]: {
+          aeRole: "tolerance",
           modifier: { kind: "tolerance", substanceId: "abc", addictionDcBump: 2 },
         },
       },
@@ -300,6 +301,7 @@ describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
       changes: [],
       flags: {
         [SCOPE]: {
+          aeRole: "tolerance",
           modifier: {
             kind: "tolerance",
             substanceId: "abc",
@@ -373,6 +375,7 @@ describe("checkParaphernalia — +N bypass (v0.4)", () => {
       changes: [],
       flags: {
         [SCOPE]: {
+          aeRole: "bypass",
           modifier: { kind: "bypass", appliesTo: ["inhaled"], ...modifier },
         },
       },
@@ -442,6 +445,7 @@ describe("checkParaphernalia — daily-recovery contract (regression)", () => {
       changes: [],
       flags: {
         [SCOPE]: {
+          aeRole: "bypass",
           modifier: {
             kind: "bypass",
             type: "auto-pass",
@@ -468,6 +472,7 @@ describe("checkParaphernalia — daily-recovery contract (regression)", () => {
       changes: [],
       flags: {
         [SCOPE]: {
+          aeRole: "bypass",
           modifier: {
             kind: "bypass",
             type: "auto-pass",
@@ -496,6 +501,7 @@ describe("MODIFIER_TYPES (reroll-on-fail)", () => {
           changes: [],
           flags: {
             [SCOPE]: {
+              aeRole: "bypass",
               modifier: {
                 kind: "bypass",
                 type: "reroll-on-fail",

@@ -11,8 +11,10 @@ import {
   setActorWithdrawalEntry,
   clearActorWithdrawalEntry,
   getModifier,
+  getToleranceCaps,
   getToleranceEffectIds,
   getToleranceEnabled,
+  findEffectsByRole,
   isSubstance,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
@@ -291,7 +293,11 @@ function buildAddictionPayload(template, item, couplingMode) {
   const data = template.toObject();
   delete data._id;
   data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = { ...(data.flags[MODULE_ID] ?? {}), [FLAGS.sourceSubstanceId]: item.id };
+  data.flags[MODULE_ID] = {
+    ...(data.flags[MODULE_ID] ?? {}),
+    [FLAGS.sourceSubstanceId]: item.id,
+    aeRole: "addiction",
+  };
   data.origin = item.uuid;
   data.disabled = false;
   if (data.duration) {
@@ -348,16 +354,11 @@ function findAppliedAddictionEffect(actor, substanceId) {
 }
 
 function findAllAppliedAddictionEffects(actor, substanceId) {
-  if (!actor?.effects) return [];
-  const matches = [];
-  for (const effect of actor.effects) {
-    if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    // Tolerance and withdrawal AEs share the sourceSubstanceId flag — disambiguate by name.
-    if (/tolerance/i.test(effect.name ?? "")) continue;
-    if (/withdraw/i.test(effect.name ?? "")) continue;
-    matches.push(effect);
-  }
-  return matches;
+  const matches = findEffectsByRole(actor, "addiction");
+  if (substanceId === undefined) return matches;
+  return matches.filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
 }
 
 /**
@@ -465,6 +466,22 @@ export async function applyOrIncrementToleranceStack(actor, item) {
   if (!getToleranceEnabled(item)) return null;
   const existing = findAllAppliedToleranceEffects(actor, item.id);
   if (existing.length > 0) {
+    // Soft-cap guard: existing AEs are kept in lockstep by the loop below, so
+    // checking any one suffices. When already at `maxStacks`, refuse to push
+    // further — silent no-op (no toast). First-time application (existing
+    // empty) skips this branch entirely, so a substance with maxStacks=1
+    // still gets its stacks=1 AE created on the first save pass.
+    const caps = getToleranceCaps(item);
+    const maxStacks = caps?.maxStacks;
+    if (Number.isFinite(maxStacks)) {
+      const currentStacks = Number(existing[0].flags?.[MODULE_ID]?.stacks) || 1;
+      if (currentStacks >= maxStacks) {
+        logger.log(
+          `tolerance cap reached for ${item.name} (stacks=${currentStacks} >= maxStacks=${maxStacks}); not incrementing`,
+        );
+        return existing[0];
+      }
+    }
     let firstUpdated = null;
     for (const effect of existing) {
       const currentStacks = Number(effect.flags?.[MODULE_ID]?.stacks) || 1;
@@ -501,6 +518,7 @@ function buildTolerancePayload(template, item) {
     kind: "tolerance",
     substanceId: item.id,
   };
+  moduleFlags.aeRole = "tolerance";
   baseData.flags[MODULE_ID] = moduleFlags;
   baseData.name = formatToleranceName(item, 1);
   baseData.origin = item.uuid;
@@ -552,15 +570,11 @@ function findToleranceTemplates(item) {
 }
 
 function findAllAppliedToleranceEffects(actor, substanceId) {
-  if (!actor?.effects) return [];
-  const matches = [];
-  for (const effect of actor.effects) {
-    if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    if (getModifier(effect)?.kind === "tolerance" || /tolerance/i.test(effect.name ?? "")) {
-      matches.push(effect);
-    }
-  }
-  return matches;
+  const matches = findEffectsByRole(actor, "tolerance");
+  if (substanceId === undefined) return matches;
+  return matches.filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
 }
 
 /**
@@ -602,6 +616,7 @@ function buildWithdrawalPayload(template, item) {
   data.flags[MODULE_ID] = {
     ...(data.flags[MODULE_ID] ?? {}),
     [FLAGS.sourceSubstanceId]: item.id,
+    aeRole: "withdrawal",
   };
   data.origin = item.uuid;
   data.disabled = false;
@@ -633,7 +648,11 @@ function buildDefaultWithdrawalTemplate(item) {
         priority: 20,
       },
     ],
-    flags: {},
+    flags: {
+      [MODULE_ID]: {
+        aeRole: "withdrawal",
+      },
+    },
   };
 }
 
@@ -656,11 +675,9 @@ function findWithdrawalTemplates(item) {
 }
 
 function findAllAppliedWithdrawalEffects(actor, substanceId) {
-  if (!actor?.effects) return [];
-  const matches = [];
-  for (const effect of actor.effects) {
-    if (effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] !== substanceId) continue;
-    if (/withdraw/i.test(effect.name ?? "")) matches.push(effect);
-  }
-  return matches;
+  const matches = findEffectsByRole(actor, "withdrawal");
+  if (substanceId === undefined) return matches;
+  return matches.filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
 }

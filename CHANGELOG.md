@@ -10,6 +10,35 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 ## [0.6.0] — 2026-05-11
 
 ### Added
+- `aeRole` flag on every module-created Active Effect (`addiction`, `withdrawal`, `altered`, `tolerance`, `overdose`, `bypass`). Substring matching against the AE name remains as a warn-logged fallback for hand-authored AEs.
+- `findEffectsByRole(actor, role)` helper exposed at `module.api.flagSchema.findEffectsByRole`.
+- Content invariant in `validate-content.mjs`: every AE whose name matches a role substring must carry the matching `aeRole` flag.
+- Save Ability convention hint under the Details-tab dropdown.
+- "Choosing a Save Ability" section in the Authoring wiki.
+- GM Guide journal pointer paragraph.
+- Tolerance soft caps in `scripts/data/tolerance.js`: `maxStacks=5`, `modifierFactorFloor=0.25`, `addictionDcBumpCap=5`, `withdrawalDurationFactorCap=2.0`. Engine clamps stack effects at the caps; per-substance `tolerance.caps` overrides allowed.
+- `validate-content` warns (not errors) when a per-substance override loosens a cap beyond the engine default.
+- Mechanics wiki section "Tolerance: Bounds and Authoring Guidance".
+- Per-substance `overdose.toleranceInteraction` (`none|mitigate|compound`) + `toleranceInteractionMagnitude` (pct points per stack). Engine reads tolerance stacks at roll time and modulates the d100 chance, clamped to [0,100].
+- Authoring controls on the Details tab (dropdown + magnitude input + hint).
+- Mechanics wiki section "Overdose × Tolerance Interaction".
+- `module.api.data.computeAdjustedOverdoseChance` (via export of `scripts/data/overdose-interaction.js`).
+- `module.api.abstain.processAbstainFailure` exposed for Quench coverage of the forced-use failure branch.
+
+### Changed
+- Bumped `flags.schemaVersion` 2 → 3 (additive; sheet-level read-with-default handles in-place migration).
+- Modifier pipeline, all five Remove-X macros, and all internal AE scanners read `aeRole` first, fall back to substring.
+- **Voluntary Abstain failure path:** a failed Wisdom save now triggers automatic consumption of the substance through its real activity (paraphernalia gate bypassed once), running the full post-use chain (Constitution save → addiction AE → tolerance stack → overdose roll). When the substance is missing or exhausted from inventory, the failure soft-fails to the standard -1 tick. **Breaking behavior** for any GM relying on the previous no-penalty failure branch.
+- Long-rest dialog button label: "Resist the urge to use {item}" (per-substance, willpower-themed).
+- Chat strings reworded to willpower/craving language (`Pass`, `FailGiveIn`, `FailNoSubstance`).
+
+### Deferred
+- Shipped-content rewrite to apply Wisdom-saves convention to every mind-altering substance — deferred to v0.9 / Item 12.
+- DC tuning for the abstain Wis save (consider escalating DC with consumption count) — held until post-v0.7 playtest per spec §3.5.
+
+## [0.6.0] — 2026-05-11
+
+### Added
 - **`reroll-on-fail` save-bypass tier.** New `modifier.type` enum entry. When a
   bypass-granting AE with `type: "reroll-on-fail"` wins resolution, the
   addiction save is rolled once; if the roll fails the DC, a second save is

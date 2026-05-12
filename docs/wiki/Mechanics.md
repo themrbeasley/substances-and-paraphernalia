@@ -50,8 +50,69 @@ flags["substances-and-paraphernalia"].modifier = {
 
 A single AE per (actor, substance) tracks stacks via `flags.stacks`. Per-stack effects sum on the result — three stacks of `addictionDcBump: 1` become +3 DC; three stacks of `durationFactor: 0.1` become 70% of the base duration. AE name **must contain** `tolerance`.
 
+## Tolerance: Bounds and Authoring Guidance
+
+The Tolerance system has three knobs (`attenuateAltered`,
+`addictionDcBump`, `withdrawalAmplify`) that all make the next
+consumption worse. To prevent runaway states where consumption is a
+pure mathematical loss, the engine applies these soft caps by default:
+
+| Cap                             | Default | Effect                              |
+|---------------------------------|---------|-------------------------------------|
+| `maxStacks`                     | 5       | Max tolerance stacks per substance  |
+| `modifierFactorFloor`           | 0.25    | Buff modifier cannot drop below ¼   |
+| `addictionDcBumpCap`            | 5       | Cumulative DC bump caps at +5       |
+| `withdrawalDurationFactorCap`   | 2.0     | Withdrawal cannot stack past 2× duration |
+
+Authors may override any subset per substance by writing a `caps` block
+under the substance's `tolerance` flag:
+
+```json
+{
+  "flags": {
+    "substances-and-paraphernalia": {
+      "tolerance": {
+        "caps": { "maxStacks": 10 }
+      }
+    }
+  }
+}
+```
+
+The validator warns (not errors) when an override loosens a cap beyond
+the engine default. The design intent: tolerance should produce
+**diminishing returns**, never a state where consumption is a pure
+loss. Overrides exist so authors who want true escalation can opt in
+explicitly.
+
 ## Overdose
 
 Each consumption rolls d100 against the substance's `chancePercent`. On a hit, a marker AE *Overdosed on {Substance}* is applied and the authored description is posted to chat. Overdose runs alongside the addiction save — both can fire on the same dose. AE name **must contain** `overdose`.
 
 Author it via the overdose fieldset on the Details tab: enable, set the percent, write a description.
+
+## Overdose × Tolerance Interaction
+
+The `overdose.toleranceInteraction` field on each substance chooses
+how the d100 overdose chance modulates with the actor's current
+tolerance-stack count:
+
+- **None (default):** Tolerance and overdose are mechanically unrelated.
+  d100 rolls against the raw `chancePercent` always.
+- **Mitigate:** The body adapts. Each tolerance stack reduces overdose
+  chance by `toleranceInteractionMagnitude` percentage points.
+- **Compound:** Users escalate doses to chase the diminishing buff.
+  Each tolerance stack raises overdose chance by
+  `toleranceInteractionMagnitude` percentage points.
+
+The adjusted chance is clamped to `[0, 100]`. Stacks are read at the
+moment the d100 fires (not at AE apply time) — see the v0.7 spec
+§2.4 for why.
+
+The maximum modulation envelope is bounded by `tolerance.caps.maxStacks`
+(default 5). Combined with the default magnitude of 0 in the schema,
+existing pre-v0.7 substances keep their pre-v0.7 behavior.
+
+## Voluntary Abstain
+
+See [Voluntary-Abstain.md](Voluntary-Abstain.md) for the willpower/craving mechanic and the failure-path consumption flow.

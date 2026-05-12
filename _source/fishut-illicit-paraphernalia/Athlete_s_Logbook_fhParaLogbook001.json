@@ -27,7 +27,7 @@
       "setting": "modern",
       "subtype": "athletes-logbook",
       "appliesTo": ["ingested", "injury"],
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [],

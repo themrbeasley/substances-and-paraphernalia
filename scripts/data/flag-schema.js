@@ -1,9 +1,11 @@
 import { MODULE_ID, FLAGS } from "../config.js";
+import { logger } from "../logger.js";
 import {
   readModifier,
   readModifierFromChanges,
   mergeModifierIntoChanges,
 } from "./modifier-flag.js";
+import { TOLERANCE_DEFAULT_CAPS } from "./tolerance.js";
 
 /**
  * @typedef {"substance" | "paraphernalia"} Kind
@@ -308,6 +310,20 @@ export const setTolerance = (item, value) =>
   item.setFlag(MODULE_ID, FLAGS.tolerance, value);
 
 /**
+ * Resolve the effective tolerance caps for a substance — merges the
+ * substance's authored `tolerance.caps` (if any) over engine defaults from
+ * {@link TOLERANCE_DEFAULT_CAPS}. Authored fields win; un-authored fields
+ * fall through to the default.
+ *
+ * @param {Item} substance
+ * @returns {typeof TOLERANCE_DEFAULT_CAPS}
+ */
+export const getToleranceCaps = (substance) => {
+  const authored = getTolerance(substance)?.caps ?? {};
+  return { ...TOLERANCE_DEFAULT_CAPS, ...authored };
+};
+
+/**
  * Whether tolerance auto-stacking runs on save pass. Undefined defaults to true.
  * @param {Item} item @returns {boolean}
  */
@@ -422,3 +438,62 @@ export const clearActorWithdrawalEntry = async (actor, substanceId) => {
   delete map[substanceId];
   return actor.setFlag(MODULE_ID, FLAGS.withdrawal, map);
 };
+
+// ─── Active Effect role lookup (locale-independent) ──────────────────────────
+
+const AE_ROLE_SUBSTRINGS = Object.freeze({
+  addiction: /addict/i,
+  withdrawal: /withdraw/i,
+  altered: /altered/i,
+  tolerance: /tolerance/i,
+  overdose: /overdose/i,
+  bypass: /bypass/i,
+});
+
+/**
+ * Read the `aeRole` flag off an AE, or null when absent.
+ * @param {ActiveEffect|{flags?: object}} effect
+ * @returns {string|null}
+ */
+export function getAeRole(effect) {
+  const raw = effect?.flags?.[MODULE_ID]?.aeRole;
+  return typeof raw === "string" && raw.length > 0 ? raw : null;
+}
+
+/**
+ * Locale-independent AE lookup. Returns every AE on the actor whose
+ * `aeRole` flag matches `role`, plus any AEs whose flag is absent but
+ * whose name matches the substring fallback. Each fallback match emits
+ * a warn so hand-authored AEs are observable.
+ *
+ * @param {Actor} actor
+ * @param {"addiction"|"withdrawal"|"altered"|"tolerance"|"overdose"|"bypass"} role
+ * @param {{ warn?: (msg: string, ctx?: object) => void }} [opts] - test seam
+ * @returns {ActiveEffect[]}
+ */
+export function findEffectsByRole(actor, role, { warn } = {}) {
+  const re = AE_ROLE_SUBSTRINGS[role];
+  if (!re) return [];
+  const effects = actor?.appliedEffects ?? actor?.effects ?? [];
+  const warnFn = warn ?? ((msg, ctx) => logger.warn(msg, ctx));
+  const matches = [];
+  for (const effect of effects) {
+    const flagRole = getAeRole(effect);
+    if (flagRole === role) {
+      matches.push(effect);
+      continue;
+    }
+    if (flagRole) continue; // wrong role explicitly; never fall back
+    const name = effect?.name ?? "";
+    if (re.test(name)) {
+      warnFn("aeRole flag missing on AE matched by substring fallback", {
+        actorId: actor?.id ?? null,
+        effectId: effect?.id ?? effect?._id ?? null,
+        effectName: name,
+        role,
+      });
+      matches.push(effect);
+    }
+  }
+  return matches;
+}

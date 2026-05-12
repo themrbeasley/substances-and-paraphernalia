@@ -27,7 +27,7 @@
       "setting": "fantasy",
       "subtype": "snuff-horn",
       "appliesTo": ["inhaled"],
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [],

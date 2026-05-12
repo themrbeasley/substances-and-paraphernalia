@@ -1,5 +1,11 @@
 import { MODULE_ID } from "../config.js";
-import { getAppliesTo, getModifier, isParaphernalia } from "./flag-schema.js";
+import {
+  getAeRole,
+  getAppliesTo,
+  getModifier,
+  getToleranceCaps,
+  isParaphernalia,
+} from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
 import { composeTolerance } from "./tolerance.js";
 
@@ -49,9 +55,17 @@ export async function consumeBypassIfAvailable(actor, substance) {
   const links = new Map();
 
   for (const effect of effects) {
-    const block = getModifier(effect);
-    if (!block) continue;
-    if (block.kind !== "bypass") continue;
+    const rawBlock = getModifier(effect);
+    const role = getAeRole(effect);
+
+    const isBypass = rawBlock?.kind === "bypass" || role === "bypass";
+    if (!isBypass) continue;
+
+    // Default to an empty block so the rest of the loop can read
+    // type/bonus/appliesTo/usesPerDay safely when only `aeRole` admitted
+    // the AE. `pickBypassResolution` will then reject it for missing
+    // `kind`/`type`, which is the intended behavior for malformed AEs.
+    const block = rawBlock ?? {};
 
     const sourceItem = resolveSourceItem(actor, effect);
     // Paraphernalia is the only authored bypass source — its `appliesTo`
@@ -129,6 +143,8 @@ export async function consumeBypassIfAvailable(actor, substance) {
  */
 export function consumeToleranceForSubstance(actor, substanceId) {
   if (!actor || !substanceId) return null;
+  const substance = actor.items?.get?.(substanceId);
+  const caps = substance ? getToleranceCaps(substance) : undefined;
   const effects = actor.appliedEffects ?? actor.effects ?? [];
   const candidates = [];
   for (const effect of effects) {
@@ -140,7 +156,7 @@ export function consumeToleranceForSubstance(actor, substanceId) {
     candidates.push({ ...block, stacks });
   }
   if (candidates.length === 0) return null;
-  return composeTolerance(candidates);
+  return composeTolerance(candidates, caps);
 }
 
 function readStacks(effect) {

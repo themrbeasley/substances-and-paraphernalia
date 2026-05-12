@@ -32,7 +32,7 @@
       "setting": "modern",
       "subtype": "rolling-papers",
       "appliesTo": ["inhaled"],
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [],

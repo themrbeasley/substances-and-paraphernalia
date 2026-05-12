@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Substances and Paraphernalia — module schema",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "moduleId": "substances-and-paraphernalia",
   "flagScope": "substances-and-paraphernalia",
   "kinds": [
@@ -50,6 +50,14 @@
       { "id": "+N", "labelKey": "FISHUT.Modifier.Type.PlusN" }
     ]
   },
+  "tolerance": {
+    "caps": {
+      "maxStacks": 5,
+      "modifierFactorFloor": 0.25,
+      "addictionDcBumpCap": 5,
+      "withdrawalDurationFactorCap": 2.0
+    }
+  },
   "coupling": {
     "modes": [
       { "id": "linked-cascade", "labelKey": "FISHUT.Coupling.Mode.LinkedCascade" },
@@ -57,6 +65,14 @@
       { "id": "independent", "labelKey": "FISHUT.Coupling.Mode.Independent" }
     ]
   },
+  "aeRoles": [
+    { "id": "addiction", "labelKey": "FISHUT.AERole.Addiction" },
+    { "id": "withdrawal", "labelKey": "FISHUT.AERole.Withdrawal" },
+    { "id": "altered", "labelKey": "FISHUT.AERole.Altered" },
+    { "id": "tolerance", "labelKey": "FISHUT.AERole.Tolerance" },
+    { "id": "overdose", "labelKey": "FISHUT.AERole.Overdose" },
+    { "id": "bypass", "labelKey": "FISHUT.AERole.Bypass" }
+  ],
   "worldSettings": [
     {
       "key": "enforceParaphernalia",
@@ -107,6 +123,7 @@
     "schemaVersion": "schemaVersion",
     "modifier": "modifier",
     "overdose": "overdose",
-    "tolerance": "tolerance"
+    "tolerance": "tolerance",
+    "aeRole": "aeRole"
   }
 }

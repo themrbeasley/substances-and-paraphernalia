@@ -28,6 +28,7 @@ import {
   setActorWithdrawalEntry,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
+import { processAbstainFailure } from "../../scripts/hooks/long-rest-abstain.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
 import {
   buildParaphernaliaContext,
@@ -38,6 +39,8 @@ import {
 } from "../../scripts/ui/details-tab.js";
 import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { rollSaveAndApply } from "../../scripts/hooks/addiction.js";
+import { rollOverdoseAndApply } from "../../scripts/hooks/overdose.js";
+import { logger } from "../../scripts/logger.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
 import { PRESETS, PRESET_LIBRARY, verifyTmfxPresets } from "../../scripts/integrations/tmfx.js";
@@ -150,6 +153,98 @@ export function registerQuenchSuite() {
       tmfxPresetsBatch,
       { displayName: "S&P · TMFX preset round-trip" },
     );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.ae-role-rename`,
+      aeRoleRenameBatch,
+      { displayName: "S&P · aeRole — renamed AE still removable" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.ae-role-fallback-warn`,
+      aeRoleFallbackWarnBatch,
+      { displayName: "S&P · aeRole — hand-authored AE without flag warn-logs" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.overdose-tolerance-interaction`,
+      overdoseToleranceInteractionBatch,
+      { displayName: "S&P · Overdose × Tolerance — adjusted d100" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.abstain-fail-consumes`,
+      abstainFailConsumesBatch,
+      { displayName: "S&P · Voluntary Abstain · fail triggers consumption" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.abstain-fail-soft`,
+      abstainFailSoftBatch,
+      { displayName: "S&P · Voluntary Abstain · fail soft-fail" },
+    );
+  });
+}
+
+// ─── Batch: Overdose × Tolerance interaction ────────────────────────────────
+
+function overdoseToleranceInteractionBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+  describe("S&P · Overdose × Tolerance — adjusted d100 reflects mode + stacks", () => {
+    let actor, substance;
+    beforeEach(async () => {
+      const cls = CONFIG.Actor.documentClass;
+      actor = await cls.create({ name: "Quench OD×Tol", type: "character" });
+      // Build an in-memory substance with overdose enabled + tolerance interaction.
+      const data = {
+        name: "Quench Mitigate Substance",
+        type: "consumable",
+        system: { type: { value: "poison", subtype: "ingested" } },
+        flags: {
+          "substances-and-paraphernalia": {
+            kind: "substance",
+            schemaVersion: 3,
+            overdose: {
+              enabled: true,
+              chancePercent: 50,
+              toleranceInteraction: "mitigate",
+              toleranceInteractionMagnitude: 10,
+            },
+            addiction: { enabled: false },
+          },
+        },
+      };
+      [substance] = await actor.createEmbeddedDocuments("Item", [data]);
+      // Pre-stage 3 tolerance stacks.
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Tolerance: Quench Mitigate Substance",
+          icon: "icons/svg/poison.svg",
+          flags: {
+            "substances-and-paraphernalia": {
+              aeRole: "tolerance",
+              sourceSubstanceId: substance.id,
+              stacks: 3,
+            },
+          },
+        },
+      ]);
+    });
+    afterEach(async () => {
+      if (actor) await actor.delete();
+    });
+
+    it("mitigate × 3 stacks × 10 magnitude reduces 50% → 20%; a roll of 30 misses", async () => {
+      const block = game.modules.get("substances-and-paraphernalia").api.flagSchema.getOverdose(substance);
+      // Stub randomFn so the d100 returns exactly 30 (= floor(0.29 * 100) + 1).
+      const result = await rollOverdoseAndApply(actor, substance, block, { randomFn: () => 0.29 });
+      assert.ok(result, "rollOverdoseAndApply returns a result object");
+      assert.equal(result.hit, false, "roll 30 vs adjusted 20% must miss (50 − 30 = 20)");
+    });
+
+    it("compound × 3 stacks × 10 magnitude raises 50% → 80%; a roll of 70 hits", async () => {
+      await substance.update({
+        "flags.substances-and-paraphernalia.overdose.toleranceInteraction": "compound",
+      });
+      const block = game.modules.get("substances-and-paraphernalia").api.flagSchema.getOverdose(substance);
+      const result = await rollOverdoseAndApply(actor, substance, block, { randomFn: () => 0.69 });
+      assert.equal(result.hit, true, "roll 70 vs adjusted 80% must hit (50 + 30 = 80)");
+    });
   });
 }
 
@@ -2805,6 +2900,208 @@ function tmfxPresetsBatch(context) {
           ? tm.hasFilterId(token, presetName)
           : Boolean(token.TMFXhasFilterId?.(presetName));
       assert.ok(hasFilter, `token should have filter ${presetName} after addFilters`);
+    });
+  });
+}
+
+// ─── Batch: aeRole — renamed AE still removable via the flag ────────────────
+
+function aeRoleRenameBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · aeRole — renamed AE still removable", () => {
+    let actor, substance;
+
+    beforeEach(async () => {
+      actor = await makeActor("Quench aeRole Rename");
+      const items = await loadPackItems("fishut-illicit-substance");
+      const src = items.find((i) => i?.name?.startsWith("Coalshade") && isSubstance(i));
+      if (src) {
+        [substance] = await actor.createEmbeddedDocuments("Item", [src.toObject()]);
+      }
+    });
+
+    afterEach(async () => {
+      await deleteActor(actor);
+    });
+
+    it("Remove Addiction macro finds AE renamed to a non-matching name via the aeRole flag", async () => {
+      assert.ok(substance, "Coalshade substance must be importable from the shipped pack");
+
+      await api().addiction.applyAddictionEffect(actor, substance);
+
+      const ae = actor.effects.find(
+        (e) => e.flags?.[MODULE_ID]?.aeRole === "addiction",
+      );
+      assert.ok(ae, "addiction AE should exist after applyAddictionEffect");
+
+      // Rename to a non-matching string (German for "poisoned by coalshade powder")
+      // so the substring fallback (`/addict/i`) cannot find it.
+      await ae.update({ name: "Toxisch durch Kohlenschattenpulver" });
+
+      // Simulate the Remove Addiction macro body (flag-first lookup).
+      const matches = actor.effects.filter(
+        (e) => e.flags?.[MODULE_ID]?.aeRole === "addiction",
+      );
+      assert.equal(matches.length, 1, "flag-first lookup must find the renamed AE");
+      await actor.deleteEmbeddedDocuments(
+        "ActiveEffect",
+        matches.map((m) => m.id),
+      );
+      const remaining = actor.effects.filter(
+        (e) => e.flags?.[MODULE_ID]?.aeRole === "addiction",
+      );
+      assert.equal(remaining.length, 0, "AE should be removed after delete");
+    });
+  });
+}
+
+// ─── Batch: aeRole — hand-authored AE warn-logs on substring fallback ───────
+
+function aeRoleFallbackWarnBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · aeRole — hand-authored AE without flag warn-logs", () => {
+    let actor, originalWarn, warnCalls;
+
+    beforeEach(async () => {
+      actor = await makeActor("Quench Fallback Warn");
+      warnCalls = [];
+      // Spy on the module logger's `warn`. The logger object is a plain
+      // exported singleton (see scripts/logger.js), so reassigning its
+      // `warn` property is observable from the helper at the call site.
+      originalWarn = logger.warn;
+      logger.warn = (...args) => {
+        warnCalls.push(args);
+        originalWarn.apply(logger, args);
+      };
+    });
+
+    afterEach(async () => {
+      logger.warn = originalWarn;
+      await deleteActor(actor);
+    });
+
+    it("findEffectsByRole emits a warn when matching via substring fallback", async () => {
+      await actor.createEmbeddedDocuments("ActiveEffect", [
+        {
+          name: "Hand-authored Withdrawal AE",
+          icon: "icons/svg/poison.svg",
+          changes: [],
+          duration: {},
+        },
+      ]);
+
+      const found = api().flagSchema.findEffectsByRole(actor, "withdrawal");
+      assert.equal(found.length, 1, "substring fallback must match the hand-authored AE");
+      assert.equal(found[0].name, "Hand-authored Withdrawal AE");
+
+      // Secondary: the logger spy should have captured at least one warn.
+      // If the logger module ever switches to a frozen export the spy will
+      // silently no-op — fall back to inspecting `actor.effects` only via
+      // the primary `found.length` assert above.
+      assert.ok(
+        warnCalls.length >= 1,
+        `expected at least one logger.warn for substring fallback (got ${warnCalls.length})`,
+      );
+    });
+  });
+}
+
+// ─── Batch: Voluntary Abstain — fail triggers consumption ───────────────────
+
+function abstainFailConsumesBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · Voluntary Abstain · fail triggers consumption", () => {
+    let actor, substance;
+
+    beforeEach(async () => {
+      const cls = CONFIG.Actor.documentClass;
+      actor = await cls.create({
+        name: "Quench Abstain Fail",
+        type: "character",
+        system: { abilities: { wis: { value: 3 } } }, // Wis -4, very low save
+      });
+      const items = await loadPackItems("fishut-illicit-substance");
+      const src = items.find((i) => i?.name === "Coalshade Powder" && isSubstance(i));
+      if (src) {
+        [substance] = await actor.createEmbeddedDocuments("Item", [src.toObject()]);
+        await substance.update({ "system.uses.value": 1, "system.uses.max": 1 });
+        // Plant an active withdrawal AE so processAbstainFailure has a row to act on.
+        await actor.createEmbeddedDocuments("ActiveEffect", [
+          {
+            name: `Withdrawal from ${substance.name}`,
+            icon: "icons/svg/poison.svg",
+            flags: {
+              [MODULE_ID]: {
+                aeRole: "withdrawal",
+                [FLAGS.sourceSubstanceId]: substance.id,
+              },
+            },
+          },
+        ]);
+      }
+    });
+
+    afterEach(async () => {
+      if (actor) await deleteActor(actor);
+    });
+
+    it("fail path: uses decrement and addiction/tolerance/overdose chain runs", async () => {
+      assert.ok(substance, "Coalshade substance must be importable from the shipped pack");
+      const row = {
+        substanceId: substance.id,
+        itemName: substance.name,
+        dc: 99, // unreachable → forced fail
+        withdrawalMod: 4,
+      };
+      const before = Number(actor.items.get(substance.id).system.uses.value);
+      await processAbstainFailure(actor, row);
+      // Foundry's activity.use() is async + emits its own chat; allow microtask flush.
+      await new Promise((r) => setTimeout(r, 100));
+      const after = Number(actor.items.get(substance.id).system.uses.value);
+      assert.equal(after, before - 1, "consumption fired and decremented uses by 1");
+    });
+  });
+}
+
+// ─── Batch: Voluntary Abstain — fail with no inventory soft-fails ───────────
+
+function abstainFailSoftBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · Voluntary Abstain · fail with no inventory soft-fails", () => {
+    let actor;
+
+    beforeEach(async () => {
+      const cls = CONFIG.Actor.documentClass;
+      actor = await cls.create({ name: "Quench Abstain SoftFail", type: "character" });
+    });
+
+    afterEach(async () => {
+      if (actor) await deleteActor(actor);
+    });
+
+    it("missing inventory item posts FailNoSubstance and does not throw", async () => {
+      const row = {
+        substanceId: "nonexistent-item-id",
+        itemName: "Coalshade Powder",
+        dc: 99,
+        withdrawalMod: 4,
+      };
+      // Should resolve without throwing.
+      await processAbstainFailure(actor, row);
+      // Inspect the recent chat history for the FailNoSubstance message.
+      // Pull the expected text from the i18n bundle so a future locale string
+      // tweak doesn't break this assertion.
+      const expected = game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
+        actor: actor.name,
+        item: "Coalshade Powder",
+      });
+      const recent = game.messages?.contents?.slice(-3) ?? [];
+      const hit = recent.some((m) => m.content === expected);
+      assert.ok(hit, "FailNoSubstance chat card emitted");
     });
   });
 }

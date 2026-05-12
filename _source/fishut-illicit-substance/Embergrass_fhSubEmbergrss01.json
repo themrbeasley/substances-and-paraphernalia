@@ -130,7 +130,7 @@
           "fhAEEmbergrssWit"
         ]
       },
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [
@@ -158,7 +158,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "altered"
+        }
+      },
       "_key": "!items.effects!fhSubEmbergrss01.fhAEEmbergrssBen"
     },
     {
@@ -173,7 +177,11 @@
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Intelligence checks until withdrawal completes.</p>",
       "changes": [],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "addiction"
+        }
+      },
       "_key": "!items.effects!fhSubEmbergrss01.fhAEEmbergrssAdc"
     },
     {
@@ -192,7 +200,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "withdrawal"
+        }
+      },
       "_key": "!items.effects!fhSubEmbergrss01.fhAEEmbergrssWit"
     }
   ],
