@@ -3024,7 +3024,7 @@ function abstainFailConsumesBatch(context) {
         system: { abilities: { wis: { value: 3 } } }, // Wis -4, very low save
       });
       const items = await loadPackItems("fishut-illicit-substance");
-      const src = items.find((i) => i?.name?.startsWith("Coalshade") && isSubstance(i));
+      const src = items.find((i) => i?.name === "Coalshade Powder" && isSubstance(i));
       if (src) {
         [substance] = await actor.createEmbeddedDocuments("Item", [src.toObject()]);
         await substance.update({ "system.uses.value": 1, "system.uses.max": 1 });
@@ -3093,10 +3093,14 @@ function abstainFailSoftBatch(context) {
       // Should resolve without throwing.
       await processAbstainFailure(actor, row);
       // Inspect the recent chat history for the FailNoSubstance message.
+      // Pull the expected text from the i18n bundle so a future locale string
+      // tweak doesn't break this assertion.
+      const expected = game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
+        actor: actor.name,
+        item: "Coalshade Powder",
+      });
       const recent = game.messages?.contents?.slice(-3) ?? [];
-      const hit = recent.some(
-        (m) => m.content?.includes?.("reached for") || m.content?.includes?.("found none"),
-      );
+      const hit = recent.some((m) => m.content === expected);
       assert.ok(hit, "FailNoSubstance chat card emitted");
     });
   });

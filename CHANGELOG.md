@@ -31,8 +31,6 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ### Deferred
 - Shipped-content rewrite to apply Wisdom-saves convention to every mind-altering substance — deferred to v0.9 / Item 12.
-
-### Held / Deferred
 - DC tuning for the abstain Wis save (consider escalating DC with consumption count) — held until post-v0.7 playtest per spec §3.5.
 
 ## [0.6.0] — 2026-05-11
