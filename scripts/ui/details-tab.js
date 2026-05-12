@@ -235,6 +235,12 @@ function buildLabels() {
     overdoseEffect: L("FISHUT.DetailsTab.Field.OverdoseEffect.Label"),
     overdoseEffectTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.Tooltip"),
     overdoseEffectCreateTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.CreateTooltip"),
+    overdoseToleranceInteractionLabel: L("FISHUT.Details.Overdose.ToleranceInteraction.Label"),
+    overdoseToleranceInteractionNone: L("FISHUT.Details.Overdose.ToleranceInteraction.None"),
+    overdoseToleranceInteractionMitigate: L("FISHUT.Details.Overdose.ToleranceInteraction.Mitigate"),
+    overdoseToleranceInteractionCompound: L("FISHUT.Details.Overdose.ToleranceInteraction.Compound"),
+    overdoseToleranceInteractionMagnitude: L("FISHUT.Details.Overdose.ToleranceInteraction.Magnitude"),
+    overdoseToleranceInteractionHint: L("FISHUT.Details.Overdose.ToleranceInteraction.Hint"),
     toleranceHeader: L("FISHUT.DetailsTab.Tolerance.Header"),
     toleranceEnabled: L("FISHUT.DetailsTab.Tolerance.Enabled"),
     toleranceEffect: L("FISHUT.DetailsTab.Field.ToleranceEffect.Label"),
@@ -375,6 +381,18 @@ function buildOverdoseContext(item) {
   const chancePercent = Number.isFinite(rawChance) ? rawChance : 5;
   const description = typeof block.description === "string" ? block.description : "";
 
+  const rawInteraction = block.toleranceInteraction;
+  const toleranceInteraction =
+    rawInteraction === "mitigate" || rawInteraction === "compound" ? rawInteraction : "none";
+  const rawMagnitude = Number(block.toleranceInteractionMagnitude);
+  const toleranceInteractionMagnitude = Number.isFinite(rawMagnitude) ? rawMagnitude : 0;
+
+  const toleranceInteractionOptions = [
+    { id: "none", label: L("FISHUT.Details.Overdose.ToleranceInteraction.None") },
+    { id: "mitigate", label: L("FISHUT.Details.Overdose.ToleranceInteraction.Mitigate") },
+    { id: "compound", label: L("FISHUT.Details.Overdose.ToleranceInteraction.Compound") },
+  ].map((o) => ({ ...o, selected: o.id === toleranceInteraction }));
+
   const attachedIds = getOverdoseEffectIds(item);
   const allEffects = Array.from(item.effects ?? []);
   // Overdose picker only lists AEs whose name contains "overdose"
@@ -389,6 +407,9 @@ function buildOverdoseContext(item) {
     enabled,
     chancePercent,
     description,
+    toleranceInteraction,
+    toleranceInteractionMagnitude,
+    toleranceInteractionOptions,
     fieldsDisabled: !enabled,
     availableEffects,
     attachedEffects,
@@ -648,6 +669,16 @@ export async function persistField(item, field, rawValue, target) {
     }
     case "overdose.description":
       return persistOverdoseField(item, "description", rawValue ?? "");
+    case "overdose.toleranceInteraction": {
+      const allowed = new Set(["none", "mitigate", "compound"]);
+      const v = allowed.has(rawValue) ? rawValue : "none";
+      return persistOverdoseField(item, "toleranceInteraction", v);
+    }
+    case "overdose.toleranceInteractionMagnitude": {
+      const n = parseIntOrNull(rawValue);
+      const clamped = n === null ? 0 : Math.max(0, n);
+      return persistOverdoseField(item, "toleranceInteractionMagnitude", clamped);
+    }
     case "tolerance.enabled":
       return setToleranceEnabled(item, rawValue === "true");
     case "subtype": {
@@ -930,6 +961,8 @@ function parseIntOrNull(value) {
 // `setOverdose` writes the whole `OverdoseBlock`, so per-subfield edits read
 // the existing block (or default to a 5%-disabled stub), patch the one key,
 // and write it back. Default `chancePercent` of 5 matches the authoring UI.
+// All known subfields must be re-asserted in `merged` so editing one key
+// doesn't strip the others off the on-disk block.
 async function persistOverdoseField(item, key, value) {
   const current = getOverdose(item) ?? {};
   const merged = {
@@ -938,6 +971,13 @@ async function persistOverdoseField(item, key, value) {
       ? Number(current.chancePercent)
       : 5,
     description: typeof current.description === "string" ? current.description : "",
+    toleranceInteraction:
+      current.toleranceInteraction === "mitigate" || current.toleranceInteraction === "compound"
+        ? current.toleranceInteraction
+        : "none",
+    toleranceInteractionMagnitude: Number.isFinite(Number(current.toleranceInteractionMagnitude))
+      ? Number(current.toleranceInteractionMagnitude)
+      : 0,
     [key]: value,
   };
   return setOverdose(item, merged);
