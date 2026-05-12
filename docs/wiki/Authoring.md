@@ -41,6 +41,27 @@ flags["substances-and-paraphernalia"] = {
 
 Per-day uses for bypass-granting paraphernalia ride on dnd5e's native `system.uses.recovery: [{ period: "day", type: "recoverAll" }]`. The validator requires this when an embedded bypass AE declares `usesPerDay`.
 
+## Choosing a Save Ability
+
+The Save Ability dropdown defaults to **Constitution** because most
+homebrew substances are stimulants or performance-enhancers where
+physical dependence is the right fit. The shipped compendium varies
+by category:
+
+- **Stimulants** and **Performance-Enhancers** call Constitution saves
+  (resist physical dependence).
+- **Mind-Altering** substances call Wisdom saves (resist psychic
+  compulsion, in line with 2024 D&D's resist-charm-fear convention).
+
+Override freely. The schema accepts any save ability; the UI default
+and the shipped content are conventions, not rules.
+
+> The shipped compendium content is being rewritten in v0.9 (Item 12 of
+> the roadmap) to apply this convention consistently across every
+> mind-altering substance. Until then, some existing content still uses
+> Constitution saves for mind-altering substances — that's the legacy
+> baseline, not the design intent.
+
 ## Active Effect name contracts
 
 The module prefers the `flags.substances-and-paraphernalia.aeRole` flag (see *AE Conventions* below); substring matching against the AE name is a warn-logged fallback for hand-authored AEs without the flag. Names are case-insensitive.
