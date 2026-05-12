@@ -77,3 +77,51 @@ describe("composeTolerance", () => {
     assert.equal(b.addictionDcBump, 0);
   });
 });
+
+describe("composeTolerance — soft caps", () => {
+  const DEFAULTS = {
+    maxStacks: 5,
+    modifierFactorFloor: 0.25,
+    addictionDcBumpCap: 5,
+    withdrawalDurationFactorCap: 2.0,
+  };
+
+  it("clamps stacks at maxStacks=5 (10 stacks treated as 5)", () => {
+    const big = composeTolerance([{ stacks: 10, addictionDcBump: 1 }], DEFAULTS);
+    const five = composeTolerance([{ stacks: 5, addictionDcBump: 1 }], DEFAULTS);
+    assert.equal(big.addictionDcBump, five.addictionDcBump);
+  });
+
+  it("floors attenuateAltered.modifierFactor at modifierFactorFloor=0.25", () => {
+    const r = composeTolerance(
+      [{ stacks: 5, attenuateAltered: { modifierFactor: -0.5 } }],
+      DEFAULTS,
+    );
+    assert.ok(r.attenuateAltered.modifierFactor >= 0.25 - 1e-9, "must not drop below 0.25");
+  });
+
+  it("caps addictionDcBump at 5 even when raw total would be higher", () => {
+    const r = composeTolerance([{ stacks: 5, addictionDcBump: 3 }], DEFAULTS);
+    assert.equal(r.addictionDcBump, 5);
+  });
+
+  it("caps withdrawalAmplify.durationFactor at 2.0", () => {
+    const r = composeTolerance(
+      [{ stacks: 5, withdrawalAmplify: { durationFactor: 0.5 } }],
+      DEFAULTS,
+    );
+    assert.ok(r.withdrawalAmplify.durationFactor <= 2.0 + 1e-9);
+  });
+
+  it("per-substance override loosens the cap when caps={maxStacks:10}", () => {
+    const looser = { ...DEFAULTS, maxStacks: 10 };
+    const r = composeTolerance([{ stacks: 10, addictionDcBump: 1 }], looser);
+    // Without clamp: 10 × 1 = 10, but addictionDcBumpCap stays at 5
+    assert.equal(r.addictionDcBump, 5);
+  });
+
+  it("when caps omitted (legacy callers), behavior matches pre-v0.7 — no clamp", () => {
+    const r = composeTolerance([{ stacks: 10, addictionDcBump: 1 }]);
+    assert.equal(r.addictionDcBump, 10);
+  });
+});
