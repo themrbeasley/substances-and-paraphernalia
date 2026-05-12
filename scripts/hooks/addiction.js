@@ -291,7 +291,11 @@ function buildAddictionPayload(template, item, couplingMode) {
   const data = template.toObject();
   delete data._id;
   data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = { ...(data.flags[MODULE_ID] ?? {}), [FLAGS.sourceSubstanceId]: item.id };
+  data.flags[MODULE_ID] = {
+    ...(data.flags[MODULE_ID] ?? {}),
+    [FLAGS.sourceSubstanceId]: item.id,
+    aeRole: "addiction",
+  };
   data.origin = item.uuid;
   data.disabled = false;
   if (data.duration) {
