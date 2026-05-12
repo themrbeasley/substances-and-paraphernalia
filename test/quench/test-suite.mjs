@@ -28,6 +28,7 @@ import {
   setActorWithdrawalEntry,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
+import { processAbstainFailure } from "../../scripts/hooks/long-rest-abstain.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
 import {
   buildParaphernaliaContext,
@@ -166,6 +167,11 @@ export function registerQuenchSuite() {
       `${BATCH_PREFIX}.overdose-tolerance-interaction`,
       overdoseToleranceInteractionBatch,
       { displayName: "S&P · Overdose × Tolerance — adjusted d100" },
+    );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.abstain-fail-consumes`,
+      abstainFailConsumesBatch,
+      { displayName: "S&P · Voluntary Abstain · fail triggers consumption" },
     );
   });
 }
@@ -2993,6 +2999,64 @@ function aeRoleFallbackWarnBatch(context) {
         warnCalls.length >= 1,
         `expected at least one logger.warn for substring fallback (got ${warnCalls.length})`,
       );
+    });
+  });
+}
+
+// ─── Batch: Voluntary Abstain — fail triggers consumption ───────────────────
+
+function abstainFailConsumesBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · Voluntary Abstain · fail triggers consumption", () => {
+    let actor, substance;
+
+    beforeEach(async () => {
+      const cls = CONFIG.Actor.documentClass;
+      actor = await cls.create({
+        name: "Quench Abstain Fail",
+        type: "character",
+        system: { abilities: { wis: { value: 3 } } }, // Wis -4, very low save
+      });
+      const items = await loadPackItems("fishut-illicit-substance");
+      const src = items.find((i) => i?.name?.startsWith("Coalshade") && isSubstance(i));
+      if (src) {
+        [substance] = await actor.createEmbeddedDocuments("Item", [src.toObject()]);
+        await substance.update({ "system.uses.value": 1, "system.uses.max": 1 });
+        // Plant an active withdrawal AE so processAbstainFailure has a row to act on.
+        await actor.createEmbeddedDocuments("ActiveEffect", [
+          {
+            name: `Withdrawal from ${substance.name}`,
+            icon: "icons/svg/poison.svg",
+            flags: {
+              [MODULE_ID]: {
+                aeRole: "withdrawal",
+                [FLAGS.sourceSubstanceId]: substance.id,
+              },
+            },
+          },
+        ]);
+      }
+    });
+
+    afterEach(async () => {
+      if (actor) await deleteActor(actor);
+    });
+
+    it("fail path: uses decrement and addiction/tolerance/overdose chain runs", async () => {
+      assert.ok(substance, "Coalshade substance must be importable from the shipped pack");
+      const row = {
+        substanceId: substance.id,
+        itemName: substance.name,
+        dc: 99, // unreachable → forced fail
+        withdrawalMod: 4,
+      };
+      const before = Number(actor.items.get(substance.id).system.uses.value);
+      await processAbstainFailure(actor, row);
+      // Foundry's activity.use() is async + emits its own chat; allow microtask flush.
+      await new Promise((r) => setTimeout(r, 100));
+      const after = Number(actor.items.get(substance.id).system.uses.value);
+      assert.equal(after, before - 1, "consumption fired and decremented uses by 1");
     });
   });
 }
