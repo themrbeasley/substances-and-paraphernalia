@@ -130,7 +130,7 @@
           "fhAEBlackLiftWit"
         ]
       },
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [
@@ -170,7 +170,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "altered"
+        }
+      },
       "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftBen"
     },
     {
@@ -192,7 +196,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "addiction"
+        }
+      },
       "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftAdc"
     },
     {
@@ -211,7 +219,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "withdrawal"
+        }
+      },
       "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftWit"
     }
   ],

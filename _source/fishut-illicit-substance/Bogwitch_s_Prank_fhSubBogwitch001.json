@@ -130,7 +130,7 @@
           "fhAEBogwitchWit1"
         ]
       },
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [
@@ -152,7 +152,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "altered"
+        }
+      },
       "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchBen1"
     },
     {
@@ -167,7 +171,11 @@
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom (Perception) checks until withdrawal completes.</p>",
       "changes": [],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "addiction"
+        }
+      },
       "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchAdc1"
     },
     {
@@ -186,7 +194,11 @@
           "priority": 20
         }
       ],
-      "flags": {},
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "withdrawal"
+        }
+      },
       "_key": "!items.effects!fhSubBogwitch001.fhAEBogwitchWit1"
     }
   ],

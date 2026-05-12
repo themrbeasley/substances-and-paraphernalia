@@ -32,7 +32,7 @@
       "setting": "modern",
       "subtype": "tincture-dropper",
       "appliesTo": ["ingested"],
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [],

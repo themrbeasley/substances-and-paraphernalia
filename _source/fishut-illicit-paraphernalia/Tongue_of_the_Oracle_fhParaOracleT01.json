@@ -40,7 +40,7 @@
       "setting": "fantasy",
       "subtype": "tincture-dropper",
       "appliesTo": ["ingested"],
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [
@@ -55,6 +55,7 @@
       "changes": [],
       "flags": {
         "substances-and-paraphernalia": {
+          "aeRole": "bypass",
           "modifier": {
             "kind": "bypass",
             "type": "reroll-on-fail",

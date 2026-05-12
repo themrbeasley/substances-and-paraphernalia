@@ -27,7 +27,7 @@
       "setting": "sciFi",
       "subtype": "inhaler",
       "appliesTo": ["inhaled", "contact"],
-      "schemaVersion": 2
+      "schemaVersion": 3
     }
   },
   "effects": [],
