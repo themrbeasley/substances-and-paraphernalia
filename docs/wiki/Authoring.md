@@ -20,7 +20,7 @@ flags["substances-and-paraphernalia"] = {
     chancePercent: 5,
     description: "<chat-card body>"
   },
-  schemaVersion: 2
+  schemaVersion: 3
 };
 ```
 
@@ -35,7 +35,7 @@ flags["substances-and-paraphernalia"] = {
   kind: "paraphernalia",
   setting: "fantasy" | "sciFi" | "modern",
   subtype: "snuff-horn",                      // built-in or custom (see Subtype Manager)
-  schemaVersion: 2
+  schemaVersion: 3
 };
 ```
 
@@ -43,7 +43,7 @@ Per-day uses for bypass-granting paraphernalia ride on dnd5e's native `system.us
 
 ## Active Effect name contracts
 
-The module matches AEs by substring. Names are case-insensitive.
+The module prefers the `flags.substances-and-paraphernalia.aeRole` flag (see *AE Conventions* below); substring matching against the AE name is a warn-logged fallback for hand-authored AEs without the flag. Names are case-insensitive.
 
 | AE role | Required substring | Notes |
 |---|---|---|
@@ -53,6 +53,31 @@ The module matches AEs by substring. Names are case-insensitive.
 | Tolerance | `tolerance` | Template lives on the substance with the `tolerance` modifier flag block. |
 | Overdose marker | `overdose` | Applied when the d100 roll hits. |
 | Bypass (paraphernalia) | (no contract) | Lives on the paraphernalia as a `transfer: true` AE with the `bypass` modifier flag block. |
+
+## AE Conventions: the `aeRole` flag
+
+Every module-created Active Effect carries a flag at
+`flags.substances-and-paraphernalia.aeRole`. Values:
+
+| `aeRole`     | Used for                                         |
+|--------------|--------------------------------------------------|
+| `addiction`  | The persistent addiction AE on an addicted actor |
+| `withdrawal` | The withdrawal AE applied when an addiction expires |
+| `altered`    | The benefit AE applied during the substance's altered state |
+| `tolerance`  | Per-substance tolerance stacks                   |
+| `overdose`   | Overdose marker AE                               |
+| `bypass`     | Paraphernalia bypass AE                          |
+
+**Why:** AE name strings vary by locale and author preference. Reading the
+role from a flag is locale-independent. Substring matching against the AE
+name (`addict`, `withdraw`, `altered`, `tolerance`, `overdose`, `bypass`)
+remains as a **warn-logged fallback** so hand-authored AEs continue to
+work — the console warns each time the fallback fires so a GM can add
+the flag manually when authoring conventions are uncertain.
+
+**For homebrew authors:** when you create an AE outside the module's
+templates (e.g. directly in the AE editor), add the `aeRole` flag. The
+Remove-X macros and the modifier pipeline both prefer the flag.
 
 ## Modifier flag block (on bypass / tolerance AEs)
 
