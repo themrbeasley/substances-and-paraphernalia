@@ -150,6 +150,11 @@ export function registerQuenchSuite() {
       tmfxPresetsBatch,
       { displayName: "S&P · TMFX preset round-trip" },
     );
+    quench.registerBatch(
+      `${BATCH_PREFIX}.ae-role-rename`,
+      aeRoleRenameBatch,
+      { displayName: "S&P · aeRole — renamed AE still removable" },
+    );
   });
 }
 
@@ -2805,6 +2810,58 @@ function tmfxPresetsBatch(context) {
           ? tm.hasFilterId(token, presetName)
           : Boolean(token.TMFXhasFilterId?.(presetName));
       assert.ok(hasFilter, `token should have filter ${presetName} after addFilters`);
+    });
+  });
+}
+
+// ─── Batch: aeRole — renamed AE still removable via the flag ────────────────
+
+function aeRoleRenameBatch(context) {
+  const { describe, it, assert, beforeEach, afterEach } = context;
+
+  describe("S&P · aeRole — renamed AE still removable", () => {
+    let actor, substance;
+
+    beforeEach(async () => {
+      actor = await makeActor("Quench aeRole Rename");
+      const items = await loadPackItems("fishut-illicit-substance");
+      const src = items.find((i) => i?.name?.startsWith("Coalshade") && isSubstance(i));
+      if (src) {
+        [substance] = await actor.createEmbeddedDocuments("Item", [src.toObject()]);
+      }
+    });
+
+    afterEach(async () => {
+      await deleteActor(actor);
+    });
+
+    it("Remove Addiction macro finds AE renamed to a non-matching name via the aeRole flag", async () => {
+      assert.ok(substance, "Coalshade substance must be importable from the shipped pack");
+
+      await api().addiction.applyAddictionEffect(actor, substance);
+
+      const ae = actor.effects.find(
+        (e) => e.flags?.[MODULE_ID]?.aeRole === "addiction",
+      );
+      assert.ok(ae, "addiction AE should exist after applyAddictionEffect");
+
+      // Rename to a non-matching string (German for "poisoned by coalshade powder")
+      // so the substring fallback (`/addict/i`) cannot find it.
+      await ae.update({ name: "Toxisch durch Kohlenschattenpulver" });
+
+      // Simulate the Remove Addiction macro body (flag-first lookup).
+      const matches = actor.effects.filter(
+        (e) => e.flags?.[MODULE_ID]?.aeRole === "addiction",
+      );
+      assert.equal(matches.length, 1, "flag-first lookup must find the renamed AE");
+      await actor.deleteEmbeddedDocuments(
+        "ActiveEffect",
+        matches.map((m) => m.id),
+      );
+      const remaining = actor.effects.filter(
+        (e) => e.flags?.[MODULE_ID]?.aeRole === "addiction",
+      );
+      assert.equal(remaining.length, 0, "AE should be removed after delete");
     });
   });
 }
