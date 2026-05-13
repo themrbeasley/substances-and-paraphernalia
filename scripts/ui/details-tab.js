@@ -33,6 +33,7 @@ import {
 } from "../data/flag-schema.js";
 import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
 import { writeModifierAsChanges } from "../data/modifier-flag.js";
+import { previewWithdrawalDuration } from "../data/withdrawal.js";
 import { logger } from "../logger.js";
 
 const SECTION_TEMPLATE = `modules/${MODULE_ID}/templates/details-tab/section.hbs`;
@@ -383,9 +384,19 @@ function buildWithdrawalContext(item) {
     enabled,
     fieldsDisabled: !enabled,
     mod: Number.isFinite(withdrawalMod) ? withdrawalMod : "",
+    previewLabel: formatWithdrawalPreviewLabel(withdrawalMod),
     availableEffects,
     attachedEffects,
   };
+}
+
+// Author-time withdrawal preview: rests-remaining assuming Con +0, since the
+// authoring sheet has no character context. Shares the engine helper so the
+// preview can never drift from the post-save computation.
+function formatWithdrawalPreviewLabel(withdrawalMod) {
+  const w = Number.isFinite(withdrawalMod) ? withdrawalMod : 0;
+  const rests = previewWithdrawalDuration(w, 0);
+  return game.i18n.format("FISHUT.Details.Preview.Withdrawal", { rests });
 }
 
 function buildOverdoseContext(item) {
@@ -530,8 +541,20 @@ export function buildParaphernaliaContext(item) {
     subtype,
     subtypeSelectOptions,
     adminOptions,
+    appliesToPreviewLabel: formatAppliesToPreviewLabel(adminOptions),
     bypass: buildBypassDisplay(findBypassEffect(item)),
   };
+}
+
+// Author-time appliesTo preview: comma-joined human-readable list of the
+// admin labels currently checked. Blank when none are selected so the row
+// disappears rather than reading "Required for: ".
+function formatAppliesToPreviewLabel(adminOptions) {
+  const labels = adminOptions.filter((o) => o.checked).map((o) => o.label);
+  if (labels.length === 0) return "";
+  return game.i18n.format("FISHUT.Details.Preview.AppliesTo", {
+    admins: labels.join(", "),
+  });
 }
 
 function findBypassEffect(item) {
@@ -593,6 +616,23 @@ function wireDetails(wrapper, item) {
     persistField(item, flagField, rawValue, target).catch((err) =>
       logger.error("details-tab persistField failed", err),
     );
+    // Cosmetic, synchronous, optimistic UI: collapse/preview reflect the
+    // user's just-typed value without waiting for the persist round-trip.
+    // The next renderApplicationV2 confirms the same state from flags.
+    handleCollapseToggle(wrapper, flagField, rawValue);
+    handlePreviewUpdate(wrapper, flagField, rawValue, target);
+  });
+
+  // Number inputs only fire `change` on commit (blur/Enter); keystroke-by-
+  // keystroke withdrawal preview needs `input` too. Persistence still rides
+  // on `change` to avoid writing every keystroke to the flag.
+  wrapper.addEventListener("input", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const flagField = target.dataset?.fishutFlag;
+    if (flagField !== "withdrawal.mod") return;
+    const rawValue = readFieldValue(target);
+    updateWithdrawalPreview(wrapper, rawValue);
   });
 
   wrapper.addEventListener("click", (event) => {
@@ -604,6 +644,67 @@ function wireDetails(wrapper, item) {
       logger.error("details-tab dispatchAction failed", err),
     );
   });
+}
+
+// Synchronously toggle `[data-fishut-collapse="<name>"]` visibility when its
+// parent enable-checkbox changes. Field names map 1:1 onto collapse names.
+function handleCollapseToggle(wrapper, flagField, rawValue) {
+  if (
+    flagField !== "addiction.enabled" &&
+    flagField !== "withdrawal.enabled" &&
+    flagField !== "overdose.enabled" &&
+    flagField !== "tolerance.enabled"
+  ) return;
+  const name = flagField.split(".")[0];
+  const isOn = rawValue === "true";
+  toggleCollapseFor(wrapper, name, isOn);
+}
+
+function toggleCollapseFor(wrapper, name, isOn) {
+  const block = wrapper.querySelector(`[data-fishut-collapse="${name}"]`);
+  if (!block) return;
+  block.classList.toggle("fishut-hidden", !isOn);
+}
+
+// Route preview-update calls based on which field changed. Keeps the change
+// handler thin and the preview helpers single-purpose.
+function handlePreviewUpdate(wrapper, flagField, rawValue, target) {
+  if (flagField === "withdrawal.mod") {
+    updateWithdrawalPreview(wrapper, rawValue);
+  } else if (flagField === "appliesTo") {
+    updateAppliesToPreview(wrapper, target);
+  }
+}
+
+function updateWithdrawalPreview(wrapper, rawValue) {
+  const span = wrapper.querySelector('[data-fishut-preview="withdrawal"]');
+  if (!span) return;
+  const parsed = parseIntOrNull(rawValue);
+  span.textContent = formatWithdrawalPreviewLabel(parsed);
+}
+
+// Recompute the appliesTo preview from the live checkbox state in the DOM,
+// so the preview reflects what the user sees (including the click that just
+// fired) without waiting for the next render.
+function updateAppliesToPreview(wrapper, _target) {
+  const span = wrapper.querySelector('[data-fishut-preview="appliesTo"]');
+  if (!span) return;
+  const checkboxes = wrapper.querySelectorAll(
+    '[data-fishut-flag="appliesTo"][data-fishut-admin]',
+  );
+  const labels = [];
+  for (const cb of checkboxes) {
+    if (cb.checked !== true) continue;
+    const id = cb.dataset.fishutAdmin;
+    const labelKey = SCHEMA.administrations.find((a) => a.id === id)?.labelKey;
+    if (labelKey) labels.push(L(labelKey));
+  }
+  span.textContent =
+    labels.length === 0
+      ? ""
+      : game.i18n.format("FISHUT.Details.Preview.AppliesTo", {
+          admins: labels.join(", "),
+        });
 }
 
 // Read the user-visible value off a form control. Native checkboxes and the
