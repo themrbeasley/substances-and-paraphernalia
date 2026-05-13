@@ -51,6 +51,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { checkSubstance, checkParaphernalia } from "./validate-content-checks.mjs";
+import { checkLanguagePhrasing } from "./validate-content-language.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const ROOT = resolve(dirname(__filename), "..");
@@ -119,6 +120,66 @@ for (const file of paraphernaliaFiles) {
   errors.push(...result.errors);
   warnings.push(...result.warnings);
 }
+
+// 2024 language audit (warn-only in v0.8; flips to error-blocking in v0.9).
+async function scanLangStringsForPhrasing() {
+  const path = resolve(ROOT, "lang/en.json");
+  let json;
+  try {
+    const raw = await readFile(path, "utf8");
+    json = JSON.parse(raw);
+  } catch (e) {
+    warnings.push(`lang/en.json: failed to read for language scan: ${e.message}`);
+    return;
+  }
+  for (const [key, value] of Object.entries(json)) {
+    if (typeof value !== "string") continue;
+    const findings = checkLanguagePhrasing(value, {
+      mode: "text-content-only",
+      sourcePath: `lang/en.json:${key}`,
+    });
+    for (const f of findings) {
+      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}" — ${f.message}`);
+    }
+  }
+}
+
+async function scanTemplatesForPhrasing() {
+  const templatesRoot = resolve(ROOT, "templates");
+  let entries;
+  try {
+    entries = await readdir(templatesRoot, { withFileTypes: true, recursive: true });
+  } catch (e) {
+    warnings.push(`templates/: failed to enumerate: ${e.message}`);
+    return;
+  }
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".hbs")) continue;
+    const path = resolve(entry.parentPath ?? entry.path, entry.name);
+    const relPath = path.slice(ROOT.length + 1).replace(/\\/g, "/");
+    let raw;
+    try {
+      raw = await readFile(path, "utf8");
+    } catch (e) {
+      warnings.push(`${relPath}: failed to read for language scan: ${e.message}`);
+      continue;
+    }
+    // Strip Handlebars expressions {{...}} so we don't flag inner syntax.
+    const stripped = raw.replace(/{{[\s\S]*?}}/g, " ");
+    // Strip HTML tags so we scan visible text only (coarse but warn-only).
+    const visible = stripped.replace(/<[^>]+>/g, " ");
+    const findings = checkLanguagePhrasing(visible, {
+      mode: "text-content-only",
+      sourcePath: relPath,
+    });
+    for (const f of findings) {
+      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}" — ${f.message}`);
+    }
+  }
+}
+
+await scanLangStringsForPhrasing();
+await scanTemplatesForPhrasing();
 
 const checked = substanceFiles.length + paraphernaliaFiles.length;
 if (warnings.length) {
