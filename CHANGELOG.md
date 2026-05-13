@@ -5,6 +5,13 @@ format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/) once it
 reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
+## [Unreleased]
+
+### Added
+- DC-tier scaling design statement on the Mechanics wiki, including a recommended DC range table per character tier. (Item 13)
+- Save DC hint string beneath the Details-tab Save DC field. (Item 13)
+- GM Guide journal pointer paragraph referencing the Mechanics wiki's DC-scaling section. (Item 13)
+
 ## [0.7.0] — 2026-05-12
 
 ### Added
