@@ -7,6 +7,8 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-05-13
+
 ### Added
 - DC-tier scaling design statement on the Mechanics wiki, including a recommended DC range table per character tier. (Item 13)
 - Save DC hint string beneath the Details-tab Save DC field. (Item 13)
