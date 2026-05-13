@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
+import { computeRestsRemaining, previewWithdrawalDuration } from "../../scripts/data/withdrawal.js";
 
 describe("computeRestsRemaining(wMod, abilityMod)", () => {
   it("clamps to a minimum of 1 long rest", () => {
@@ -50,4 +50,25 @@ describe("computeRestsRemaining(wMod, abilityMod)", () => {
     assert.equal(computeRestsRemaining(null, null), 1);
     assert.equal(computeRestsRemaining("not a number", "also not"), 1);
   });
+});
+
+describe("previewWithdrawalDuration(withdrawalMod, assumedConMod = 0)", () => {
+  it("defaults assumedConMod to 0 and matches computeRestsRemaining", () => {
+    assert.equal(previewWithdrawalDuration(4), 4);
+    assert.equal(previewWithdrawalDuration(2), 2);
+    assert.equal(previewWithdrawalDuration(6), 6);
+  });
+
+  // Worked-examples grid — same grid the Authoring wiki publishes.
+  // Each row is (withdrawalMod, assumedConMod, expectedRests).
+  const grid = [
+    [2, 0, 2], [2, 3, 1], [2, 5, 1],
+    [4, 0, 4], [4, 3, 2], [4, 5, 2],
+    [6, 0, 6], [6, 3, 3], [6, 5, 3],
+  ];
+  for (const [wMod, conMod, expected] of grid) {
+    it(`withdrawalMod=${wMod}, assumedConMod=${conMod} → ${expected} rests`, () => {
+      assert.equal(previewWithdrawalDuration(wMod, conMod), expected);
+    });
+  }
 });

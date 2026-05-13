@@ -10,9 +10,7 @@
  * failing an addiction save.
  *
  * Formula: `max(wMod − abilityMod, ceil(wMod / 2))`, clamped to a minimum of 1.
- *
- * The `ceil(wMod / 2)` floor ensures very-tough actors still owe at least
- * half the substance's withdrawalMod in rests (rounded up).
+ * floor clamp prevents a high-Con character from waving off withdrawal entirely.
  *
  * @param {number} wMod        The substance's `withdrawalMod`.
  * @param {number} abilityMod  The actor's relevant ability modifier (Con by default).
@@ -24,4 +22,19 @@ export function computeRestsRemaining(wMod, abilityMod) {
   const floor = Math.ceil(w / 2);
   const computed = Math.max(w - a, floor);
   return Math.max(1, computed);
+}
+
+/**
+ * Cosmetic-only preview of withdrawal duration for the Details-tab authoring
+ * surface. Reuses computeRestsRemaining so the UI preview can never drift from
+ * the engine's actual computation.
+ *
+ * @param {number} withdrawalMod   The substance's withdrawalMod (Details-tab input).
+ * @param {number} [assumedConMod] Defaults to 0 — the author has no character context
+ *                                 at item-edit time, so the preview must disclose
+ *                                 the assumption in its display string.
+ * @returns {number}               Long rests of withdrawal owed (>= 1).
+ */
+export function previewWithdrawalDuration(withdrawalMod, assumedConMod = 0) {
+  return computeRestsRemaining(withdrawalMod, assumedConMod);
 }
