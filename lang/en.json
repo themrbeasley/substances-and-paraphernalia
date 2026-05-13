@@ -207,6 +207,7 @@
   "FISHUT.DetailsTab.Field.SaveAbility": "Save Ability",
   "FISHUT.Details.SaveAbility.Hint": "By convention: stimulants and performance-enhancers use Constitution (physical dependence). Mind-altering substances use Wisdom (psychic compulsion). Override freely for your design.",
   "FISHUT.DetailsTab.Field.SaveDc": "Addictiveness DC",
+  "FISHUT.Details.SaveDc.Hint": "Recommended DC ranges: 12-14 for tier 1 substances, 15-17 for tier 2, 18-20 for tier 3, 21+ for tier 4 setpiece substances.",
   "FISHUT.DetailsTab.Field.AddictionEffect.Label": "Addiction Effect",
   "FISHUT.DetailsTab.Field.AddictionEffect.None": "(none)",
   "FISHUT.DetailsTab.Field.AddictionEffect.CreateTooltip": "Create a new addiction effect",
