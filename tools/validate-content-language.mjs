@@ -59,7 +59,7 @@ const RULES = [
   },
   {
     id: "rest-not-capitalized",
-    pattern: /\b(long rest|short rest)\b/,
+    pattern: /\b(long rests?|short rests?)\b/,
     message: 'capitalize "Long Rest" / "Short Rest"',
     appliesTo: "text-content-only",
   },
