@@ -153,6 +153,34 @@ The preview reuses the engine's `computeRestsRemaining` helper, so the number
 shown in the editor is the same number the long-rest tick will count down at
 the table.
 
+## Language Conventions
+
+User-facing content (item descriptions, AE names, lang/en.json strings,
+template prose) follows 2024 D&D 5e PHB phrasing. `npm run validate` warns
+on the most common drifts; in v0.8 these warnings are advisory, in v0.9 they
+flip to errors.
+
+| Anti-pattern | Use instead |
+|---|---|
+| "becomes poisoned" | "gains the Poisoned condition" |
+| "roll a Constitution save" | "make a Constitution saving throw" |
+| "make a Con save" (bare) | "make a Constitution saving throw" |
+| "restores 1d4 hit points" | "regains 1d4 hit points" |
+| "recovers 5 hit points" | "regains 5 hit points" |
+| "once per day" | "regains all expended uses at dawn" *or* "can't use this again until you finish a Long Rest" |
+| "long rest" / "short rest" (lower) | "Long Rest" / "Short Rest" |
+| "poisoned" as a condition reference | "Poisoned" (capitalize condition names) |
+| "Fire damage" / "Cold damage" in prose | "fire damage" / "cold damage" (lowercase damage types in prose) |
+
+The validator only flags damage types and condition names as drift in **prose
+context** (lang/en.json strings, .hbs templates). It does not flag them in
+data fields — e.g. `"subtype": "poisoned"` is a dnd5e keyword, not the
+condition name, and is left alone.
+
+The full rule set lives in `tools/validate-content-language.mjs`. Authors who
+add a new shipped substance should run `npm run validate` and resolve any
+warnings before committing.
+
 ## Details tab
 
 Open any substance item; the dnd5e Details tab now shows:

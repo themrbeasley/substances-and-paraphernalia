@@ -15,9 +15,13 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - Details-tab withdrawal preview: live "Estimated withdrawal: ~N long rests (assumes Con +0; varies per character)" span beneath the Withdrawal Mod input, recomputed on each keystroke. (Item 4)
 - Details-tab appliesTo preview on paraphernalia: live "Required for: …" admin-list span beneath the appliesTo checkbox grid. (Item 5)
 - "Tuning Withdrawal Duration" section in the Authoring wiki, with a worked-examples grid covering Con +0 / +3 / +5 across `withdrawalMod` 2–6. (Item 4)
+- `tools/validate-content-language.mjs` — pure 2024 D&D 5e phrasing invariant (`checkLanguagePhrasing`) covering condition capitalization, "saving throw" vs "save", "regain HP" vs "restore/recover", "Long Rest" / "Short Rest" capitalization, "once per day" recovery anti-pattern, and lowercase damage types in prose. Warn-only in v0.8; flips to error-blocking in v0.9. (Item 11)
+- `validate-content.mjs` now scans every `lang/en.json` string and every `templates/**/*.hbs` template (Handlebars and HTML stripped) and reports findings as warnings. (Item 11)
+- "Language Conventions" section in the Authoring wiki with the anti-pattern → recommended-phrasing table and the prose-vs-data-field rule. (Item 11)
 
 ### Changed
 - Substance subsystem fields on the Details tab (Addiction, Withdrawal, Overdose, Tolerance) now **collapse** when their parent enable toggle is off instead of greying out. Wraps the dependent inputs in `[data-fishut-collapse="<name>"]` divs that toggle `.fishut-hidden` synchronously on checkbox change — clearer than disabled-but-visible inputs that read as "broken." (Item 4)
+- `lang/en.json` strings rewritten to satisfy the new language invariant (Long Rest capitalization, "saving throw" spelled out, capitalized condition names). (Item 11)
 
 ## [0.7.0] — 2026-05-12
 
