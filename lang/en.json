@@ -215,6 +215,8 @@
   "FISHUT.DetailsTab.Withdrawal.Header": "Withdrawal",
   "FISHUT.DetailsTab.Withdrawal.Enabled": "Track withdrawal on save fail",
   "FISHUT.DetailsTab.Field.WithdrawalMod": "Withdrawal Modifier",
+  "FISHUT.Details.Preview.Withdrawal": "Estimated withdrawal: ~{rests} long rests (assumes Con +0; varies per character).",
+  "FISHUT.Details.Preview.AppliesTo": "Required for: {admins}",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.Label": "Withdrawal Effect",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.None": "(default)",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip": "Don't duplicate poisoned (disadv on attacks/checks). Escalate: exhaustion, disadv on saves, speed reduction, stat penalty.",
