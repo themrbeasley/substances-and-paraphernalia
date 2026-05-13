@@ -116,3 +116,18 @@ existing pre-v0.7 substances keep their pre-v0.7 behavior.
 ## Voluntary Abstain
 
 See [Voluntary-Abstain.md](Voluntary-Abstain.md) for the willpower/craving mechanic and the failure-path consumption flow.
+
+## DC Scaling Across Tiers
+
+The module accepts any save DC, but shipped substances follow this tier-aligned convention:
+
+| Character tier | Levels | Recommended DC range | Pass rate (vs +1 Con) | Pass rate (vs +5 Con) |
+|---|---|---|---|---|
+| 1 | 1–4 | 12–14 | ~50% | ~70% |
+| 2 | 5–10 | 15–17 | ~35% | ~55% |
+| 3 | 11–16 | 18–20 | ~20% | ~40% |
+| 4 | 17–20 | 21+ | ~10% | ~25% |
+
+The intent is **tier-1-to-tier-2 by default** — most shipped substances sit at DC 12–16 so they remain a real but manageable narrative threat through most campaigns. DCs of 17+ are reserved for tier-3-plus setpiece substances (alchemical horrors, story-critical addictions, etc.) where the addiction itself is a deliberate antagonist.
+
+This convention matches the 2024 SRD poison rules and gives the v0.9 compendium rebuild a known target. Authors are free to override per-substance — the schema accepts any DC. The Save DC field in the Details tab shows a hint with the same ranges to keep the convention discoverable at the authoring surface.
