@@ -122,6 +122,37 @@ flags["substances-and-paraphernalia"].modifier = {
 };
 ```
 
+## Tuning Withdrawal Duration
+
+The Withdrawal Mod field controls how long an addicted character suffers
+withdrawal after the addiction AE expires. The engine computes rests-remaining
+as `max(withdrawalMod − ConMod, ⌈withdrawalMod/2⌉)`, clamped to a minimum of 1
+long rest. The `⌈Y/2⌉` term is a floor clamp — a high-Con character can never
+wave off withdrawal entirely.
+
+The Details-tab preview span beneath the Withdrawal Mod input shows the
+**Con +0 projection**: how many rests withdrawal will last for an actor with
+no Con modifier. Use it as the "average actor" baseline; specific characters
+with positive Con shorten the count and negative-Con characters extend it.
+
+| `withdrawalMod` | Con +0 | Con +3 | Con +5 |
+|---|---|---|---|
+| 2 | 2 rests | 1 rest  | 1 rest  |
+| 3 | 3 rests | 2 rests | 2 rests |
+| 4 | 4 rests | 2 rests | 2 rests |
+| 5 | 5 rests | 3 rests | 3 rests |
+| 6 | 6 rests | 3 rests | 3 rests |
+
+**Picking a value:** treat `withdrawalMod` as "how many rests does a Con +0
+victim spend in withdrawal." For a casual recreational substance, 2 is
+plenty; for a setpiece narcotic that should leave a mark even on a tough
+character, 5–6 (Con +5 still owes 3 rests). Values above 8 stop scaling
+meaningfully against Con and start looking arbitrary.
+
+The preview reuses the engine's `computeRestsRemaining` helper, so the number
+shown in the editor is the same number the long-rest tick will count down at
+the table.
+
 ## Details tab
 
 Open any substance item; the dnd5e Details tab now shows:

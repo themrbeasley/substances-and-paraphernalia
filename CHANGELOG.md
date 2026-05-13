@@ -11,6 +11,13 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - DC-tier scaling design statement on the Mechanics wiki, including a recommended DC range table per character tier. (Item 13)
 - Save DC hint string beneath the Details-tab Save DC field. (Item 13)
 - GM Guide journal pointer paragraph referencing the Mechanics wiki's DC-scaling section. (Item 13)
+- `previewWithdrawalDuration(withdrawalMod, assumedConMod=0)` helper in `scripts/data/withdrawal.js`, shared with the engine's `computeRestsRemaining` so the editor preview can never drift from the post-save count. (Item 4)
+- Details-tab withdrawal preview: live "Estimated withdrawal: ~N long rests (assumes Con +0; varies per character)" span beneath the Withdrawal Mod input, recomputed on each keystroke. (Item 4)
+- Details-tab appliesTo preview on paraphernalia: live "Required for: …" admin-list span beneath the appliesTo checkbox grid. (Item 5)
+- "Tuning Withdrawal Duration" section in the Authoring wiki, with a worked-examples grid covering Con +0 / +3 / +5 across `withdrawalMod` 2–6. (Item 4)
+
+### Changed
+- Substance subsystem fields on the Details tab (Addiction, Withdrawal, Overdose, Tolerance) now **collapse** when their parent enable toggle is off instead of greying out. Wraps the dependent inputs in `[data-fishut-collapse="<name>"]` divs that toggle `.fishut-hidden` synchronously on checkbox change — clearer than disabled-but-visible inputs that read as "broken." (Item 4)
 
 ## [0.7.0] — 2026-05-12
 
