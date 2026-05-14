@@ -53,6 +53,8 @@ import { registerPhase2AbstainFailConFail } from "./phase2-abstain-fail-con-fail
 import { registerPhase2ForcedAbstain } from "./phase2-forced-abstain.test.mjs";
 import { registerPhase2DefaultUse } from "./phase2-default-use.test.mjs";
 import { registerPhase2DialogClose } from "./phase2-dialog-close.test.mjs";
+import { registerWithdrawalTimesUpCleanup } from "./withdrawal-times-up-cleanup.test.mjs";
+import { registerToleranceDecayToZero } from "./tolerance-decay-to-zero.test.mjs";
 
 const BATCH_PREFIX = "substances-and-paraphernalia";
 
@@ -197,6 +199,8 @@ export function registerQuenchSuite() {
     registerPhase2ForcedAbstain(quench);
     registerPhase2DefaultUse(quench);
     registerPhase2DialogClose(quench);
+    registerWithdrawalTimesUpCleanup(quench);
+    registerToleranceDecayToZero(quench);
   });
 }
 
