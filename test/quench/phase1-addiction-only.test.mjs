@@ -8,6 +8,8 @@ import { MODULE_ID } from "../../scripts/config.js";
 import { applyOutcome } from "../../scripts/hooks/addiction.js";
 import { getActorWithdrawal, findEffectsByRole } from "../../scripts/data/flag-schema.js";
 
+import { createSubstanceTestFixture, teardownFixture } from "./_fixtures.mjs";
+
 export function registerPhase1AddictionOnly(quench) {
   quench.registerBatch(
     "fishut.phase1-addiction-only",
@@ -49,13 +51,3 @@ export function registerPhase1AddictionOnly(quench) {
   );
 }
 
-// Test seam fixtures live in test-suite.mjs; this file imports them once it
-// registers under a shared world. For now, hoist them as exports here:
-async function createSubstanceTestFixture(opts) {
-  // Implementation TODO once a Quench-side fixture helper exists; see
-  // test/quench/_fixtures.mjs (Task 24) for the shared factory.
-  throw new Error("createSubstanceTestFixture not yet wired — see Task 24");
-}
-async function teardownFixture(actor, substance) {
-  throw new Error("teardownFixture not yet wired — see Task 24");
-}
