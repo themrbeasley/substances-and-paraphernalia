@@ -4,12 +4,7 @@ import {
   getAddictionEffectIds,
   getAddictionEnabled,
   getWithdrawalEffectIds,
-  getWithdrawalEnabled,
-  getWithdrawalMod,
-  getActorWithdrawal,
   getActorWithdrawalEntry,
-  setActorWithdrawalEntry,
-  clearActorWithdrawalEntry,
   getModifier,
   getToleranceCaps,
   getToleranceEffectIds,
@@ -18,7 +13,6 @@ import {
   isSubstance,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
-import { computeRestsRemaining } from "../data/withdrawal.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
 
@@ -31,9 +25,6 @@ export function registerAddictionHooks() {
   // world; if it differs we fall back to wrapping `Activity#use` directly
   // (see comment in onPostUseActivity).
   Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
-
-  // B.2 — Long-rest withdrawal tick (GM-arbitrated).
-  Hooks.on("dnd5e.restCompleted", onRestCompleted);
 
   // B.3 — Poisoned-coupling guard for linked-isolated mode.
   // External poisoned-clear cascades into our addiction AE's deletion under
@@ -110,25 +101,16 @@ export async function rollSaveAndApply(actor, item) {
 export async function applyOutcome(actor, item, outcome) {
   const addiction = getAddiction(item);
   if (!addiction) return;
-  const withdrawalEnabled = getWithdrawalEnabled(item);
-  const wMod = Number(getWithdrawalMod(item)) || 0;
-  const newComputed = computeRestsRemaining(wMod, conMod(actor));
 
   if (outcome?.alreadyAddicted) {
-    const current = getActorWithdrawalEntry(actor, item.id);
-    const currentRests = Number(current?.restsRemaining) || 0;
-    const next = Math.max(currentRests, newComputed);
-    await setActorWithdrawalEntry(actor, item.id, {
-      restsRemaining: next,
-      appliedAt: current?.appliedAt ?? new Date().toISOString(),
-    });
     await refreshAddictionEffect(actor, item);
-    const key =
-      next > currentRests
-        ? "FISHUT.Addiction.Already.Extended"
-        : "FISHUT.Addiction.Already.Maintained";
-    await chat(game.i18n.format(key, { actor: actor.name, item: item.name, rests: next }));
-    return { applied: "extended", restsRemaining: next };
+    await chat(
+      game.i18n.format("FISHUT.Addiction.Already.Maintained", {
+        actor: actor.name,
+        item: item.name,
+      }),
+    );
+    return { applied: "extended" };
   }
 
   if (outcome?.modifier?.resolution === "auto-pass") {
@@ -175,45 +157,23 @@ export async function applyOutcome(actor, item, outcome) {
 
   if (outcome?.saveResult === "fail") {
     await applyAddictionEffect(actor, item);
-    if (withdrawalEnabled) {
-      try {
-        await applyWithdrawalEffect(actor, item);
-      } catch (err) {
-        logger.error("withdrawal effect flow failed", err);
-      }
-      await setActorWithdrawalEntry(actor, item.id, {
-        restsRemaining: newComputed,
-        appliedAt: new Date().toISOString(),
-      });
-    }
+    // Phase 1 no longer applies Withdrawal AE or sets the actor withdrawal
+    // flag entry. Withdrawal onset is a Phase 2 event — see
+    // scripts/hooks/long-rest-abstain.js (Task 13).
     let key;
-    if (!withdrawalEnabled) {
-      if (rerollSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithReroll";
-      else if (advantageSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithAdvantage";
-      else if (isPlusN) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithBonus";
-      else key = "FISHUT.Addiction.Save.FailNoWithdrawal";
-    } else if (rerollSource) {
-      key = "FISHUT.Addiction.Save.FailWithReroll";
-    } else if (advantageSource) {
-      key = "FISHUT.Addiction.Save.FailWithAdvantage";
-    } else if (isPlusN) {
-      key = "FISHUT.Addiction.Save.FailWithBonus";
-    } else {
-      key = "FISHUT.Addiction.Save.Fail";
-    }
+    if (rerollSource) key = "FISHUT.Addiction.Save.FailWithReroll";
+    else if (advantageSource) key = "FISHUT.Addiction.Save.FailWithAdvantage";
+    else if (isPlusN) key = "FISHUT.Addiction.Save.FailWithBonus";
+    else key = "FISHUT.Addiction.Save.Fail";
     await chat(
       game.i18n.format(key, {
         actor: actor.name,
         item: item.name,
-        rests: newComputed,
         source: rerollSource || advantageSource || bonusSources,
         bonus: bonusValue,
       }),
     );
-    return {
-      applied: "addicted",
-      restsRemaining: withdrawalEnabled ? newComputed : 0,
-    };
+    return { applied: "addicted" };
   }
 }
 
@@ -221,11 +181,6 @@ function joinSourceNames(modifier) {
   const sources = Array.isArray(modifier?.sources) ? modifier.sources : [];
   const names = sources.map((s) => s?.name).filter((n) => typeof n === "string" && n.length > 0);
   return names.join(", ");
-}
-
-function conMod(actor) {
-  const mod = actor?.system?.abilities?.con?.mod;
-  return typeof mod === "number" ? mod : 0;
 }
 
 async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, reroll = false } = {}) {
@@ -396,51 +351,6 @@ export function onPreDeleteActiveEffect(effect, options, _userId) {
     `linked-isolated: blocking external delete of addiction AE "${effect.name}" on ${effect.parent?.name ?? "actor"}`,
   );
   return false;
-}
-
-async function onRestCompleted(actor, restData) {
-  if (!restData?.longRest) return;
-  if (!actor) return;
-  // GM-arbiter: only the active GM ticks, to prevent multi-client double-tick.
-  if (game.users?.activeGM && game.users.activeGM !== game.user) return;
-
-  const map = getActorWithdrawal(actor);
-  const ids = Object.keys(map);
-  if (ids.length === 0) return;
-
-  for (const substanceId of ids) {
-    const entry = map[substanceId];
-    const next = (Number(entry?.restsRemaining) || 0) - 1;
-    const addictionEffects = findAllAppliedAddictionEffects(actor, substanceId);
-    const primary = addictionEffects[0] ?? null;
-    if (next <= 0) {
-      await clearActorWithdrawalEntry(actor, substanceId);
-      for (const eff of addictionEffects) {
-        await eff.delete({ fishutIntentional: true });
-      }
-      const withdrawalEffects = findAllAppliedWithdrawalEffects(actor, substanceId);
-      for (const eff of withdrawalEffects) {
-        await eff.delete({ fishutIntentional: true });
-      }
-      const name = primary?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
-      await chat(
-        game.i18n.format("FISHUT.Withdrawal.Tick.Cleared", { actor: actor.name, effect: name }),
-      );
-    } else {
-      await setActorWithdrawalEntry(actor, substanceId, {
-        restsRemaining: next,
-        appliedAt: entry?.appliedAt ?? new Date().toISOString(),
-      });
-      const name = primary?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
-      await chat(
-        game.i18n.format("FISHUT.Withdrawal.Tick.Remaining", {
-          actor: actor.name,
-          effect: name,
-          rests: next,
-        }),
-      );
-    }
-  }
 }
 
 async function chat(content) {
@@ -674,10 +584,3 @@ function findWithdrawalTemplates(item) {
   return resolved;
 }
 
-function findAllAppliedWithdrawalEffects(actor, substanceId) {
-  const matches = findEffectsByRole(actor, "withdrawal");
-  if (substanceId === undefined) return matches;
-  return matches.filter(
-    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
-  );
-}
