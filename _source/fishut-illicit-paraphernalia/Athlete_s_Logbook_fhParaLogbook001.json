@@ -26,8 +26,11 @@
       "kind": "paraphernalia",
       "setting": "modern",
       "subtype": "athletes-logbook",
-      "appliesTo": ["ingested", "injury"],
-      "schemaVersion": 3
+      "appliesTo": [
+        "ingested",
+        "injury"
+      ],
+      "schemaVersion": 7
     }
   },
   "effects": [],

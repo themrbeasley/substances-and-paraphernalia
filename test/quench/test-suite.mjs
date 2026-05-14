@@ -25,7 +25,6 @@ import {
   getActorWithdrawalEntry,
   isParaphernalia,
   isSubstance,
-  setActorWithdrawalEntry,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
 import { processAbstainFailure } from "../../scripts/hooks/long-rest-abstain.js";
@@ -44,6 +43,18 @@ import { logger } from "../../scripts/logger.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
 import { PRESETS, PRESET_LIBRARY, verifyTmfxPresets } from "../../scripts/integrations/tmfx.js";
+import { registerPhase1AddictionOnly } from "./phase1-addiction-only.test.mjs";
+import { registerPhase1OverdoseGate } from "./phase1-overdose-gate.test.mjs";
+import { registerPhase1ToleranceIncrement } from "./phase1-tolerance-increment.test.mjs";
+import { registerPhase1AlteredAttenuation } from "./phase1-altered-attenuation.test.mjs";
+import { registerPhase2AbstainPass } from "./phase2-abstain-pass.test.mjs";
+import { registerPhase2AbstainFail } from "./phase2-abstain-fail.test.mjs";
+import { registerPhase2AbstainFailConFail } from "./phase2-abstain-fail-con-fail.test.mjs";
+import { registerPhase2ForcedAbstain } from "./phase2-forced-abstain.test.mjs";
+import { registerPhase2DefaultUse } from "./phase2-default-use.test.mjs";
+import { registerPhase2DialogClose } from "./phase2-dialog-close.test.mjs";
+import { registerWithdrawalTimesUpCleanup } from "./withdrawal-times-up-cleanup.test.mjs";
+import { registerToleranceDecayToZero } from "./tolerance-decay-to-zero.test.mjs";
 
 const BATCH_PREFIX = "substances-and-paraphernalia";
 
@@ -178,6 +189,18 @@ export function registerQuenchSuite() {
       abstainFailSoftBatch,
       { displayName: "S&P · Voluntary Abstain · fail soft-fail" },
     );
+    registerPhase1AddictionOnly(quench);
+    registerPhase1OverdoseGate(quench);
+    registerPhase1ToleranceIncrement(quench);
+    registerPhase1AlteredAttenuation(quench);
+    registerPhase2AbstainPass(quench);
+    registerPhase2AbstainFail(quench);
+    registerPhase2AbstainFailConFail(quench);
+    registerPhase2ForcedAbstain(quench);
+    registerPhase2DefaultUse(quench);
+    registerPhase2DialogClose(quench);
+    registerWithdrawalTimesUpCleanup(quench);
+    registerToleranceDecayToZero(quench);
   });
 }
 
@@ -2541,18 +2564,14 @@ function simulateDoseBatch(context) {
 
 // ─── Batch: Long-rest abstain flow ──────────────────────────────────────────
 
-const ABSTAIN_SETTING_KEY = "voluntaryAbstainEnabled";
-
 function longRestAbstainFlowBatch(context) {
   const { describe, it, assert, before, after, beforeEach } = context;
 
   describe("voluntary abstain — composition with GM rest tick", () => {
     let actor;
-    let priorSetting;
 
     before(async () => {
       actor = await makeActor("S&P Abstain Test Actor");
-      priorSetting = game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY);
     });
 
     beforeEach(async () => {
@@ -2564,7 +2583,6 @@ function longRestAbstainFlowBatch(context) {
     });
 
     after(async () => {
-      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, priorSetting);
       await deleteActor(actor);
     });
 
@@ -2576,81 +2594,6 @@ function longRestAbstainFlowBatch(context) {
       assert.equal(defaultAbstainDc(NaN), 8, "non-finite mod falls back to 8");
     });
 
-    it("public API surface: api.abstain.applyAbstainPreDecrement is callable", async () => {
-      const fn = api()?.abstain?.applyAbstainPreDecrement;
-      assert.equal(typeof fn, "function", "abstain helper missing on module API");
-    });
-
-    it("pre-decrement: rests=3 → 2 (single -1)", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub A" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 3,
-        appliedAt: new Date().toISOString(),
-      });
-      const result = await api().abstain.applyAbstainPreDecrement(actor, sub.id, {
-        restsRemaining: 3,
-      });
-      assert.equal(result?.newRests, 2, "pre-decrement should drop 3 → 2");
-      const stored = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(stored?.restsRemaining, 2);
-    });
-
-    it("clamp at 0: rests=0 stays at 0 after pre-decrement", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub Clamp" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 0,
-        appliedAt: new Date().toISOString(),
-      });
-      const result = await api().abstain.applyAbstainPreDecrement(actor, sub.id, {
-        restsRemaining: 0,
-      });
-      assert.equal(result?.newRests, 0, "0-rest entry should clamp at 0");
-      const stored = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(stored?.restsRemaining, 0);
-    });
-
-    it("composition: pre-decrement + GM tick = total -2 from rests=3", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub Compose" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 3,
-        appliedAt: new Date().toISOString(),
-      });
-
-      // Simulate the abstain pre-decrement.
-      await api().abstain.applyAbstainPreDecrement(actor, sub.id, { restsRemaining: 3 });
-      assert.equal(getActorWithdrawalEntry(actor, sub.id)?.restsRemaining, 2);
-
-      // Trigger the standard GM tick via the dnd5e hook.
-      await Hooks.callAll("dnd5e.restCompleted", actor, { longRest: true });
-
-      // Hook side effects are async; wait a tick.
-      await new Promise((r) => setTimeout(r, 50));
-      const final = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(final?.restsRemaining, 1, "composed result should be 1 after -2");
-    });
-
-    it("composition: pre-decrement + GM tick clears entry when rests was 1", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub Clear" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 1,
-        appliedAt: new Date().toISOString(),
-      });
-      await api().abstain.applyAbstainPreDecrement(actor, sub.id, { restsRemaining: 1 });
-      assert.equal(getActorWithdrawalEntry(actor, sub.id)?.restsRemaining, 0);
-
-      await Hooks.callAll("dnd5e.restCompleted", actor, { longRest: true });
-      await new Promise((r) => setTimeout(r, 50));
-
-      const final = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(final, null, "tick should clear the entry once rests reach 0");
-    });
-
-    it("setting toggle: setting can be flipped on and off without error", async () => {
-      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, false);
-      assert.equal(game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY), false);
-      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, true);
-      assert.equal(game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY), true);
-    });
   });
 }
 

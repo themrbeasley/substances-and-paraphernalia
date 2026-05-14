@@ -1,4 +1,4 @@
-import { describe, it } from "node:test";
+import { describe, it, test } from "node:test";
 import assert from "node:assert/strict";
 import {
   checkSubstance,
@@ -6,6 +6,71 @@ import {
 } from "../../tools/validate-content-checks.mjs";
 
 const SCOPE = "substances-and-paraphernalia";
+
+/**
+ * Return a fully-valid v0.8.1 substance file fixture, deep-merging the
+ * provided overrides into the flags block. Callers can supply:
+ *   { withdrawal: { ... } }  — replaces the withdrawal block wholesale
+ *   { addiction: { ... } }   — merges into the addiction block
+ *   etc.
+ */
+function makeValidSubstance(flagOverrides = {}) {
+  const defaultFlags = {
+    kind: "substance",
+    schemaVersion: 7,
+    category: "stimulant",
+    setting: "fantasy",
+    addiction: {
+      save: { ability: "con", dc: 14 },
+      addictionEffectIds: ["ae-addict-001"],
+    },
+    withdrawal: {
+      dc: 12,
+      abstain: { ability: "wis", dc: 10 },
+      duration: { value: 3, unit: "days" },
+      effectIds: ["ae-withdraw-001"],
+    },
+  };
+
+  // Explicit per-key merge: top-level flag keys are replaced; nested blocks
+  // (addiction, withdrawal) are spread so partial overrides work cleanly.
+  const mergedFlags = { ...defaultFlags };
+  for (const [key, value] of Object.entries(flagOverrides)) {
+    if (value !== null && typeof value === "object" && !Array.isArray(value) &&
+        defaultFlags[key] !== null && typeof defaultFlags[key] === "object") {
+      mergedFlags[key] = { ...defaultFlags[key], ...value };
+    } else {
+      mergedFlags[key] = value;
+    }
+  }
+
+  return {
+    relPath: "_source/fishut-illicit-substance/test.json",
+    data: {
+      name: "Test Substance",
+      type: "consumable",
+      system: { type: { value: "poison", subtype: "inhaled" } },
+      flags: {
+        [SCOPE]: mergedFlags,
+      },
+      effects: [
+        {
+          _id: "ae-addict-001",
+          name: "Addicted to Test Substance",
+          changes: [],
+          flags: { [SCOPE]: { aeRole: "addiction" } },
+        },
+        {
+          _id: "ae-withdraw-001",
+          name: "Withdrawing from Test Substance",
+          changes: [],
+          statuses: [],
+          flags: { [SCOPE]: { aeRole: "withdrawal" } },
+        },
+      ],
+    },
+  };
+}
 
 function baseSubstance(overrides = {}) {
   return {
@@ -17,14 +82,18 @@ function baseSubstance(overrides = {}) {
       flags: {
         [SCOPE]: {
           kind: "substance",
-          schemaVersion: 3,
+          schemaVersion: 7,
           category: "stimulant",
           setting: "fantasy",
           addiction: {
             save: { ability: "con", dc: 14 },
-            addictionEffectId: "ae-addict-001",
+            addictionEffectIds: ["ae-addict-001"],
           },
-          withdrawal: { mod: 3 },
+          withdrawal: {
+            dc: 12,
+            abstain: { ability: "wis", dc: 10 },
+            duration: { value: 3, unit: "days" },
+          },
         },
       },
       effects: [
@@ -50,7 +119,7 @@ function baseParaphernalia(overrides = {}) {
       flags: {
         [SCOPE]: {
           kind: "paraphernalia",
-          schemaVersion: 3,
+          schemaVersion: 7,
           subtype: "pipe",
         },
       },
@@ -60,7 +129,7 @@ function baseParaphernalia(overrides = {}) {
   };
 }
 
-describe("checkSubstance — v0.3 baseline (regression)", () => {
+describe("checkSubstance — v0.8.1 baseline (regression)", () => {
   it("passes a clean substance unchanged", () => {
     const { errors, warnings } = checkSubstance(baseSubstance());
     assert.deepEqual(errors, []);
@@ -75,9 +144,16 @@ describe("checkSubstance — v0.3 baseline (regression)", () => {
     assert.match(errors[0], /kind must be "substance"/);
   });
 
-  it("errors when addictionEffectId points at nothing", () => {
+  it("errors when schemaVersion is wrong", () => {
     const file = baseSubstance();
-    file.data.flags[SCOPE].addiction.addictionEffectId = "missing";
+    file.data.flags[SCOPE].schemaVersion = 3;
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.some((e) => /schemaVersion must be 7/.test(e)), true);
+  });
+
+  it("errors when addictionEffectIds points at nothing", () => {
+    const file = baseSubstance();
+    file.data.flags[SCOPE].addiction.addictionEffectIds = ["missing"];
     const { errors } = checkSubstance(file);
     assert.equal(errors.some((e) => /not found in effects/.test(e)), true);
   });
@@ -154,20 +230,20 @@ describe("checkSubstance — overdose flag (v0.4)", () => {
 describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
   function withWithdrawalAe(file, ae) {
     file.data.effects.push(ae);
-    file.data.flags[SCOPE].withdrawal.effectId = ae._id;
+    file.data.flags[SCOPE].withdrawal.effectIds = [ae._id];
     return file;
   }
 
-  it("accepts a missing withdrawal.effectId", () => {
+  it("accepts a missing withdrawal.effectIds", () => {
     const file = baseSubstance();
     const { errors, warnings } = checkSubstance(file);
     assert.deepEqual(errors, []);
     assert.deepEqual(warnings, []);
   });
 
-  it("errors when withdrawal.effectId points at nothing", () => {
+  it("errors when withdrawal.effectIds entry points at nothing", () => {
     const file = baseSubstance();
-    file.data.flags[SCOPE].withdrawal.effectId = "ghost";
+    file.data.flags[SCOPE].withdrawal.effectIds = ["ghost"];
     const { errors } = checkSubstance(file);
     assert.equal(
       errors.some((e) => /withdrawal\.effectIds entry "ghost" not found/.test(e)),
@@ -240,42 +316,89 @@ describe("checkSubstance — requiredSubtypes removal (v0.5)", () => {
   });
 });
 
+describe("checkSubstance — withdrawal v0.8.1 shape", () => {
+  test("missing withdrawal.dc emits error when addiction.enabled !== false", () => {
+    const file = {
+      relPath: "_source/fishut-illicit-substance/foo.json",
+      data: {
+        name: "Foo",
+        flags: {
+          [SCOPE]: {
+            kind: "substance",
+            schemaVersion: 7,
+            addiction: { save: { dc: 14 }, addictionEffectIds: ["a1"] },
+            withdrawal: { enabled: false }, // shape requires dc only when addiction.enabled !== false
+          },
+        },
+        system: { type: { value: "poison", subtype: "ingested" } },
+        effects: [{ _id: "a1", name: "Foo Addiction", flags: { [SCOPE]: { aeRole: "addiction" } } }],
+      },
+    };
+    const result = checkSubstance(file);
+    // addiction.enabled defaults to true → dc required even with withdrawal.enabled === false
+    assert.ok(result.errors.some((e) => /withdrawal\.dc is required/.test(e)));
+  });
+
+  test("withdrawal block accepts new v0.8.1 shape", () => {
+    const file = makeValidSubstance({
+      withdrawal: {
+        dc: 15,
+        abstain: { ability: "wis", dc: 12 },
+        duration: { value: 3, unit: "days" },
+        effectIds: ["ae-withdraw-001"],
+      },
+    });
+    const result = checkSubstance(file);
+    assert.deepEqual(result.errors, []);
+  });
+
+  test("withdrawal.duration.unit must be in allowed set", () => {
+    const file = makeValidSubstance({
+      withdrawal: {
+        dc: 15,
+        abstain: { ability: "wis", dc: 12 },
+        duration: { value: 3, unit: "fortnights" },
+      },
+    });
+    const result = checkSubstance(file);
+    assert.ok(result.errors.some((e) => /duration\.unit must be one of/.test(e)));
+  });
+
+  test("withdrawal.abstain block is required when withdrawal.enabled !== false", () => {
+    // Use baseSubstance and replace withdrawal wholesale to ensure abstain is absent
+    const file = baseSubstance();
+    file.data.flags[SCOPE].withdrawal = { dc: 12, duration: { value: 3, unit: "days" } };
+    const result = checkSubstance(file);
+    assert.ok(result.errors.some((e) => /withdrawal\.abstain block is required/.test(e)));
+  });
+
+  test("withdrawal.duration block is required when withdrawal.enabled !== false", () => {
+    // Use baseSubstance and replace withdrawal wholesale to ensure duration is absent
+    const file = baseSubstance();
+    file.data.flags[SCOPE].withdrawal = { dc: 12, abstain: { ability: "wis", dc: 10 } };
+    const result = checkSubstance(file);
+    assert.ok(result.errors.some((e) => /withdrawal\.duration block is required/.test(e)));
+  });
+
+  test("withdrawal.dc not required when addiction.enabled is false", () => {
+    const file = makeValidSubstance({
+      addiction: {
+        enabled: false,
+        save: { ability: "con", dc: 14 },
+        addictionEffectIds: ["ae-addict-001"],
+      },
+      withdrawal: {
+        // no dc — addiction disabled so dc not required
+        abstain: { ability: "wis", dc: 10 },
+        duration: { value: 3, unit: "days" },
+      },
+    });
+    const result = checkSubstance(file);
+    assert.ok(!result.errors.some((e) => /withdrawal\.dc is required/.test(e)));
+  });
+});
+
 describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
-  it("errors when a tolerance AE on the substance lacks substanceId", () => {
-    const file = baseSubstance();
-    file.data.effects.push({
-      _id: "tol1",
-      name: "Tolerance to Test",
-      changes: [],
-      flags: {
-        [SCOPE]: {
-          modifier: { kind: "tolerance", addictionDcBump: 1 },
-        },
-      },
-    });
-    const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /requires a non-empty substanceId/.test(e)), true);
-  });
-
-  it("errors when a tolerance AE has no measurable effect declared", () => {
-    const file = baseSubstance();
-    file.data.effects.push({
-      _id: "tol1",
-      name: "Tolerance to Test",
-      changes: [],
-      flags: {
-        [SCOPE]: {
-          modifier: { kind: "tolerance", substanceId: "abc" },
-        },
-      },
-    });
-    const { errors } = checkSubstance(file);
-    assert.equal(
-      errors.some((e) => /at least one of attenuateAltered \/ addictionDcBump \/ withdrawalAmplify/.test(e)),
-      true,
-    );
-  });
-
   it("accepts a tolerance AE with substanceId + addictionDcBump", () => {
     const file = baseSubstance();
     file.data.effects.push({
@@ -315,7 +438,7 @@ describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
   });
 });
 
-describe("checkParaphernalia — v0.3 baseline (regression)", () => {
+describe("checkParaphernalia — v0.8.1 baseline (regression)", () => {
   it("passes a clean paraphernalia unchanged", () => {
     const { errors, warnings } = checkParaphernalia(baseParaphernalia());
     assert.deepEqual(errors, []);
@@ -334,6 +457,13 @@ describe("checkParaphernalia — v0.3 baseline (regression)", () => {
     file.data.flags[SCOPE].addictionSaveBypass = { type: "auto-pass" };
     const { errors } = checkParaphernalia(file);
     assert.equal(errors.some((e) => /legacy item-level "addictionSaveBypass"/.test(e)), true);
+  });
+
+  it("errors when schemaVersion is wrong", () => {
+    const file = baseParaphernalia();
+    file.data.flags[SCOPE].schemaVersion = 3;
+    const { errors } = checkParaphernalia(file);
+    assert.equal(errors.some((e) => /schemaVersion must be 7/.test(e)), true);
   });
 });
 

@@ -7,29 +7,35 @@
  * to the pure helpers in `validate-content-checks.mjs` so the same invariants
  * can be unit-tested with synthetic JSON.
  *
- * Substance contract (v0.4):
+ * Substance contract (v0.8.1):
  *   - flags["substances-and-paraphernalia"].kind === "substance"
- *   - flags[…].schemaVersion === 2
+ *   - flags[…].schemaVersion === 7
  *   - system.type.value === "poison"
  *   - system.type.subtype is one of contact|ingested|inhaled|injury
  *   - addiction.save.dc is a finite number
  *   - addiction.enabled is boolean when present
- *   - withdrawal.mod is a positive integer; withdrawal.enabled boolean when present
- *   - addiction.addictionEffectId points to an AE on the same item whose name
- *     contains /addict/i
+ *   - withdrawal block is required (object); withdrawal.enabled boolean when present
+ *   - withdrawal.dc is a finite number when addiction.enabled !== false
+ *   - when withdrawal.enabled !== false:
+ *       - withdrawal.abstain.ability is a non-empty string
+ *       - withdrawal.abstain.dc is a finite number
+ *       - withdrawal.duration.value is a positive number
+ *       - withdrawal.duration.unit is one of minutes|hours|days|weeks|months
+ *   - tolerance.decay is the Count+Points decay config (no tolerance.caps)
+ *   - addiction.addictionEffectIds points to AEs on the same item whose names
+ *     contain /addict/i
  *   - flags[…].overdose: when `enabled`, requires integer chancePercent 1..100
  *     and non-empty `description`
- *   - flags[…].withdrawal.effectId (if set): must resolve to AE on the same
- *     item; AE name must contain /withdraw/i; warn on
+ *   - flags[…].withdrawal.effectIds (if set): must resolve to AEs on the same
+ *     item; AE names must contain /withdraw/i; warn on
  *     disadvantage-on-attack/check or statuses:["poisoned"] (don't duplicate
  *     poisoned)
  *   - any modifier-bearing AE: when kind="bypass" type="+N" requires non-zero
- *     numeric bonus; kind="tolerance" requires substanceId + at least one of
- *     attenuateAltered / addictionDcBump / withdrawalAmplify
+ *     numeric bonus; kind="tolerance" is removed (Count+Points model)
  *
- * Paraphernalia contract (v0.4):
+ * Paraphernalia contract (v0.8.1):
  *   - flags["substances-and-paraphernalia"].kind === "paraphernalia"
- *   - flags[…].schemaVersion === 2
+ *   - flags[…].schemaVersion === 7
  *   - subtype is a non-empty kebab-case string AND must be a built-in subtype
  *     from schema.json (custom subtypes are user-managed at runtime via the
  *     Subtype Manager app and can't be validated at build time)

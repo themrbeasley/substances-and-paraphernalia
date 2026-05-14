@@ -1,13 +1,10 @@
-import { MODULE_ID } from "../config.js";
 import {
   getAeRole,
   getAppliesTo,
   getModifier,
-  getToleranceCaps,
   isParaphernalia,
 } from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
-import { composeTolerance } from "./tolerance.js";
 
 /**
  * @typedef {"auto-pass" | "reroll-on-fail" | "advantage" | "+N" | "none"} ModifierResolutionType
@@ -127,42 +124,6 @@ export async function consumeBypassIfAvailable(actor, substance) {
     sources: sourceEffects,
     bonus: chosen.bonus,
   };
-}
-
-/**
- * Walk the actor's applied AEs for `kind: "tolerance"` entries matching
- * `substanceId`, and compose their per-stack effects via `composeTolerance`.
- *
- * Stacks are read from `effect.flags[MODULE_ID].stacks` (default 1). No uses
- * are consumed — tolerance is a state, not a per-shot resource.
- *
- * @param {Actor}  actor
- * @param {string} substanceId
- * @returns {import("./tolerance.js").ComposedTolerance|null}
- *   `null` when no matching AE exists; otherwise the composed effect.
- */
-export function consumeToleranceForSubstance(actor, substanceId) {
-  if (!actor || !substanceId) return null;
-  const substance = actor.items?.get?.(substanceId);
-  const caps = substance ? getToleranceCaps(substance) : undefined;
-  const effects = actor.appliedEffects ?? actor.effects ?? [];
-  const candidates = [];
-  for (const effect of effects) {
-    const block = getModifier(effect);
-    if (!block) continue;
-    if (block.kind !== "tolerance") continue;
-    if (block.substanceId !== substanceId) continue;
-    const stacks = readStacks(effect);
-    candidates.push({ ...block, stacks });
-  }
-  if (candidates.length === 0) return null;
-  return composeTolerance(candidates, caps);
-}
-
-function readStacks(effect) {
-  const raw = Number(effect?.flags?.[MODULE_ID]?.stacks);
-  if (!Number.isFinite(raw) || raw < 1) return 1;
-  return Math.floor(raw);
 }
 
 /**

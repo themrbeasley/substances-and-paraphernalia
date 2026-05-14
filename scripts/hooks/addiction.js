@@ -4,21 +4,22 @@ import {
   getAddictionEffectIds,
   getAddictionEnabled,
   getWithdrawalEffectIds,
-  getWithdrawalEnabled,
-  getWithdrawalMod,
-  getActorWithdrawal,
   getActorWithdrawalEntry,
-  setActorWithdrawalEntry,
-  clearActorWithdrawalEntry,
   getModifier,
-  getToleranceCaps,
   getToleranceEffectIds,
   getToleranceEnabled,
   findEffectsByRole,
   isSubstance,
+  getWithdrawalDc,
+  getToleranceDecay,
+  getAttenuationCurve,
+  getActorToleranceEntry,
+  setActorToleranceEntry,
+  clearActorToleranceEntry,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
-import { computeRestsRemaining } from "../data/withdrawal.js";
+import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
+import { applyAttenuation } from "../data/tolerance.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
 
@@ -31,9 +32,6 @@ export function registerAddictionHooks() {
   // world; if it differs we fall back to wrapping `Activity#use` directly
   // (see comment in onPostUseActivity).
   Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
-
-  // B.2 — Long-rest withdrawal tick (GM-arbitrated).
-  Hooks.on("dnd5e.restCompleted", onRestCompleted);
 
   // B.3 — Poisoned-coupling guard for linked-isolated mode.
   // External poisoned-clear cascades into our addiction AE's deletion under
@@ -110,25 +108,16 @@ export async function rollSaveAndApply(actor, item) {
 export async function applyOutcome(actor, item, outcome) {
   const addiction = getAddiction(item);
   if (!addiction) return;
-  const withdrawalEnabled = getWithdrawalEnabled(item);
-  const wMod = Number(getWithdrawalMod(item)) || 0;
-  const newComputed = computeRestsRemaining(wMod, conMod(actor));
 
   if (outcome?.alreadyAddicted) {
-    const current = getActorWithdrawalEntry(actor, item.id);
-    const currentRests = Number(current?.restsRemaining) || 0;
-    const next = Math.max(currentRests, newComputed);
-    await setActorWithdrawalEntry(actor, item.id, {
-      restsRemaining: next,
-      appliedAt: current?.appliedAt ?? new Date().toISOString(),
-    });
     await refreshAddictionEffect(actor, item);
-    const key =
-      next > currentRests
-        ? "FISHUT.Addiction.Already.Extended"
-        : "FISHUT.Addiction.Already.Maintained";
-    await chat(game.i18n.format(key, { actor: actor.name, item: item.name, rests: next }));
-    return { applied: "extended", restsRemaining: next };
+    await chat(
+      game.i18n.format("FISHUT.Addiction.Already.Maintained", {
+        actor: actor.name,
+        item: item.name,
+      }),
+    );
+    return { applied: "extended" };
   }
 
   if (outcome?.modifier?.resolution === "auto-pass") {
@@ -166,54 +155,32 @@ export async function applyOutcome(actor, item, outcome) {
       }),
     );
     try {
-      await applyOrIncrementToleranceStack(actor, item);
+      await incrementActorToleranceCount(actor, item);
     } catch (err) {
-      logger.error("tolerance stack flow failed", err);
+      logger.error("tolerance flow failed", err);
     }
     return { applied: "passed" };
   }
 
   if (outcome?.saveResult === "fail") {
     await applyAddictionEffect(actor, item);
-    if (withdrawalEnabled) {
-      try {
-        await applyWithdrawalEffect(actor, item);
-      } catch (err) {
-        logger.error("withdrawal effect flow failed", err);
-      }
-      await setActorWithdrawalEntry(actor, item.id, {
-        restsRemaining: newComputed,
-        appliedAt: new Date().toISOString(),
-      });
-    }
+    // Phase 1 no longer applies Withdrawal AE or sets the actor withdrawal
+    // flag entry. Withdrawal onset is a Phase 2 event — see
+    // scripts/hooks/long-rest-abstain.js (Task 13).
     let key;
-    if (!withdrawalEnabled) {
-      if (rerollSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithReroll";
-      else if (advantageSource) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithAdvantage";
-      else if (isPlusN) key = "FISHUT.Addiction.Save.FailNoWithdrawalWithBonus";
-      else key = "FISHUT.Addiction.Save.FailNoWithdrawal";
-    } else if (rerollSource) {
-      key = "FISHUT.Addiction.Save.FailWithReroll";
-    } else if (advantageSource) {
-      key = "FISHUT.Addiction.Save.FailWithAdvantage";
-    } else if (isPlusN) {
-      key = "FISHUT.Addiction.Save.FailWithBonus";
-    } else {
-      key = "FISHUT.Addiction.Save.Fail";
-    }
+    if (rerollSource) key = "FISHUT.Addiction.Save.FailWithReroll";
+    else if (advantageSource) key = "FISHUT.Addiction.Save.FailWithAdvantage";
+    else if (isPlusN) key = "FISHUT.Addiction.Save.FailWithBonus";
+    else key = "FISHUT.Addiction.Save.Fail";
     await chat(
       game.i18n.format(key, {
         actor: actor.name,
         item: item.name,
-        rests: newComputed,
         source: rerollSource || advantageSource || bonusSources,
         bonus: bonusValue,
       }),
     );
-    return {
-      applied: "addicted",
-      restsRemaining: withdrawalEnabled ? newComputed : 0,
-    };
+    return { applied: "addicted" };
   }
 }
 
@@ -221,11 +188,6 @@ function joinSourceNames(modifier) {
   const sources = Array.isArray(modifier?.sources) ? modifier.sources : [];
   const names = sources.map((s) => s?.name).filter((n) => typeof n === "string" && n.length > 0);
   return names.join(", ");
-}
-
-function conMod(actor) {
-  const mod = actor?.system?.abilities?.con?.mod;
-  return typeof mod === "number" ? mod : 0;
 }
 
 async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, reroll = false } = {}) {
@@ -398,183 +360,119 @@ export function onPreDeleteActiveEffect(effect, options, _userId) {
   return false;
 }
 
-async function onRestCompleted(actor, restData) {
-  if (!restData?.longRest) return;
-  if (!actor) return;
-  // GM-arbiter: only the active GM ticks, to prevent multi-client double-tick.
-  if (game.users?.activeGM && game.users.activeGM !== game.user) return;
-
-  const map = getActorWithdrawal(actor);
-  const ids = Object.keys(map);
-  if (ids.length === 0) return;
-
-  for (const substanceId of ids) {
-    const entry = map[substanceId];
-    const next = (Number(entry?.restsRemaining) || 0) - 1;
-    const addictionEffects = findAllAppliedAddictionEffects(actor, substanceId);
-    const primary = addictionEffects[0] ?? null;
-    if (next <= 0) {
-      await clearActorWithdrawalEntry(actor, substanceId);
-      for (const eff of addictionEffects) {
-        await eff.delete({ fishutIntentional: true });
-      }
-      const withdrawalEffects = findAllAppliedWithdrawalEffects(actor, substanceId);
-      for (const eff of withdrawalEffects) {
-        await eff.delete({ fishutIntentional: true });
-      }
-      const name = primary?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
-      await chat(
-        game.i18n.format("FISHUT.Withdrawal.Tick.Cleared", { actor: actor.name, effect: name }),
-      );
-    } else {
-      await setActorWithdrawalEntry(actor, substanceId, {
-        restsRemaining: next,
-        appliedAt: entry?.appliedAt ?? new Date().toISOString(),
-      });
-      const name = primary?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
-      await chat(
-        game.i18n.format("FISHUT.Withdrawal.Tick.Remaining", {
-          actor: actor.name,
-          effect: name,
-          rests: next,
-        }),
-      );
-    }
-  }
-}
-
 async function chat(content) {
   return ChatMessage.create({ content, whisper: [] });
 }
 
 /**
- * Increment all existing tolerance stack AEs for this (actor, substance) pair,
- * or apply a new set (one per authored template, falling back to a built-in
- * default if none authored). Test seam — exported for Quench.
- *
- * Semantics: "all-or-nothing per substance". If any tolerance AE already
- * exists for the substance, every existing tolerance AE is incremented in
- * lockstep so the GM never has to chase per-template counters. If none exist,
- * every authored template is applied at `stacks: 1`.
+ * Increment the actor's tolerance Count for a substance. Clamps at the
+ * tier-derived MaxCount. Reapplies the Tolerance AE so its stack indicator
+ * (or marker) reflects the new state.
  *
  * @param {Actor} actor
  * @param {Item}  item
- * @returns {Promise<ActiveEffect|null>} the first AE touched (incremented or
- *   created), or null if tolerance is disabled.
  */
-export async function applyOrIncrementToleranceStack(actor, item) {
-  if (!getToleranceEnabled(item)) return null;
-  const existing = findAllAppliedToleranceEffects(actor, item.id);
-  if (existing.length > 0) {
-    // Soft-cap guard: existing AEs are kept in lockstep by the loop below, so
-    // checking any one suffices. When already at `maxStacks`, refuse to push
-    // further — silent no-op (no toast). First-time application (existing
-    // empty) skips this branch entirely, so a substance with maxStacks=1
-    // still gets its stacks=1 AE created on the first save pass.
-    const caps = getToleranceCaps(item);
-    const maxStacks = caps?.maxStacks;
-    if (Number.isFinite(maxStacks)) {
-      const currentStacks = Number(existing[0].flags?.[MODULE_ID]?.stacks) || 1;
-      if (currentStacks >= maxStacks) {
-        logger.log(
-          `tolerance cap reached for ${item.name} (stacks=${currentStacks} >= maxStacks=${maxStacks}); not incrementing`,
-        );
-        return existing[0];
-      }
-    }
-    let firstUpdated = null;
-    for (const effect of existing) {
-      const currentStacks = Number(effect.flags?.[MODULE_ID]?.stacks) || 1;
-      const nextStacks = currentStacks + 1;
-      await effect.update({
-        [`flags.${MODULE_ID}.stacks`]: nextStacks,
-        name: formatToleranceName(item, nextStacks),
-      });
-      firstUpdated ??= effect;
-    }
-    return firstUpdated;
-  }
-  return applyToleranceEffects(actor, item);
-}
-
-async function applyToleranceEffects(actor, item) {
-  const templates = findToleranceTemplates(item);
-  const sources = templates.length > 0 ? templates : [null]; // null → default template
-  const payloads = sources.map((template) => buildTolerancePayload(template, item));
-  const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
-  return created?.[0] ?? null;
-}
-
-function buildTolerancePayload(template, item) {
-  const baseData = template ? template.toObject() : buildDefaultToleranceTemplate(item);
-  delete baseData._id;
-  baseData.flags = baseData.flags ?? {};
-  const moduleFlags = { ...(baseData.flags[MODULE_ID] ?? {}) };
-  moduleFlags[FLAGS.sourceSubstanceId] = item.id;
-  moduleFlags.stacks = 1;
-  const existingModifier = moduleFlags[FLAGS.modifier] ?? {};
-  moduleFlags[FLAGS.modifier] = {
-    ...existingModifier,
-    kind: "tolerance",
-    substanceId: item.id,
-  };
-  moduleFlags.aeRole = "tolerance";
-  baseData.flags[MODULE_ID] = moduleFlags;
-  baseData.name = formatToleranceName(item, 1);
-  baseData.origin = item.uuid;
-  baseData.disabled = false;
-  baseData.transfer = false;
-  if (baseData.duration) {
-    baseData.duration.rounds = undefined;
-    baseData.duration.seconds = undefined;
-  }
-  return baseData;
-}
-
-function buildDefaultToleranceTemplate(item) {
-  return {
-    name: formatToleranceName(item, 1),
-    img: item.img ?? "icons/svg/upgrade.svg",
-    changes: [],
-    description: "",
-    flags: {},
-  };
-}
-
-function formatToleranceName(item, stacks) {
-  return game.i18n.format("FISHUT.Tolerance.EffectName", {
-    item: item.name,
-    stacks,
+export async function incrementActorToleranceCount(actor, item) {
+  if (!getToleranceEnabled(item)) return;
+  const dc = getWithdrawalDc(item);
+  if (!Number.isFinite(dc)) return;
+  const profile = tierProfile(snapDcToTier(dc));
+  const prior = getActorToleranceEntry(actor, item.id);
+  const priorCount = Number(prior?.count) || 0;
+  const nextCount = Math.min(profile.maxCount, priorCount + 1);
+  if (nextCount === priorCount) return;
+  await setActorToleranceEntry(actor, item.id, {
+    count: nextCount,
+    lastIncrementedAt: new Date().toISOString(),
+    lastDecayedAt: prior?.lastDecayedAt,
   });
+  await refreshToleranceMarkerAe(actor, item, nextCount);
 }
 
-function findToleranceTemplates(item) {
-  const effects = item?.effects;
-  if (!effects) return [];
-  const list = [...effects];
-  const ids = getToleranceEffectIds(item);
-  const resolved = [];
-  const seen = new Set();
-  for (const id of ids) {
-    const found = effects.get?.(id) ?? list.find((e) => e.id === id || e._id === id);
-    if (found && !seen.has(found.id ?? found._id)) {
-      resolved.push(found);
-      seen.add(found.id ?? found._id);
-    }
-  }
-  if (resolved.length > 0) return resolved;
-  // Fallback: any effect whose modifier block declares kind:"tolerance" or whose name contains "tolerance".
-  const byModifier = list.filter((e) => getModifier(e)?.kind === "tolerance");
-  if (byModifier.length > 0) return byModifier;
-  return list.filter((e) => /tolerance/i.test(e.name ?? ""));
-}
-
-function findAllAppliedToleranceEffects(actor, substanceId) {
-  const matches = findEffectsByRole(actor, "tolerance");
-  if (substanceId === undefined) return matches;
-  return matches.filter(
-    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+/**
+ * Apply the Altered AE, scaling every numeric Change-row `value` by the
+ * substance's attenuation curve at the actor's current tolerance Count. Deletes
+ * any prior Altered AE for this substance first so re-application with a
+ * different scalar replaces in-place (avoids stacking).
+ *
+ * @param {Actor} actor
+ * @param {Item}  item
+ */
+export async function applyAlteredEffectGated(actor, item) {
+  const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
+  const curve = getAttenuationCurve(item) ?? DEFAULT_ATTENUATION_CURVE;
+  const prior = findEffectsByRole(actor, "altered").filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
   );
+  for (const eff of prior) {
+    await eff.delete({ fishutIntentional: true });
+  }
+  const template = findAlteredTemplate(item);
+  if (!template) return null;
+  const data = template.toObject();
+  delete data._id;
+  data.flags = data.flags ?? {};
+  data.flags[MODULE_ID] = {
+    ...(data.flags[MODULE_ID] ?? {}),
+    [FLAGS.sourceSubstanceId]: item.id,
+    aeRole: "altered",
+  };
+  data.origin = item.uuid;
+  data.disabled = false;
+  data.changes = (data.changes ?? []).map((row) => ({
+    ...row,
+    value: stringifyScalar(applyAttenuation(parseScalar(row.value), count, curve)),
+  }));
+  const [created] = await actor.createEmbeddedDocuments("ActiveEffect", [data]);
+  return created ?? null;
+}
+
+function parseScalar(v) {
+  if (typeof v === "number") return v;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : v;
+}
+
+function stringifyScalar(v) {
+  return typeof v === "number" ? String(v) : v;
+}
+
+function findAlteredTemplate(item) {
+  const effects = item?.effects;
+  if (!effects) return null;
+  const list = [...effects];
+  return list.find((e) => /altered/i.test(e.name ?? "")) ?? null;
+}
+
+async function refreshToleranceMarkerAe(actor, item, count) {
+  // Marker AE: updates an existing tolerance AE's count flag, or applies an
+  // authored tolerance AE template if none exists and count > 0.
+  const existing = findEffectsByRole(actor, "tolerance").filter(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
+  );
+  for (const eff of existing) {
+    await eff.update({ [`flags.${MODULE_ID}.count`]: count });
+  }
+  if (existing.length === 0 && count > 0) {
+    const tplIds = getToleranceEffectIds(item) ?? [];
+    const tpl =
+      tplIds[0] && item.effects?.get?.(tplIds[0])
+        ? item.effects.get(tplIds[0])
+        : null;
+    if (!tpl) return;
+    const data = tpl.toObject();
+    delete data._id;
+    data.flags = data.flags ?? {};
+    data.flags[MODULE_ID] = {
+      ...(data.flags[MODULE_ID] ?? {}),
+      [FLAGS.sourceSubstanceId]: item.id,
+      aeRole: "tolerance",
+      count,
+    };
+    data.origin = item.uuid;
+    data.disabled = false;
+    await actor.createEmbeddedDocuments("ActiveEffect", [data]);
+  }
 }
 
 /**
@@ -674,10 +572,3 @@ function findWithdrawalTemplates(item) {
   return resolved;
 }
 
-function findAllAppliedWithdrawalEffects(actor, substanceId) {
-  const matches = findEffectsByRole(actor, "withdrawal");
-  if (substanceId === undefined) return matches;
-  return matches.filter(
-    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
-  );
-}

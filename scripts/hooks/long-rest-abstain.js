@@ -1,234 +1,239 @@
+// scripts/hooks/long-rest-abstain.js
+/**
+ * Phase 2 — long rest dialog + Abstain Check + Withdrawal Save pipeline.
+ *
+ * Fires on `dnd5e.preRestCompleted` (GM-arbitrated). For each substance the
+ * actor is currently addicted to, opens the combined Abstain dialog
+ * (scripts/ui/abstain-dialog.js) and dispatches per-row:
+ *
+ *   - "use"             → force-use the substance via activity.use with
+ *                         bypass set; goes through full Phase 1 chain.
+ *   - "abstain"         → roll Wis Abstain Check; pass → decay; fail → Con
+ *                         Withdrawal Save → fail → apply Withdrawal AE.
+ *   - "forced-abstain"  → skip Wis; roll Con Withdrawal Save → fail → apply
+ *                         Withdrawal AE; decay regardless.
+ *
+ * `actor.flags.S&P.withdrawal[id]` is set when the AE applies (with
+ * `appliedAt` + `endsAt`). Times-Up handles removal at duration expiry;
+ * `withdrawal-cleanup.js` clears the flag entry on AE delete.
+ */
+
 import { MODULE_ID } from "../config.js";
-import {
-  getActorWithdrawal,
-  getAddiction,
-  setActorWithdrawalEntry,
-} from "../data/flag-schema.js";
-import { defaultAbstainDc } from "../data/abstain.js";
-import { SETTING_KEYS } from "../settings.js";
 import { logger } from "../logger.js";
-import { clearForcedUseBypass, registerForcedUseBypass } from "./activity-gating.js";
+import {
+  getAbstain,
+  getWithdrawalDc,
+  getWithdrawalDuration,
+  getWithdrawalEnabled,
+  getWithdrawalEffectIds,
+  getActorWithdrawal,
+  setActorWithdrawalEntry,
+  getActorToleranceEntry,
+} from "../data/flag-schema.js";
+import { snapDcToTier, tierProfile } from "../data/tier-table.js";
+import { durationToSeconds } from "../data/withdrawal-duration.js";
+import { applyToleranceDecay } from "./tolerance-decay.js";
+import { openAbstainDialog } from "../ui/abstain-dialog.js";
+import { registerForcedUseBypass, clearForcedUseBypass } from "./activity-gating.js";
+
+let dialogImpl = openAbstainDialog;
 
 /**
- * Voluntary abstain — long-rest dialog hook.
+ * Test seam — Quench tests call this to install a stub returning a
+ * deterministic per-row decision map before invoking runPhase2.
  *
- * Composes with the existing GM-arbitrated rest tick by pre-decrementing the
- * actor's withdrawal entry by 1 on a successful abstain save. The standard
- * tick subtracts another 1 for a total of -2. On a failed save, no
- * pre-decrement is applied; the standard tick's -1 stands.
+ * @param {(actor: Actor, rows: any[]) => Promise<Record<string, string>>} stub
  */
-export function registerLongRestAbstain() {
-  Hooks.on("dnd5e.preRestCompleted", onPreRestCompleted);
+export function setAbstainDialogStub(stub) {
+  dialogImpl = stub ?? openAbstainDialog;
 }
 
-async function onPreRestCompleted(actor, result, _config) {
-  if (!result?.longRest) return;
-  if (!actor) return;
-  if (!isAbstainEnabled()) return;
+export function registerLongRestAbstain() {
+  Hooks.on("dnd5e.preRestCompleted", async (actor, restData) => {
+    if (!restData?.longRest) return;
+    if (!actor) return;
+    if (game.users?.activeGM && game.users.activeGM !== game.user) return;
+    await runPhase2(actor);
+  });
+}
 
-  const map = getActorWithdrawal(actor);
-  const ids = Object.keys(map);
-  if (ids.length === 0) return;
+export async function runPhase2(actor) {
+  const map = getActorWithdrawal(actor) ?? {};
+  const addictedIds = Object.keys(map);
+  if (addictedIds.length === 0) return;
 
-  const rows = ids
-    .map((id) => buildRow(actor, id, map[id]))
-    .filter((row) => row !== null);
+  // Build dialog rows for substances the actor is currently addicted to
+  // (i.e. has an Addiction AE for). Each row needs Tolerance Count + doses
+  // remaining in inventory.
+  const rows = [];
+  for (const substanceId of addictedIds) {
+    const item = actor.items?.get?.(substanceId);
+    if (!item) continue;
+    const tolEntry = getActorToleranceEntry(actor, substanceId);
+    const dc = getWithdrawalDc(item);
+    const profile = Number.isFinite(dc) ? tierProfile(snapDcToTier(dc)) : null;
+    rows.push({
+      substanceId,
+      name: item.name,
+      count: Number(tolEntry?.count) || 0,
+      maxCount: profile?.maxCount ?? 0,
+      dosesRemaining: Number(item.system?.quantity) || 0,
+    });
+  }
   if (rows.length === 0) return;
 
-  let selectedId;
-  try {
-    selectedId = await promptCombinedAbstain(actor.name, rows);
-  } catch (err) {
-    logger.error("abstain prompt failed", err);
-    return;
-  }
-  if (!selectedId) return;
-  const row = rows.find((r) => r.substanceId === selectedId);
-  if (!row) return;
-  try {
-    await processAbstainSave(actor, row);
-  } catch (err) {
-    logger.error(`abstain flow failed for substance ${selectedId}`, err);
+  const decisions = await dialogImpl(actor, rows);
+
+  for (const row of rows) {
+    const action = decisions[row.substanceId] ?? "use";
+    const item = actor.items.get(row.substanceId);
+    if (!item) continue;
+    try {
+      if (action === "use") {
+        await forceUseSubstance(actor, item);
+      } else if (action === "abstain") {
+        await runAbstainBranch(actor, item, { forced: false });
+      } else if (action === "forced-abstain") {
+        await runAbstainBranch(actor, item, { forced: true });
+      }
+    } catch (e) {
+      logger.warn(`Phase 2 dispatch failed for ${item.name}: ${e?.message}`, e);
+    }
   }
 }
 
-function buildRow(actor, substanceId, entry) {
-  if (!entry) return null;
-  const item = actor.items?.get?.(substanceId) ?? null;
-  const wMod = Number(getAddiction(item)?.withdrawalMod) || 0;
-  const dc = defaultAbstainDc(wMod);
-  const itemName = item?.name ?? game.i18n.localize("FISHUT.Kind.Substance");
-  return { substanceId, itemName, dc, entry };
-}
-
-async function processAbstainSave(actor, row) {
-  const { substanceId, itemName, dc, entry } = row;
-  const passed = await rollAbstainSave(actor, dc);
-  if (passed === null) return;
-
-  if (!passed) {
-    await processAbstainFailure(actor, row);
-    return;
-  }
-
-  await applyAbstainPreDecrement(actor, substanceId, entry);
-  await chat(
-    game.i18n.format("FISHUT.LongRestAbstain.Pass", {
-      actor: actor.name,
-      item: itemName,
-      dc,
-    }),
-  );
-}
-
-/**
- * Failed-Wis-save handler for voluntary abstain.
- *
- * If the substance is in inventory with uses remaining, register a
- * forced-use bypass and call `activity.use()` so the substance flows
- * through its real post-use chain (save → addiction AE → tolerance
- * stack → overdose roll). Soft-fail when the substance is missing or
- * exhausted.
- *
- * @param {Actor} actor
- * @param {{substanceId: string, itemName?: string, withdrawalMod?: number, dc: number}} row
- */
-export async function processAbstainFailure(actor, row) {
-  const item = actor.items.get(row.substanceId);
-  if (!item) {
-    await chat(
-      game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
-        actor: actor.name,
-        item: row.itemName ?? game.i18n.localize("FISHUT.Kind.Substance"),
-      }),
-    );
-    return;
-  }
-
-  const activities = item.system?.activities?.contents ?? [];
-  const activity =
-    activities.find((a) => a.type === "utility" || a.type === "save") ?? activities[0];
+export async function forceUseSubstance(actor, item) {
+  const activity = item.system?.activities?.contents?.[0] ?? null;
   if (!activity) {
-    await chat(
-      game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
-        actor: actor.name,
-        item: item.name,
-      }),
-    );
+    logger.warn(`forceUseSubstance: no activity on ${item.name}`);
     return;
   }
-
-  const usesValue = item.system?.uses?.value;
-  if (usesValue !== undefined && Number(usesValue) <= 0) {
-    await chat(
-      game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
-        actor: actor.name,
-        item: item.name,
-      }),
-    );
-    return;
-  }
-
   registerForcedUseBypass(activity.id);
-
-  await chat(
-    game.i18n.format("FISHUT.LongRestAbstain.FailGiveIn", {
-      actor: actor.name,
-      item: item.name,
-      dc: row.dc,
-    }),
-  );
-
   try {
     await activity.use({ event: null }, { fastForward: true, chatMessage: true });
-  } catch (err) {
+  } catch (e) {
+    // bypassOnce is normally consumed by the preUseActivity gate; if use()
+    // rejects before the gate fires, clean up so the entry doesn't leak into
+    // a later non-Phase-2 click of the same activity.
     clearForcedUseBypass(activity.id);
-    throw err;
+    throw e;
   }
 }
 
-/**
- * Pre-decrement the withdrawal entry by 1. Composed with the standard
- * GM-arbitrated rest tick (-1), this yields a total of -2 on successful
- * abstain. Test seam — exported for Quench.
- *
- * @param {Actor}  actor
- * @param {string} substanceId
- * @param {{restsRemaining:number,appliedAt?:string}} entry
- */
-export async function applyAbstainPreDecrement(actor, substanceId, entry) {
-  const currentRests = Math.max(0, Math.floor(Number(entry?.restsRemaining) || 0));
-  const next = Math.max(0, currentRests - 1);
-  await setActorWithdrawalEntry(actor, substanceId, {
-    restsRemaining: next,
-    appliedAt: entry?.appliedAt ?? new Date().toISOString(),
-  });
-  return { newRests: next };
-}
+export async function runAbstainBranch(actor, item, { forced }) {
+  const abstain = getAbstain(item);
+  let abstainPassed = false;
+  if (!forced && abstain) {
+    const roll = await rollAbstainCheck(actor, abstain.ability ?? "wis");
+    abstainPassed = roll?.total >= Number(abstain.dc);
+    await chat(
+      game.i18n.format(
+        abstainPassed ? "FISHUT.Phase2.AbstainCheck.Pass" : "FISHUT.Phase2.AbstainCheck.Fail",
+        { actor: actor.name, item: item.name, total: roll?.total ?? "?", dc: abstain.dc },
+      ),
+    );
+  } else if (forced) {
+    await chat(
+      game.i18n.format("FISHUT.Phase2.ForcedAbstain.Intro", {
+        actor: actor.name,
+        item: item.name,
+        dc: getWithdrawalDc(item),
+      }),
+    );
+  }
 
-function isAbstainEnabled() {
-  try {
-    return game.settings?.get?.(MODULE_ID, SETTING_KEYS.voluntaryAbstainEnabled) === true;
-  } catch {
-    return false;
+  if (!forced && abstainPassed) {
+    // Pass Wis → decay, no Withdrawal Save.
+    await applyToleranceDecay(actor, item);
+    return;
+  }
+
+  // Forced abstain OR failed Wis → roll Con Withdrawal Save.
+  if (!getWithdrawalEnabled(item)) {
+    if (forced) await applyToleranceDecay(actor, item);
+    return;
+  }
+  const withdrawalDc = getWithdrawalDc(item);
+  const saveRoll = await rollWithdrawalSave(actor, withdrawalDc);
+  const passed = saveRoll?.total >= Number(withdrawalDc);
+  await chat(
+    game.i18n.format(
+      passed ? "FISHUT.Phase2.WithdrawalSave.Pass" : "FISHUT.Phase2.WithdrawalSave.Fail",
+      { actor: actor.name, item: item.name, total: saveRoll?.total ?? "?", dc: withdrawalDc },
+    ),
+  );
+
+  if (!passed) {
+    await applyWithdrawalAeFromTemplate(actor, item);
+  }
+
+  if (forced) {
+    await applyToleranceDecay(actor, item);
   }
 }
 
-async function promptCombinedAbstain(actorName, rows) {
-  const DialogV2 = foundry?.applications?.api?.DialogV2;
-  if (!DialogV2) {
-    logger.warn("DialogV2 not available; skipping abstain prompt");
-    return null;
+async function rollAbstainCheck(actor, ability) {
+  const bonus =
+    Number(actor?.getFlag?.(MODULE_ID, "abstaining.check.bonus")) || 0;
+  if (typeof actor.rollAbilityCheck === "function") {
+    const config = { ability, chatMessage: true };
+    if (bonus !== 0) config.parts = [String(bonus)];
+    const roll = await actor.rollAbilityCheck(config);
+    return Array.isArray(roll) ? roll[0] : roll;
   }
-  const title = game.i18n.localize("FISHUT.LongRestAbstain.Title");
-  const intro = game.i18n.format("FISHUT.LongRestAbstain.Intro", { actor: actorName });
-  const content = `<p>${intro}</p>`;
-
-  const buttons = rows.map((row) => ({
-    action: `abstain-${row.substanceId}`,
-    label: game.i18n.format("FISHUT.LongRestAbstain.ButtonResistUrge", {
-      item: row.itemName,
-    }),
-    callback: () => row.substanceId,
-  }));
-  buttons.push({
-    action: "skip",
-    label: game.i18n.localize("FISHUT.LongRestAbstain.Skip"),
-    callback: () => null,
-    default: true,
-  });
-
-  try {
-    const result = await DialogV2.wait({
-      window: { title },
-      content,
-      buttons,
-      rejectClose: false,
-    });
-    return typeof result === "string" ? result : null;
-  } catch (err) {
-    logger.error("abstain prompt failed", err);
-    return null;
-  }
+  return null;
 }
 
-async function rollAbstainSave(actor, dc) {
+async function rollWithdrawalSave(actor, dc) {
+  const bonus =
+    Number(actor?.getFlag?.(MODULE_ID, "withdrawal.save.bonus")) || 0;
   const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
-  if (typeof fn !== "function") {
-    logger.warn("actor has no rollSavingThrow/rollAbilitySave; skipping abstain save");
-    return null;
-  }
-  const config = {
-    ability: "wis",
-    target: dc,
-    targetValue: dc,
-    fastForward: false,
-    chatMessage: true,
-  };
+  if (typeof fn !== "function") return null;
+  const config = { ability: "con", targetValue: dc, chatMessage: true };
+  if (bonus !== 0) config.parts = [String(bonus)];
   const roll = await fn.call(actor, config);
-  const r = Array.isArray(roll) ? roll[0] : roll;
-  if (!r) return null;
-  return Number(r.total) >= dc;
+  return Array.isArray(roll) ? roll[0] : roll;
+}
+
+async function applyWithdrawalAeFromTemplate(actor, item) {
+  const templates = findWithdrawalTemplates(item);
+  if (templates.length === 0) {
+    logger.warn(`no withdrawal AE template on ${item.name}; chat-only`);
+    return;
+  }
+  const duration = getWithdrawalDuration(item);
+  const seconds = duration ? durationToSeconds(duration.value, duration.unit) : 0;
+  const now = new Date();
+  const endsAt = new Date(now.getTime() + seconds * 1000).toISOString();
+
+  const payloads = templates.map((tpl) => {
+    const data = tpl.toObject();
+    delete data._id;
+    data.flags = data.flags ?? {};
+    data.flags[MODULE_ID] = {
+      ...(data.flags[MODULE_ID] ?? {}),
+      sourceSubstanceId: item.id,
+      aeRole: "withdrawal",
+    };
+    data.origin = item.uuid;
+    data.disabled = false;
+    data.duration = { ...(data.duration ?? {}), seconds };
+    return data;
+  });
+  await actor.createEmbeddedDocuments("ActiveEffect", payloads);
+  await setActorWithdrawalEntry(actor, item.id, {
+    appliedAt: now.toISOString(),
+    endsAt,
+  });
+}
+
+function findWithdrawalTemplates(item) {
+  const ids = getWithdrawalEffectIds(item);
+  if (ids.length === 0) {
+    // Fallback: any effect whose name contains "withdraw".
+    return [...(item?.effects ?? [])].filter((e) => /withdraw/i.test(e.name ?? ""));
+  }
+  return ids.map((id) => item.effects?.get?.(id)).filter(Boolean);
 }
 
 async function chat(content) {

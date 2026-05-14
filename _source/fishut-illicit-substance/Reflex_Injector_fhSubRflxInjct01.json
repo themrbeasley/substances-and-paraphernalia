@@ -125,12 +125,20 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 5,
+        "dc": 25,
+        "abstain": {
+          "ability": "wis",
+          "dc": 13
+        },
+        "duration": {
+          "value": 3,
+          "unit": "days"
+        },
         "effectIds": [
           "fhAERflxInjctWit"
         ]
       },
-      "schemaVersion": 3
+      "schemaVersion": 7
     }
   },
   "effects": [

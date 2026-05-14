@@ -26,8 +26,10 @@
       "kind": "paraphernalia",
       "setting": "modern",
       "subtype": "pill-cutter",
-      "appliesTo": ["ingested"],
-      "schemaVersion": 3
+      "appliesTo": [
+        "ingested"
+      ],
+      "schemaVersion": 7
     }
   },
   "effects": [

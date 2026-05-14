@@ -26,8 +26,10 @@
       "kind": "paraphernalia",
       "setting": "modern",
       "subtype": "inhaler",
-      "appliesTo": ["inhaled"],
-      "schemaVersion": 3
+      "appliesTo": [
+        "inhaled"
+      ],
+      "schemaVersion": 7
     }
   },
   "effects": [
