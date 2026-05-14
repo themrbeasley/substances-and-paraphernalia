@@ -808,7 +808,8 @@ export async function persistField(item, field, rawValue, target) {
     }
     case "withdrawal.duration.unit": {
       const current = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
-      return setWithdrawalDuration(item, { value: current.value ?? null, unit: rawValue || "days" });
+      const unit = WITHDRAWAL_DURATION_UNITS.includes(rawValue) ? rawValue : "days";
+      return setWithdrawalDuration(item, { value: current.value ?? null, unit });
     }
     case "tolerance.decay":
       return setToleranceDecay(item, parseIntOrNull(rawValue));
