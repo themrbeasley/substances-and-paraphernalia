@@ -416,6 +416,122 @@ export const clearActorWithdrawalEntry = async (actor, substanceId) => {
   return actor.setFlag(MODULE_ID, FLAGS.withdrawal, map);
 };
 
+// ─── Substance withdrawal block (v0.8.1 — DC + Abstain + Duration) ───────────
+
+/** @param {Item} item @returns {number|null} */
+export const getWithdrawalDc = (item) => {
+  const dc = item?.getFlag?.(MODULE_ID, "withdrawal.dc");
+  return Number.isFinite(Number(dc)) ? Number(dc) : null;
+};
+
+/** @param {Item} item @param {number} value */
+export const setWithdrawalDc = (item, value) => {
+  const block = getWithdrawal(item) ?? {};
+  return setWithdrawal(item, { ...block, dc: value });
+};
+
+/**
+ * @typedef {Object} AbstainBlock
+ * @property {string} ability   Standard 5e ability key; defaults to "wis".
+ * @property {number} dc
+ */
+
+const DEFAULT_ABSTAIN_ABILITY = "wis";
+
+/** @param {Item} item @returns {AbstainBlock|null} */
+export const getAbstain = (item) => {
+  const block = getWithdrawal(item);
+  if (!block || !block.abstain) return null;
+  const a = block.abstain;
+  return { ability: a.ability ?? DEFAULT_ABSTAIN_ABILITY, dc: a.dc };
+};
+
+/** @param {Item} item @param {AbstainBlock} value */
+export const setAbstain = (item, value) => {
+  const block = getWithdrawal(item) ?? {};
+  return setWithdrawal(item, { ...block, abstain: value });
+};
+
+/**
+ * @typedef {Object} WithdrawalDuration
+ * @property {number} value
+ * @property {"minutes"|"hours"|"days"|"weeks"|"months"} unit
+ */
+
+/** @param {Item} item @returns {WithdrawalDuration|null} */
+export const getWithdrawalDuration = (item) => {
+  const block = getWithdrawal(item);
+  if (!block || !block.duration) return null;
+  const d = block.duration;
+  return { value: d.value, unit: d.unit };
+};
+
+/** @param {Item} item @param {WithdrawalDuration} value */
+export const setWithdrawalDuration = (item, value) => {
+  const block = getWithdrawal(item) ?? {};
+  return setWithdrawal(item, { ...block, duration: value });
+};
+
+// ─── Substance tolerance block (v0.8.1 — decay + attenuation curve) ──────────
+
+const DEFAULT_TOLERANCE_DECAY = 1;
+
+/** @param {Item} item @returns {number} */
+export const getToleranceDecay = (item) => {
+  const block = getTolerance(item);
+  const d = Number(block?.decay);
+  return Number.isFinite(d) ? d : DEFAULT_TOLERANCE_DECAY;
+};
+
+/** @param {Item} item @param {number} value */
+export const setToleranceDecay = (item, value) => {
+  const block = getTolerance(item) ?? {};
+  return setTolerance(item, { ...block, decay: value });
+};
+
+/**
+ * Authored attenuation curve override; null if not authored (caller falls back
+ * to DEFAULT_ATTENUATION_CURVE from tier-table.js).
+ * @param {Item} item @returns {number[]|null}
+ */
+export const getAttenuationCurve = (item) => {
+  const curve = getTolerance(item)?.attenuationCurve;
+  return Array.isArray(curve) ? curve : null;
+};
+
+// ─── Actor flags (tolerance map — mirror of withdrawal map shape) ────────────
+
+/**
+ * @typedef {Object} ToleranceEntry
+ * @property {number} count
+ * @property {string} [lastIncrementedAt]   ISO-8601
+ * @property {string} [lastDecayedAt]       ISO-8601
+ */
+
+/** @param {Actor} actor @returns {Object<string, ToleranceEntry>} */
+export const getActorTolerance = (actor) =>
+  actor?.getFlag?.(MODULE_ID, "tolerance") ?? {};
+
+/** @param {Actor} actor @param {string} substanceId @returns {ToleranceEntry|null} */
+export const getActorToleranceEntry = (actor, substanceId) => {
+  const map = getActorTolerance(actor);
+  return map[substanceId] ?? null;
+};
+
+/** @param {Actor} actor @param {string} substanceId @param {ToleranceEntry} entry */
+export const setActorToleranceEntry = async (actor, substanceId, entry) => {
+  const map = { ...getActorTolerance(actor), [substanceId]: entry };
+  return actor.setFlag(MODULE_ID, "tolerance", map);
+};
+
+/** @param {Actor} actor @param {string} substanceId */
+export const clearActorToleranceEntry = async (actor, substanceId) => {
+  const map = { ...getActorTolerance(actor) };
+  if (!(substanceId in map)) return null;
+  delete map[substanceId];
+  return actor.setFlag(MODULE_ID, "tolerance", map);
+};
+
 // ─── Active Effect role lookup (locale-independent) ──────────────────────────
 
 const AE_ROLE_SUBSTRINGS = Object.freeze({
