@@ -6,8 +6,11 @@ import {
   getAddictionSave,
   getAddictionEffectIds,
   getWithdrawalEnabled,
-  getWithdrawalMod,
   getWithdrawalEffectIds,
+  getWithdrawalDc,
+  getAbstain,
+  getWithdrawalDuration,
+  getToleranceDecay,
   getOverdose,
   getOverdoseEffectIds,
   getToleranceEnabled,
@@ -21,11 +24,14 @@ import {
   setAddictionSave,
   setAddictionEffectIds,
   setWithdrawalEnabled,
-  setWithdrawalMod,
+  setWithdrawalDc,
+  setAbstain,
+  setWithdrawalDuration,
   setWithdrawalEffectIds,
   setOverdose,
   setOverdoseEffectIds,
   setToleranceEnabled,
+  setToleranceDecay,
   setToleranceEffectIds,
   setSubtype,
   setAppliesTo,
@@ -33,7 +39,8 @@ import {
 } from "../data/flag-schema.js";
 import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtypes.js";
 import { writeModifierAsChanges } from "../data/modifier-flag.js";
-import { previewWithdrawalDuration } from "../data/withdrawal.js";
+import { snapDcToTier, tierProfile } from "../data/tier-table.js";
+import { WITHDRAWAL_DURATION_UNITS } from "../data/withdrawal-duration.js";
 import { logger } from "../logger.js";
 
 const SECTION_TEMPLATE = `modules/${MODULE_ID}/templates/details-tab/section.hbs`;
@@ -241,7 +248,11 @@ function buildLabels() {
     addictionEffectCreateTooltip: L("FISHUT.DetailsTab.Field.AddictionEffect.CreateTooltip"),
     withdrawalHeader: L("FISHUT.DetailsTab.Withdrawal.Header"),
     withdrawalEnabled: L("FISHUT.DetailsTab.Withdrawal.Enabled"),
-    withdrawalMod: L("FISHUT.DetailsTab.Field.WithdrawalMod"),
+    withdrawalDc: L("FISHUT.DetailsTab.Field.WithdrawalDc"),
+    abstainAbility: L("FISHUT.DetailsTab.Field.AbstainAbility"),
+    abstainDc: L("FISHUT.DetailsTab.Field.AbstainDc"),
+    withdrawalDurationValue: L("FISHUT.DetailsTab.Field.WithdrawalDurationValue"),
+    withdrawalDurationUnit: L("FISHUT.DetailsTab.Field.WithdrawalDurationUnit"),
     withdrawalEffect: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Label"),
     withdrawalEffectTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip"),
     withdrawalEffectCreateTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.CreateTooltip"),
@@ -261,6 +272,7 @@ function buildLabels() {
     overdoseToleranceInteractionHint: L("FISHUT.Details.Overdose.ToleranceInteraction.Hint"),
     toleranceHeader: L("FISHUT.DetailsTab.Tolerance.Header"),
     toleranceEnabled: L("FISHUT.DetailsTab.Tolerance.Enabled"),
+    toleranceDecay: L("FISHUT.DetailsTab.Field.ToleranceDecay"),
     toleranceEffect: L("FISHUT.DetailsTab.Field.ToleranceEffect.Label"),
     toleranceEffectTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.Tooltip"),
     toleranceEffectCreateTooltip: L("FISHUT.DetailsTab.Field.ToleranceEffect.CreateTooltip"),
@@ -318,9 +330,9 @@ function buildSubstanceContext(item) {
   return {
     categories,
     addiction: buildAddictionContext(item),
-    withdrawal: buildWithdrawalContext(item),
     overdose: buildOverdoseContext(item),
     tolerance: buildToleranceContext(item),
+    ...buildAddictionFieldsetContext(item),
   };
 }
 
@@ -364,39 +376,67 @@ function buildAddictionContext(item) {
   };
 }
 
-function buildWithdrawalContext(item) {
-  const enabled = getWithdrawalEnabled(item);
-  const withdrawalMod = getWithdrawalMod(item);
-  const attachedIds = getWithdrawalEffectIds(item);
+function buildAddictionFieldsetContext(item) {
+  const dc = getWithdrawalDc(item);
+  const profile = Number.isFinite(dc) ? tierProfile(snapDcToTier(dc)) : null;
+  const abstain = getAbstain(item) ?? { ability: "wis", dc: null };
+  const currentAbstainAbility = abstain.ability ?? "wis";
+  const duration = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
+  const toleranceDecayRaw = getToleranceDecay(item);
 
+  // Build abstain ability options using the same pattern as the addiction save
+  // ability options in buildAddictionContext — pre-resolved so the template
+  // stays trivial.
+  const abilityEntries = Object.entries(CONFIG?.DND5E?.abilities ?? {});
+  const abstainAbilityOptions = abilityEntries.map(([id, entry]) => ({
+    id,
+    label: entry?.label ? L(entry.label) : id,
+    selected: id === currentAbstainAbility,
+  }));
+  if (currentAbstainAbility && !abstainAbilityOptions.some((o) => o.selected)) {
+    abstainAbilityOptions.unshift({ id: currentAbstainAbility, label: currentAbstainAbility, selected: true });
+  }
+
+  const attachedIds = getWithdrawalEffectIds(item);
   const allEffects = Array.from(item.effects ?? []);
   // Withdrawal picker only lists AEs whose name contains "withdraw"
   // (case-insensitive) — same naming contract enforced by validate-content
   // and the long-rest tick. Stale ids are preserved as `isStale` rows so
   // re-saving doesn't silently drop the pointer.
-  const { availableEffects, attachedEffects } = buildEffectPicker(
-    allEffects,
-    attachedIds,
-    (e) => /withdraw/i.test(e.name ?? ""),
-  );
+  const { availableEffects: withdrawalAvailableEffects, attachedEffects: withdrawalAttachedEffects } =
+    buildEffectPicker(allEffects, attachedIds, (e) => /withdraw/i.test(e.name ?? ""));
 
   return {
-    enabled,
-    fieldsDisabled: !enabled,
-    mod: Number.isFinite(withdrawalMod) ? withdrawalMod : "",
-    previewLabel: formatWithdrawalPreviewLabel(withdrawalMod),
-    availableEffects,
-    attachedEffects,
+    withdrawalEnabled: getWithdrawalEnabled(item),
+    withdrawalDc: Number.isFinite(dc) ? dc : "",
+    withdrawalTierLabel: profile ? formatTierLabel(profile) : "",
+    rate: profile?.rate ?? null,
+    threshold: profile?.threshold ?? null,
+    maxCount: profile?.maxCount ?? null,
+    abstainAbilityOptions,
+    abstainDc: Number.isFinite(abstain.dc) ? abstain.dc : "",
+    withdrawalDurationValue: Number.isFinite(duration.value) ? duration.value : "",
+    withdrawalDurationUnit: duration.unit ?? "days",
+    withdrawalDurationUnitOptions: WITHDRAWAL_DURATION_UNITS.map((u) => ({
+      id: u,
+      label: L(`FISHUT.DetailsTab.Field.WithdrawalDurationUnit.${u}`),
+      selected: u === (duration.unit ?? "days"),
+    })),
+    toleranceDecay: Number.isFinite(toleranceDecayRaw) ? toleranceDecayRaw : "",
+    withdrawalAvailableEffects,
+    withdrawalAttachedEffects,
   };
 }
 
-// Author-time withdrawal preview: rests-remaining assuming Con +0, since the
-// authoring sheet has no character context. Shares the engine helper so the
-// preview can never drift from the post-save computation.
-function formatWithdrawalPreviewLabel(withdrawalMod) {
-  const w = Number.isFinite(withdrawalMod) ? withdrawalMod : 0;
-  const rests = previewWithdrawalDuration(w, 0);
-  return game.i18n.format("FISHUT.Details.Preview.Withdrawal", { rests });
+function formatTierLabel(profile) {
+  const labels = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Nearly Impossible"];
+  const name = labels[profile.tier - 1] ?? `Tier ${profile.tier}`;
+  return game.i18n.format("FISHUT.Details.TierPreview", {
+    label: name,
+    rate: profile.rate,
+    threshold: profile.threshold,
+    maxCount: profile.maxCount,
+  });
 }
 
 function buildOverdoseContext(item) {
@@ -623,18 +663,6 @@ function wireDetails(wrapper, item) {
     handlePreviewUpdate(wrapper, flagField, rawValue, target);
   });
 
-  // Number inputs only fire `change` on commit (blur/Enter); keystroke-by-
-  // keystroke withdrawal preview needs `input` too. Persistence still rides
-  // on `change` to avoid writing every keystroke to the flag.
-  wrapper.addEventListener("input", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    const flagField = target.dataset?.fishutFlag;
-    if (flagField !== "withdrawal.mod") return;
-    const rawValue = readFieldValue(target);
-    updateWithdrawalPreview(wrapper, rawValue);
-  });
-
   wrapper.addEventListener("click", (event) => {
     const button = event.target?.closest?.("[data-fishut-action]");
     if (!button || !wrapper.contains(button)) return;
@@ -669,18 +697,9 @@ function toggleCollapseFor(wrapper, name, isOn) {
 // Route preview-update calls based on which field changed. Keeps the change
 // handler thin and the preview helpers single-purpose.
 function handlePreviewUpdate(wrapper, flagField, rawValue, target) {
-  if (flagField === "withdrawal.mod") {
-    updateWithdrawalPreview(wrapper, rawValue);
-  } else if (flagField === "appliesTo") {
+  if (flagField === "appliesTo") {
     updateAppliesToPreview(wrapper, target);
   }
-}
-
-function updateWithdrawalPreview(wrapper, rawValue) {
-  const span = wrapper.querySelector('[data-fishut-preview="withdrawal"]');
-  if (!span) return;
-  const parsed = parseIntOrNull(rawValue);
-  span.textContent = formatWithdrawalPreviewLabel(parsed);
 }
 
 // Recompute the appliesTo preview from the live checkbox state in the DOM,
@@ -744,8 +763,10 @@ function readMultiSelectValue(target) {
  *
  * @param {Item} item
  * @param {string} field  Dotted path: category | addiction.enabled |
- *   save.ability | save.dc | withdrawal.enabled | withdrawal.mod | subtype |
- *   overdose.* | tolerance.enabled | bypass.*
+ *   save.ability | save.dc | withdrawal.enabled | withdrawal.dc |
+ *   withdrawal.abstain.ability | withdrawal.abstain.dc |
+ *   withdrawal.duration.value | withdrawal.duration.unit |
+ *   tolerance.decay | subtype | overdose.* | tolerance.enabled | bypass.*
  * @param {string} rawValue
  * @param {HTMLElement} [target]
  *   The form control whose change fired. Reserved for future toggles that
@@ -771,8 +792,26 @@ export async function persistField(item, field, rawValue, target) {
     }
     case "withdrawal.enabled":
       return setWithdrawalEnabled(item, rawValue === "true");
-    case "withdrawal.mod":
-      return setWithdrawalMod(item, parseIntOrNull(rawValue));
+    case "withdrawal.dc":
+      return setWithdrawalDc(item, parseIntOrNull(rawValue));
+    case "withdrawal.abstain.ability": {
+      const current = getAbstain(item) ?? { ability: "wis", dc: null };
+      return setAbstain(item, { ability: (rawValue || "wis").trim() || "wis", dc: current.dc });
+    }
+    case "withdrawal.abstain.dc": {
+      const current = getAbstain(item) ?? { ability: "wis", dc: null };
+      return setAbstain(item, { ability: current.ability ?? "wis", dc: parseIntOrNull(rawValue) });
+    }
+    case "withdrawal.duration.value": {
+      const current = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
+      return setWithdrawalDuration(item, { value: parseIntOrNull(rawValue), unit: current.unit ?? "days" });
+    }
+    case "withdrawal.duration.unit": {
+      const current = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
+      return setWithdrawalDuration(item, { value: current.value ?? null, unit: rawValue || "days" });
+    }
+    case "tolerance.decay":
+      return setToleranceDecay(item, parseIntOrNull(rawValue));
     case "overdose.enabled":
       return persistOverdoseField(item, "enabled", rawValue === "true");
     case "overdose.chancePercent": {

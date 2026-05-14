@@ -92,17 +92,45 @@
     <div class="form-group">
       <label class="checkbox">
         <dnd5e-checkbox data-fishut-flag="withdrawal.enabled"
-          {{#if substance.withdrawal.enabled}}checked{{/if}}></dnd5e-checkbox>
+          {{#if substance.withdrawalEnabled}}checked{{/if}}></dnd5e-checkbox>
         {{labels.withdrawalEnabled}}
       </label>
     </div>
 
     <div data-fishut-collapse="withdrawal"
-         class="{{#unless substance.withdrawal.enabled}}fishut-hidden{{/unless}}">
+         class="{{#unless substance.withdrawalEnabled}}fishut-hidden{{/unless}}">
       <div class="form-group">
-        <label>{{labels.withdrawalMod}}</label>
-        <input type="number" data-fishut-flag="withdrawal.mod" value="{{substance.withdrawal.mod}}" min="0" step="1" />
-        <span class="fishut-preview" data-fishut-preview="withdrawal">{{substance.withdrawal.previewLabel}}</span>
+        <label>{{labels.withdrawalDc}}</label>
+        <input type="number" data-fishut-flag="withdrawal.dc" value="{{substance.withdrawalDc}}" min="1" step="1" />
+        <span class="fishut-hint fishut-tier-preview">{{substance.withdrawalTierLabel}}</span>
+      </div>
+
+      <div class="form-group">
+        <label>{{labels.abstainAbility}}</label>
+        <select data-fishut-flag="withdrawal.abstain.ability">
+          {{#each substance.abstainAbilityOptions}}
+            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>{{labels.abstainDc}}</label>
+        <input type="number" data-fishut-flag="withdrawal.abstain.dc" value="{{substance.abstainDc}}" min="1" step="1" />
+      </div>
+
+      <div class="form-group">
+        <label>{{labels.withdrawalDurationValue}}</label>
+        <input type="number" min="0" data-fishut-flag="withdrawal.duration.value" value="{{substance.withdrawalDurationValue}}" />
+      </div>
+
+      <div class="form-group">
+        <label>{{labels.withdrawalDurationUnit}}</label>
+        <select data-fishut-flag="withdrawal.duration.unit">
+          {{#each substance.withdrawalDurationUnitOptions}}
+            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
       </div>
 
       <fieldset>
@@ -116,12 +144,12 @@
           </button>
         </legend>
         <multi-select data-fishut-multi="withdrawal.effectIds" class="hidden-tags">
-          {{#each substance.withdrawal.availableEffects}}
+          {{#each substance.withdrawalAvailableEffects}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
           {{/each}}
         </multi-select>
         <ul class="separated-list effects-list flexcol unlist">
-          {{#each substance.withdrawal.attachedEffects}}
+          {{#each substance.withdrawalAttachedEffects}}
             <li data-effect-id="{{this.id}}"{{#if this.isStale}} class="stale"{{/if}}>
               <div class="details flexrow">
                 <img class="gold-icon" src="{{this.img}}" alt="{{this.name}}" />
@@ -260,6 +288,11 @@
 
     <div data-fishut-collapse="tolerance"
          class="{{#unless substance.tolerance.enabled}}fishut-hidden{{/unless}}">
+      <div class="form-group">
+        <label>{{labels.toleranceDecay}}</label>
+        <input type="number" min="0" data-fishut-flag="tolerance.decay" value="{{substance.toleranceDecay}}" />
+      </div>
+
       <fieldset>
         <legend>
           <span>{{labels.toleranceEffect}}</span>
