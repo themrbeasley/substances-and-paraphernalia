@@ -38,7 +38,7 @@ export async function applyToleranceDecay(actor, substance) {
       (e) => e.flags?.[MODULE_ID]?.sourceSubstanceId === substance.id,
     );
     for (const ae of aes) {
-      await ae.update({ "flags.substances-and-paraphernalia.count": nextCount });
+      await ae.update({ [`flags.${MODULE_ID}.count`]: nextCount });
     }
   }
   return nextCount;
