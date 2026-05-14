@@ -34,7 +34,7 @@ import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import { applyToleranceDecay } from "./tolerance-decay.js";
 import { openAbstainDialog } from "../ui/abstain-dialog.js";
-import { registerForcedUseBypass } from "./activity-gating.js";
+import { registerForcedUseBypass, clearForcedUseBypass } from "./activity-gating.js";
 
 export function registerLongRestAbstain() {
   Hooks.on("dnd5e.preRestCompleted", async (actor, restData) => {
@@ -97,7 +97,15 @@ async function forceUseSubstance(actor, item) {
     return;
   }
   registerForcedUseBypass(activity.id);
-  await activity.use({ event: null }, { fastForward: true, chatMessage: true });
+  try {
+    await activity.use({ event: null }, { fastForward: true, chatMessage: true });
+  } catch (e) {
+    // bypassOnce is normally consumed by the preUseActivity gate; if use()
+    // rejects before the gate fires, clean up so the entry doesn't leak into
+    // a later non-Phase-2 click of the same activity.
+    clearForcedUseBypass(activity.id);
+    throw e;
+  }
 }
 
 async function runAbstainBranch(actor, item, { forced }) {
