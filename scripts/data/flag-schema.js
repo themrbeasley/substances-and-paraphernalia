@@ -5,7 +5,6 @@ import {
   readModifierFromChanges,
   mergeModifierIntoChanges,
 } from "./modifier-flag.js";
-import { TOLERANCE_DEFAULT_CAPS } from "./tolerance.js";
 
 /**
  * @typedef {"substance" | "paraphernalia"} Kind
@@ -63,8 +62,8 @@ import { TOLERANCE_DEFAULT_CAPS } from "./tolerance.js";
  * @property {number} [schemaVersion]
  *
  * @typedef {Object} WithdrawalEntry
- * @property {number} restsRemaining
- * @property {string} appliedAt    ISO-8601 timestamp.
+ * @property {string} appliedAt    ISO-8601 timestamp when withdrawal landed.
+ * @property {string} endsAt       ISO-8601 timestamp computed from AE duration.seconds.
  *
  * @typedef {Object<string, WithdrawalEntry>} WithdrawalMap
  *   Keyed by substance item `_id`.
@@ -205,14 +204,6 @@ export const setWithdrawalEnabled = (item, value) => {
   return setWithdrawal(item, { ...block, enabled: !!value });
 };
 
-/** @param {Item} item */ export const getWithdrawalMod = (item) =>
-  getWithdrawal(item)?.mod ?? null;
-
-export const setWithdrawalMod = (item, value) => {
-  const block = getWithdrawal(item) ?? {};
-  return setWithdrawal(item, { ...block, mod: value });
-};
-
 /**
  * Plural canonical: list of withdrawal AE template ids on the substance item.
  * Reads `effectIds` first; falls back to wrapping the legacy singular `effectId`
@@ -308,20 +299,6 @@ export const getTolerance = (item) =>
 
 export const setTolerance = (item, value) =>
   item.setFlag(MODULE_ID, FLAGS.tolerance, value);
-
-/**
- * Resolve the effective tolerance caps for a substance — merges the
- * substance's authored `tolerance.caps` (if any) over engine defaults from
- * {@link TOLERANCE_DEFAULT_CAPS}. Authored fields win; un-authored fields
- * fall through to the default.
- *
- * @param {Item} substance
- * @returns {typeof TOLERANCE_DEFAULT_CAPS}
- */
-export const getToleranceCaps = (substance) => {
-  const authored = getTolerance(substance)?.caps ?? {};
-  return { ...TOLERANCE_DEFAULT_CAPS, ...authored };
-};
 
 /**
  * Whether tolerance auto-stacking runs on save pass. Undefined defaults to true.
