@@ -44,6 +44,9 @@ import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
 import { PRESETS, PRESET_LIBRARY, verifyTmfxPresets } from "../../scripts/integrations/tmfx.js";
 import { registerPhase1AddictionOnly } from "./phase1-addiction-only.test.mjs";
+import { registerPhase1OverdoseGate } from "./phase1-overdose-gate.test.mjs";
+import { registerPhase1ToleranceIncrement } from "./phase1-tolerance-increment.test.mjs";
+import { registerPhase1AlteredAttenuation } from "./phase1-altered-attenuation.test.mjs";
 
 const BATCH_PREFIX = "substances-and-paraphernalia";
 
@@ -179,6 +182,9 @@ export function registerQuenchSuite() {
       { displayName: "S&P · Voluntary Abstain · fail soft-fail" },
     );
     registerPhase1AddictionOnly(quench);
+    registerPhase1OverdoseGate(quench);
+    registerPhase1ToleranceIncrement(quench);
+    registerPhase1AlteredAttenuation(quench);
   });
 }
 
