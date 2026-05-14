@@ -31,8 +31,10 @@
       "kind": "paraphernalia",
       "setting": "modern",
       "subtype": "tincture-dropper",
-      "appliesTo": ["ingested"],
-      "schemaVersion": 3
+      "appliesTo": [
+        "ingested"
+      ],
+      "schemaVersion": 7
     }
   },
   "effects": [],

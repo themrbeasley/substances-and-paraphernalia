@@ -39,8 +39,10 @@
       "kind": "paraphernalia",
       "setting": "fantasy",
       "subtype": "pipe",
-      "appliesTo": ["inhaled"],
-      "schemaVersion": 3
+      "appliesTo": [
+        "inhaled"
+      ],
+      "schemaVersion": 7
     }
   },
   "effects": [

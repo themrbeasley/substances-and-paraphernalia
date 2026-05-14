@@ -125,12 +125,20 @@
       },
       "withdrawal": {
         "enabled": true,
-        "mod": 3,
+        "dc": 15,
+        "abstain": {
+          "ability": "wis",
+          "dc": 11
+        },
+        "duration": {
+          "value": 3,
+          "unit": "days"
+        },
         "effectIds": [
           "fhAEEmbergrssWit"
         ]
       },
-      "schemaVersion": 3
+      "schemaVersion": 7
     }
   },
   "effects": [
