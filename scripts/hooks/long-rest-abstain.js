@@ -36,6 +36,18 @@ import { applyToleranceDecay } from "./tolerance-decay.js";
 import { openAbstainDialog } from "../ui/abstain-dialog.js";
 import { registerForcedUseBypass, clearForcedUseBypass } from "./activity-gating.js";
 
+let dialogImpl = openAbstainDialog;
+
+/**
+ * Test seam — Quench tests call this to install a stub returning a
+ * deterministic per-row decision map before invoking runPhase2.
+ *
+ * @param {(actor: Actor, rows: any[]) => Promise<Record<string, string>>} stub
+ */
+export function setAbstainDialogStub(stub) {
+  dialogImpl = stub ?? openAbstainDialog;
+}
+
 export function registerLongRestAbstain() {
   Hooks.on("dnd5e.preRestCompleted", async (actor, restData) => {
     if (!restData?.longRest) return;
@@ -45,7 +57,7 @@ export function registerLongRestAbstain() {
   });
 }
 
-async function runPhase2(actor) {
+export async function runPhase2(actor) {
   const map = getActorWithdrawal(actor) ?? {};
   const addictedIds = Object.keys(map);
   if (addictedIds.length === 0) return;
@@ -70,7 +82,7 @@ async function runPhase2(actor) {
   }
   if (rows.length === 0) return;
 
-  const decisions = await openAbstainDialog(actor, rows);
+  const decisions = await dialogImpl(actor, rows);
 
   for (const row of rows) {
     const action = decisions[row.substanceId] ?? "use";
@@ -90,7 +102,7 @@ async function runPhase2(actor) {
   }
 }
 
-async function forceUseSubstance(actor, item) {
+export async function forceUseSubstance(actor, item) {
   const activity = item.system?.activities?.contents?.[0] ?? null;
   if (!activity) {
     logger.warn(`forceUseSubstance: no activity on ${item.name}`);
@@ -108,7 +120,7 @@ async function forceUseSubstance(actor, item) {
   }
 }
 
-async function runAbstainBranch(actor, item, { forced }) {
+export async function runAbstainBranch(actor, item, { forced }) {
   const abstain = getAbstain(item);
   let abstainPassed = false;
   if (!forced && abstain) {
