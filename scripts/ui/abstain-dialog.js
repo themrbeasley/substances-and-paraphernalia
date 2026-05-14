@@ -81,9 +81,13 @@ export async function openAbstainDialog(actor, rows) {
           action: "confirm",
           label: confirmLabel,
           default: true,
-          callback: (_event, _button, html) => {
+          callback: (_event, _button, dialog) => {
             const out = {};
-            const root = html?.[0] ?? html;
+            const root = dialog?.element ?? dialog;
+            if (!root?.querySelectorAll) {
+              defaultToUse();
+              return;
+            }
             const inputs = root.querySelectorAll('input[type="checkbox"]');
             for (const input of inputs) {
               const substanceId = input.dataset.substanceId;
