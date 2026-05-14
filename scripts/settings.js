@@ -7,7 +7,6 @@ export const SETTING_KEYS = Object.freeze({
   suppressIntegrationWarnings: "suppressIntegrationWarnings",
   debug: "debug",
   addictionPoisonedCoupling: "addictionPoisonedCoupling",
-  voluntaryAbstainEnabled: "voluntaryAbstainEnabled",
   customParaphernaliaSubtypes: "customParaphernaliaSubtypes",
   timesUpIntegration: "timesUpIntegration",
   tmfxIntegration: "tmfxIntegration",
@@ -53,15 +52,6 @@ export function registerSettings() {
     type: String,
     default: COUPLING_DEFAULT,
     choices: couplingChoices(),
-  });
-
-  game.settings.register(MODULE_ID, SETTING_KEYS.voluntaryAbstainEnabled, {
-    name: "FISHUT.Settings.VoluntaryAbstainEnabled.Name",
-    hint: "FISHUT.Settings.VoluntaryAbstainEnabled.Hint",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: true,
   });
 
   game.settings.register(MODULE_ID, SETTING_KEYS.timesUpIntegration, {

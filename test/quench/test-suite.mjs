@@ -2541,18 +2541,14 @@ function simulateDoseBatch(context) {
 
 // ─── Batch: Long-rest abstain flow ──────────────────────────────────────────
 
-const ABSTAIN_SETTING_KEY = "voluntaryAbstainEnabled";
-
 function longRestAbstainFlowBatch(context) {
   const { describe, it, assert, before, after, beforeEach } = context;
 
   describe("voluntary abstain — composition with GM rest tick", () => {
     let actor;
-    let priorSetting;
 
     before(async () => {
       actor = await makeActor("S&P Abstain Test Actor");
-      priorSetting = game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY);
     });
 
     beforeEach(async () => {
@@ -2564,7 +2560,6 @@ function longRestAbstainFlowBatch(context) {
     });
 
     after(async () => {
-      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, priorSetting);
       await deleteActor(actor);
     });
 
@@ -2645,12 +2640,6 @@ function longRestAbstainFlowBatch(context) {
       assert.equal(final, null, "tick should clear the entry once rests reach 0");
     });
 
-    it("setting toggle: setting can be flipped on and off without error", async () => {
-      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, false);
-      assert.equal(game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY), false);
-      await game.settings.set(MODULE_ID, ABSTAIN_SETTING_KEY, true);
-      assert.equal(game.settings.get(MODULE_ID, ABSTAIN_SETTING_KEY), true);
-    });
   });
 }
 

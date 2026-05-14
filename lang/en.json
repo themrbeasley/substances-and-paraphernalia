@@ -53,9 +53,6 @@
   "FISHUT.Settings.AddictionPoisonedCoupling.Name": "Addiction / Poisoned coupling",
   "FISHUT.Settings.AddictionPoisonedCoupling.Hint": "Choose how addiction relates to the Poisoned condition. Linked-cascade: addiction also applies Poisoned, and curing Poisoned cures the addiction. Linked-isolated: addiction also applies Poisoned, but they're cleared separately. Independent: addiction never adds Poisoned. Changes only affect new applications.",
 
-  "FISHUT.Settings.VoluntaryAbstainEnabled.Name": "Allow voluntary abstain on Long Rest",
-  "FISHUT.Settings.VoluntaryAbstainEnabled.Hint": "When on, actors with active withdrawal may attempt a Wisdom saving throw during a Long Rest to skip an extra rest. On a success: -2 rests. On a failed saving throw: normal -1 rest, no penalty.",
-
   "FISHUT.Settings.TimesUpIntegration.Name": "Wire into Times Up",
   "FISHUT.Settings.TimesUpIntegration.Hint": "Disable to make this module ignore Times Up even if it's installed.",
   "FISHUT.Settings.TmfxIntegration.Name": "Wire into Token Magic FX",
