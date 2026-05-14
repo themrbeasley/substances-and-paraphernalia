@@ -47,6 +47,11 @@ import { registerPhase1AddictionOnly } from "./phase1-addiction-only.test.mjs";
 import { registerPhase1OverdoseGate } from "./phase1-overdose-gate.test.mjs";
 import { registerPhase1ToleranceIncrement } from "./phase1-tolerance-increment.test.mjs";
 import { registerPhase1AlteredAttenuation } from "./phase1-altered-attenuation.test.mjs";
+import { registerPhase2AbstainPass } from "./phase2-abstain-pass.test.mjs";
+import { registerPhase2AbstainFail } from "./phase2-abstain-fail.test.mjs";
+import { registerPhase2AbstainFailConFail } from "./phase2-abstain-fail-con-fail.test.mjs";
+import { registerPhase2ForcedAbstain } from "./phase2-forced-abstain.test.mjs";
+import { registerPhase2DefaultUse } from "./phase2-default-use.test.mjs";
 
 const BATCH_PREFIX = "substances-and-paraphernalia";
 
@@ -185,6 +190,11 @@ export function registerQuenchSuite() {
     registerPhase1OverdoseGate(quench);
     registerPhase1ToleranceIncrement(quench);
     registerPhase1AlteredAttenuation(quench);
+    registerPhase2AbstainPass(quench);
+    registerPhase2AbstainFail(quench);
+    registerPhase2AbstainFailConFail(quench);
+    registerPhase2ForcedAbstain(quench);
+    registerPhase2DefaultUse(quench);
   });
 }
 
