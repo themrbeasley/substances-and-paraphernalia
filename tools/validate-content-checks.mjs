@@ -14,16 +14,6 @@ export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]
 export const MODIFIER_TYPES = new Set(["auto-pass", "reroll-on-fail", "advantage", "+N"]);
 export const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
-// Mirror of TOLERANCE_DEFAULT_CAPS in scripts/data/tolerance.js. Keep in
-// sync — this file is build-time only and cannot import the runtime module
-// without dragging Foundry globals into Node validation.
-const TOLERANCE_CAP_DEFAULTS = {
-  maxStacks: 5,
-  modifierFactorFloor: 0.25,
-  addictionDcBumpCap: 5,
-  withdrawalDurationFactorCap: 2.0,
-};
-
 const ROLE_PATTERNS = {
   addiction: /addict/i,
   withdrawal: /withdraw/i,
@@ -61,15 +51,23 @@ function findEffect(data, id) {
 }
 
 /**
- * Substance contract. See top-of-file comment in validate-content.mjs for the
- * v0.3 baseline. v0.4 adds:
- *   - flags[…].overdose: when `enabled`, require chancePercent (1–100) and
- *     non-empty `description`.
- *   - flags[…].withdrawal: top-level block { enabled?, mod, effectId? }.
- *     `mod` is required and positive-integer. `effectId`, when set, must
- *     resolve to an AE on the same item whose name contains "withdraw";
- *     that AE warns if it imposes disadvantage on attack or check
- *     (escalate, don't duplicate poisoned).
+ * Validate a substance item against the v0.8.1 contract.
+ *
+ * Required shape (full contract is documented in validate-content.mjs):
+ *   - flags[…].kind === "substance", schemaVersion === 7
+ *   - system.type.value === "poison"; system.type.subtype ∈ contact|ingested|inhaled|injury
+ *   - addiction.save.dc is a finite number; addiction.enabled is boolean when present
+ *   - withdrawal block is required; withdrawal.dc is a finite number when
+ *     addiction.enabled !== false
+ *   - when withdrawal.enabled !== false: withdrawal.abstain.{ability,dc} and
+ *     withdrawal.duration.{value,unit} are all required
+ *   - addiction.addictionEffectIds points to AEs whose names contain /addict/i
+ *   - overdose: when enabled, chancePercent must be an integer 1..100 and
+ *     description must be a non-empty string
+ *   - withdrawal.effectIds (if set): AE names must contain /withdraw/i; warns
+ *     on disadvantage-on-attack/check or statuses:["poisoned"]
+ *   - any modifier-bearing AE with kind="bypass" type="+N" requires non-zero
+ *     numeric bonus
  *
  * @param {{relPath: string, data: object}} file
  * @returns {{errors: string[], warnings: string[]}}
@@ -91,8 +89,8 @@ export function checkSubstance(file) {
     err(`kind must be "substance" (got ${flags.kind})`);
     return { errors, warnings };
   }
-  if (flags.schemaVersion !== 3) {
-    err(`schemaVersion must be 3 (got ${flags.schemaVersion})`);
+  if (flags.schemaVersion !== 7) {
+    err(`schemaVersion must be 7 (got ${flags.schemaVersion})`);
   }
   if (flags.administration !== undefined) {
     err(
@@ -128,14 +126,41 @@ export function checkSubstance(file) {
 
   const withdrawal = flags.withdrawal;
   if (!withdrawal || typeof withdrawal !== "object" || Array.isArray(withdrawal)) {
-    err(`withdrawal block is required (object with at least { mod })`);
+    err(`withdrawal block is required`);
   } else {
     if (withdrawal.enabled !== undefined && typeof withdrawal.enabled !== "boolean") {
       err(`withdrawal.enabled must be a boolean when present (got ${typeof withdrawal.enabled})`);
     }
-    const w = withdrawal.mod;
-    if (!Number.isInteger(w) || w <= 0) {
-      err(`withdrawal.mod must be a positive integer (got ${w})`);
+    if (addiction?.enabled !== false) {
+      const dc = withdrawal.dc;
+      if (!Number.isFinite(Number(dc))) {
+        err(`withdrawal.dc is required (finite number) when addiction.enabled !== false (got ${JSON.stringify(dc)})`);
+      }
+    }
+    if (withdrawal.enabled !== false) {
+      const abstain = withdrawal.abstain;
+      if (!abstain || typeof abstain !== "object") {
+        err(`withdrawal.abstain block is required when withdrawal.enabled !== false`);
+      } else {
+        if (typeof abstain.ability !== "string" || abstain.ability.length === 0) {
+          err(`withdrawal.abstain.ability must be a non-empty string (got ${JSON.stringify(abstain.ability)})`);
+        }
+        if (!Number.isFinite(Number(abstain.dc))) {
+          err(`withdrawal.abstain.dc must be a finite number (got ${JSON.stringify(abstain.dc)})`);
+        }
+      }
+      const duration = withdrawal.duration;
+      if (!duration || typeof duration !== "object") {
+        err(`withdrawal.duration block is required when withdrawal.enabled !== false`);
+      } else {
+        const allowedUnits = new Set(["minutes", "hours", "days", "weeks", "months"]);
+        if (!Number.isFinite(Number(duration.value)) || Number(duration.value) <= 0) {
+          err(`withdrawal.duration.value must be a positive number (got ${JSON.stringify(duration.value)})`);
+        }
+        if (!allowedUnits.has(duration.unit)) {
+          err(`withdrawal.duration.unit must be one of minutes|hours|days|weeks|months (got ${JSON.stringify(duration.unit)})`);
+        }
+      }
     }
   }
 
@@ -248,19 +273,25 @@ export function checkSubstance(file) {
     checkAeRole(ae, tag, errors);
   }
 
-  // v0.7 — warn when authored tolerance.caps loosen an engine default.
-  checkToleranceCapsOverride(data, warn);
-
   return { errors, warnings };
 }
 
 /**
- * Paraphernalia contract. See top-of-file comment in validate-content.mjs for
- * the v0.3 baseline. v0.4 adds:
- *   - "+N" modifier type with required numeric `bonus`.
- *   - subtype must be in `builtinSubtypes` when provided (custom subtypes from
- *     world setting can't be checked at build time — runtime authoring path
- *     validates against the live composed list).
+ * Validate a paraphernalia item against the v0.8.1 contract.
+ *
+ * Required shape (full contract is documented in validate-content.mjs):
+ *   - flags[…].kind === "paraphernalia", schemaVersion === 7
+ *   - subtype is a non-empty kebab-case string matching a built-in subtype
+ *     from schema.json (custom subtypes are user-managed at runtime and cannot
+ *     be validated at build time)
+ *   - legacy flags paraphernaliaId / tags / addictionSaveBypass are hard errors
+ *   - bypass intent is declared via an embedded transfer:true AE carrying
+ *     flags[…].modifier with kind="bypass" and type ∈ auto-pass|advantage|+N;
+ *     "+N" requires a non-zero numeric bonus
+ *   - appliesTo on the AE-side modifier is optional; when present, each entry
+ *     must be a valid administration value so typos are caught early
+ *   - when any bypass AE declares usesPerDay, the host item must have
+ *     system.uses.recovery including a { period:"day", type:"recoverAll" } entry
  *
  * @param {{relPath: string, data: object}} file
  * @param {{builtinSubtypes?: Set<string>}} [opts]
@@ -282,8 +313,8 @@ export function checkParaphernalia(file, opts = {}) {
     err(`kind must be "paraphernalia" (got ${flags.kind})`);
     return { errors, warnings };
   }
-  if (flags.schemaVersion !== 3) {
-    err(`schemaVersion must be 3 (got ${flags.schemaVersion})`);
+  if (flags.schemaVersion !== 7) {
+    err(`schemaVersion must be 7 (got ${flags.schemaVersion})`);
   }
   if (typeof flags.subtype !== "string" || !KEBAB.test(flags.subtype)) {
     err(`subtype must be a kebab-case string (got ${JSON.stringify(flags.subtype)})`);
@@ -395,57 +426,8 @@ function checkModifierShape(ae, tag) {
         );
       }
     }
-  } else if (modifier.kind === "tolerance") {
-    if (typeof modifier.substanceId !== "string" || modifier.substanceId === "") {
-      errors.push(
-        `${aeTag}: tolerance modifier requires a non-empty substanceId (got ${JSON.stringify(modifier.substanceId)})`,
-      );
-    }
-    const hasAtt = isObject(modifier.attenuateAltered);
-    const hasBump = Number.isFinite(Number(modifier.addictionDcBump));
-    const hasAmp = isObject(modifier.withdrawalAmplify);
-    if (!hasAtt && !hasBump && !hasAmp) {
-      errors.push(
-        `${aeTag}: tolerance modifier must declare at least one of attenuateAltered / addictionDcBump / withdrawalAmplify`,
-      );
-    }
   }
   return errors;
-}
-
-function isObject(v) {
-  return v !== null && typeof v === "object" && !Array.isArray(v);
-}
-
-/**
- * Warn (not error) when a per-substance `tolerance.caps` override loosens an
- * engine default. Tolerance is designed for diminishing returns — overrides
- * exist so authors who want true escalation can opt in explicitly. The
- * modifier-factor floor is a *lower* bound (smaller = looser); the other caps
- * are *upper* bounds (larger = looser).
- */
-function checkToleranceCapsOverride(data, warn) {
-  const caps = data?.flags?.[FLAG_SCOPE]?.tolerance?.caps;
-  if (!caps || typeof caps !== "object") return;
-  for (const [key, defaultVal] of Object.entries(TOLERANCE_CAP_DEFAULTS)) {
-    const authored = caps[key];
-    if (typeof authored !== "number") continue;
-    if (key === "modifierFactorFloor") {
-      // floor: lower = looser
-      if (authored < defaultVal) {
-        warn(
-          `tolerance.caps.${key} (${authored}) is below engine default (${defaultVal}) — buffs can drop further than usual`,
-        );
-      }
-    } else {
-      // upper caps: higher = looser
-      if (authored > defaultVal) {
-        warn(
-          `tolerance.caps.${key} (${authored}) exceeds engine default (${defaultVal}) — tolerance can stack further than usual`,
-        );
-      }
-    }
-  }
 }
 
 /**
