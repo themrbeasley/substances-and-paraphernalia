@@ -43,6 +43,7 @@ import { logger } from "../../scripts/logger.js";
 import { applyDragOutcome, shouldShowDialog } from "../../scripts/hooks/drag-to-inventory.js";
 import { runSimulation, sweepOrphanedTestActors } from "../../scripts/ui/simulate-dose.js";
 import { PRESETS, PRESET_LIBRARY, verifyTmfxPresets } from "../../scripts/integrations/tmfx.js";
+import { registerPhase1AddictionOnly } from "./phase1-addiction-only.test.mjs";
 
 const BATCH_PREFIX = "substances-and-paraphernalia";
 
@@ -177,6 +178,7 @@ export function registerQuenchSuite() {
       abstainFailSoftBatch,
       { displayName: "S&P · Voluntary Abstain · fail soft-fail" },
     );
+    registerPhase1AddictionOnly(quench);
   });
 }
 
