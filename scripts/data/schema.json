@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Substances and Paraphernalia — module schema",
-  "schemaVersion": 3,
+  "schemaVersion": 7,
   "moduleId": "substances-and-paraphernalia",
   "flagScope": "substances-and-paraphernalia",
   "kinds": [
@@ -49,14 +49,6 @@
       { "id": "advantage", "labelKey": "FISHUT.Modifier.Type.Advantage" },
       { "id": "+N", "labelKey": "FISHUT.Modifier.Type.PlusN" }
     ]
-  },
-  "tolerance": {
-    "caps": {
-      "maxStacks": 5,
-      "modifierFactorFloor": 0.25,
-      "addictionDcBumpCap": 5,
-      "withdrawalDurationFactorCap": 2.0
-    }
   },
   "coupling": {
     "modes": [
@@ -124,6 +116,14 @@
     "modifier": "modifier",
     "overdose": "overdose",
     "tolerance": "tolerance",
-    "aeRole": "aeRole"
+    "aeRole": "aeRole",
+    "withdrawalDc": "withdrawal.dc",
+    "abstainAbility": "withdrawal.abstain.ability",
+    "abstainDc": "withdrawal.abstain.dc",
+    "withdrawalDurationValue": "withdrawal.duration.value",
+    "withdrawalDurationUnit": "withdrawal.duration.unit",
+    "toleranceDecay": "tolerance.decay",
+    "toleranceAttenuationCurve": "tolerance.attenuationCurve",
+    "actorTolerance": "tolerance"
   }
 }
