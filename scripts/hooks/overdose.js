@@ -3,11 +3,12 @@ import {
   getOverdose,
   getOverdoseEffectIds,
   isSubstance,
-  findEffectsByRole,
-  getSourceSubstanceId,
+  getActorToleranceEntry,
+  getWithdrawalDc,
 } from "../data/flag-schema.js";
-import { rollOverdose } from "../data/overdose.js";
-import { computeAdjustedOverdoseChance } from "../data/overdose-interaction.js";
+import { shouldRollOverdose, rollOverdoseChance } from "../data/overdose-gate.js";
+import { snapDcToTier, tierProfile } from "../data/tier-table.js";
+import { currentPoints } from "../data/tolerance.js";
 import { logger } from "../logger.js";
 
 /**
@@ -23,72 +24,48 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
-  const block = getOverdose(item);
-  if (!block || block.enabled !== true) return;
 
   try {
-    await rollOverdoseAndApply(actor, item, block);
+    await rollOverdoseAndApply(actor, item);
   } catch (err) {
     logger.error("overdose post-use flow failed", err);
   }
 }
 
 /**
- * Test seam — Quench calls this directly with a deterministic `randomFn`.
- *
- * The returned `chancePercent` reflects the **post-adjustment** chance — i.e.
- * the value the d100 was rolled against after tolerance modulation, not the
- * authored `block.chancePercent`.
+ * Phase 1 overdose gate. Returns the created Overdose AE on hit, null
+ * otherwise. Test seam — exported for Quench.
  *
  * @param {Actor} actor
  * @param {Item}  item
- * @param {{ enabled?: boolean, chancePercent?: number, description?: string,
- *          toleranceInteraction?: "none"|"mitigate"|"compound",
- *          toleranceInteractionMagnitude?: number }} block
- * @param {{ randomFn?: () => number }} [opts]
+ * @param {() => number} [rng]   d100 — defaults to Math.random-based 1..100.
+ * @returns {Promise<ActiveEffect|null>}
  */
-export async function rollOverdoseAndApply(actor, item, block, { randomFn } = {}) {
-  if (!block || block.enabled !== true) return null;
-  const baseChance = Number(block.chancePercent) || 0;
-  if (baseChance <= 0) return null;
+export async function rollOverdoseAndApply(actor, item, rng = defaultD100) {
+  const overdose = getOverdose(item);
+  if (!overdose?.enabled) return null;
 
-  // Read tolerance stacks at roll time, NOT at AE apply time — per spec §2.4,
-  // the addiction-AE listener and this overdose listener fire in the same
-  // postUseActivity cycle and listener order is not guaranteed. Reading here
-  // means we see the *prior* stack count if addiction's stack-increment has
-  // not yet run; that's intentional (the new stack only takes effect from
-  // the next consumption forward, which matches "tolerance grows over time").
-  const toleranceEffects = findEffectsByRole(actor, "tolerance").filter(
-    (e) => getSourceSubstanceId(e) === item.id,
-  );
-  const stacks = toleranceEffects.reduce((sum, e) => {
-    const raw = Number(e.flags?.[MODULE_ID]?.stacks);
-    if (!Number.isFinite(raw)) return sum + 1; // missing/garbage → default 1
-    return sum + Math.max(0, raw);
-  }, 0);
-  const mode = block.toleranceInteraction ?? "none";
-  const rawMagnitude = Number(block.toleranceInteractionMagnitude);
-  const magnitude = Number.isFinite(rawMagnitude) ? rawMagnitude : 0;
-  const adjustedChance = computeAdjustedOverdoseChance(baseChance, stacks, mode, magnitude);
-  if (adjustedChance <= 0) return null;
+  const dc = getWithdrawalDc(item);
+  if (!Number.isFinite(dc)) return null;
+  const profile = tierProfile(snapDcToTier(dc));
+  const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
+  const points = currentPoints(count, profile.rate);
 
-  const result = rollOverdose(adjustedChance, randomFn ?? Math.random);
-  if (!result.hit) return { hit: false, roll: result.roll, chancePercent: result.chancePercent };
+  const thresholdModifier = Number(
+    actor?.getFlag?.(MODULE_ID, "overdose.thresholdModifier"),
+  ) || 0;
+  if (!shouldRollOverdose(points, profile.threshold, thresholdModifier)) return null;
 
-  const effect = await applyOverdoseEffect(actor, item, block);
-  await chat(
-    game.i18n.format("FISHUT.Overdose.Triggered", {
-      actor: actor.name,
-      item: item.name,
-      description: block.description ?? "",
-    }),
-  );
-  return {
-    hit: true,
-    roll: result.roll,
-    chancePercent: result.chancePercent,
-    effectId: effect?.id ?? null,
-  };
+  const chanceModifier = Number(
+    actor?.getFlag?.(MODULE_ID, "overdose.chanceModifier"),
+  ) || 0;
+  if (!rollOverdoseChance(rng, overdose.chancePercent, chanceModifier)) return null;
+
+  return applyOverdoseEffect(actor, item, overdose);
+}
+
+function defaultD100() {
+  return Math.floor(Math.random() * 100) + 1;
 }
 
 /**
@@ -169,6 +146,3 @@ function resolveOverdoseTemplates(item, block) {
   return resolved;
 }
 
-async function chat(content) {
-  return ChatMessage.create({ content, whisper: [] });
-}
