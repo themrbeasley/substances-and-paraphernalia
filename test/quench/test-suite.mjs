@@ -25,7 +25,6 @@ import {
   getActorWithdrawalEntry,
   isParaphernalia,
   isSubstance,
-  setActorWithdrawalEntry,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
 import { processAbstainFailure } from "../../scripts/hooks/long-rest-abstain.js";
@@ -2569,75 +2568,6 @@ function longRestAbstainFlowBatch(context) {
       assert.equal(defaultAbstainDc(4), 12);
       assert.equal(defaultAbstainDc(-1), 7, "DC formula does not floor negatives");
       assert.equal(defaultAbstainDc(NaN), 8, "non-finite mod falls back to 8");
-    });
-
-    it("public API surface: api.abstain.applyAbstainPreDecrement is callable", async () => {
-      const fn = api()?.abstain?.applyAbstainPreDecrement;
-      assert.equal(typeof fn, "function", "abstain helper missing on module API");
-    });
-
-    it("pre-decrement: rests=3 → 2 (single -1)", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub A" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 3,
-        appliedAt: new Date().toISOString(),
-      });
-      const result = await api().abstain.applyAbstainPreDecrement(actor, sub.id, {
-        restsRemaining: 3,
-      });
-      assert.equal(result?.newRests, 2, "pre-decrement should drop 3 → 2");
-      const stored = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(stored?.restsRemaining, 2);
-    });
-
-    it("clamp at 0: rests=0 stays at 0 after pre-decrement", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub Clamp" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 0,
-        appliedAt: new Date().toISOString(),
-      });
-      const result = await api().abstain.applyAbstainPreDecrement(actor, sub.id, {
-        restsRemaining: 0,
-      });
-      assert.equal(result?.newRests, 0, "0-rest entry should clamp at 0");
-      const stored = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(stored?.restsRemaining, 0);
-    });
-
-    it("composition: pre-decrement + GM tick = total -2 from rests=3", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub Compose" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 3,
-        appliedAt: new Date().toISOString(),
-      });
-
-      // Simulate the abstain pre-decrement.
-      await api().abstain.applyAbstainPreDecrement(actor, sub.id, { restsRemaining: 3 });
-      assert.equal(getActorWithdrawalEntry(actor, sub.id)?.restsRemaining, 2);
-
-      // Trigger the standard GM tick via the dnd5e hook.
-      await Hooks.callAll("dnd5e.restCompleted", actor, { longRest: true });
-
-      // Hook side effects are async; wait a tick.
-      await new Promise((r) => setTimeout(r, 50));
-      const final = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(final?.restsRemaining, 1, "composed result should be 1 after -2");
-    });
-
-    it("composition: pre-decrement + GM tick clears entry when rests was 1", async () => {
-      const sub = await embedSubstance(actor, { name: "Abstain Sub Clear" });
-      await setActorWithdrawalEntry(actor, sub.id, {
-        restsRemaining: 1,
-        appliedAt: new Date().toISOString(),
-      });
-      await api().abstain.applyAbstainPreDecrement(actor, sub.id, { restsRemaining: 1 });
-      assert.equal(getActorWithdrawalEntry(actor, sub.id)?.restsRemaining, 0);
-
-      await Hooks.callAll("dnd5e.restCompleted", actor, { longRest: true });
-      await new Promise((r) => setTimeout(r, 50));
-
-      const final = getActorWithdrawalEntry(actor, sub.id);
-      assert.equal(final, null, "tick should clear the entry once rests reach 0");
     });
 
   });

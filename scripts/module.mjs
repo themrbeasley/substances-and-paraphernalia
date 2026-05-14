@@ -19,9 +19,10 @@ import { registerOverdoseHooks, rollOverdoseAndApply } from "./hooks/overdose.js
 import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
 import {
   registerLongRestAbstain,
-  applyAbstainPreDecrement,
   processAbstainFailure,
 } from "./hooks/long-rest-abstain.js";
+import { registerToleranceDecay, applyToleranceDecay } from "./hooks/tolerance-decay.js";
+import { registerWithdrawalCleanup } from "./hooks/withdrawal-cleanup.js";
 import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
 import { computeAdjustedOverdoseChance } from "./data/overdose-interaction.js";
 import {
@@ -47,6 +48,8 @@ Hooks.once("init", () => {
   registerOverdoseHooks();
   registerDragToInventory();
   registerLongRestAbstain();
+  registerToleranceDecay();
+  registerWithdrawalCleanup();
   registerDetailsTab();
   registerSimulateDose();
   registerTmfxPresets();
@@ -80,7 +83,8 @@ Hooks.once("ready", async () => {
       },
       overdose: { rollOverdoseAndApply },
       saveBypass: { consumeBypassIfAvailable },
-      abstain: { applyAbstainPreDecrement, processAbstainFailure },
+      abstain: { processAbstainFailure },
+      tolerance: { applyToleranceDecay },
       data: { computeAdjustedOverdoseChance },
       simulateDose: { runSimulation, sweepOrphanedTestActors },
       integrations: {
