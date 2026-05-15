@@ -2,7 +2,7 @@
   <legend>{{labels.substancePropertiesHeader}}</legend>
   <div class="form-group">
     <label>{{labels.category}}</label>
-    <select data-fishut-flag="category">
+    <select data-fishut-flag="category" {{#unless isEditable}}disabled{{/unless}}>
       <option value="">—</option>
       {{#each substance.categories}}
         <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
@@ -16,7 +16,8 @@
     <div class="form-group">
       <label class="checkbox">
         <dnd5e-checkbox data-fishut-flag="addiction.enabled"
-          {{#if substance.addiction.enabled}}checked{{/if}}></dnd5e-checkbox>
+          {{#if substance.addiction.enabled}}checked{{/if}}
+          {{#unless isEditable}}disabled{{/unless}}></dnd5e-checkbox>
         {{labels.addictionEnabled}}
       </label>
     </div>
@@ -25,7 +26,7 @@
          class="{{#unless substance.addiction.enabled}}fishut-hidden{{/unless}}">
       <div class="form-group">
         <label>{{labels.saveAbility}}</label>
-        <select data-fishut-flag="save.ability">
+        <select data-fishut-flag="save.ability" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.addiction.save.abilityOptions}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
           {{/each}}
@@ -35,7 +36,7 @@
 
       <div class="form-group">
         <label>{{labels.saveDc}}</label>
-        <input type="number" data-fishut-flag="save.dc" value="{{substance.addiction.save.dc}}" min="1" step="1" />
+        <input type="number" data-fishut-flag="save.dc" value="{{substance.addiction.save.dc}}" min="1" step="1" {{#unless isEditable}}disabled{{/unless}} />
         <p class="fishut-hint">{{labels.saveDcHint}}</p>
       </div>
 
@@ -45,11 +46,12 @@
           <button type="button" class="unbutton control-button"
                   data-fishut-action="create-addiction-ae"
                   data-tooltip="{{labels.addictionEffectCreateTooltip}}"
-                  aria-label="{{labels.addictionEffectCreateTooltip}}">
+                  aria-label="{{labels.addictionEffectCreateTooltip}}"
+                  {{#unless isEditable}}disabled{{/unless}}>
             <i class="fas fa-plus" inert></i>
           </button>
         </legend>
-        <multi-select data-fishut-multi="addiction.effectIds" class="hidden-tags">
+        <multi-select data-fishut-multi="addiction.effectIds" class="hidden-tags" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.addiction.availableEffects}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
           {{/each}}
@@ -65,14 +67,16 @@
                           data-fishut-action="dissociate-addiction-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDissociate}}"
-                          aria-label="{{../labels.effectDissociate}}">
+                          aria-label="{{../labels.effectDissociate}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-minus" inert></i>
                   </button>
                   <button type="button" class="unbutton control-button"
                           data-fishut-action="delete-addiction-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDelete}}"
-                          aria-label="{{../labels.effectDelete}}">
+                          aria-label="{{../labels.effectDelete}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-trash" inert></i>
                   </button>
                 </div>
@@ -92,7 +96,8 @@
     <div class="form-group">
       <label class="checkbox">
         <dnd5e-checkbox data-fishut-flag="withdrawal.enabled"
-          {{#if substance.withdrawalEnabled}}checked{{/if}}></dnd5e-checkbox>
+          {{#if substance.withdrawalEnabled}}checked{{/if}}
+          {{#unless isEditable}}disabled{{/unless}}></dnd5e-checkbox>
         {{labels.withdrawalEnabled}}
       </label>
     </div>
@@ -101,13 +106,13 @@
          class="{{#unless substance.withdrawalEnabled}}fishut-hidden{{/unless}}">
       <div class="form-group">
         <label>{{labels.withdrawalDc}}</label>
-        <input type="number" data-fishut-flag="withdrawal.dc" value="{{substance.withdrawalDc}}" min="1" step="1" />
+        <input type="number" data-fishut-flag="withdrawal.dc" value="{{substance.withdrawalDc}}" min="1" step="1" {{#unless isEditable}}disabled{{/unless}} />
         <span class="fishut-hint fishut-tier-preview">{{substance.withdrawalTierLabel}}</span>
       </div>
 
       <div class="form-group">
         <label>{{labels.abstainAbility}}</label>
-        <select data-fishut-flag="withdrawal.abstain.ability">
+        <select data-fishut-flag="withdrawal.abstain.ability" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.abstainAbilityOptions}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
           {{/each}}
@@ -116,17 +121,17 @@
 
       <div class="form-group">
         <label>{{labels.abstainDc}}</label>
-        <input type="number" data-fishut-flag="withdrawal.abstain.dc" value="{{substance.abstainDc}}" min="1" step="1" />
+        <input type="number" data-fishut-flag="withdrawal.abstain.dc" value="{{substance.abstainDc}}" min="1" step="1" {{#unless isEditable}}disabled{{/unless}} />
       </div>
 
       <div class="form-group">
         <label>{{labels.withdrawalDurationValue}}</label>
-        <input type="number" min="0" data-fishut-flag="withdrawal.duration.value" value="{{substance.withdrawalDurationValue}}" />
+        <input type="number" min="0" data-fishut-flag="withdrawal.duration.value" value="{{substance.withdrawalDurationValue}}" {{#unless isEditable}}disabled{{/unless}} />
       </div>
 
       <div class="form-group">
         <label>{{labels.withdrawalDurationUnit}}</label>
-        <select data-fishut-flag="withdrawal.duration.unit">
+        <select data-fishut-flag="withdrawal.duration.unit" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.withdrawalDurationUnitOptions}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
           {{/each}}
@@ -139,11 +144,12 @@
           <button type="button" class="unbutton control-button"
                   data-fishut-action="create-withdrawal-ae"
                   data-tooltip="{{labels.withdrawalEffectCreateTooltip}}"
-                  aria-label="{{labels.withdrawalEffectCreateTooltip}}">
+                  aria-label="{{labels.withdrawalEffectCreateTooltip}}"
+                  {{#unless isEditable}}disabled{{/unless}}>
             <i class="fas fa-plus" inert></i>
           </button>
         </legend>
-        <multi-select data-fishut-multi="withdrawal.effectIds" class="hidden-tags">
+        <multi-select data-fishut-multi="withdrawal.effectIds" class="hidden-tags" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.withdrawalAvailableEffects}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
           {{/each}}
@@ -159,14 +165,16 @@
                           data-fishut-action="dissociate-withdrawal-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDissociate}}"
-                          aria-label="{{../labels.effectDissociate}}">
+                          aria-label="{{../labels.effectDissociate}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-minus" inert></i>
                   </button>
                   <button type="button" class="unbutton control-button"
                           data-fishut-action="delete-withdrawal-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDelete}}"
-                          aria-label="{{../labels.effectDelete}}">
+                          aria-label="{{../labels.effectDelete}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-trash" inert></i>
                   </button>
                 </div>
@@ -186,7 +194,8 @@
     <div class="form-group">
       <label class="checkbox">
         <dnd5e-checkbox data-fishut-flag="overdose.enabled"
-          {{#if substance.overdose.enabled}}checked{{/if}}></dnd5e-checkbox>
+          {{#if substance.overdose.enabled}}checked{{/if}}
+          {{#unless isEditable}}disabled{{/unless}}></dnd5e-checkbox>
         {{labels.overdoseEnabled}}
       </label>
     </div>
@@ -197,7 +206,8 @@
         <label>{{labels.overdoseChancePercent}}</label>
         <input type="number" data-fishut-flag="overdose.chancePercent"
                value="{{substance.overdose.chancePercent}}"
-               min="1" max="100" step="1" />
+               min="1" max="100" step="1"
+               {{#unless isEditable}}disabled{{/unless}} />
       </div>
 
       <div class="form-group">
@@ -205,12 +215,12 @@
           {{labels.overdoseDescription}}
           <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.overdoseTooltip}}"></i>
         </label>
-        <textarea data-fishut-flag="overdose.description" rows="3">{{substance.overdose.description}}</textarea>
+        <textarea data-fishut-flag="overdose.description" rows="3" {{#unless isEditable}}disabled{{/unless}}>{{substance.overdose.description}}</textarea>
       </div>
 
       <div class="form-group">
         <label>{{labels.overdoseToleranceInteractionLabel}}</label>
-        <select data-fishut-flag="overdose.toleranceInteraction">
+        <select data-fishut-flag="overdose.toleranceInteraction" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.overdose.toleranceInteractionOptions}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
           {{/each}}
@@ -221,7 +231,8 @@
         <label>{{labels.overdoseToleranceInteractionMagnitude}}</label>
         <input type="number" data-fishut-flag="overdose.toleranceInteractionMagnitude"
                value="{{substance.overdose.toleranceInteractionMagnitude}}"
-               min="0" step="1" />
+               min="0" step="1"
+               {{#unless isEditable}}disabled{{/unless}} />
       </div>
 
       <div class="form-group">
@@ -234,11 +245,12 @@
           <button type="button" class="unbutton control-button"
                   data-fishut-action="create-overdose-ae"
                   data-tooltip="{{labels.overdoseEffectCreateTooltip}}"
-                  aria-label="{{labels.overdoseEffectCreateTooltip}}">
+                  aria-label="{{labels.overdoseEffectCreateTooltip}}"
+                  {{#unless isEditable}}disabled{{/unless}}>
             <i class="fas fa-plus" inert></i>
           </button>
         </legend>
-        <multi-select data-fishut-multi="overdose.effectIds" class="hidden-tags">
+        <multi-select data-fishut-multi="overdose.effectIds" class="hidden-tags" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.overdose.availableEffects}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
           {{/each}}
@@ -254,14 +266,16 @@
                           data-fishut-action="dissociate-overdose-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDissociate}}"
-                          aria-label="{{../labels.effectDissociate}}">
+                          aria-label="{{../labels.effectDissociate}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-minus" inert></i>
                   </button>
                   <button type="button" class="unbutton control-button"
                           data-fishut-action="delete-overdose-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDelete}}"
-                          aria-label="{{../labels.effectDelete}}">
+                          aria-label="{{../labels.effectDelete}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-trash" inert></i>
                   </button>
                 </div>
@@ -281,7 +295,8 @@
     <div class="form-group">
       <label class="checkbox">
         <dnd5e-checkbox data-fishut-flag="tolerance.enabled"
-          {{#if substance.tolerance.enabled}}checked{{/if}}></dnd5e-checkbox>
+          {{#if substance.tolerance.enabled}}checked{{/if}}
+          {{#unless isEditable}}disabled{{/unless}}></dnd5e-checkbox>
         {{labels.toleranceEnabled}}
       </label>
     </div>
@@ -290,7 +305,7 @@
          class="{{#unless substance.tolerance.enabled}}fishut-hidden{{/unless}}">
       <div class="form-group">
         <label>{{labels.toleranceDecay}}</label>
-        <input type="number" min="0" data-fishut-flag="tolerance.decay" value="{{substance.toleranceDecay}}" />
+        <input type="number" min="0" data-fishut-flag="tolerance.decay" value="{{substance.toleranceDecay}}" {{#unless isEditable}}disabled{{/unless}} />
       </div>
 
       <fieldset>
@@ -299,11 +314,12 @@
           <button type="button" class="unbutton control-button"
                   data-fishut-action="create-tolerance-ae"
                   data-tooltip="{{labels.toleranceEffectCreateTooltip}}"
-                  aria-label="{{labels.toleranceEffectCreateTooltip}}">
+                  aria-label="{{labels.toleranceEffectCreateTooltip}}"
+                  {{#unless isEditable}}disabled{{/unless}}>
             <i class="fas fa-plus" inert></i>
           </button>
         </legend>
-        <multi-select data-fishut-multi="tolerance.effectIds" class="hidden-tags">
+        <multi-select data-fishut-multi="tolerance.effectIds" class="hidden-tags" {{#unless isEditable}}disabled{{/unless}}>
           {{#each substance.tolerance.availableEffects}}
             <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
           {{/each}}
@@ -319,14 +335,16 @@
                           data-fishut-action="dissociate-tolerance-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDissociate}}"
-                          aria-label="{{../labels.effectDissociate}}">
+                          aria-label="{{../labels.effectDissociate}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-minus" inert></i>
                   </button>
                   <button type="button" class="unbutton control-button"
                           data-fishut-action="delete-tolerance-ae"
                           data-fishut-effect-id="{{this.id}}"
                           data-tooltip="{{../labels.effectDelete}}"
-                          aria-label="{{../labels.effectDelete}}">
+                          aria-label="{{../labels.effectDelete}}"
+                          {{#unless ../isEditable}}disabled{{/unless}}>
                     <i class="fa-solid fa-trash" inert></i>
                   </button>
                 </div>

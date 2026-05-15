@@ -2,7 +2,7 @@
   <legend>{{labels.paraphernaliaPropertiesHeader}}</legend>
   <div class="form-group">
     <label>{{labels.subtype}}</label>
-    <select data-fishut-flag="subtype">
+    <select data-fishut-flag="subtype" {{#unless isEditable}}disabled{{/unless}}>
       <option value="">{{labels.subtypeNone}}</option>
       {{#each paraphernalia.subtypeSelectOptions}}
         <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
@@ -18,6 +18,7 @@
             data-fishut-flag="appliesTo"
             data-fishut-admin="{{this.id}}"
             {{#if this.checked}}checked{{/if}}
+            {{#unless ../isEditable}}disabled{{/unless}}
           ></dnd5e-checkbox>
           {{this.label}}
         </label>
