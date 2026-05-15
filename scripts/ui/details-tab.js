@@ -87,7 +87,7 @@ export function registerDetailsTab() {
 // markup shifts, fall back to a `<div>` (NOT a fieldset) so the authoring-
 // section anchor below isn't fooled into placing itself relative to our own
 // fallback wrapper.
-function injectKindToggle(detailsTab, item) {
+function injectKindToggle(detailsTab, item, isEditable) {
   if (detailsTab.querySelector(`[${TOGGLE_MARKER}]`)) return;
 
   const intendedKind = KIND_BY_ITEM_TYPE[item.type];
@@ -114,6 +114,7 @@ function injectKindToggle(detailsTab, item) {
   );
   if (!useWebComponent) input.type = "checkbox";
   if (isEnabled) input.setAttribute("checked", "");
+  if (!isEditable) input.setAttribute("disabled", "");
   input.dataset.fishutKindToggle = intendedKind;
   wrapper.appendChild(input);
   wrapper.appendChild(document.createTextNode(` ${labelText}`));
@@ -180,10 +181,15 @@ async function onRenderApplicationV2(app, htmlElement) {
   const detailsTab = htmlElement?.querySelector?.('section.tab[data-tab="details"]');
   if (!detailsTab) return;
 
+  // ApplicationV2 sheets expose `isEditable` reflecting the pencil-icon edit
+  // toggle (and observer/limited permission). Mirror dnd5e's behavior of
+  // disabling form controls when the sheet is in view mode.
+  const isEditable = app.isEditable !== false;
+
   // Toggle checkbox always renders for eligible item types so a fresh item can
   // be marked substance/paraphernalia. The authoring section below only renders
   // when the kind flag is set.
-  injectKindToggle(detailsTab, doc);
+  injectKindToggle(detailsTab, doc, isEditable);
 
   const kind = getKind(doc);
   if (kind !== "substance" && kind !== "paraphernalia") return;
@@ -195,6 +201,7 @@ async function onRenderApplicationV2(app, htmlElement) {
       kind,
       isSubstance: kind === "substance",
       isParaphernalia: kind === "paraphernalia",
+      isEditable,
       itemName: doc.name,
       labels: buildLabels(),
       substance: kind === "substance" ? buildSubstanceContext(doc) : null,

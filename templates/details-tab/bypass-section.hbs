@@ -3,7 +3,7 @@
   {{#if paraphernalia.bypass.present}}
     <div class="form-group">
       <label>{{labels.bypassType}}</label>
-      <select data-fishut-flag="bypass.type">
+      <select data-fishut-flag="bypass.type" {{#unless isEditable}}disabled{{/unless}}>
         {{#each paraphernalia.bypass.typeOptions}}
           <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
         {{/each}}
@@ -18,6 +18,7 @@
         data-fishut-flag="bypass.usesPerDay"
         value="{{paraphernalia.bypass.usesPerDayValue}}"
         placeholder="{{labels.bypassUsesPerDayPlaceholder}}"
+        {{#unless isEditable}}disabled{{/unless}}
       />
     </div>
     {{#if paraphernalia.bypass.isPlusN}}
@@ -28,12 +29,13 @@
           step="1"
           data-fishut-flag="bypass.bonus"
           value="{{paraphernalia.bypass.bonusValue}}"
+          {{#unless isEditable}}disabled{{/unless}}
         />
       </div>
     {{/if}}
   {{else}}
     <p class="hint">{{labels.bypassNoneHint}}</p>
-    <button type="button" class="fishut-btn-text" data-fishut-action="grant-bypass">
+    <button type="button" class="fishut-btn-text" data-fishut-action="grant-bypass" {{#unless isEditable}}disabled{{/unless}}>
       <i class="fa-solid fa-plus"></i>
       {{labels.bypassGrantButton}}
     </button>
