@@ -7,6 +7,14 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.8.5] — 2026-05-18
+
+### Fixed
+- **View-mode field lock leak on the kind toggle.** The master Substance/Paraphernalia checkbox (`<dnd5e-checkbox>` web component) honored `setAttribute("disabled", "")` visually but still fired `change` events when clicked, allowing the kind flag to be flipped from a view-mode sheet. Mirrors the JS-side `isEditable` guard added to `wireDetails` in v0.8.3 — same class of leak, different element.
+
+### Added
+- **One-shot i18n diagnostic on the Details tab.** If `game.i18n.localize("FISHUT.*")` returns the key verbatim (Foundry's behavior when no translation is loaded), log a single `logger.warn` per session pointing at the world install. Helps triage stale-install / world-translation-override reports without blaming the source.
+
 ## [0.8.0] — 2026-05-13
 
 ### Added
