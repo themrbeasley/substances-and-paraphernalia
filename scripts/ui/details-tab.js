@@ -41,6 +41,7 @@ import { getEffectiveParaphernaliaSubtypes } from "../data/paraphernalia-subtype
 import { writeModifierAsChanges } from "../data/modifier-flag.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { WITHDRAWAL_DURATION_UNITS } from "../data/withdrawal-duration.js";
+import { resolveSheetEditable } from "../data/sheet-mode.js";
 import { logger } from "../logger.js";
 
 const SECTION_TEMPLATE = `modules/${MODULE_ID}/templates/details-tab/section.hbs`;
@@ -134,6 +135,7 @@ function injectKindToggle(detailsTab, item, isEditable) {
   const host = findPropertiesHost(detailsTab);
   if (host) {
     host.appendChild(wrapper);
+    if (!isEditable) lockInjectedFields(wrapper);
     return;
   }
 
@@ -141,6 +143,7 @@ function injectKindToggle(detailsTab, item, isEditable) {
   fallback.classList.add("fishut-kind-toggle-fallback");
   fallback.appendChild(wrapper);
   detailsTab.insertBefore(fallback, detailsTab.firstChild);
+  if (!isEditable) lockInjectedFields(fallback);
 }
 
 // Locate the dnd5e Item-Properties container so the kind-toggle slots in
@@ -186,10 +189,15 @@ async function onRenderApplicationV2(app, htmlElement) {
   const detailsTab = htmlElement?.querySelector?.('section.tab[data-tab="details"]');
   if (!detailsTab) return;
 
-  // ApplicationV2 sheets expose `isEditable` reflecting the pencil-icon edit
-  // toggle (and observer/limited permission). Mirror dnd5e's behavior of
-  // disabling form controls when the sheet is in view mode.
-  const isEditable = app.isEditable !== false;
+  // `app.isEditable` only reflects ownership permission; dnd5e's view/edit
+  // pencil toggle drives `app._mode` (PLAY=1 / EDIT=2). Both must say yes for
+  // the sheet to be effectively editable. See `data/sheet-mode.js` for the
+  // resolution table — gating on `isEditable` alone was the v0.8.3-v0.8.6
+  // regression.
+  const isEditable = resolveSheetEditable({
+    isEditable: app.isEditable,
+    mode: app._mode,
+  });
 
   // Toggle checkbox always renders for eligible item types so a fresh item can
   // be marked substance/paraphernalia. The authoring section below only renders
@@ -233,8 +241,42 @@ async function onRenderApplicationV2(app, htmlElement) {
       detailsTab.appendChild(wrapper);
     }
     wireDetails(wrapper, doc, isEditable);
+    if (!isEditable) lockInjectedFields(wrapper);
   } catch (err) {
     logger.error("details-tab inject failed", err);
+  }
+}
+
+// Mirrors dnd5e's `_disableFields` selector set (dnd5e.mjs:2060-2070). The
+// template-level `{{#unless isEditable}}disabled{{/unless}}` doesn't reliably
+// suppress writes on `<dnd5e-checkbox>` and other web components, and the
+// `disabled` attribute alone doesn't dim their styling — setting the property
+// does both. Run on our injected DOM so the visual lock and the write block
+// match what dnd5e itself does to its native fields.
+const VIEW_MODE_LOCK_SELECTOR = [
+  "INPUT",
+  "SELECT",
+  "TEXTAREA",
+  "BUTTON",
+  "DND5E-CHECKBOX",
+  "COLOR-PICKER",
+  "DOCUMENT-TAGS",
+  "FILE-PICKER",
+  "HUE-SLIDER",
+  "MULTI-SELECT",
+  "PROSE-MIRROR",
+  "RANGE-PICKER",
+  "STRING-TAGS",
+]
+  .map((tag) => `${tag}:not(.always-interactive)`)
+  .join(", ");
+
+function lockInjectedFields(root) {
+  if (!root?.querySelectorAll) return;
+  for (const el of root.querySelectorAll(VIEW_MODE_LOCK_SELECTOR)) {
+    if (el.closest?.("prose-mirror[open]")) continue;
+    if (el.tagName === "TEXTAREA") el.readOnly = true;
+    else el.disabled = true;
   }
 }
 
