@@ -1,0 +1,59 @@
+name: Wiki sync
+
+# Mirrors docs/wiki/*.md → the GitHub Wiki repo
+# (substances-and-paraphernalia.wiki.git) on every push to main that touches
+# wiki content. The wiki is a separate git repo; GITHUB_TOKEN cannot push to
+# it, so this workflow requires a fine-scoped Personal Access Token stored as
+# repo secret WIKI_PAT with `repo` scope (or contents:write on the wiki repo
+# specifically for a fine-grained PAT — note that fine-grained PATs do not
+# always cover wiki repos, so a classic PAT with `repo` is the safer choice).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/wiki/**"
+      - ".github/workflows/wiki-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v5
+
+      - name: Clone wiki repo
+        env:
+          WIKI_PAT: ${{ secrets.WIKI_PAT }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WIKI_PAT:-}" ]; then
+            echo "::error::WIKI_PAT secret is not set. Create a classic PAT with 'repo' scope and add it to repo secrets."
+            exit 1
+          fi
+          git clone "https://x-access-token:${WIKI_PAT}@github.com/${{ github.repository }}.wiki.git" wiki
+
+      - name: Mirror docs/wiki -> wiki repo
+        run: |
+          set -euo pipefail
+          # rsync with --delete so removed pages disappear from the wiki too.
+          # Exclude the wiki repo's .git so we don't blow it away.
+          rsync -av --delete --exclude='.git/' docs/wiki/ wiki/
+
+      - name: Commit and push if changed
+        working-directory: wiki
+        run: |
+          set -euo pipefail
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No wiki changes to publish."
+            exit 0
+          fi
+          git add -A
+          git commit -m "Sync from ${{ github.repository }}@${{ github.sha }}"
+          git push origin HEAD:master
