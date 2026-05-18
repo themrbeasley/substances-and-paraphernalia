@@ -5,17 +5,14 @@ import {
   getAddictionEnabled,
   getWithdrawalEffectIds,
   getActorWithdrawalEntry,
-  getModifier,
   getToleranceEffectIds,
   getToleranceEnabled,
   findEffectsByRole,
   isSubstance,
   getWithdrawalDc,
-  getToleranceDecay,
   getAttenuationCurve,
   getActorToleranceEntry,
   setActorToleranceEntry,
-  clearActorToleranceEntry,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";

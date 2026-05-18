@@ -37,7 +37,6 @@ const foundryGlobals = {
   renderTemplate: "readonly",
   Handlebars: "readonly",
   dnd5e: "readonly",
-  Quench: "readonly",
 };
 
 export default [

@@ -10,8 +10,6 @@
  * confirming resolves with every row defaulted to "use".
  */
 
-import { MODULE_ID } from "../config.js";
-
 /**
  * @typedef {Object} AbstainRow
  * @property {string} substanceId          Item id of the substance.
