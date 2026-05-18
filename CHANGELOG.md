@@ -7,6 +7,14 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.8.6] — 2026-05-18
+
+### Fixed
+- **`lang/en.json` failed to load in Foundry**, rendering every `FISHUT.*` label as the literal key string across the entire Details tab. Foundry runs translation files through `foundry.utils.expandObject`, which turns dotted keys into a nested tree. v0.8.3 declared both `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit": "Unit"` and `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit.minutes": "Minutes"` (plus four sibling unit suffixes), so expansion tried to set a child key on top of a leaf string and threw `Cannot use 'in' operator to search for 'minutes' in Unit`. That throw aborted the entire file load — not just the offending key. Renamed the parent to `…WithdrawalDurationUnit.Label` and updated the single JS reference. The v0.8.3 lang-keys regression test verified keys *exist* but not that they can be structurally parsed; this release also adds a Foundry-equivalent prefix-collision check.
+
+### Added
+- **New regression guard:** `test/unit/details-tab-lang-keys.test.mjs` now asserts that no key in `lang/en.json` is a strict dotted-prefix of another key. Catches the v0.8.3 → v0.8.5 failure class at CI time without requiring Foundry to be in the Node test runtime.
+
 ## [0.8.5] — 2026-05-18
 
 ### Fixed

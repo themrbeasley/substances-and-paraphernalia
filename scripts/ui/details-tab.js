@@ -289,7 +289,7 @@ function buildLabels() {
     abstainAbility: L("FISHUT.DetailsTab.Field.AbstainAbility"),
     abstainDc: L("FISHUT.DetailsTab.Field.AbstainDc"),
     withdrawalDurationValue: L("FISHUT.DetailsTab.Field.WithdrawalDurationValue"),
-    withdrawalDurationUnit: L("FISHUT.DetailsTab.Field.WithdrawalDurationUnit"),
+    withdrawalDurationUnit: L("FISHUT.DetailsTab.Field.WithdrawalDurationUnit.Label"),
     withdrawalEffect: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Label"),
     withdrawalEffectTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip"),
     withdrawalEffectCreateTooltip: L("FISHUT.DetailsTab.Field.WithdrawalEffect.CreateTooltip"),
