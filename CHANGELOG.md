@@ -7,6 +7,14 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.8.7] — 2026-05-18
+
+### Fixed
+- **View-mode field lock leak across the whole Details tab.** Owners who flipped the dnd5e item sheet to view mode (pencil icon off) could still edit every Substances-and-Paraphernalia control — Illicit Substance toggle, Save Ability, Addictiveness DC, Withdrawal Mod, sub-feature checkboxes, dropdowns. The v0.8.3 and v0.8.5 attempts both gated on `app.isEditable !== false`, but dnd5e's `isEditable` only reflects *ownership* (Foundry's document-level permission). The view/edit pencil drives a *separate* signal, `app._mode` (PLAY=1 / EDIT=2), which dnd5e's own `_disableFields` reads at `_onRender` time — but only on dnd5e's own fields. Our injection runs after dnd5e finishes, so we have to repeat the resolution ourselves. The new pure helper `resolveSheetEditable({ isEditable, mode })` in `scripts/data/sheet-mode.js` returns true only when both signals agree, and `lockInjectedFields(wrapper)` mirrors dnd5e's `_disableFields` selector (INPUT, SELECT, TEXTAREA, BUTTON, DND5E-CHECKBOX, COLOR-PICKER, DOCUMENT-TAGS, FILE-PICKER, HUE-SLIDER, MULTI-SELECT, PROSE-MIRROR, RANGE-PICKER, STRING-TAGS) and applies the same lock to every control we inject.
+
+### Added
+- **New regression guard:** `test/unit/sheet-mode.test.mjs` locks in the truth table for `resolveSheetEditable` and verifies the `SHEET_MODE_PLAY`/`SHEET_MODE_EDIT` constants still match dnd5e's `ItemSheet5e.MODES` values. If dnd5e renumbers them in a future release, this test breaks on purpose so the resolver can be updated before users hit a regression.
+
 ## [0.8.6] — 2026-05-18
 
 ### Fixed
