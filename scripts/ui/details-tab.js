@@ -225,7 +225,7 @@ async function onRenderApplicationV2(app, htmlElement) {
     } else {
       detailsTab.appendChild(wrapper);
     }
-    wireDetails(wrapper, doc);
+    wireDetails(wrapper, doc, isEditable);
   } catch (err) {
     logger.error("details-tab inject failed", err);
   }
@@ -641,8 +641,13 @@ function buildBypassDisplay(match) {
 
 // ─── Wiring ────────────────────────────────────────────────────────────────
 
-function wireDetails(wrapper, item) {
+function wireDetails(wrapper, item, isEditable) {
   wrapper.addEventListener("change", (event) => {
+    // View-mode guard: web components like <dnd5e-checkbox> and <multi-select>
+    // don't always honor the native `disabled` attribute, so the template-level
+    // {{#unless isEditable}}disabled{{/unless}} lock can leak. Refuse the flag
+    // write here as defense-in-depth.
+    if (!isEditable) return;
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
 
@@ -671,6 +676,7 @@ function wireDetails(wrapper, item) {
   });
 
   wrapper.addEventListener("click", (event) => {
+    if (!isEditable) return;
     const button = event.target?.closest?.("[data-fishut-action]");
     if (!button || !wrapper.contains(button)) return;
     event.preventDefault();
