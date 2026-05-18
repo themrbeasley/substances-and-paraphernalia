@@ -27,8 +27,6 @@ node --test test/unit/withdrawal-formula.test.mjs
 
 `packs/` and `node_modules/` are gitignored. `_source/` is the source of truth for compendium content; `packs/` is built from it and is what Foundry reads at runtime.
 
-The Quench integration suite at `test/quench/test-suite.mjs` only registers when the [Quench](https://foundryvtt.com/packages/quench) module is active in the running Foundry world. There's no Node-side Quench runner.
-
 ## Release flow
 
 Tag-driven. Pushing a `v*` tag fires `.github/workflows/release.yml`, which:
@@ -49,7 +47,7 @@ If a tag/release pair ends up stale (e.g. tag pushed before a PR landed), recove
 
 `scripts/module.mjs` is the entry point. The flow is:
 
-- `init` hook: register settings, register the `preUseActivity` gate, register the addiction hooks (`postUseActivity` + `restCompleted`), register the dnd5e Details-tab item-sheet injection, conditionally register the Quench suite.
+- `init` hook: register settings, register the `preUseActivity` gate, register the addiction hooks (`postUseActivity` + `restCompleted`), register the dnd5e Details-tab item-sheet injection.
 - `ready` hook: run migrations (currently a no-op — empty `MIGRATORS` array), publish `game.modules.get(MODULE_ID).api`, notify GMs of missing optional integrations.
 
 Adding a new hook means adding a `register*` call in `module.mjs` and a corresponding `Hooks.on(...)` inside the new module.
@@ -138,11 +136,11 @@ Note: the addiction AE already carries the `poisoned` status — the withdrawal 
 
 ### Public API surface
 
-`game.modules.get("substances-and-paraphernalia").api` exposes `schema`, `flagSchema`, `references`, `requirements`, `addiction`, `saveBypass`, `integrations`. The Quench tests are the canonical consumer — when adding a new public capability, add it here and exercise it from a Quench test.
+`game.modules.get("substances-and-paraphernalia").api` exposes `schema`, `flagSchema`, `references`, `requirements`, `addiction`, `saveBypass`, `integrations`. When adding a new public capability, expose it here.
 
 ### Pure-function discipline
 
-`test/unit/*` runs in plain Node — **no Foundry globals**. Anything imported under unit tests must be importable without `game`, `Hooks`, `ui`, etc. existing. When adding logic that needs these, split: pure helper in `scripts/data/*` (testable), Foundry-coupled wrapper in `scripts/hooks/*` (Quench-tested).
+`test/unit/*` runs in plain Node — **no Foundry globals**. Anything imported under unit tests must be importable without `game`, `Hooks`, `ui`, etc. existing. When adding logic that needs these, split: pure helper in `scripts/data/*` (testable), Foundry-coupled wrapper in `scripts/hooks/*` (exercised manually in a live world).
 
 ### Localization
 

@@ -50,16 +50,8 @@ Hooks.once("init", () => {
   registerDetailsTab();
   registerSimulateDose();
   registerTmfxPresets();
-  registerQuenchSuiteIfActive();
   logger.log("init complete");
 });
-
-function registerQuenchSuiteIfActive() {
-  if (!game.modules.get("quench")?.active) return;
-  import("../test/quench/test-suite.mjs")
-    .then(({ registerQuenchSuite }) => registerQuenchSuite())
-    .catch((err) => logger.error("Quench suite load failed", err));
-}
 
 Hooks.once("ready", async () => {
   await runMigrations();
