@@ -109,6 +109,12 @@ The `restCompleted` handler in `addiction.js` early-returns unless `game.users.a
 
 As of v0.5.1, **`dae`, `midi-qol`, and `tokenmagic` are declared `relationships.requires`** in `module.json` — Foundry refuses to activate the module when any are missing. The `KNOWN_INTEGRATIONS` "missing modules" notice list intentionally drops `dae` and `midi-qol`; `tokenmagic` stays in the list only because the `tmfxIntegration` world setting is still a per-world visuals opt-out, even though TMFX itself is required. Do not add fallback paths that assume any of these three could be absent at runtime.
 
+### dnd5e ItemSheet5e has two independent editability signals
+
+`app.isEditable` reflects **ownership permission only** (Foundry document-level). The pencil-icon view/edit toggle drives a **separate** signal, `app._mode` (`PLAY=1`, `EDIT=2`). Effective editability requires **both** to agree. dnd5e's own `_disableFields()` runs at `_onRender` when `_mode === PLAY` but only walks dnd5e's own fields — our Details-tab injection runs after dnd5e finishes, so we have to repeat the resolution ourselves.
+
+`scripts/data/sheet-mode.js` `resolveSheetEditable({ isEditable, mode })` is the pure resolver; `lockInjectedFields(root)` in `scripts/ui/details-tab.js` mirrors dnd5e's `_disableFields` selector (INPUT/SELECT/TEXTAREA/BUTTON/DND5E-CHECKBOX/COLOR-PICKER/...) and runs after every injection site. **Never gate Details-tab injection on `isEditable` alone** — that was the v0.8.3 → v0.8.7 regression class. If dnd5e ever renumbers `ItemSheet5e.MODES`, `test/unit/sheet-mode.test.mjs` breaks on purpose so the resolver can be updated before users hit it.
+
 ### TMFX integration is DAE-driven, not a custom hook
 
 The TMFX (Token Magic FX) overlay on `Altered by *` AEs is dispatched via DAE's `macro.tokenMagic` Active Effect Change mode — **we do not ship a TMFX-aware hook**. The pattern:
@@ -145,6 +151,8 @@ Note: the addiction AE already carries the `poisoned` status — the withdrawal 
 ### Localization
 
 All user-facing strings go through `game.i18n.localize(key)` / `format(key, args)` against `lang/en.json`. Key prefix is `FISHUT.*`. There's no fallback machinery — a missing key renders as the literal key string at runtime, so verify in a live world after adding strings.
+
+**Prefix-collision invariant:** Foundry runs `lang/en.json` through `foundry.utils.expandObject`, which throws `Cannot use 'in' operator to search for '<child>' in <leaf>` when any key is a strict dotted prefix of another key — and the throw aborts the entire file load (every `FISHUT.*` lookup falls back to the literal key string). `test/unit/details-tab-lang-keys.test.mjs` asserts that no key is a strict dotted prefix of another. If you add `FOO.Bar` and want `FOO.Bar.minutes` underneath it, rename the leaf to `FOO.Bar.Label` first.
 
 ## Memory + roadmap context
 
