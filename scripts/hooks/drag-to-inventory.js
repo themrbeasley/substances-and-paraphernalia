@@ -24,11 +24,12 @@ import {
   getOverdose,
   getOverdoseEffectIds,
   getToleranceEffectIds,
-  getWithdrawalMod,
+  getWithdrawalDuration,
   setActorWithdrawalEntry,
+  getActorToleranceEntry,
 } from "../data/flag-schema.js";
-import { computeRestsRemaining } from "../data/withdrawal.js";
-import { applyOrIncrementToleranceStack } from "./addiction.js";
+import { durationToSeconds } from "../data/withdrawal-duration.js";
+import { incrementActorToleranceCount } from "./addiction.js";
 import { applyOverdoseEffect } from "./overdose.js";
 import { logger } from "../logger.js";
 
@@ -189,21 +190,17 @@ export async function applyDragOutcome(actor, item, choice) {
         logger.warn(`addicted: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const wMod = Number(getWithdrawalMod(item)) || 0;
-      const rests = computeRestsRemaining(wMod, conMod(actor));
+      const { appliedAt, endsAt, durationText } = computeWithdrawalWindow(item);
       await applyAddictionEffect(actor, item);
-      await setActorWithdrawalEntry(actor, item.id, {
-        restsRemaining: rests,
-        appliedAt: new Date().toISOString(),
-      });
+      await setActorWithdrawalEntry(actor, item.id, { appliedAt, endsAt });
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Addicted", {
           actor: actor.name,
           item: item.name,
-          rests,
+          duration: durationText,
         }),
       );
-      return { applied: "addicted", restsRemaining: rests };
+      return { applied: "addicted", endsAt };
     }
 
     case CHOICES.WITHDRAWING: {
@@ -212,25 +209,22 @@ export async function applyDragOutcome(actor, item, choice) {
         logger.warn(`withdrawing: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const wMod = Number(getWithdrawalMod(item)) || 0;
-      const rests = computeRestsRemaining(wMod, conMod(actor));
-      await setActorWithdrawalEntry(actor, item.id, {
-        restsRemaining: rests,
-        appliedAt: new Date().toISOString(),
-      });
+      const { appliedAt, endsAt, durationText, seconds } = computeWithdrawalWindow(item);
+      await cloneWithdrawalAesOntoActor(actor, item, seconds);
+      await setActorWithdrawalEntry(actor, item.id, { appliedAt, endsAt });
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Withdrawing", {
           actor: actor.name,
           item: item.name,
-          rests,
+          duration: durationText,
         }),
       );
-      return { applied: "withdrawing", restsRemaining: rests };
+      return { applied: "withdrawing", endsAt };
     }
 
     case CHOICES.TOLERANT: {
-      const effect = await applyOrIncrementToleranceStack(actor, item);
-      const stacks = Number(effect?.flags?.[MODULE_ID]?.stacks) || 1;
+      await incrementActorToleranceCount(actor, item);
+      const stacks = Number(getActorToleranceEntry(actor, item.id)?.count) || 1;
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Tolerant", {
           actor: actor.name,
@@ -259,9 +253,55 @@ export async function applyDragOutcome(actor, item, choice) {
   }
 }
 
-function conMod(actor) {
-  const mod = actor?.system?.abilities?.con?.mod;
-  return typeof mod === "number" ? mod : 0;
+function computeWithdrawalWindow(item) {
+  const duration = getWithdrawalDuration(item);
+  const seconds = duration ? durationToSeconds(duration.value, duration.unit) : 0;
+  const now = new Date();
+  const appliedAt = now.toISOString();
+  const endsAt = new Date(now.getTime() + seconds * 1000).toISOString();
+  const durationText = humanizeDuration(duration);
+  return { appliedAt, endsAt, durationText, seconds };
+}
+
+function humanizeDuration(duration) {
+  if (!duration) return "—";
+  const value = Number(duration.value) || 0;
+  const unit =
+    value === 1 && typeof duration.unit === "string"
+      ? duration.unit.replace(/s$/, "")
+      : duration.unit;
+  return `${value} ${unit}`;
+}
+
+async function cloneWithdrawalAesOntoActor(actor, item, seconds) {
+  const templates = findWithdrawalTemplates(item);
+  if (templates.length === 0) {
+    logger.warn(`withdrawing: no withdrawal AE template on ${item.name}; chat-only`);
+    return;
+  }
+  const payloads = templates.map((tpl) => {
+    const data = typeof tpl.toObject === "function" ? tpl.toObject() : { ...tpl };
+    delete data._id;
+    data.flags = data.flags ?? {};
+    data.flags[MODULE_ID] = {
+      ...(data.flags[MODULE_ID] ?? {}),
+      [FLAGS.sourceSubstanceId]: item.id,
+      aeRole: "withdrawal",
+    };
+    data.origin = item.uuid;
+    data.disabled = false;
+    data.duration = { ...(data.duration ?? {}), seconds };
+    return data;
+  });
+  await actor.createEmbeddedDocuments("ActiveEffect", payloads);
+}
+
+function findWithdrawalTemplates(item) {
+  const ids = getWithdrawalEffectIds(item);
+  if (ids.length === 0) {
+    return [...(item?.effects ?? [])].filter((e) => /withdraw/i.test(e.name ?? ""));
+  }
+  return ids.map((id) => item.effects?.get?.(id)).filter(Boolean);
 }
 
 async function applyBenefitEffects(actor, item) {
