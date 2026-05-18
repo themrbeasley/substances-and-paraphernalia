@@ -7,6 +7,17 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.8.8] — 2026-05-18
+
+### Fixed
+- **Lowercase "long rest" in the Phase 2 dialog intro.** `FISHUT.Phase2.Dialog.Intro` referenced the rest as lowercase prose; the project's language convention is to capitalize 5e mechanic names (`Long Rest`). The warn-only language validator caught the drift in `tools/validate-content-language.mjs`.
+
+### Removed
+- **Dead `FISHUT.Details.Preview.Withdrawal` localization key.** The string was authored for a withdrawal-rest preview span that was never rendered after the duration/unit model pivot; no code referenced it.
+
+### Changed
+- **Wiki + CLAUDE.md withdrawal docs rewritten for the duration/unit model.** `docs/wiki/Mechanics.md`, `docs/wiki/Authoring.md`, and `CLAUDE.md` still described the obsolete `withdrawalMod` rest-counting formula and the long-since-removed `scripts/data/withdrawal.js` / `computeRestsRemaining` helper. They now describe the shipped pipeline: Phase 1 applies the addiction AE only; Phase 2 (`dnd5e.preRestCompleted`) opens the Abstain dialog, rolls Wis Abstain Check → Con Withdrawal Save, and applies a Withdrawal AE whose duration is `durationToSeconds(value, unit)`. Times-Up owns expiry; `scripts/hooks/withdrawal-cleanup.js` clears the actor flag on `deleteActiveEffect`. Actor flag shape updated from `{ restsRemaining, appliedAt }` to `{ appliedAt, endsAt }`. Stale test reference `withdrawal-formula.test.mjs` → `withdrawal-duration.test.mjs`.
+
 ## [0.8.7] — 2026-05-18
 
 ### Fixed

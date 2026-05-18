@@ -16,23 +16,25 @@ The world setting **Enforce paraphernalia requirements** (default on) is the mas
 
 > **v0.5 note.** The earlier per-substance `requiredSubtypes` callout (a flat list of subtype ids) was removed in v0.5; gating now keys on the dnd5e administration type instead. Phase 4 of the v0.5 dig-out lands the live admin-type gate; until then the gate stub allows substances through unconditionally (DAE-strict guard intact).
 
-## Addiction (`postUseActivity`)
+## Addiction — Phase 1 (`postUseActivity`)
 
-After a substance is used, the module rolls a Constitution save (DC and ability are authored on the substance). On a failed save, the addiction Active Effect template on the substance is cloned onto the actor.
+After a substance is used, the module rolls a save against the substance's authored DC and ability (Con by default). On a failed save, **every** addiction Active Effect template listed in `flags[…].addiction.addictionEffectIds` is cloned onto the actor.
 
-- The applied AE is keyed back to the substance via `flags["substances-and-paraphernalia"].sourceSubstanceId`.
-- The actor flag `flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { restsRemaining, appliedAt }` is the canonical state — the AE is a UI mirror.
-- AE name **must contain** the substring `addict` (case-insensitive). The Remove Addiction macro uses `*addict*` as a fallback when source-flag matching misses.
+- Each applied AE is keyed back to the substance via `flags["substances-and-paraphernalia"].sourceSubstanceId` so the Remove Addiction macro can match by source. The macro falls back to a name regex (`/addict/i`) when the source flag is missing on a legacy AE.
+- Phase 1 **does not** apply a Withdrawal AE or write to the actor's withdrawal flag map. Withdrawal onset is a long-rest event (Phase 2, below).
+- Re-using a substance you're already addicted to runs the save again, which can stack additional addiction AEs or trigger overdose, but does not retro-apply withdrawal.
 
-Re-using a substance you're already addicted to does not reroll. It extends withdrawal to `max(currentRestsRemaining, newComputed)` — bingeing while addicted prolongs withdrawal but never shortens it.
+## Withdrawal — Phase 2 (`dnd5e.preRestCompleted`, long rest only)
 
-## Withdrawal (`restCompleted`)
+On the GM client only (`game.users.activeGM === game.user`), the long-rest hook walks every substance the actor is currently addicted to and opens the **Abstain dialog** (`scripts/ui/abstain-dialog.js`). Each row offers one of three actions:
 
-`restsRemaining = max(withdrawalMod − ConMod, ⌈withdrawalMod/2⌉)`, minimum 1. The `⌈Y/2⌉` term is the **floor clamp** — a high-Constitution character can never wave off withdrawal entirely.
+- **Use** — force-consumes one dose through the normal `activity.use()` chain with the paraphernalia gate bypassed for this single use. Goes through full Phase 1 again.
+- **Abstain** — rolls a Wisdom *Abstain Check* against the substance's `withdrawal.abstain.dc`. On pass, tolerance decays one tier; on fail, a Constitution *Withdrawal Save* against `withdrawal.dc` is rolled, and on that failure the Withdrawal AE applies.
+- **Forced abstain** — automatic when the actor has no doses left of an addictive substance. Skips the Wis check, rolls the Con Withdrawal Save directly, and decays tolerance regardless of outcome.
 
-The long-rest tick is fired by `dnd5e.restCompleted` with `longRest: true`. To prevent multi-client double-ticks, only the active GM (`game.users.activeGM === game.user`) decrements. Each entry's `restsRemaining` drops by 1; on reaching zero the matching AE is removed and the flag entry cleared. Short rests do nothing.
+When the Withdrawal AE applies, its duration is computed from the authored `withdrawal.duration.value` + `withdrawal.duration.unit` (one of `minutes | hours | days | weeks | months`, where months are 30-day months) via `durationToSeconds` in `scripts/data/withdrawal-duration.js`. The actor flag `flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }` records the lifecycle window. **Times-Up** (bundled with DAE — both are required modules) removes the AE when game time passes `endsAt`; `scripts/hooks/withdrawal-cleanup.js` listens for `deleteActiveEffect` and clears the matching flag entry. The module ships no rest-decrement counter — Times-Up owns expiry.
 
-The withdrawal AE itself is selected per substance via the `withdrawalEffectId` flag. Author it on the substance's Active Effects tab, give it a name containing `withdraw`, and pick it in the Details tab. The validator warns if the AE imposes disadvantage on attacks or checks — that duplicates *poisoned*. Escalate instead with exhaustion, disadvantage on saves, speed reduction, or a stat penalty.
+The withdrawal AE templates are selected per substance via the `withdrawal.effectIds` flag. Author them on the substance's Active Effects tab, give each a name containing `withdraw`, and pick them in the Details tab. The validator warns if any AE imposes disadvantage on attacks or checks, or carries the `poisoned` status — those duplicate the addiction AE. Escalate instead with exhaustion, disadvantage on saves, speed reduction, or a stat penalty. The per-owner CSS vignette color is set by a Change row on the withdrawal AE itself (`flags.substances-and-paraphernalia.vignetteColor`, mode OVERRIDE); the default authored template ships `#a02020`.
 
 ## Tolerance
 

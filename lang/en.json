@@ -193,7 +193,7 @@
   "FISHUT.LongRestAbstain.ButtonResistUrge": "Resist the urge to use {item}",
 
   "FISHUT.Phase2.Dialog.Title": "Withdrawal Choices",
-  "FISHUT.Phase2.Dialog.Intro": "You are addicted to the following substances and will automatically consume one dose during the long rest unless you specifically choose to abstain. Select all that apply; unselected substances will be consumed as normal.",
+  "FISHUT.Phase2.Dialog.Intro": "You are addicted to the following substances and will automatically consume one dose during the Long Rest unless you specifically choose to abstain. Select all that apply; unselected substances will be consumed as normal.",
   "FISHUT.Phase2.Dialog.Confirm": "Confirm",
   "FISHUT.Phase2.Dialog.DosesRemaining": "Doses: {n} left",
   "FISHUT.Phase2.Dialog.Tolerance": "Tol {count}/{max}",
@@ -231,7 +231,6 @@
   "FISHUT.DetailsTab.Field.ToleranceDecay": "Tolerance Decay (per Abstain)",
   "FISHUT.DetailsTab.Withdrawal.Header": "Withdrawal",
   "FISHUT.DetailsTab.Withdrawal.Enabled": "Track withdrawal on save fail",
-  "FISHUT.Details.Preview.Withdrawal": "Estimated withdrawal: ~{rests} Long Rests (assumes Con +0; varies per character).",
   "FISHUT.Details.Preview.AppliesTo": "Required for: {admins}",
   "FISHUT.Details.TierPreview": "Tier preview: {label} — Rate {rate}, Threshold {threshold}, MaxCount {maxCount}",
   "FISHUT.Details.Addiction.Legend": "Addictive",

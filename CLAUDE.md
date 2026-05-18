@@ -20,7 +20,7 @@ npm run format               # prettier
 
 Run a single unit test file:
 ```sh
-node --test test/unit/withdrawal-formula.test.mjs
+node --test test/unit/withdrawal-duration.test.mjs
 ```
 
 `npm run test:unit` lists files explicitly (not a glob) — when adding a new `test/unit/*.test.mjs`, add it to the script in `package.json` or it won't run in CI.
@@ -67,8 +67,8 @@ Paraphernalia subtypes are an exception: the legal list is **runtime-composed** 
 ### Three-layer data model
 
 1. **Item flags** (the canonical source). `scripts/data/flag-schema.js` is the only place that reads/writes `flags["substances-and-paraphernalia"]`. Every other module talks to flags through these accessors.
-2. **Actor flags** (`flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { restsRemaining, appliedAt }`) — canonical state for active addictions on a given actor.
-3. **Active Effects on the actor** — UI mirror of the actor flag. The applied addiction AE carries `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so the long-rest tick can match the AE back to the flag entry. Flag is canonical, AE is presentation; the long-rest tick rebuilds/clears the AE from the flag.
+2. **Actor flags** (`flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }`) — canonical state for an active withdrawal window on a given actor. `appliedAt` and `endsAt` are ISO timestamps; `endsAt` is derived from the AE's authored duration at apply time and is what Times-Up counts down against.
+3. **Active Effects on the actor** — UI mirror of the actor flag. Applied addiction and withdrawal AEs carry `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so callers can match the AE back to its substance. Times-Up removes the withdrawal AE at expiry; `scripts/hooks/withdrawal-cleanup.js` listens on `deleteActiveEffect` and clears the matching actor flag entry. We do not poll or tick — the flag entry and AE come up and go down together.
 
 ### AE naming contract
 
@@ -99,9 +99,9 @@ Paraphernalia readiness comes from `scripts/data/references.js` `inspectParapher
 
 Bypass-granting paraphernalia must satisfy the gate's `appliesTo` for the substance's admin — the bypass isn't a free aura. Per-day uses ride on dnd5e's native `system.uses.recovery = [{ period: "day", type: "recoverAll" }]`; we don't write our own recovery hook.
 
-### Long-rest tick is GM-arbitrated
+### Long-rest handling is GM-arbitrated
 
-The `restCompleted` handler in `addiction.js` early-returns unless `game.users.activeGM === game.user`. This is the same single-arbiter pattern Foundry uses for other "exactly one client should run this" cases. Don't add per-actor-owner logic to this hook.
+The `dnd5e.preRestCompleted` handler in `scripts/hooks/long-rest-abstain.js` (Phase 2: Abstain dialog → Wis Abstain Check → Con Withdrawal Save → withdrawal AE apply) and the `deleteActiveEffect` cleanup in `scripts/hooks/withdrawal-cleanup.js` both early-return unless `game.users.activeGM === game.user`. This is the same single-arbiter pattern Foundry uses for other "exactly one client should run this" cases. Don't add per-actor-owner logic to either hook.
 
 ### Optional-integration detection is presence-only
 
@@ -136,9 +136,9 @@ Each shipped substance carries an authored withdrawal AE template in its item's 
 
 Note: the addiction AE already carries the `poisoned` status — the withdrawal AE deliberately does not, because `validate-content` warns on the duplicate. Withdrawal AEs ship with `statuses: []`.
 
-### Withdrawal formula
+### Withdrawal duration
 
-`restsRemaining = max(withdrawalMod − ConMod, ⌈withdrawalMod/2⌉)`, minimum 1. The `⌈Y/2⌉` term is the **floor clamp** — high-Con characters can never wave off withdrawal entirely. Lives in `scripts/data/withdrawal.js` as a pure function so the unit test can hit it without Foundry globals.
+Withdrawal duration is authored as `withdrawal.duration.value` + `withdrawal.duration.unit` (`minutes | hours | days | weeks | months`, with months = 30 days). `scripts/data/withdrawal-duration.js` `durationToSeconds(value, unit)` is the pure converter (testable without Foundry globals — see `test/unit/withdrawal-duration.test.mjs`). The seconds value rides on the applied AE's `duration`; **Times-Up** (bundled with DAE; both required) removes the AE at expiry, and `scripts/hooks/withdrawal-cleanup.js` clears the matching actor flag entry on the resulting `deleteActiveEffect`. We do not ship a rest-decrement counter and withdrawal does not scale against Constitution — Con only gates onset via the Withdrawal Save DC.
 
 ### Public API surface
 

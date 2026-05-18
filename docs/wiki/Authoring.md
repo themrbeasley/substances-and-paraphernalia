@@ -124,34 +124,36 @@ flags["substances-and-paraphernalia"].modifier = {
 
 ## Tuning Withdrawal Duration
 
-The Withdrawal Mod field controls how long an addicted character suffers
-withdrawal after the addiction AE expires. The engine computes rests-remaining
-as `max(withdrawalMod − ConMod, ⌈withdrawalMod/2⌉)`, clamped to a minimum of 1
-long rest. The `⌈Y/2⌉` term is a floor clamp — a high-Con character can never
-wave off withdrawal entirely.
+Withdrawal duration is authored directly as a **value + unit** pair on the
+Details tab. The Withdrawal Duration field (number) and unit selector
+(`minutes | hours | days | weeks | months`) together compose the lifetime of
+the Withdrawal AE that lands at long rest if the addicted actor fails their
+Abstain → Withdrawal Save chain. The helper `durationToSeconds(value, unit)`
+in `scripts/data/withdrawal-duration.js` is the canonical converter (months
+are 30-day months — approximate by design). The seconds value rides on the
+applied AE's `duration` and is enforced by **Times-Up** (bundled with DAE).
 
-The Details-tab preview span beneath the Withdrawal Mod input shows the
-**Con +0 projection**: how many rests withdrawal will last for an actor with
-no Con modifier. Use it as the "average actor" baseline; specific characters
-with positive Con shorten the count and negative-Con characters extend it.
+Because Times-Up owns expiry, withdrawal no longer ticks down per long rest
+and no longer scales against Constitution — every addict on a given substance
+suffers the same authored duration window. The actor's Con modifier still
+gates onset via the Withdrawal Save DC; once the AE lands, only game time
+removes it.
 
-| `withdrawalMod` | Con +0 | Con +3 | Con +5 |
-|---|---|---|---|
-| 2 | 2 rests | 1 rest  | 1 rest  |
-| 3 | 3 rests | 2 rests | 2 rests |
-| 4 | 4 rests | 2 rests | 2 rests |
-| 5 | 5 rests | 3 rests | 3 rests |
-| 6 | 6 rests | 3 rests | 3 rests |
+**Picking a value:** choose a unit that matches the narrative weight of the
+substance and the table's expected pacing.
 
-**Picking a value:** treat `withdrawalMod` as "how many rests does a Con +0
-victim spend in withdrawal." For a casual recreational substance, 2 is
-plenty; for a setpiece narcotic that should leave a mark even on a tough
-character, 5–6 (Con +5 still owes 3 rests). Values above 8 stop scaling
-meaningfully against Con and start looking arbitrary.
+| Substance feel | Suggested duration |
+|---|---|
+| Casual recreational | 1–6 hours |
+| Hard street drug | 1–3 days |
+| Magical or alien narcotic | 1–2 weeks |
+| Setpiece, plot-relevant addiction | 1–3 months |
 
-The preview reuses the engine's `computeRestsRemaining` helper, so the number
-shown in the editor is the same number the long-rest tick will count down at
-the table.
+Avoid mixing minutes with months on the same campaign — pick a unit family
+that fits the table's clock so players can plan around it. If a substance
+should leave a permanent mark, prefer authoring an additional non-expiring
+"former addict" AE separately rather than inflating the withdrawal window
+past the campaign's natural arc.
 
 ## Language Conventions
 
