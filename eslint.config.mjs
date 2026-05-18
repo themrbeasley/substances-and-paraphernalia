@@ -1,5 +1,6 @@
 import globals from "globals";
 import prettier from "eslint-config-prettier";
+import importPlugin from "eslint-plugin-import";
 
 const foundryGlobals = {
   game: "readonly",
@@ -45,6 +46,7 @@ export default [
   },
   {
     files: ["scripts/**/*.{js,mjs}", "test/**/*.{js,mjs}", "_source/fishut-illicit-macros/**/*.js"],
+    plugins: { import: importPlugin },
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: "module",
@@ -59,10 +61,13 @@ export default [
       "no-undef": "error",
       eqeqeq: ["error", "smart"],
       "prefer-const": "warn",
+      // Catches "imported name does not exist" — the v0.8.1 regression class.
+      "import/named": "error",
     },
   },
   {
     files: ["tools/**/*.{js,mjs}"],
+    plugins: { import: importPlugin },
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: "module",
@@ -75,6 +80,7 @@ export default [
       "no-undef": "error",
       eqeqeq: ["error", "smart"],
       "prefer-const": "warn",
+      "import/named": "error",
     },
   },
   prettier,

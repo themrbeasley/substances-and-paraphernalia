@@ -9,7 +9,7 @@ import {
   registerAddictionHooks,
   rollSaveAndApply,
   applyOutcome,
-  applyOrIncrementToleranceStack,
+  incrementActorToleranceCount,
   applyWithdrawalEffect,
   applyAddictionEffect,
   isAppliedAddictionEffect,
@@ -17,10 +17,7 @@ import {
 } from "./hooks/addiction.js";
 import { registerOverdoseHooks, rollOverdoseAndApply } from "./hooks/overdose.js";
 import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
-import {
-  registerLongRestAbstain,
-  processAbstainFailure,
-} from "./hooks/long-rest-abstain.js";
+import { registerLongRestAbstain } from "./hooks/long-rest-abstain.js";
 import { registerToleranceDecay, applyToleranceDecay } from "./hooks/tolerance-decay.js";
 import { registerWithdrawalCleanup } from "./hooks/withdrawal-cleanup.js";
 import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
@@ -75,7 +72,7 @@ Hooks.once("ready", async () => {
       addiction: {
         rollSaveAndApply,
         applyOutcome,
-        applyOrIncrementToleranceStack,
+        incrementActorToleranceCount,
         applyWithdrawalEffect,
         applyAddictionEffect,
         isAppliedAddictionEffect,
@@ -83,7 +80,6 @@ Hooks.once("ready", async () => {
       },
       overdose: { rollOverdoseAndApply },
       saveBypass: { consumeBypassIfAvailable },
-      abstain: { processAbstainFailure },
       tolerance: { applyToleranceDecay },
       data: { computeAdjustedOverdoseChance },
       simulateDose: { runSimulation, sweepOrphanedTestActors },

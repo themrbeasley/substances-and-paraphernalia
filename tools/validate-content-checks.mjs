@@ -116,7 +116,7 @@ export function checkSubstance(file) {
   }
   if (addiction.withdrawalMod !== undefined) {
     err(
-      `addiction.withdrawalMod is removed in v0.4 — move to flags.withdrawal.mod`,
+      `addiction.withdrawalMod is removed in v0.8.1 — withdrawal duration is now driven by flags.withdrawal.{dc, duration:{value,unit}}`,
     );
   }
   const dc = addiction.save?.dc;

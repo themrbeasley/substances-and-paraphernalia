@@ -20,11 +20,11 @@ import { MODULE_ID, FLAGS } from "../config.js";
 import {
   getAddiction,
   getOverdose,
-  getWithdrawalMod,
+  getWithdrawalDuration,
   isSubstance,
   setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
-import { computeRestsRemaining } from "../data/withdrawal.js";
+import { durationToSeconds } from "../data/withdrawal-duration.js";
 import {
   applyAddictionEffect,
   applyWithdrawalEffect,
@@ -252,7 +252,7 @@ export async function runSimulation({
     const embeddedSubstance = await embedSubstanceClone(testActor, substance);
 
     if (addictionState === "addicted" || addictionState === "withdrawing") {
-      await preSeedAddictionState(testActor, embeddedSubstance, addictionState, conMod);
+      await preSeedAddictionState(testActor, embeddedSubstance, addictionState);
     }
 
     await rollSaveAndApply(testActor, embeddedSubstance);
@@ -355,21 +355,22 @@ async function embedSubstanceClone(actor, sourceItem) {
   return embedded;
 }
 
-async function preSeedAddictionState(actor, item, state, conMod) {
+async function preSeedAddictionState(actor, item, state) {
   const addiction = getAddiction(item);
   if (!addiction) return;
-  const wMod = Number(getWithdrawalMod(item)) || 0;
-  const fullRests = computeRestsRemaining(wMod, conMod);
-  const rests =
-    state === "withdrawing" ? Math.max(1, Math.ceil(fullRests / 2)) : fullRests;
+  const duration = getWithdrawalDuration(item);
+  const seconds = duration ? durationToSeconds(duration.value, duration.unit) : 0;
+  const now = new Date();
+  const appliedAt = now.toISOString();
+  // "addicted" → window fully ahead; "withdrawing" → already half-elapsed so
+  // the simulated actor lands mid-withdrawal rather than at the leading edge.
+  const elapsedSeconds = state === "withdrawing" ? Math.floor(seconds / 2) : 0;
+  const endsAt = new Date(now.getTime() + (seconds - elapsedSeconds) * 1000).toISOString();
   if (state === "addicted") {
     await applyAddictionEffect(actor, item);
   }
   await applyWithdrawalEffect(actor, item).catch(() => null);
-  await setActorWithdrawalEntry(actor, item.id, {
-    restsRemaining: rests,
-    appliedAt: new Date().toISOString(),
-  });
+  await setActorWithdrawalEntry(actor, item.id, { appliedAt, endsAt });
 }
 
 /**

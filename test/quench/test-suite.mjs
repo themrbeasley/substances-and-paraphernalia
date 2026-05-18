@@ -20,14 +20,13 @@ import {
   getModifier,
   getOverdose,
   getSubtype,
-  getWithdrawalMod,
+  getWithdrawalDc,
   getActorWithdrawal,
   getActorWithdrawalEntry,
   isParaphernalia,
   isSubstance,
 } from "../../scripts/data/flag-schema.js";
 import { defaultAbstainDc } from "../../scripts/data/abstain.js";
-import { processAbstainFailure } from "../../scripts/hooks/long-rest-abstain.js";
 import { actorHasSubtype, inspectSubtypeOnActor } from "../../scripts/data/references.js";
 import {
   buildParaphernaliaContext,
@@ -36,7 +35,6 @@ import {
   persistKindToggle,
   persistMultiField,
 } from "../../scripts/ui/details-tab.js";
-import { computeRestsRemaining } from "../../scripts/data/withdrawal.js";
 import { rollSaveAndApply } from "../../scripts/hooks/addiction.js";
 import { rollOverdoseAndApply } from "../../scripts/hooks/overdose.js";
 import { logger } from "../../scripts/logger.js";
@@ -178,16 +176,6 @@ export function registerQuenchSuite() {
       `${BATCH_PREFIX}.overdose-tolerance-interaction`,
       overdoseToleranceInteractionBatch,
       { displayName: "S&P · Overdose × Tolerance — adjusted d100" },
-    );
-    quench.registerBatch(
-      `${BATCH_PREFIX}.abstain-fail-consumes`,
-      abstainFailConsumesBatch,
-      { displayName: "S&P · Voluntary Abstain · fail triggers consumption" },
-    );
-    quench.registerBatch(
-      `${BATCH_PREFIX}.abstain-fail-soft`,
-      abstainFailSoftBatch,
-      { displayName: "S&P · Voluntary Abstain · fail soft-fail" },
     );
     registerPhase1AddictionOnly(quench);
     registerPhase1OverdoseGate(quench);
@@ -1846,14 +1834,14 @@ function detailsTabSubstancePersistenceBatch(context) {
       assert.equal(getAddictionSave(substance)?.dc, null);
     });
 
-    it("persists withdrawal.mod as integer", async () => {
-      await persistField(substance, "withdrawal.mod", "6");
-      assert.equal(getWithdrawalMod(substance), 6);
+    it("persists withdrawal.dc as integer", async () => {
+      await persistField(substance, "withdrawal.dc", "15");
+      assert.equal(getWithdrawalDc(substance), 15);
     });
 
-    it("clears withdrawal.mod when value is empty", async () => {
-      await persistField(substance, "withdrawal.mod", "");
-      assert.equal(getWithdrawalMod(substance), null);
+    it("clears withdrawal.dc when value is empty", async () => {
+      await persistField(substance, "withdrawal.dc", "");
+      assert.equal(getWithdrawalDc(substance), null);
     });
 
     it("persists addiction.effectIds and clears on empty list", async () => {
@@ -2191,36 +2179,43 @@ function dragToInventoryBatch(context) {
       assert.equal(benefit, undefined, "no benefit AE should land for decline");
     });
 
-    it("addicted: applies addiction AE + writes withdrawal entry with computed rests", async () => {
+    it("addicted: applies addiction AE + writes withdrawal entry with appliedAt/endsAt", async () => {
       await applyDragOutcome(actor, substance, "addicted");
-      const wMod = substance.flags?.[MODULE_ID]?.[FLAGS.addiction]?.withdrawalMod;
-      const con = actor.system?.abilities?.con?.mod ?? 0;
-      const expected = computeRestsRemaining(wMod, con);
 
       const entry = getActorWithdrawalEntry(actor, substance.id);
       assert.ok(entry, "withdrawal entry should be set");
-      assert.equal(entry.restsRemaining, expected);
+      assert.ok(typeof entry.appliedAt === "string" && entry.appliedAt.length > 0);
+      assert.ok(typeof entry.endsAt === "string" && entry.endsAt.length > 0);
+      assert.ok(
+        Date.parse(entry.endsAt) >= Date.parse(entry.appliedAt),
+        "endsAt should be >= appliedAt",
+      );
 
       const ae = findAppliedAddictionEffect(actor, substance.id);
       assert.ok(ae, "addiction AE should exist on actor");
       assert.match(ae.name ?? "", /addict/i);
     });
 
-    it("withdrawing: writes withdrawal entry but applies no addiction AE", async () => {
+    it("withdrawing: writes withdrawal entry + clones withdrawal AE; no addiction AE", async () => {
       await applyDragOutcome(actor, substance, "withdrawing");
-      const wMod = substance.flags?.[MODULE_ID]?.[FLAGS.addiction]?.withdrawalMod;
-      const con = actor.system?.abilities?.con?.mod ?? 0;
-      const expected = computeRestsRemaining(wMod, con);
 
       const entry = getActorWithdrawalEntry(actor, substance.id);
       assert.ok(entry, "withdrawal entry should be set");
-      assert.equal(entry.restsRemaining, expected);
+      assert.ok(typeof entry.appliedAt === "string" && entry.appliedAt.length > 0);
+      assert.ok(typeof entry.endsAt === "string" && entry.endsAt.length > 0);
 
       assert.equal(
         findAppliedAddictionEffect(actor, substance.id),
         null,
         "withdrawing must not apply the addiction AE",
       );
+
+      const withdrawalAe = [...(actor.effects ?? [])].find(
+        (e) =>
+          e.flags?.[MODULE_ID]?.aeRole === "withdrawal" &&
+          e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substance.id,
+      );
+      assert.ok(withdrawalAe, "withdrawal AE should be cloned onto actor");
     });
 
     it("tolerant: applies tolerance AE with stacks=1; second call increments to stacks=2", async () => {
@@ -2951,100 +2946,3 @@ function aeRoleFallbackWarnBatch(context) {
   });
 }
 
-// ─── Batch: Voluntary Abstain — fail triggers consumption ───────────────────
-
-function abstainFailConsumesBatch(context) {
-  const { describe, it, assert, beforeEach, afterEach } = context;
-
-  describe("S&P · Voluntary Abstain · fail triggers consumption", () => {
-    let actor, substance;
-
-    beforeEach(async () => {
-      const cls = CONFIG.Actor.documentClass;
-      actor = await cls.create({
-        name: "Quench Abstain Fail",
-        type: "character",
-        system: { abilities: { wis: { value: 3 } } }, // Wis -4, very low save
-      });
-      const items = await loadPackItems("fishut-illicit-substance");
-      const src = items.find((i) => i?.name === "Coalshade Powder" && isSubstance(i));
-      if (src) {
-        [substance] = await actor.createEmbeddedDocuments("Item", [src.toObject()]);
-        await substance.update({ "system.uses.value": 1, "system.uses.max": 1 });
-        // Plant an active withdrawal AE so processAbstainFailure has a row to act on.
-        await actor.createEmbeddedDocuments("ActiveEffect", [
-          {
-            name: `Withdrawal from ${substance.name}`,
-            icon: "icons/svg/poison.svg",
-            flags: {
-              [MODULE_ID]: {
-                aeRole: "withdrawal",
-                [FLAGS.sourceSubstanceId]: substance.id,
-              },
-            },
-          },
-        ]);
-      }
-    });
-
-    afterEach(async () => {
-      if (actor) await deleteActor(actor);
-    });
-
-    it("fail path: uses decrement and addiction/tolerance/overdose chain runs", async () => {
-      assert.ok(substance, "Coalshade substance must be importable from the shipped pack");
-      const row = {
-        substanceId: substance.id,
-        itemName: substance.name,
-        dc: 99, // unreachable → forced fail
-        withdrawalMod: 4,
-      };
-      const before = Number(actor.items.get(substance.id).system.uses.value);
-      await processAbstainFailure(actor, row);
-      // Foundry's activity.use() is async + emits its own chat; allow microtask flush.
-      await new Promise((r) => setTimeout(r, 100));
-      const after = Number(actor.items.get(substance.id).system.uses.value);
-      assert.equal(after, before - 1, "consumption fired and decremented uses by 1");
-    });
-  });
-}
-
-// ─── Batch: Voluntary Abstain — fail with no inventory soft-fails ───────────
-
-function abstainFailSoftBatch(context) {
-  const { describe, it, assert, beforeEach, afterEach } = context;
-
-  describe("S&P · Voluntary Abstain · fail with no inventory soft-fails", () => {
-    let actor;
-
-    beforeEach(async () => {
-      const cls = CONFIG.Actor.documentClass;
-      actor = await cls.create({ name: "Quench Abstain SoftFail", type: "character" });
-    });
-
-    afterEach(async () => {
-      if (actor) await deleteActor(actor);
-    });
-
-    it("missing inventory item posts FailNoSubstance and does not throw", async () => {
-      const row = {
-        substanceId: "nonexistent-item-id",
-        itemName: "Coalshade Powder",
-        dc: 99,
-        withdrawalMod: 4,
-      };
-      // Should resolve without throwing.
-      await processAbstainFailure(actor, row);
-      // Inspect the recent chat history for the FailNoSubstance message.
-      // Pull the expected text from the i18n bundle so a future locale string
-      // tweak doesn't break this assertion.
-      const expected = game.i18n.format("FISHUT.LongRestAbstain.FailNoSubstance", {
-        actor: actor.name,
-        item: "Coalshade Powder",
-      });
-      const recent = game.messages?.contents?.slice(-3) ?? [];
-      const hit = recent.some((m) => m.content === expected);
-      assert.ok(hit, "FailNoSubstance chat card emitted");
-    });
-  });
-}
