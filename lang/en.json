@@ -222,7 +222,7 @@
   "FISHUT.DetailsTab.Field.AbstainAbility": "Abstain Save Ability",
   "FISHUT.DetailsTab.Field.AbstainDc": "Abstain Save DC",
   "FISHUT.DetailsTab.Field.WithdrawalDurationValue": "Withdrawal Duration",
-  "FISHUT.DetailsTab.Field.WithdrawalDurationUnit": "Unit",
+  "FISHUT.DetailsTab.Field.WithdrawalDurationUnit.Label": "Unit",
   "FISHUT.DetailsTab.Field.WithdrawalDurationUnit.minutes": "Minutes",
   "FISHUT.DetailsTab.Field.WithdrawalDurationUnit.hours": "Hours",
   "FISHUT.DetailsTab.Field.WithdrawalDurationUnit.days": "Days",
