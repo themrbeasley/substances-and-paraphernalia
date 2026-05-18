@@ -120,6 +120,11 @@ function injectKindToggle(detailsTab, item, isEditable) {
   wrapper.appendChild(document.createTextNode(` ${labelText}`));
 
   input.addEventListener("change", (event) => {
+    // Mirror the wireDetails view-mode guard: setAttribute("disabled") on a
+    // <dnd5e-checkbox> web component doesn't reliably suppress its change
+    // event, so refuse the flag write here as defense-in-depth. Same class of
+    // leak the v0.8.3 wireDetails fix addressed, just on the kind toggle.
+    if (!isEditable) return;
     event.stopPropagation();
     persistKindToggle(item, intendedKind, input.checked === true).catch((err) =>
       logger.error("details-tab kind-toggle failed", err),
@@ -197,13 +202,15 @@ async function onRenderApplicationV2(app, htmlElement) {
 
   try {
     await ensureTemplates();
+    const labels = buildLabels();
+    warnIfI18nUnloaded(labels);
     const context = {
       kind,
       isSubstance: kind === "substance",
       isParaphernalia: kind === "paraphernalia",
       isEditable,
       itemName: doc.name,
-      labels: buildLabels(),
+      labels,
       substance: kind === "substance" ? buildSubstanceContext(doc) : null,
       paraphernalia: kind === "paraphernalia" ? buildParaphernaliaContext(doc) : null,
     };
@@ -239,6 +246,29 @@ async function onRenderApplicationV2(app, htmlElement) {
 // question and keeps the templates trivial.
 function L(key) {
   return game.i18n.localize(key);
+}
+
+// One-shot diagnostic: Foundry's i18n returns the key string verbatim when no
+// translation is loaded for it. If a user reports literal `FISHUT.*` strings
+// rendering on the Details tab, this catches it at the source (their world)
+// rather than blaming the source code, which already references the right keys.
+// Fires at most once per session.
+let _i18nUnloadedWarned = false;
+function warnIfI18nUnloaded(labels) {
+  if (_i18nUnloadedWarned) return;
+  for (const value of Object.values(labels)) {
+    if (typeof value === "string" && value.startsWith("FISHUT.")) {
+      _i18nUnloadedWarned = true;
+      logger.warn(
+        "details-tab: FISHUT.* lang keys are not being translated — Foundry's " +
+          "i18n returned the key verbatim. Check that the module is enabled, " +
+          "lang/en.json is loaded, and no world translation override is " +
+          "shadowing it. Example unresolved value:",
+        value,
+      );
+      return;
+    }
+  }
 }
 
 function buildLabels() {
