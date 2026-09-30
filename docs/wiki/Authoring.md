@@ -131,9 +131,10 @@ the Withdrawal AE that lands at long rest if the addicted actor fails their
 Abstain → Withdrawal Save chain. The helper `durationToSeconds(value, unit)`
 in `scripts/data/withdrawal-duration.js` is the canonical converter (months
 are 30-day months — approximate by design). The seconds value rides on the
-applied AE's `duration` and is enforced by **Times-Up** (bundled with DAE).
+applied AE's V14 duration (`value` + `units: "seconds"`); Foundry core
+expires it when world time passes.
 
-Because Times-Up owns expiry, withdrawal no longer ticks down per long rest
+Because game time owns expiry, withdrawal no longer ticks down per long rest
 and no longer scales against Constitution — every addict on a given substance
 suffers the same authored duration window. The actor's Con modifier still
 gates onset via the Withdrawal Save DC; once the AE lands, only game time

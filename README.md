@@ -7,17 +7,16 @@ gate that blocks consumption when the right gear isn't ready, and a save-on-use
 addiction loop with paraphernalia-granted bypasses.
 
 > **Status:** pre-1.0, work in progress.
-> Compatibility target: **FoundryVTT V13** and **dnd5e 5.2.5**.
+> Compatibility target: **FoundryVTT V14** (build 368+) and **dnd5e 5.3.x**.
 > Not yet on the Foundry package registry.
 
 ## Requirements
 
 | Module | Role | Required? |
 |--------|------|-----------|
-| [Dynamic Active Effects (DAE)](https://foundryvtt.com/packages/dae) | Powers AE Changes that use DAE-only modes (e.g. `macro.tokenMagic`) | **Yes** |
+| [Dynamic Active Effects (DAE)](https://foundryvtt.com/packages/dae) | Powers AE Changes that use DAE-only change types (e.g. `macro.tokenMagic`) | **Yes** |
 | [Midi-QoL](https://foundryvtt.com/packages/midi-qol) | Intercepts the addiction save dialog and drives the save workflow | **Yes** |
 | [Token Magic FX](https://foundryvtt.com/packages/tokenmagic) | Visual overlays on substance benefit AEs (`Altered by *`) | **Yes** |
-| [Times Up](https://foundryvtt.com/packages/times-up) | Automatic AE duration expiry | No (recommended) |
 
 Foundry refuses to activate the module without DAE, Midi-QoL, and Token Magic FX
 installed and active.

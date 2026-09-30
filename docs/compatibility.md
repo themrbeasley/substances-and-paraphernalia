@@ -4,6 +4,17 @@ Each entry is the result of a manual verification against a specific
 Foundry + dnd5e combination. Findings here drive what the module ships and
 what mitigations it carries.
 
+## Foundry V14 (build 368) + dnd5e 5.3.3 (2026-09-30)
+
+Verified by reading the installed V14 and dnd5e source, then a live test wave.
+
+- **Unchanged:** dnd5e `preUseActivity` / `postUseActivity` / `preRestCompleted` / `restCompleted` signatures; `ItemSheet5e.MODES` (`PLAY: 1`, `EDIT: 2`); the Details tab markup (`section.tab[data-tab="details"]`); `_getHeaderControls`; core `dropActorSheetData`; DAE 14 `macro.tokenMagic`; the Token Magic FX 0.8.4 preset API; `#interface`.
+- **Active Effect data moved:** `changes` → `system.changes`; numeric `mode` → string `type`; `duration.seconds` → `duration.value` + `duration.units`; a new `start` block that V14 keeps if the incoming data already has one. V14 converts old data on load, and shims the old accessors (with warnings) until V16.
+- **Expiry:** V14 core expires timed effects on the active GM's client. The default `CONFIG.ActiveEffect.expiryAction = "update"` only marks them `duration.expired`; `"delete"` deletes them. Times Up (which deleted them on V13) has no V14 build. DAE 14's `expiryAction` setting covers only its special durations.
+- **`value: 0` is expired:** `isTemporary` is `!!expiry || Number.isFinite(value)`, so a zero duration expires at once.
+- **Deprecated in V14, removed later:** global `renderTemplate` / `loadTemplates` (V15), `Dialog` / `Application` (V16), `CONST.ACTIVE_EFFECT_MODES` and `change.mode` (V16). The v12-era globals (`mergeObject`, `duplicate`, `getProperty`, …) are gone.
+- **dnd5e 5.3.3** added `FORMULA-INPUT` to `_disableFields`.
+
 ## Foundry V13 + dnd5e 5.2.5 (2026-05-05)
 
 Verified by manually exercising the Activity → chat-card flow in a dev

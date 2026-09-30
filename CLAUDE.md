@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A FoundryVTT V13 / dnd5e 5.2.5 module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; latest shipped is v0.5.x. Clean breaks preferred over migration shims (no shipped users).
+A FoundryVTT V14 / dnd5e 5.3.x module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; current is v0.9.0 (Foundry V14 only). Clean breaks preferred over migration shims (no shipped users).
 
 ## Common commands
 
@@ -67,8 +67,8 @@ Paraphernalia subtypes are an exception: the legal list is **runtime-composed** 
 ### Three-layer data model
 
 1. **Item flags** (the canonical source). `scripts/data/flag-schema.js` is the only place that reads/writes `flags["substances-and-paraphernalia"]`. Every other module talks to flags through these accessors.
-2. **Actor flags** (`flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }`) — canonical state for an active withdrawal window on a given actor. `appliedAt` and `endsAt` are ISO timestamps; `endsAt` is derived from the AE's authored duration at apply time and is what Times-Up counts down against.
-3. **Active Effects on the actor** — UI mirror of the actor flag. Applied addiction and withdrawal AEs carry `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so callers can match the AE back to its substance. Times-Up removes the withdrawal AE at expiry; `scripts/hooks/withdrawal-cleanup.js` listens on `deleteActiveEffect` and clears the matching actor flag entry. We do not poll or tick — the flag entry and AE come up and go down together.
+2. **Actor flags** (`flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }`) — canonical state for an active withdrawal window on a given actor. `appliedAt` and `endsAt` are ISO timestamps; `endsAt` is derived from the AE's authored duration at apply time.
+3. **Active Effects on the actor** — UI mirror of the actor flag. Applied addiction and withdrawal AEs carry `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so callers can match the AE back to its substance. On V14, core expires the withdrawal AE; it is deleted only when `CONFIG.ActiveEffect.expiryAction` is `"delete"` (set by the user's House Automation module), and then `scripts/hooks/withdrawal-cleanup.js` listens on `deleteActiveEffect` and clears the matching actor flag entry. We do not poll or tick — the flag entry and AE come up and go down together.
 
 ### AE naming contract
 
@@ -120,7 +120,7 @@ As of v0.5.1, **`dae`, `midi-qol`, and `tokenmagic` are declared `relationships.
 The TMFX (Token Magic FX) overlay on `Altered by *` AEs is dispatched via DAE's `macro.tokenMagic` Active Effect Change mode — **we do not ship a TMFX-aware hook**. The pattern:
 
 - `scripts/integrations/tmfx.js` `registerTmfxPresets()` runs at `ready` and registers a 3×3 palette of presets (setting × category) into TMFX's `tmfx-main` library via `TokenMagic.addPreset({ name, library: "tmfx-main" }, params, /* silent */ true)`. Names are `fishut-tmfx-{setting}-{category}` (e.g. `fishut-tmfx-fantasy-stimulant`). `addPreset` is **first-write-wins** on `{name, library}` collision (it warns and returns false), so the registration loop calls `deletePreset` first to make re-registration idempotent and let us push tuning updates without churning preset names. Gated on `game.user.isGM` (preset registry is a world setting) and `isIntegrationEnabled("tokenmagic")`. TMFX binds `globalThis.TokenMagic` inside its own `ready` handler; if our `ready` runs first we defer to `canvasReady` (which fires strictly after every module's `ready` work). A diagnostic helper `verifyTmfxPresets()` is exposed at `module.api.integrations.verifyTmfxPresets` — returns `{registered, missing}` so a GM can triage from the console.
-- The substance's benefit AE (e.g. `Altered by Coalshade Powder`) carries a Change row with `key: "macro.tokenMagic"`, `mode: 0` (CUSTOM), `value: "<preset-name>"`. The CUSTOM mode is the implicit "this AE needs DAE" signal that `aeRequiresDae` already detects. Filter params are validated against TMFX 0.7.6.3+; **unknown params are silently ignored at construction time**, so silently-misnamed authoring (e.g. `amplitude` on `wave`) renders with default uniforms and looks like nothing happened — when adding a new filter, cross-check param names against the TMFX filter source.
+- The substance's benefit AE (e.g. `Altered by Coalshade Powder`) carries a Change row with `key: "macro.tokenMagic"`, `type: "custom"`, `value: "<preset-name>"`. The `custom` type is the implicit "this AE needs DAE" signal that `aeRequiresDae` already detects. Filter params are validated against TMFX 0.7.6.3+; **unknown params are silently ignored at construction time**, so silently-misnamed authoring (e.g. `amplitude` on `wave`) renders with default uniforms and looks like nothing happened — when adding a new filter, cross-check param names against the TMFX filter source.
 - DAE forwards `change.value` verbatim to `TokenMagic.addFilters(token, value)` on apply and removes the matching filter on remove. TMFX overwrites each param's `filterId` with the preset name during registration, so add/remove key cleanly off the same string.
 - There is no Details-tab TMFX selector and no `flags[…].tmfx` / `flags[…].tmfxFilterParams` block. Authoring happens directly on the AE's Changes table (Foundry's standard AE editor) — same surface authors already use for any other AE Change.
 
@@ -130,7 +130,7 @@ When adding a new substance with TMFX visuals, append a `macro.tokenMagic` Chang
 
 ### Withdrawal vignette is an authored AE Change
 
-The per-owner CSS withdrawal vignette (red screen-edge bloom mounted to `#interface`) reads its color from `actor.flags.substances-and-paraphernalia.vignetteColor`. That flag is set by an AE Change row on the **withdrawal AE** itself — `key: "flags.substances-and-paraphernalia.vignetteColor"`, `mode: 5` (OVERRIDE), `value: "<#hex>"`, `priority: 20`. No color-inheritance step at apply time; the color rides on the AE.
+The per-owner CSS withdrawal vignette (red screen-edge bloom mounted to `#interface`) reads its color from `actor.flags.substances-and-paraphernalia.vignetteColor`. That flag is set by an AE Change row on the **withdrawal AE** itself — `key: "flags.substances-and-paraphernalia.vignetteColor"`, `type: "override"`, `value: "<#hex>"`, `priority: 20`. No color-inheritance step at apply time; the color rides on the AE.
 
 Each shipped substance carries an authored withdrawal AE template in its item's `effects` array (matched into the addiction system via `flags[…].withdrawal.effectIds`). Authors who want a custom vignette color hand-edit the Change row's `value` on the template; `applyWithdrawalEffect` clones the template onto the actor when the addiction lands. The default fallback template (built by `buildDefaultWithdrawalTemplate` when an item has no `effectIds`) carries `#a02020`.
 
@@ -138,7 +138,11 @@ Note: the addiction AE already carries the `poisoned` status — the withdrawal 
 
 ### Withdrawal duration
 
-Withdrawal duration is authored as `withdrawal.duration.value` + `withdrawal.duration.unit` (`minutes | hours | days | weeks | months`, with months = 30 days). `scripts/data/withdrawal-duration.js` `durationToSeconds(value, unit)` is the pure converter (testable without Foundry globals — see `test/unit/withdrawal-duration.test.mjs`). The seconds value rides on the applied AE's `duration`; **Times-Up** (bundled with DAE; both required) removes the AE at expiry, and `scripts/hooks/withdrawal-cleanup.js` clears the matching actor flag entry on the resulting `deleteActiveEffect`. We do not ship a rest-decrement counter and withdrawal does not scale against Constitution — Con only gates onset via the Withdrawal Save DC.
+Withdrawal duration is authored as `withdrawal.duration.value` + `withdrawal.duration.unit` (`minutes | hours | days | weeks | months`, with months = 30 days). `scripts/data/withdrawal-duration.js` `durationToSeconds(value, unit)` is the pure converter (testable without Foundry globals — see `test/unit/withdrawal-duration.test.mjs`). The seconds value rides on the applied AE's V14 duration (`value` + `units: "seconds"`); core expires it, and when it is deleted (`expiryAction: "delete"`) `scripts/hooks/withdrawal-cleanup.js` clears the matching actor flag entry on the resulting `deleteActiveEffect`. We do not ship a rest-decrement counter and withdrawal does not scale against Constitution — Con only gates onset via the Withdrawal Save DC.
+
+### V14 Active Effect data lives in one helper
+
+`scripts/data/effect-data.js` is the only place that knows V14's AE data shape. `effectChanges(effect)` reads `system.changes`; `prepareEffectPayload(data, { sourceSubstanceId, origin, role, duration })` turns a template's `toObject()` into a create payload: it drops `_id` and `start` (V14 keeps an incoming start), merges our flags, sets `origin`, and sets duration (`undefined` keep, `null` or `<= 0` permanent with `expiry: null`, positive seconds). Every module-created AE goes through it. Change rows are written with string `type`s and string values; readers accept native values because V14's converter `JSON.parse`s legacy strings. `validate-content` errors on legacy shapes in `_source/`, and ESLint rejects `.changes` outside `system`, legacy duration fields, `CONST.ACTIVE_EFFECT_MODES` and V14-removed globals. Don't add expiry handling here: deleting expired effects is House Automation's job.
 
 ### Public API surface
 

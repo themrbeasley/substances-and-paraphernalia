@@ -12,7 +12,6 @@ When adding a new integration to `scripts/integrations/index.js` `KNOWN_INTEGRAT
 |---|---|---|---|---|---|
 | Dynamic Active Effects (DAE) | `dae` | MIT | `MIT` | RECOMMEND | 2026-05-08 |
 | Midi-QoL | `midi-qol` | MIT | `MIT` | RECOMMEND | 2026-05-08 |
-| Times-Up | `times-up` | MIT | `MIT` | RECOMMEND | 2026-05-08 |
 | Token Magic FX | `tokenmagic` | GPL-3.0 | `GPL-3.0-or-later` | RECOMMEND (runtime-API boundary, see below) | 2026-05-08 |
 | JB2A — Free | `JB2A_DnD5e` (free pack) | CC-BY-NC-SA 4.0 | `CC-BY-NC-SA-4.0` | DROP | 2026-05-08 |
 
@@ -20,7 +19,7 @@ When adding a new integration to `scripts/integrations/index.js` `KNOWN_INTEGRAT
 
 - **License:** MIT.
 - **Source:** https://gitlab.com/tposney/dae
-- **What we use:** Detection-only via `aeRequiresDae(effect)` in `scripts/integrations/dae.js`. We scan AE `changes` for DAE-only modes to surface a warning when DAE is missing.
+- **What we use:** Detection-only via `aeRequiresDae(effect)` in `scripts/integrations/dae.js`. We scan AE `changes` for DAE-only change types (`"custom"`) to surface a warning when DAE is missing.
 - **Compatibility:** No friction. MIT is permissive and compatible with our MIT module + Patreon model. No attribution or share-alike obligations apply because we don't redistribute DAE code.
 - **Maintained as of:** 2026-05-08.
 
@@ -29,14 +28,6 @@ When adding a new integration to `scripts/integrations/index.js` `KNOWN_INTEGRAT
 - **License:** MIT.
 - **Source:** https://gitlab.com/tposney/midi-qol
 - **What we use:** Future hook target (v0.6 roadmap). v0.5 ships no Midi-QoL code paths; the integration toggle exists for forward compatibility.
-- **Compatibility:** No friction.
-- **Maintained as of:** 2026-05-08.
-
-## Times-Up — RECOMMEND
-
-- **License:** MIT.
-- **Source:** https://gitlab.com/tposney/times-up
-- **What we use:** No direct API calls; we rely on Times-Up being present so AEs with duration `seconds`/`turns` expire reliably.
 - **Compatibility:** No friction.
 - **Maintained as of:** 2026-05-08.
 
