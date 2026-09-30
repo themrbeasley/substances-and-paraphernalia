@@ -1,5 +1,6 @@
 import { MODULE_ID, FLAGS } from "../config.js";
 import { logger } from "../logger.js";
+import { effectChanges } from "./effect-data.js";
 import {
   readModifier,
   readModifierFromChanges,
@@ -358,7 +359,7 @@ export const setSourceSubstanceId = (effect, value) =>
 /**
  * Read the modifier block from an AE.
  *
- * v0.4 canonical storage is `effect.changes[]` rows whose key starts with
+ * v0.4 canonical storage is `effect.system.changes[]` rows (V14) whose key starts with
  * `flags.<scope>.modifier.` so the standard Foundry "Changes" tab is the
  * editable surface. Falls back to the legacy `effect.flags.<scope>.modifier`
  * shape so pre-v0.4 authored content (and Quench fixtures that haven't been
@@ -369,7 +370,7 @@ export const setSourceSubstanceId = (effect, value) =>
  */
 export const getModifier = (effect) => {
   if (!effect) return null;
-  const fromChanges = readModifierFromChanges(effect.changes, MODULE_ID);
+  const fromChanges = readModifierFromChanges(effectChanges(effect), MODULE_ID);
   if (fromChanges) return fromChanges;
   return readModifier(effect.flags?.[MODULE_ID]);
 };
@@ -382,8 +383,8 @@ export const getModifier = (effect) => {
  * @param {import("./modifier-flag.js").ModifierBlock} value
  */
 export const setModifier = (effect, value) => {
-  const changes = mergeModifierIntoChanges(effect?.changes, value, MODULE_ID);
-  return effect.update({ changes });
+  const changes = mergeModifierIntoChanges(effectChanges(effect), value, MODULE_ID);
+  return effect.update({ "system.changes": changes });
 };
 
 // ─── Actor flags (withdrawal map) ────────────────────────────────────────────

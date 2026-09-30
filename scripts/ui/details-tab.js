@@ -267,6 +267,7 @@ const VIEW_MODE_LOCK_SELECTOR = [
   "PROSE-MIRROR",
   "RANGE-PICKER",
   "STRING-TAGS",
+  "FORMULA-INPUT",
 ]
   .map((tag) => `${tag}:not(.always-interactive)`)
   .join(", ");
@@ -1080,7 +1081,7 @@ export async function createBypassStubAE(item) {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: true,
-      changes: writeModifierAsChanges(block, MODULE_ID),
+      system: { changes: writeModifierAsChanges(block, MODULE_ID) },
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
@@ -1100,7 +1101,7 @@ export async function createAddictionStubAE(item) {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: false,
-      changes: [],
+      system: { changes: [] },
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
@@ -1124,7 +1125,7 @@ export async function createWithdrawalStubAE(item) {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: false,
-      changes: [],
+      system: { changes: [] },
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
@@ -1148,7 +1149,7 @@ export async function createOverdoseStubAE(item) {
       name,
       img: item.img ?? "icons/svg/poison.svg",
       transfer: false,
-      changes: [],
+      system: { changes: [] },
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
@@ -1181,7 +1182,7 @@ export async function createToleranceStubAE(item) {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: false,
-      changes: writeModifierAsChanges(block, MODULE_ID),
+      system: { changes: writeModifierAsChanges(block, MODULE_ID) },
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
