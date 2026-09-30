@@ -341,3 +341,10 @@
   display: block;
 }
 
+/* Long Rest "Withdrawal Choices" rows: space out name, tolerance, doses, tags. */
+.fishut-abstain-dialog .fishut-abstain-row label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
