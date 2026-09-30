@@ -99,3 +99,12 @@ test("attenuateChangeRows does not mutate the input rows", () => {
 test("attenuateChangeRows returns [] for a missing row list", () => {
   assert.deepEqual(attenuateChangeRows(undefined, 1, CURVE), []);
 });
+
+test("attenuateChangeRows leaves non-numeric values untouched at any tolerance (V14 sheets save native types)", () => {
+  for (const count of [0, 1]) {
+    for (const value of [true, false, null, [], "", "  "]) {
+      const rows = [{ key: "system.attributes.movement.hover", type: "override", value }];
+      assert.deepEqual(attenuateChangeRows(rows, count, CURVE)[0].value, value, `count ${count}, value ${JSON.stringify(value)}`);
+    }
+  }
+});

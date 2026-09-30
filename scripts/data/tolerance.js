@@ -44,9 +44,10 @@ export function applyAttenuation(value, count, curve) {
 
 /**
  * Scale every numeric change-row value by the attenuation curve at `count`.
- * Values are parsed from strings or taken as numbers (V14-migrated data holds
- * real numbers), and written back as strings. Non-numeric values such as
- * `macro.tokenMagic` preset names pass through unchanged.
+ * Only finite numbers and non-blank numeric strings count as numeric; they are
+ * written back as strings. Everything else passes through unchanged: preset
+ * names, and the booleans, nulls and arrays that V14's effect sheet saves as
+ * native JSON (`Number(true)` is 1, which would flip a boolean override).
  *
  * @param {Array<{value:any}>|null|undefined} rows
  * @param {number} count
@@ -55,10 +56,17 @@ export function applyAttenuation(value, count, curve) {
  */
 export function attenuateChangeRows(rows, count, curve) {
   return (rows ?? []).map((row) => {
-    const n = Number(row.value);
-    const scaled = applyAttenuation(Number.isFinite(n) ? n : row.value, count, curve);
-    return { ...row, value: typeof scaled === "number" ? String(scaled) : scaled };
+    const n = numericValue(row.value);
+    if (n === null) return { ...row };
+    return { ...row, value: String(applyAttenuation(n, count, curve)) };
   });
+}
+
+function numericValue(v) {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v !== "string" || v.trim() === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
