@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   checkSubstance,
   checkParaphernalia,
+  checkDocumentIds,
 } from "../../tools/validate-content-checks.mjs";
 
 const SCOPE = "substances-and-paraphernalia";
@@ -705,5 +706,50 @@ describe("checkSubstance: V14 effect shape (v0.9)", () => {
     );
     const { errors } = checkSubstance(file);
     assert.deepEqual(errors, []);
+  });
+});
+
+describe("checkDocumentIds", () => {
+  const file = (data) => ({ relPath: "_source/x/test.json", data });
+
+  it("accepts 16-character ids, top-level and embedded", () => {
+    const r = checkDocumentIds(file({ _id: "fhParaOracleT001", effects: [{ _id: "fhAEOracleTByp01" }] }));
+    assert.deepEqual(r.errors, []);
+  });
+
+  it("rejects a 15-character top-level id", () => {
+    const r = checkDocumentIds(file({ _id: "fhParaOracleT01" }));
+    assert.equal(r.errors.length, 1);
+    assert.match(r.errors[0], /fhParaOracleT01/);
+  });
+
+  it("rejects a bad embedded effect id", () => {
+    const r = checkDocumentIds(file({ _id: "fhParaOracleT001", effects: [{ _id: "fhAEOracleTByp" }] }));
+    assert.equal(r.errors.length, 1);
+    assert.match(r.errors[0], /effects\[0\]/);
+  });
+});
+
+describe("checkSubstance: the high on an activity", () => {
+  const withAltered = (activityEffects) => {
+    const f = makeValidSubstance();
+    f.data.effects.push({
+      _id: "ae-altered-001",
+      name: "Altered by Test Substance",
+      system: { changes: [] },
+      flags: { [SCOPE]: { aeRole: "altered" } },
+    });
+    f.data.system.activities = { act1: { _id: "act1", name: "Use", effects: activityEffects } };
+    return f;
+  };
+
+  it("warns when an activity lists the Altered effect", () => {
+    const r = checkSubstance(withAltered([{ _id: "ae-altered-001" }]));
+    assert.ok(r.warnings.some((w) => /lists the Altered effect/.test(w)));
+  });
+
+  it("stays quiet when the activity lists no effects", () => {
+    const r = checkSubstance(withAltered([]));
+    assert.ok(!r.warnings.some((w) => /lists the Altered effect/.test(w)));
   });
 });
