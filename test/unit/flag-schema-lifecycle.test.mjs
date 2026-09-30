@@ -9,6 +9,9 @@ import {
   getAttenuationCurve,
   getActorTolerance,
   getActorToleranceEntry,
+  getAddictedSubstanceIds,
+  clearActorWithdrawalEntry,
+  clearActorToleranceEntry,
 } from "../../scripts/data/flag-schema.js";
 
 // Simulate a Foundry document's `getFlag(scope, path)` interface using a
@@ -124,3 +127,53 @@ test("getActorToleranceEntry returns null for unknown substance", () => {
   const actor = mockDoc({ "substances-and-paraphernalia": { tolerance: {} } });
   assert.equal(getActorToleranceEntry(actor, "missing"), null);
 });
+
+const SCOPE = "substances-and-paraphernalia";
+
+test("getAddictedSubstanceIds lists each addicted substance once", () => {
+  const fx = (role, sid) => ({ name: "x", flags: { [SCOPE]: { aeRole: role, sourceSubstanceId: sid } } });
+  const actor = {
+    appliedEffects: [fx("addiction", "a"), fx("addiction", "a"), fx("addiction", "b"), fx("withdrawal", "c"), fx("addiction", undefined)],
+  };
+  assert.deepEqual(getAddictedSubstanceIds(actor), ["a", "b"]);
+});
+
+function actorWithRecords(records) {
+  const calls = [];
+  return { calls, actor: { ...mockDoc({ [SCOPE]: records }), update: async (u) => calls.push(u) } };
+}
+
+function withForcedDeletion(fn) {
+  return async () => {
+    class ForcedDeletion {}
+    globalThis.foundry = { data: { operators: { ForcedDeletion } } };
+    try {
+      await fn(ForcedDeletion);
+    } finally {
+      delete globalThis.foundry;
+    }
+  };
+}
+
+test("clearActorWithdrawalEntry removes the key with ForcedDeletion", withForcedDeletion(async (ForcedDeletion) => {
+  const { actor, calls } = actorWithRecords({ withdrawal: { s1: {}, s2: {} } });
+  await clearActorWithdrawalEntry(actor, "s1");
+  assert.equal(calls.length, 1);
+  const [[key, value]] = Object.entries(calls[0]);
+  assert.equal(key, `flags.${SCOPE}.withdrawal.s1`);
+  assert.ok(value instanceof ForcedDeletion);
+}));
+
+test("clearActorWithdrawalEntry does nothing when the key is absent", withForcedDeletion(async () => {
+  const { actor, calls } = actorWithRecords({ withdrawal: { s2: {} } });
+  await clearActorWithdrawalEntry(actor, "s1");
+  assert.equal(calls.length, 0);
+}));
+
+test("clearActorToleranceEntry removes the key with ForcedDeletion", withForcedDeletion(async (ForcedDeletion) => {
+  const { actor, calls } = actorWithRecords({ tolerance: { s1: { count: 2 } } });
+  await clearActorToleranceEntry(actor, "s1");
+  const [[key, value]] = Object.entries(calls[0]);
+  assert.equal(key, `flags.${SCOPE}.tolerance.s1`);
+  assert.ok(value instanceof ForcedDeletion);
+}));
