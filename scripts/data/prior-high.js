@@ -31,5 +31,5 @@ export function isPriorHigh(effect, item) {
  */
 export function isStrayHigh(effect, actor) {
   if (effect?.flags?.[MODULE_ID]?.sourceSubstanceId) return false;
-  return [...(actor?.items ?? [])].some((item) => isSubstance(item) && isPriorHigh(effect, item));
+  return [...(actor?.items ?? [])].some((item) => isPriorHigh(effect, item) && isSubstance(item));
 }

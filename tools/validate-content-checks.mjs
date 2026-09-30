@@ -333,7 +333,7 @@ export function checkSubstance(file) {
       const ae = findEffect(data, ref?._id);
       if (ae?.flags?.[FLAG_SCOPE]?.aeRole === "altered") {
         warn(
-          `activity "${activity.name ?? activity._id}" lists the Altered effect "${ae.name}"; the module applies it, so Midi-QoL would add a second copy`,
+          `activity "${activity.name ?? activity._id}" lists the Altered effect "${ae.name}"; the module applies it itself and blocks the second copy, so the listing only adds a dead apply button`,
         );
       }
     }
