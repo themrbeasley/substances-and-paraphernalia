@@ -3,7 +3,7 @@ import { logger } from "./logger.js";
 
 /**
  * Ordered list of migrators. Each runs once when the world's stored
- * dataVersion is below the migrator's `to` value. Empty at v0.1.0 — first
+ * dataVersion is below the migrator's `to` value. Empty at v0.1.0; the first
  * real migrator lands when the data shape changes.
  *
  * @type {Array<{ from: number, to: number, run: () => Promise<void> }>}

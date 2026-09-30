@@ -5,7 +5,7 @@ name: Wiki sync
 # wiki content. The wiki is a separate git repo; GITHUB_TOKEN cannot push to
 # it, so this workflow requires a fine-scoped Personal Access Token stored as
 # repo secret WIKI_PAT with `repo` scope (or contents:write on the wiki repo
-# specifically for a fine-grained PAT — note that fine-grained PATs do not
+# specifically for a fine-grained PAT; note that fine-grained PATs do not
 # always cover wiki repos, so a classic PAT with `repo` is the safer choice).
 
 on:

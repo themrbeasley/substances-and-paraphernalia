@@ -42,7 +42,7 @@
   "FISHUT.Settings.EnforceParaphernalia.Hint": "When on, substances with required paraphernalia cannot be consumed unless the actor possesses the required gear. When off, all substances consume freely.",
 
   "FISHUT.Settings.StrictDaeRequirement.Name": "Block substances that require DAE when DAE is missing",
-  "FISHUT.Settings.StrictDaeRequirement.Hint": "When on, a substance whose Active Effects are flagged as requiring DAE cannot be consumed unless the DAE module is active. When off (default), the substance is consumed but a warning is shown — its DAE-mode effects may silently fail to apply.",
+  "FISHUT.Settings.StrictDaeRequirement.Hint": "When on, a substance whose Active Effects are flagged as requiring DAE cannot be consumed unless the DAE module is active. When off (default), the substance is consumed but a warning is shown: its DAE-mode effects may silently fail to apply.",
 
   "FISHUT.Settings.SuppressIntegrationWarnings.Name": "Suppress integration warnings",
   "FISHUT.Settings.SuppressIntegrationWarnings.Hint": "When on, the ready-time notification listing recommended-but-missing modules is suppressed. Per-substance DAE warnings are unaffected.",
@@ -86,7 +86,7 @@
 
   "FISHUT.Integrations.Module.Tokenmagic": "Token Magic FX (tokenmagic)",
   "FISHUT.Integrations.Missing.Notice": "Substances and Paraphernalia recommends modules that aren't active: {missing}. Disable this notice in the module settings.",
-  "FISHUT.Integrations.RequiresDae.Warn": "{item}: this substance has effects that require DAE. DAE isn't active — those effect modes may silently fail to apply.",
+  "FISHUT.Integrations.RequiresDae.Warn": "{item}: this substance has effects that require DAE. DAE isn't active, so those effect modes may silently fail to apply.",
   "FISHUT.Integrations.RequiresDae.Block": "{item}: requires DAE, and DAE isn't active. Consumption blocked.",
 
   "FISHUT.Addiction.SaveDialog.Title": "Resist addiction to {item}",
@@ -118,39 +118,39 @@
   "FISHUT.RemoveAddiction.Confirm": "Remove",
   "FISHUT.RemoveAddiction.Cancel": "Cancel",
   "FISHUT.RemoveAddiction.PreviewIntro": "<p>Choose addiction effects to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveAddiction.RowDetail": "{name} — source: {sourceId}, withdrawal: {rests} LR",
+  "FISHUT.RemoveAddiction.RowDetail": "{name} (source: {sourceId}, withdrawal: {rests} LR)",
   "FISHUT.RemoveAddiction.Removed": "Removed <strong>{count}</strong> addiction effect(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveAddiction.LogTitle": "Removed addiction (paste-restore JSON)",
 
   "FISHUT.RemoveTolerance.Title": "Remove Tolerance",
   "FISHUT.RemoveTolerance.NoCandidates": "{actor} has no tolerance effects to remove.",
   "FISHUT.RemoveTolerance.PreviewIntro": "<p>Choose tolerance effects to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveTolerance.RowDetail": "{name} — source: {sourceId}, stacks: {stacks}",
+  "FISHUT.RemoveTolerance.RowDetail": "{name} (source: {sourceId}, stacks: {stacks})",
   "FISHUT.RemoveTolerance.Removed": "Removed <strong>{count}</strong> tolerance effect(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveTolerance.LogTitle": "Removed tolerance (paste-restore JSON)",
 
   "FISHUT.RemoveOverdose.Title": "Remove Overdose",
   "FISHUT.RemoveOverdose.NoCandidates": "{actor} has no overdose effects to remove.",
   "FISHUT.RemoveOverdose.PreviewIntro": "<p>Choose overdose markers to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveOverdose.RowDetail": "{name} — source: {sourceId}",
+  "FISHUT.RemoveOverdose.RowDetail": "{name} (source: {sourceId})",
   "FISHUT.RemoveOverdose.Removed": "Removed <strong>{count}</strong> overdose marker(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveOverdose.LogTitle": "Removed overdose (paste-restore JSON)",
 
   "FISHUT.RemoveWithdrawal.Title": "Remove Withdrawal",
   "FISHUT.RemoveWithdrawal.NoCandidates": "{actor} has no withdrawal effects or entries to remove.",
   "FISHUT.RemoveWithdrawal.PreviewIntro": "<p>Choose withdrawal effects to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveWithdrawal.RowDetail": "{name} — source: {sourceId}, withdrawal: {rests} LR",
+  "FISHUT.RemoveWithdrawal.RowDetail": "{name} (source: {sourceId}, withdrawal: {rests} LR)",
   "FISHUT.RemoveWithdrawal.Removed": "Removed <strong>{count}</strong> withdrawal effect(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveWithdrawal.LogTitle": "Removed withdrawal (paste-restore JSON)",
 
   "FISHUT.RemoveAltered.Title": "Remove Altered",
   "FISHUT.RemoveAltered.NoCandidates": "{actor} has no Altered effects to remove.",
   "FISHUT.RemoveAltered.PreviewIntro": "<p>Choose Altered effects to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveAltered.RowDetail": "{name} — source: {sourceId}",
+  "FISHUT.RemoveAltered.RowDetail": "{name} (source: {sourceId})",
   "FISHUT.RemoveAltered.Removed": "Removed <strong>{count}</strong> Altered effect(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveAltered.LogTitle": "Removed Altered (paste-restore JSON)",
 
-  "FISHUT.DragInventory.Title": "Inject state — {item}",
+  "FISHUT.DragInventory.Title": "Inject state: {item}",
   "FISHUT.DragInventory.Body": "<p>Select the state to apply to <strong>{actor}</strong> from <strong>{item}</strong>.</p>",
   "FISHUT.DragInventory.Button.Altered": "Altered",
   "FISHUT.DragInventory.Button.Addicted": "Addicted",
@@ -166,7 +166,7 @@
   "FISHUT.DragInventory.Applied.Decline": "{actor} declined to use <strong>{item}</strong>.",
 
   "FISHUT.SimulateDose.MenuLabel": "Simulate dose…",
-  "FISHUT.SimulateDose.Title": "Simulate dose — {item}",
+  "FISHUT.SimulateDose.Title": "Simulate dose: {item}",
   "FISHUT.SimulateDose.Run": "Run",
   "FISHUT.SimulateDose.Cancel": "Cancel",
   "FISHUT.SimulateDose.ConMod": "Constitution modifier",
@@ -174,7 +174,7 @@
   "FISHUT.SimulateDose.AddictionState.None": "None",
   "FISHUT.SimulateDose.AddictionState.Addicted": "Addicted",
   "FISHUT.SimulateDose.AddictionState.Withdrawing": "Withdrawing",
-  "FISHUT.SimulateDose.Result.Title": "Simulation result — {item}",
+  "FISHUT.SimulateDose.Result.Title": "Simulation result: {item}",
   "FISHUT.SimulateDose.Result.Header": "Simulated dose of {item}",
   "FISHUT.SimulateDose.Result.Error": "Simulation failed for {item}",
   "FISHUT.SimulateDose.Result.NoChatCaptured": "(No chat output captured.)",
@@ -182,7 +182,7 @@
   "FISHUT.SimulateDose.Result.Ok": "Close",
 
   "FISHUT.LongRestAbstain.Title": "Voluntary abstain",
-  "FISHUT.LongRestAbstain.Intro": "Withdrawal pulls {actor} toward each substance below. For any craving, attempt a Wisdom save to resist — on a failure, {actor} gives in and consumes a dose.",
+  "FISHUT.LongRestAbstain.Intro": "Withdrawal pulls {actor} toward each substance below. For any craving, attempt a Wisdom save to resist. On a failure, {actor} gives in and consumes a dose.",
   "FISHUT.LongRestAbstain.Skip": "Skip",
   "FISHUT.LongRestAbstain.Pass": "{actor} resisted the urge to use {item} (DC {dc} Wisdom save). Withdrawal eases by 2 rests.",
   "FISHUT.LongRestAbstain.FailGiveIn": "{actor} failed to resist the craving for {item} (DC {dc} Wisdom save). The substance is consumed.",
@@ -229,7 +229,7 @@
   "FISHUT.DetailsTab.Withdrawal.Header": "Withdrawal",
   "FISHUT.DetailsTab.Withdrawal.Enabled": "Track withdrawal on save fail",
   "FISHUT.Details.Preview.AppliesTo": "Required for: {admins}",
-  "FISHUT.Details.TierPreview": "Tier preview: {label} — Rate {rate}, Threshold {threshold}, MaxCount {maxCount}",
+  "FISHUT.Details.TierPreview": "Tier preview: {label} (Rate {rate}, Threshold {threshold}, MaxCount {maxCount})",
   "FISHUT.Details.Addiction.Legend": "Addictive",
   "FISHUT.Details.Addiction.Enabled": "Addiction enabled",
   "FISHUT.Details.Addiction.SaveAbility": "Save ability",
@@ -292,7 +292,7 @@
   "FISHUT.DetailsTab.Bypass.Header": "Addiction Save Modifiers",
   "FISHUT.DetailsTab.Bypass.None.Hint": "No save modifier on this item.",
   "FISHUT.DetailsTab.Bypass.GrantButton": "Grant save modifier via Active Effect",
-  "FISHUT.DetailsTab.Bypass.AeName.Default": "{item} — Save Modifier",
+  "FISHUT.DetailsTab.Bypass.AeName.Default": "{item}: Save Modifier",
   "FISHUT.DetailsTab.Bypass.Type": "Type",
   "FISHUT.DetailsTab.Bypass.UsesPerDay.Label": "Uses per day",
   "FISHUT.DetailsTab.Bypass.UsesPerDay.Placeholder": "Unlimited",
@@ -305,7 +305,7 @@
   "FISHUT.Modifier.Type.PlusN": "Save Bonus",
   "FISHUT.Modifier.Type.RerollOnFail": "Reroll on Fail",
 
-  "FISHUT.Coupling.Mode.LinkedCascade": "Linked (cascade) — removing Poisoned removes addiction",
-  "FISHUT.Coupling.Mode.LinkedIsolated": "Linked (isolated) — both apply, but removal is independent",
-  "FISHUT.Coupling.Mode.Independent": "Independent — addiction does not apply Poisoned"
+  "FISHUT.Coupling.Mode.LinkedCascade": "Linked (cascade): removing Poisoned removes addiction",
+  "FISHUT.Coupling.Mode.LinkedIsolated": "Linked (isolated): both apply, but removal is independent",
+  "FISHUT.Coupling.Mode.Independent": "Independent: addiction does not apply Poisoned"
 }

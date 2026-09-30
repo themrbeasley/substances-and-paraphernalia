@@ -3,7 +3,7 @@
   <div class="form-group">
     <label>{{labels.category}}</label>
     <select data-fishut-flag="category" {{#unless isEditable}}disabled{{/unless}}>
-      <option value="">—</option>
+      <option value="">(none)</option>
       {{#each substance.categories}}
         <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
       {{/each}}

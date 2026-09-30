@@ -14,7 +14,7 @@ import { isParaphernalia, getSubtype } from "./flag-schema.js";
  * Readiness rules (gate, not just inventory presence):
  *  - Equipment paraphernalia must have `system.equipped === true`.
  *  - Consumable paraphernalia must have `system.quantity > 0`. dnd5e
- *    consumables have no equipped slot — quantity is the analogue.
+ *    consumables have no equipped slot; quantity is the analogue.
  *  - Attunement-required paraphernalia (`system.attunement === "required"`)
  *    must have `system.attuned === true` on the actor's copy.
  *

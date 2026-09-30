@@ -15,11 +15,11 @@ describe("computeAdjustedOverdoseChance", () => {
     assert.equal(computeAdjustedOverdoseChance(20, 3, "compound", 10), 50);
   });
 
-  it("clamps result to [0, 100] — mitigate floor", () => {
+  it("clamps result to [0, 100] (mitigate floor)", () => {
     assert.equal(computeAdjustedOverdoseChance(10, 5, "mitigate", 10), 0);
   });
 
-  it("clamps result to [0, 100] — compound ceiling", () => {
+  it("clamps result to [0, 100] (compound ceiling)", () => {
     assert.equal(computeAdjustedOverdoseChance(90, 5, "compound", 10), 100);
   });
 

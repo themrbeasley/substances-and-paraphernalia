@@ -165,7 +165,7 @@ describe("mergeModifierIntoChanges", () => {
   });
 });
 
-describe("readModifierFromChanges — V14-migrated native values", () => {
+describe("readModifierFromChanges: V14-migrated native values", () => {
   it("decodes numbers and booleans the same as their string forms", () => {
     const rows = [
       { key: `${PREFIX}kind`, type: "override", value: "tolerance" },

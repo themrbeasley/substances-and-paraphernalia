@@ -91,7 +91,7 @@ Hooks.once("ready", async () => {
 
 function notifyMissingIntegrations() {
   if (game.settings.get(MODULE_ID, "suppressIntegrationWarnings")) return;
-  // The user explicitly opted out of integrations whose setting is false —
+  // The user explicitly opted out of integrations whose setting is false;
   // don't nag them about modules they've already declined to wire into.
   const missing = listMissingIntegrations().filter((m) => isIntegrationSettingEnabled(m.id));
   if (missing.length === 0) return;

@@ -34,7 +34,7 @@ world before P4 implementation.
 - `usageConfig`, `dialogConfig`, `messageConfig` are plain objects.
 
 The hook is treated as cancellable: returning `false` stops the workflow
-cleanly — no usage dialog, no chat card, no resource consumption. The hook
+cleanly: no usage dialog, no chat card, no resource consumption. The hook
 is synchronous; returning a Promise does not delay the workflow and is
 treated as truthy (i.e. does not cancel).
 
@@ -59,8 +59,8 @@ defer destruction.
 
 Without Midi-QoL, Active Effects from an Activity do not auto-apply. The
 chat card surfaces a small curved-arrow icon next to each effect; the user
-clicks to apply. This is by design and acceptable for our gating use case
-— gating runs at `preUseActivity`, *before* the chat card is posted, so the
+clicks to apply. This is by design and acceptable for our gating use case,
+because gating runs at `preUseActivity`, *before* the chat card is posted, so the
 manual apply step only matters for the effect, not the gate.
 
 ### Documented limitation

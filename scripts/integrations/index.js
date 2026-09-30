@@ -5,7 +5,7 @@ import { MODULE_ID } from "../config.js";
 // whether this module wires into it. The order here drives the order in the
 // ready-time "missing modules" notification.
 //
-// dae and midi-qol are declared as `relationships.requires` in module.json —
+// dae and midi-qol are declared as `relationships.requires` in module.json;
 // Foundry refuses to activate without them, so they can never be "missing"
 // and have no setting toggle. tokenmagic is also `requires` (the Altered AE
 // visuals need it), but its `tmfxIntegration` toggle is kept so a GM can
@@ -39,8 +39,8 @@ export function listMissingIntegrations() {
  * Pure boolean AND of "user has the integration enabled" and "module is
  * active in this world." Lives separately from the Foundry-coupled wrapper
  * so the resolution rule is unit-testable without `game` globals.
- * @param {boolean} enabled — user's per-integration setting value
- * @param {boolean} moduleActive — whether the Foundry module is installed + active
+ * @param {boolean} enabled The user's per-integration setting value.
+ * @param {boolean} moduleActive Whether the Foundry module is installed + active.
  * @returns {boolean}
  */
 export function resolveIntegrationState(enabled, moduleActive) {

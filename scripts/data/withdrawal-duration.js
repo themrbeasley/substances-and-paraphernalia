@@ -5,7 +5,7 @@
  * cleanup) needs `CONFIG.ActiveEffect.expiryAction = "delete"`, set by the
  * House Automation module.
  *
- * Months use 30-day months. The conversion is approximate by design — the
+ * Months use 30-day months. The conversion is approximate by design: the
  * fiction is "a few weeks of withdrawal" and exact wall-clock semantics don't
  * matter for the game.
  */

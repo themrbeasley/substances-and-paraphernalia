@@ -74,7 +74,7 @@ const OVERDOSE_TOLERANCE_INTERACTION_LABEL_KEYS = Object.freeze({
 // `(app, htmlElement, context, options)`. We gate on `app.document` being an
 // Item of an eligible type (consumable | equipment) whose kind flag is
 // substance or paraphernalia, and locate the Details *panel* via
-// `section.tab[data-tab="details"]` — the nav button (`<a data-tab="details">`)
+// `section.tab[data-tab="details"]`; the nav button (`<a data-tab="details">`)
 // has the same data-tab and would otherwise win `querySelector` first-match.
 // V1 sheets (`renderItemSheet5e`) are not back-supported.
 export function registerDetailsTab() {
@@ -192,7 +192,7 @@ async function onRenderApplicationV2(app, htmlElement) {
   // `app.isEditable` only reflects ownership permission; dnd5e's view/edit
   // pencil toggle drives `app._mode` (PLAY=1 / EDIT=2). Both must say yes for
   // the sheet to be effectively editable. See `data/sheet-mode.js` for the
-  // resolution table — gating on `isEditable` alone was the v0.8.3-v0.8.6
+  // resolution table; gating on `isEditable` alone was the v0.8.3-v0.8.6
   // regression.
   const isEditable = resolveSheetEditable({
     isEditable: app.isEditable,
@@ -250,7 +250,7 @@ async function onRenderApplicationV2(app, htmlElement) {
 // Mirrors dnd5e's `_disableFields` selector set (dnd5e.mjs:2060-2070). The
 // template-level `{{#unless isEditable}}disabled{{/unless}}` doesn't reliably
 // suppress writes on `<dnd5e-checkbox>` and other web components, and the
-// `disabled` attribute alone doesn't dim their styling — setting the property
+// `disabled` attribute alone doesn't dim their styling; setting the property
 // does both. Run on our injected DOM so the visual lock and the write block
 // match what dnd5e itself does to its native fields.
 const VIEW_MODE_LOCK_SELECTOR = [
@@ -285,7 +285,7 @@ function lockInjectedFields(root) {
 
 // Pre-resolve labels in JS rather than relying on the Handlebars `{{localize}}`
 // helper. dnd5e's V2 sheet template scope doesn't expose Foundry's globally-
-// registered helpers reliably here — pre-resolving sidesteps that whole
+// registered helpers reliably here; pre-resolving sidesteps that whole
 // question and keeps the templates trivial.
 function L(key) {
   return game.i18n.localize(key);
@@ -303,7 +303,7 @@ function warnIfI18nUnloaded(labels) {
     if (typeof value === "string" && value.startsWith("FISHUT.")) {
       _i18nUnloadedWarned = true;
       logger.warn(
-        "details-tab: FISHUT.* lang keys are not being translated — Foundry's " +
+        "details-tab: FISHUT.* lang keys are not being translated. Foundry's " +
           "i18n returned the key verbatim. Check that the module is enabled, " +
           "lang/en.json is loaded, and no world translation override is " +
           "shadowing it. Example unresolved value:",
@@ -422,7 +422,7 @@ function buildAddictionContext(item) {
   const attachedIds = getAddictionEffectIds(item);
 
   const allEffects = Array.from(item.effects ?? []);
-  // Addiction picker has no name-substring filter — any AE on the item is a
+  // Addiction picker has no name-substring filter; any AE on the item is a
   // valid addiction-template candidate. Author intent is the source of truth.
   const { availableEffects, attachedEffects } = buildEffectPicker(
     allEffects,
@@ -465,7 +465,7 @@ function buildAddictionFieldsetContext(item) {
   const toleranceDecayRaw = getToleranceDecay(item);
 
   // Build abstain ability options using the same pattern as the addiction save
-  // ability options in buildAddictionContext — pre-resolved so the template
+  // ability options in buildAddictionContext, pre-resolved so the template
   // stays trivial.
   const abilityEntries = Object.entries(CONFIG?.DND5E?.abilities ?? {});
   const abstainAbilityOptions = abilityEntries.map(([id, entry]) => ({
@@ -480,7 +480,7 @@ function buildAddictionFieldsetContext(item) {
   const attachedIds = getWithdrawalEffectIds(item);
   const allEffects = Array.from(item.effects ?? []);
   // Withdrawal picker only lists AEs whose name contains "withdraw"
-  // (case-insensitive) — same naming contract enforced by validate-content
+  // (case-insensitive), the same naming contract enforced by validate-content
   // and the long-rest tick. Stale ids are preserved as `isStale` rows so
   // re-saving doesn't silently drop the pointer.
   const { availableEffects: withdrawalAvailableEffects, attachedEffects: withdrawalAttachedEffects } =
@@ -563,14 +563,14 @@ function buildOverdoseContext(item) {
 }
 
 function buildToleranceContext(item) {
-  // Tolerance defaults to enabled when the flag is unset (legacy compat) —
-  // matches the auto-stack-on-save-pass behavior the engine has shipped with.
+  // Tolerance defaults to enabled when the flag is unset (legacy compat),
+  // which matches the auto-stack-on-save-pass behavior the engine has shipped with.
   const enabled = getToleranceEnabled(item);
   const attachedIds = getToleranceEffectIds(item);
 
   const allEffects = Array.from(item.effects ?? []);
   // Tolerance picker lists AEs whose name contains "tolerance"
-  // (case-insensitive) OR carry a `modifier.kind === "tolerance"` flag block —
+  // (case-insensitive) OR carry a `modifier.kind === "tolerance"` flag block;
   // either heuristic is sufficient to mark the AE as a tolerance template.
   const { availableEffects, attachedEffects } = buildEffectPicker(
     allEffects,
@@ -843,7 +843,7 @@ function readMultiSelectValue(target) {
  * Persist a single scalar field. Exported for Quench coverage.
  *
  * Effect-id arrays (`addiction.effectIds`, `withdrawal.effectIds`,
- * `overdose.effectIds`, `tolerance.effectIds`) are not handled here — they
+ * `overdose.effectIds`, `tolerance.effectIds`) are not handled here; they
  * flow through `persistMultiField` which is fed by the multi-select change
  * branch in `wireDetails`.
  *

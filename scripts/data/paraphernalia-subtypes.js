@@ -1,5 +1,5 @@
 /**
- * Paraphernalia subtype catalog — composition of built-in (schema-seeded)
+ * Paraphernalia subtype catalog: composition of built-in (schema-seeded)
  * subtypes and the world-managed custom list. Pure module: takes a custom
  * list as an argument, falls back to reading the world setting only when
  * Foundry globals are present. Unit-testable without `game`.

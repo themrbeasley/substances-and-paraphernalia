@@ -5,7 +5,7 @@
 // default item-creation path to proceed normally (the substance lands in the
 // inventory regardless of the dialog outcome), and gives us a clean point to
 // schedule the post-drop dialog. The alternative considered was
-// `preCreateItem(item, data, options, userId)` — usable but it fires for every
+// `preCreateItem(item, data, options, userId)`, usable but it fires for every
 // embedded item creation (including macro-created and migration paths), which
 // would force more guarding here. `dropActorSheetData` is scoped to the
 // drag-drop UX surface this task is about.
@@ -153,7 +153,7 @@ async function openDialog(actor, item) {
 }
 
 /**
- * Apply a chosen drag outcome to the actor. Pure-ish test seam — Quench calls
+ * Apply a chosen drag outcome to the actor. Pure-ish test seam: Quench calls
  * this directly, bypassing the dialog.
  *
  * @param {Actor} actor
@@ -265,7 +265,7 @@ function computeWithdrawalWindow(item) {
 }
 
 function humanizeDuration(duration) {
-  if (!duration) return "—";
+  if (!duration) return "none";
   const value = Number(duration.value) || 0;
   const unit =
     value === 1 && typeof duration.unit === "string"

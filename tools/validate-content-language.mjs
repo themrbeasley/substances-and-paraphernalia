@@ -1,5 +1,5 @@
 /**
- * 2024 D&D 5e language compliance — pure phrasing invariants. Returns
+ * 2024 D&D 5e language compliance: pure phrasing invariants. Returns
  * warn-level findings (never errors) per Item 11 v0.8 portion: ship the
  * invariant as a non-blocking signal so authors can clean up their content
  * before v0.9 / Item 12 flips it to error-blocking.

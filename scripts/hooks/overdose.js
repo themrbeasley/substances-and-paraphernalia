@@ -14,7 +14,7 @@ import { prepareEffectPayload } from "../data/effect-data.js";
 
 /**
  * Overdose runs alongside the addiction save in `dnd5e.postUseActivity`.
- * Independent of addiction outcome — a saved dose can still overdose.
+ * Independent of addiction outcome; a saved dose can still overdose.
  */
 export function registerOverdoseHooks() {
   Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
@@ -35,11 +35,11 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
 
 /**
  * Phase 1 overdose gate. Returns the created Overdose AE on hit, null
- * otherwise. Test seam — exported for Quench.
+ * otherwise. Test seam: exported for Quench.
  *
  * @param {Actor} actor
  * @param {Item}  item
- * @param {() => number} [rng]   d100 — defaults to Math.random-based 1..100.
+ * @param {() => number} [rng]   d100; defaults to Math.random-based 1..100.
  * @returns {Promise<ActiveEffect|null>}
  */
 export async function rollOverdoseAndApply(actor, item, rng = defaultD100) {
@@ -72,7 +72,7 @@ function defaultD100() {
 /**
  * Apply the overdose marker AEs to an actor for a given substance.
  *
- * Test seam — exported so other flows (e.g. the drag-to-inventory dialog) can
+ * Test seam: exported so other flows (e.g. the drag-to-inventory dialog) can
  * apply the markers directly without a d100 roll.
  *
  * Every id in `getOverdoseEffectIds(item)` is cloned (preserving authored

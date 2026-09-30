@@ -25,45 +25,45 @@ installed and active.
 
 ### Compendium packs (under "Illicit Compendia")
 
-- **Illicit Substances** — 19+ consumables across the 3x3 setting x category
+- **Illicit Substances**: 19+ consumables across the 3x3 setting x category
   matrix, each with addiction tuning, benefit AE, addiction AE, and withdrawal
   AE templates.
-- **Illicit Paraphernalia** — 11+ equipment and consumable items with subtype,
+- **Illicit Paraphernalia**: 11+ equipment and consumable items with subtype,
   administration-type matching (`appliesTo`), and optional save-bypass AEs.
-- **Illicit Macros** — Remove Addiction, Remove Altered, Remove Overdose,
+- **Illicit Macros**: Remove Addiction, Remove Altered, Remove Overdose,
   Remove Tolerance, Remove Withdrawal, and Toggle Paraphernalia Enforcement.
-- **GM Guide** — single-page journal pointing to the
+- **GM Guide**: single-page journal pointing to the
   [GitHub wiki](https://github.com/themrbeasley/substances-and-paraphernalia/wiki)
   for full documentation.
 
 ### Automation hooks
 
-- **`dnd5e.preUseActivity` gate** — blocks substance use when matching
+- **`dnd5e.preUseActivity` gate**: blocks substance use when matching
   paraphernalia is missing or unready. The gate keys off the dnd5e Poison
   subtype on the substance (`system.type.subtype`) and matches against
   paraphernalia `appliesTo`. "Use anyway" override available to all users.
-- **`dnd5e.postUseActivity` addiction loop** — rolls a Constitution save
+- **`dnd5e.postUseActivity` addiction loop**: rolls a Constitution save
   against the substance's DC, consults the modifier pipeline for save bypasses
   (`auto-pass > advantage > +N`), and applies the Addiction AE on failure.
-- **`dnd5e.restCompleted` long-rest tick** — GM-arbitrated: decrements
+- **`dnd5e.restCompleted` long-rest tick**: GM-arbitrated; decrements
   withdrawal counters, removes addiction/withdrawal AEs when the count reaches
   zero, and prompts voluntary abstain.
 
 ### Additional mechanics
 
-- **Tolerance** — auto-stacks on a passed addiction save.
-- **Overdose** — d100 roll per consumption with a marker AE.
-- **Poisoned coupling** — three modes (`linked-cascade`, `linked-isolated`,
+- **Tolerance**: auto-stacks on a passed addiction save.
+- **Overdose**: d100 roll per consumption with a marker AE.
+- **Poisoned coupling**: three modes (`linked-cascade`, `linked-isolated`,
   `independent`) controlling how the Poisoned condition interacts with addiction.
-- **Voluntary abstain** — long-rest dialog button to voluntarily skip a substance.
-- **Withdrawal vignette** — per-owner CSS overlay with per-substance colors
+- **Voluntary abstain**: long-rest dialog button to voluntarily skip a substance.
+- **Withdrawal vignette**: per-owner CSS overlay with per-substance colors
   authored on the withdrawal AE template.
-- **Simulate-dose** — 3-dot menu dry-run on substance items.
-- **Paraphernalia Subtype Manager** — settings menu for adding custom subtypes
+- **Simulate-dose**: 3-dot menu dry-run on substance items.
+- **Paraphernalia Subtype Manager**: settings menu for adding custom subtypes
   beyond the built-in list.
-- **Drag-to-inventory dialog** — state-injection when substances are dropped
+- **Drag-to-inventory dialog**: state-injection when substances are dropped
   onto actors (GM/ASSISTANT).
-- **TMFX visual overlays** — DAE-driven `macro.tokenMagic` Change rows on
+- **TMFX visual overlays**: DAE-driven `macro.tokenMagic` Change rows on
   `Altered by *` benefit AEs, with nine setting x category preset filters.
 
 ## Authoring
@@ -71,11 +71,11 @@ installed and active.
 Substances and paraphernalia are authored on the dnd5e item sheet's
 **Details tab**. The wiki has the full authoring guide:
 
-- **[Authoring](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Authoring)** —
+- **[Authoring](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Authoring)**:
   Details-tab fields, flag shapes, AE conventions, worked examples.
-- **[Save Bypass Tiers](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Save-Bypass-Tiers)** —
+- **[Save Bypass Tiers](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Save-Bypass-Tiers)**:
   `auto-pass > advantage > +N` pipeline.
-- **[Mechanics](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Mechanics)** —
+- **[Mechanics](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Mechanics)**:
   full mechanics reference.
 
 Active Effect naming is a contract: addiction AEs contain `addict`,
@@ -106,5 +106,5 @@ content lives in `_source/`.
 
 ## License
 
-Code is MIT — see [LICENSE](LICENSE). Lore and journal text intended to ship
+Code is MIT; see [LICENSE](LICENSE). Lore and journal text intended to ship
 under CC-BY-4.0 once the lore corpus is large enough to be worth attributing.

@@ -25,13 +25,13 @@ const DEFAULT_SAVE_ABILITY = "con";
 const POISONED_STATUS = "poisoned";
 
 export function registerAddictionHooks() {
-  // B.1 — Save-on-use (post-activity).
+  // B.1: Save-on-use (post-activity).
   // dnd5e 4.x exposes `dnd5e.postUseActivity`. Signature confirmed in live
   // world; if it differs we fall back to wrapping `Activity#use` directly
   // (see comment in onPostUseActivity).
   Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
 
-  // B.3 — Poisoned-coupling guard for linked-isolated mode.
+  // B.3: Poisoned-coupling guard for linked-isolated mode.
   // External poisoned-clear cascades into our addiction AE's deletion under
   // Foundry's default "linked-cascade" semantics; this hook re-asserts the
   // addiction AE's persistence in linked-isolated mode by canceling the delete
@@ -88,7 +88,7 @@ export async function rollSaveAndApply(actor, item) {
 }
 
 /**
- * Apply a pre-determined outcome to the actor. This is the test seam — the
+ * Apply a pre-determined outcome to the actor. This is the test seam: the
  * Quench suite calls it directly with a forced result.
  *
  * @param {Actor}  actor
@@ -163,7 +163,7 @@ export async function applyOutcome(actor, item, outcome) {
   if (outcome?.saveResult === "fail") {
     await applyAddictionEffect(actor, item);
     // Phase 1 no longer applies Withdrawal AE or sets the actor withdrawal
-    // flag entry. Withdrawal onset is a Phase 2 event — see
+    // flag entry. Withdrawal onset is a Phase 2 event; see
     // scripts/hooks/long-rest-abstain.js (Task 13).
     let key;
     if (rerollSource) key = "FISHUT.Addiction.Save.FailWithReroll";
@@ -229,7 +229,7 @@ async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, rero
  * `getAddictionEffectIds(item)` is cloned in a single batch so a GM can split
  * a complex addiction across multiple AEs and have all of them appear at once.
  * Adjusts `data.statuses` per the `addictionPoisonedCoupling` setting before
- * creation. Test seam — exported for Quench.
+ * creation. Test seam: exported for Quench.
  *
  * @param {Actor} actor
  * @param {Item}  item
@@ -314,7 +314,7 @@ function findAllAppliedAddictionEffects(actor, substanceId) {
 }
 
 /**
- * Identify an applied addiction AE on an actor — used by the linked-isolated
+ * Identify an applied addiction AE on an actor. Used by the linked-isolated
  * coupling guard to decide whether to block external deletes. Exported as part
  * of the public API so macros and integrations can reuse the same predicate.
  *
@@ -332,7 +332,7 @@ export function isAppliedAddictionEffect(effect) {
 }
 
 /**
- * Test seam — Quench calls this to exercise the linked-isolated guard with a
+ * Test seam: Quench calls this to exercise the linked-isolated guard with a
  * deterministic options object. Returns `false` to cancel the delete.
  *
  * @param {ActiveEffect} effect
@@ -447,7 +447,7 @@ async function refreshToleranceMarkerAe(actor, item, count) {
  * built-in default template when no authored templates exist, so every
  * `withdrawal.enabled` substance produces a visible AE (and thus a vignette)
  * without per-substance authoring. Authored template names must contain
- * `withdraw`; mismatched templates log a warning and are skipped. Test seam —
+ * `withdraw`; mismatched templates log a warning and are skipped. Test seam:
  * exported for Quench.
  *
  * @param {Actor} actor

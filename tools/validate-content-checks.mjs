@@ -116,7 +116,7 @@ export function checkSubstance(file) {
   }
   if (flags.administration !== undefined) {
     err(
-      `legacy "administration" flag is removed in v0.3 — administration now lives on system.type.subtype (dnd5e Poison subtype)`,
+      `legacy "administration" flag is removed in v0.3; administration now lives on system.type.subtype (dnd5e Poison subtype)`,
     );
   }
   const poisonValue = data?.system?.type?.value;
@@ -138,7 +138,7 @@ export function checkSubstance(file) {
   }
   if (addiction.withdrawalMod !== undefined) {
     err(
-      `addiction.withdrawalMod is removed in v0.8.1 — withdrawal duration is now driven by flags.withdrawal.{dc, duration:{value,unit}}`,
+      `addiction.withdrawalMod is removed in v0.8.1; withdrawal duration is now driven by flags.withdrawal.{dc, duration:{value,unit}}`,
     );
   }
   const dc = addiction.save?.dc;
@@ -205,16 +205,16 @@ export function checkSubstance(file) {
 
   if (flags.requiredParaphernalia !== undefined) {
     err(
-      `legacy "requiredParaphernalia" flag is removed in v0.3 — paraphernalia gating now keys on system.type.subtype matched against paraphernalia appliesTo`,
+      `legacy "requiredParaphernalia" flag is removed in v0.3; paraphernalia gating now keys on system.type.subtype matched against paraphernalia appliesTo`,
     );
   }
   if (flags.requiredSubtypes !== undefined) {
     err(
-      `legacy "requiredSubtypes" flag is removed in v0.5 — paraphernalia gating now keys on system.type.subtype (poison administration) matched against paraphernalia appliesTo`,
+      `legacy "requiredSubtypes" flag is removed in v0.5; paraphernalia gating now keys on system.type.subtype (poison administration) matched against paraphernalia appliesTo`,
     );
   }
 
-  // v0.4 — overdose flag shape.
+  // v0.4: overdose flag shape.
   if (flags.overdose !== undefined && flags.overdose !== null) {
     const ov = flags.overdose;
     if (typeof ov !== "object" || Array.isArray(ov)) {
@@ -230,10 +230,10 @@ export function checkSubstance(file) {
     }
   }
 
-  // v0.4 — withdrawal.effectIds resolution + name-contract + content guidance.
+  // v0.4: withdrawal.effectIds resolution + name-contract + content guidance.
   if (flags.withdrawalEffectId !== undefined) {
     err(
-      `legacy "withdrawalEffectId" flag is removed in v0.4 — declare flags["${FLAG_SCOPE}"].withdrawal.effectIds instead`,
+      `legacy "withdrawalEffectId" flag is removed in v0.4; declare flags["${FLAG_SCOPE}"].withdrawal.effectIds instead`,
     );
   }
   const withdrawalIds = resolveEffectIdList(
@@ -251,12 +251,12 @@ export function checkSubstance(file) {
     }
     if (aeViolatesContentGuidance(withdrawalAe)) {
       warn(
-        `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks — duplicates poisoned. Escalate instead (exhaustion, disadv on saves, speed reduction, stat penalty).`,
+        `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks, which duplicates poisoned. Escalate instead (exhaustion, disadv on saves, speed reduction, stat penalty).`,
       );
     }
   }
 
-  // v0.4 — overdose.effectIds resolution + name-contract.
+  // v0.4: overdose.effectIds resolution + name-contract.
   const overdoseIds = resolveEffectIdList(
     flags.overdose?.effectIds,
     flags.overdose?.effectId,
@@ -272,7 +272,7 @@ export function checkSubstance(file) {
     }
   }
 
-  // v0.4 — tolerance.effectIds resolution + name-contract.
+  // v0.4: tolerance.effectIds resolution + name-contract.
   const toleranceIds = resolveEffectIdList(
     flags.tolerance?.effectIds,
     flags.tolerance?.effectId,
@@ -288,7 +288,7 @@ export function checkSubstance(file) {
     }
   }
 
-  // v0.4 — modifier-bearing AEs (tolerance template lives on the substance).
+  // v0.4: modifier-bearing AEs (tolerance template lives on the substance).
   for (const ae of effectsOf(data)) {
     const modErrs = checkModifierShape(ae, tag);
     errors.push(...modErrs);
@@ -342,7 +342,7 @@ export function checkParaphernalia(file, opts = {}) {
   if (typeof flags.subtype !== "string" || !KEBAB.test(flags.subtype)) {
     err(`subtype must be a kebab-case string (got ${JSON.stringify(flags.subtype)})`);
   } else if (opts.builtinSubtypes && !opts.builtinSubtypes.has(flags.subtype)) {
-    // Shipped paraphernalia may only declare built-in subtypes — custom
+    // Shipped paraphernalia may only declare built-in subtypes; custom
     // subtypes are user-managed at runtime via the Subtype Manager app.
     err(
       `subtype "${flags.subtype}" is not a built-in (custom subtypes are runtime-only; ship content using built-in subtypes only)`,
@@ -350,17 +350,17 @@ export function checkParaphernalia(file, opts = {}) {
   }
   if (flags.paraphernaliaId !== undefined) {
     err(
-      `legacy "paraphernaliaId" flag is removed in v0.3 — declare flags["${FLAG_SCOPE}"].subtype instead`,
+      `legacy "paraphernaliaId" flag is removed in v0.3; declare flags["${FLAG_SCOPE}"].subtype instead`,
     );
   }
   if (flags.tags !== undefined) {
     err(
-      `legacy "tags" flag is removed in v0.3 — paraphernalia identity is the subtype id alone`,
+      `legacy "tags" flag is removed in v0.3; paraphernalia identity is the subtype id alone`,
     );
   }
   if (flags.addictionSaveBypass !== undefined) {
     err(
-      `legacy item-level "addictionSaveBypass" flag is removed in v0.3 — declare bypass via an embedded transfer:true AE with flags["${FLAG_SCOPE}"].modifier instead`,
+      `legacy item-level "addictionSaveBypass" flag is removed in v0.3; declare bypass via an embedded transfer:true AE with flags["${FLAG_SCOPE}"].modifier instead`,
     );
   }
 
@@ -394,7 +394,7 @@ export function checkParaphernalia(file, opts = {}) {
         `${aeTag}: modifier.type must be one of ${[...MODIFIER_TYPES].join("|")} (got ${modifier.type})`,
       );
     }
-    // appliesTo on the bypass AE is no longer authored — paraphernalia's
+    // appliesTo on the bypass AE is no longer authored; paraphernalia's
     // own `flags[…].appliesTo` is the canonical filter at resolution time.
     // We still validate the AE-side array's *values* if it happens to be
     // present (legacy authored content) so a typo'd administration string
@@ -471,7 +471,7 @@ function resolveEffectIdList(plural, singular) {
  * Heuristic for the "don't duplicate poisoned" content guidance: if the
  * withdrawal AE imposes disadvantage on attacks or checks, warn the author.
  *
- * Coarse but useful — catches the most common authoring mistake. False
+ * Coarse but useful: catches the most common authoring mistake. False
  * positives are easy to fix by re-authoring; false negatives just don't get
  * flagged (the check is a warning, not an error).
  */

@@ -8,9 +8,9 @@
  * @typedef {Object} ModifierCandidate
  * @property {string}   id              AE id (deterministic tie-breaker).
  * @property {string}   kind            Modifier kind, e.g. "bypass".
- * @property {string}   type            Modifier type — "auto-pass" | "reroll-on-fail" | "advantage" | "+N".
+ * @property {string}   type            Modifier type: "auto-pass" | "reroll-on-fail" | "advantage" | "+N".
  * @property {string[]} appliesTo       Administrations the modifier covers.
- * @property {number}   [bonus]         For type === "+N" only — numeric bonus.
+ * @property {number}   [bonus]         For type === "+N" only: numeric bonus.
  * @property {boolean}  [hasUsesConfig] True when the source item tracks per-day uses.
  * @property {number}   [usesRemaining] Numeric uses available now (only checked when hasUsesConfig).
  *

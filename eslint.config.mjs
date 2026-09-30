@@ -47,7 +47,7 @@ export default [
       "no-undef": "error",
       eqeqeq: ["error", "smart"],
       "prefer-const": "warn",
-      // Catches "imported name does not exist" — the v0.8.1 regression class.
+      // Catches "imported name does not exist" (the v0.8.1 regression class).
       "import/named": "error",
       "no-restricted-properties": [
         "error",

@@ -1,6 +1,6 @@
 // scripts/hooks/long-rest-abstain.js
 /**
- * Phase 2 — long rest dialog + Abstain Check + Withdrawal Save pipeline.
+ * Phase 2: long rest dialog + Abstain Check + Withdrawal Save pipeline.
  *
  * Fires on `dnd5e.preRestCompleted` (GM-arbitrated). For each substance the
  * actor is currently addicted to, opens the combined Abstain dialog
@@ -41,7 +41,7 @@ import { registerForcedUseBypass, clearForcedUseBypass } from "./activity-gating
 let dialogImpl = openAbstainDialog;
 
 /**
- * Test seam — Quench tests call this to install a stub returning a
+ * Test seam: Quench tests call this to install a stub returning a
  * deterministic per-row decision map before invoking runPhase2.
  *
  * @param {(actor: Actor, rows: any[]) => Promise<Record<string, string>>} stub

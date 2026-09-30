@@ -45,7 +45,7 @@
  *     flags["substances-and-paraphernalia"].modifier:
  *       - kind === "bypass"
  *       - type is one of "auto-pass" | "advantage" | "+N"
- *       - appliesTo is optional — paraphernalia's own `appliesTo` is the
+ *       - appliesTo is optional; paraphernalia's own `appliesTo` is the
  *         canonical filter at resolution time; values are still validated
  *         when present so typo'd administration strings can't slip through
  *     and when usesPerDay is declared the host item must have
@@ -100,11 +100,11 @@ const paraphernaliaFiles = await loadJsonFiles("_source/fishut-illicit-paraphern
 const builtinSubtypes = await loadBuiltinSubtypes();
 
 if (substanceFiles.length === 0) {
-  warnings.push("_source/fishut-illicit-substance is empty — no substance content to validate.");
+  warnings.push("_source/fishut-illicit-substance is empty; no substance content to validate.");
 }
 if (paraphernaliaFiles.length === 0) {
   warnings.push(
-    "_source/fishut-illicit-paraphernalia is empty — no paraphernalia content to validate.",
+    "_source/fishut-illicit-paraphernalia is empty; no paraphernalia content to validate.",
   );
 }
 
@@ -145,7 +145,7 @@ async function scanLangStringsForPhrasing() {
       sourcePath: `lang/en.json:${key}`,
     });
     for (const f of findings) {
-      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}" — ${f.message}`);
+      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}": ${f.message}`);
     }
   }
 }
@@ -179,7 +179,7 @@ async function scanTemplatesForPhrasing() {
       sourcePath: relPath,
     });
     for (const f of findings) {
-      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}" — ${f.message}`);
+      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}": ${f.message}`);
     }
   }
 }

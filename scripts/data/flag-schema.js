@@ -417,7 +417,7 @@ export const clearActorWithdrawalEntry = async (actor, substanceId) => {
   return actor.setFlag(MODULE_ID, FLAGS.withdrawal, map);
 };
 
-// ─── Substance withdrawal block (v0.8.1 — DC + Abstain + Duration) ───────────
+// ─── Substance withdrawal block (v0.8.1: DC + Abstain + Duration) ────────────
 
 /** @param {Item} item @returns {number|null} */
 export const getWithdrawalDc = (item) => {
@@ -473,7 +473,7 @@ export const setWithdrawalDuration = (item, value) => {
   return setWithdrawal(item, { ...block, duration: value });
 };
 
-// ─── Substance tolerance block (v0.8.1 — decay + attenuation curve) ──────────
+// ─── Substance tolerance block (v0.8.1: decay + attenuation curve) ───────────
 
 const DEFAULT_TOLERANCE_DECAY = 1;
 
@@ -500,7 +500,7 @@ export const getAttenuationCurve = (item) => {
   return Array.isArray(curve) ? curve : null;
 };
 
-// ─── Actor flags (tolerance map — mirror of withdrawal map shape) ────────────
+// ─── Actor flags (tolerance map: mirror of withdrawal map shape) ─────────────
 
 /**
  * @typedef {Object} ToleranceEntry

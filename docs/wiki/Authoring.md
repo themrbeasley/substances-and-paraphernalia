@@ -24,7 +24,7 @@ flags["substances-and-paraphernalia"] = {
 };
 ```
 
-`system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury` — that's the administration channel the gate and bypass logic key on. (The legacy per-substance `requiredSubtypes` callout was removed in v0.5; gating now keys on this admin type matched against a paraphernalia-side `appliesTo` admin list.)
+`system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury`; that's the administration channel the gate and bypass logic key on. (The legacy per-substance `requiredSubtypes` callout was removed in v0.5; gating now keys on this admin type matched against a paraphernalia-side `appliesTo` admin list.)
 
 `system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type *Item Uses* with value 1 so dnd5e auto-destroys the consumable on use.
 
@@ -59,7 +59,7 @@ and the shipped content are conventions, not rules.
 > The shipped compendium content is being rewritten in v0.9 (Item 12 of
 > the roadmap) to apply this convention consistently across every
 > mind-altering substance. Until then, some existing content still uses
-> Constitution saves for mind-altering substances — that's the legacy
+> Constitution saves for mind-altering substances; that's the legacy
 > baseline, not the design intent.
 
 ## Active Effect name contracts
@@ -93,7 +93,7 @@ Every module-created Active Effect carries a flag at
 role from a flag is locale-independent. Substring matching against the AE
 name (`addict`, `withdraw`, `altered`, `tolerance`, `overdose`, `bypass`)
 remains as a **warn-logged fallback** so hand-authored AEs continue to
-work — the console warns each time the fallback fires so a GM can add
+work; the console warns each time the fallback fires so a GM can add
 the flag manually when authoring conventions are uncertain.
 
 **For homebrew authors:** when you create an AE outside the module's
@@ -112,7 +112,7 @@ flags["substances-and-paraphernalia"].modifier = {
   usesPerDay: "@prof"                         // optional; rides on system.uses
 };
 
-// Tolerance (substance, template AE — module clones onto actor on save pass)
+// Tolerance (substance, template AE; module clones onto actor on save pass)
 flags["substances-and-paraphernalia"].modifier = {
   kind: "tolerance",
   substanceId: "<itemId>",
@@ -130,12 +130,12 @@ Details tab. The Withdrawal Duration field (number) and unit selector
 the Withdrawal AE that lands at long rest if the addicted actor fails their
 Abstain → Withdrawal Save chain. The helper `durationToSeconds(value, unit)`
 in `scripts/data/withdrawal-duration.js` is the canonical converter (months
-are 30-day months — approximate by design). The seconds value rides on the
+are 30-day months, approximate by design). The seconds value rides on the
 applied AE's V14 duration (`value` + `units: "seconds"`); Foundry core
 expires it when world time passes.
 
 Because game time owns expiry, withdrawal no longer ticks down per long rest
-and no longer scales against Constitution — every addict on a given substance
+and no longer scales against Constitution: every addict on a given substance
 suffers the same authored duration window. The actor's Con modifier still
 gates onset via the Withdrawal Save DC; once the AE lands, only game time
 removes it.
@@ -150,7 +150,7 @@ substance and the table's expected pacing.
 | Magical or alien narcotic | 1–2 weeks |
 | Setpiece, plot-relevant addiction | 1–3 months |
 
-Avoid mixing minutes with months on the same campaign — pick a unit family
+Avoid mixing minutes with months on the same campaign: pick a unit family
 that fits the table's clock so players can plan around it. If a substance
 should leave a permanent mark, prefer authoring an additional non-expiring
 "former addict" AE separately rather than inflating the withdrawal window
@@ -177,7 +177,7 @@ flip to errors.
 
 The validator only flags damage types and condition names as drift in **prose
 context** (lang/en.json strings, .hbs templates). It does not flag them in
-data fields — e.g. `"subtype": "poisoned"` is a dnd5e keyword, not the
+data fields. For example, `"subtype": "poisoned"` is a dnd5e keyword, not the
 condition name, and is left alone.
 
 The full rule set lives in `tools/validate-content-language.mjs`. Authors who
@@ -194,4 +194,4 @@ Open any substance item; the dnd5e Details tab now shows:
 - **Withdrawal AE picker** + content-guidance hint (don't duplicate poisoned; escalate instead).
 - **Overdose fieldset**: enabled toggle, chance percent (1-100), description.
 
-For paraphernalia items, the Details tab shows the **Subtype** select (built-ins + custom). Bypass authoring lives on the Active Effects tab — add a `transfer: true` AE and write the modifier flag block.
+For paraphernalia items, the Details tab shows the **Subtype** select (built-ins + custom). Bypass authoring lives on the Active Effects tab: add a `transfer: true` AE and write the modifier flag block.

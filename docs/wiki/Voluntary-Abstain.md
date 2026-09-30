@@ -35,7 +35,7 @@ exactly once). The full post-use chain runs:
 
 ## Fail (with no substance in inventory)
 
-Soft-fails to the standard pace — no consumption, withdrawal continues
+Soft-fails to the standard pace: no consumption, withdrawal continues
 on the normal -1 tick.
 
 > "{actor} reached for {item} but found none. The withdrawal continues
@@ -45,7 +45,7 @@ on the normal -1 tick.
 
 The Wis save represents *willpower vs. craving*, not "Will save to
 escape this effect". The teeth of the failed save are not a flat
-penalty — they are the realistic narrative consequence: the addicted
+penalty; they are the realistic narrative consequence: the addicted
 character goes and gets a hit. From there, the substance's own
 mechanics (addiction, tolerance, overdose) determine what that hit
 costs.

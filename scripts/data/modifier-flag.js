@@ -14,7 +14,7 @@
  * coupled wrappers `getModifier` / `setModifier` live in `flag-schema.js`.
  *
  * @typedef {"bypass" | "tolerance"} ModifierKind
- *   v0.4 adds "tolerance" — actor-side stack-counted state (no per-shot consumption).
+ *   v0.4 adds "tolerance": actor-side stack-counted state (no per-shot consumption).
  *   "bypass" is the original paraphernalia-grants-save-relief pipeline.
  *
  * @typedef {"auto-pass" | "reroll-on-fail" | "advantage" | "+N"} ModifierType

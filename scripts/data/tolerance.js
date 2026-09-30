@@ -1,6 +1,6 @@
 // scripts/data/tolerance.js
 /**
- * Pure tolerance helpers — Count + Points dual model.
+ * Pure tolerance helpers: Count + Points dual model.
  *
  * Count: integer 0..MaxCount, drives Altered AE attenuation.
  * Points: derived (Count × Rate), drives Overdose threshold gating.

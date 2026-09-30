@@ -1,5 +1,5 @@
 /**
- * Voluntary abstain — pure helpers for the long-rest "tough it out" save.
+ * Voluntary abstain: pure helpers for the long-rest "tough it out" save.
  *
  * Per `SPEC.md` line 154:
  *   DC = 8 + withdrawalMod, Wis save.

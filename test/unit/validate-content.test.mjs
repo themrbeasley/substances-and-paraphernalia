@@ -10,8 +10,8 @@ const SCOPE = "substances-and-paraphernalia";
 /**
  * Return a fully-valid v0.8.1 substance file fixture, deep-merging the
  * provided overrides into the flags block. Callers can supply:
- *   { withdrawal: { ... } }  — replaces the withdrawal block wholesale
- *   { addiction: { ... } }   — merges into the addiction block
+ *   { withdrawal: { ... } }: replaces the withdrawal block wholesale
+ *   { addiction: { ... } }: merges into the addiction block
  *   etc.
  */
 function makeValidSubstance(flagOverrides = {}) {
@@ -129,7 +129,7 @@ function baseParaphernalia(overrides = {}) {
   };
 }
 
-describe("checkSubstance — v0.8.1 baseline (regression)", () => {
+describe("checkSubstance: v0.8.1 baseline (regression)", () => {
   it("passes a clean substance unchanged", () => {
     const { errors, warnings } = checkSubstance(baseSubstance());
     assert.deepEqual(errors, []);
@@ -166,7 +166,7 @@ describe("checkSubstance — v0.8.1 baseline (regression)", () => {
   });
 });
 
-describe("checkSubstance — overdose flag (v0.4)", () => {
+describe("checkSubstance: overdose flag (v0.4)", () => {
   it("accepts a missing overdose flag", () => {
     const file = baseSubstance();
     const { errors } = checkSubstance(file);
@@ -227,7 +227,7 @@ describe("checkSubstance — overdose flag (v0.4)", () => {
   });
 });
 
-describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
+describe("checkSubstance: withdrawal.effectId (v0.4)", () => {
   function withWithdrawalAe(file, ae) {
     file.data.effects.push(ae);
     file.data.flags[SCOPE].withdrawal.effectIds = [ae._id];
@@ -308,7 +308,7 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
   });
 });
 
-describe("checkSubstance — requiredSubtypes removal (v0.5)", () => {
+describe("checkSubstance: requiredSubtypes removal (v0.5)", () => {
   it("errors when the legacy requiredSubtypes flag is present", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].requiredSubtypes = ["pipe"];
@@ -320,7 +320,7 @@ describe("checkSubstance — requiredSubtypes removal (v0.5)", () => {
   });
 });
 
-describe("checkSubstance — withdrawal v0.8.1 shape", () => {
+describe("checkSubstance: withdrawal v0.8.1 shape", () => {
   test("missing withdrawal.dc emits error when addiction.enabled !== false", () => {
     const file = {
       relPath: "_source/fishut-illicit-substance/foo.json",
@@ -392,7 +392,7 @@ describe("checkSubstance — withdrawal v0.8.1 shape", () => {
         addictionEffectIds: ["ae-addict-001"],
       },
       withdrawal: {
-        // no dc — addiction disabled so dc not required
+        // no dc: addiction disabled so dc not required
         abstain: { ability: "wis", dc: 10 },
         duration: { value: 3, unit: "days" },
       },
@@ -402,7 +402,7 @@ describe("checkSubstance — withdrawal v0.8.1 shape", () => {
   });
 });
 
-describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
+describe("checkSubstance: modifier-bearing AEs (v0.4)", () => {
   it("accepts a tolerance AE with substanceId + addictionDcBump", () => {
     const file = baseSubstance();
     file.data.effects.push({
@@ -442,7 +442,7 @@ describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
   });
 });
 
-describe("checkParaphernalia — v0.8.1 baseline (regression)", () => {
+describe("checkParaphernalia: v0.8.1 baseline (regression)", () => {
   it("passes a clean paraphernalia unchanged", () => {
     const { errors, warnings } = checkParaphernalia(baseParaphernalia());
     assert.deepEqual(errors, []);
@@ -471,7 +471,7 @@ describe("checkParaphernalia — v0.8.1 baseline (regression)", () => {
   });
 });
 
-describe("checkParaphernalia — subtype against built-ins (v0.4)", () => {
+describe("checkParaphernalia: subtype against built-ins (v0.4)", () => {
   it("accepts a built-in subtype when builtinSubtypes is supplied", () => {
     const builtin = new Set(["pipe", "syringe", "vial"]);
     const { errors } = checkParaphernalia(baseParaphernalia(), { builtinSubtypes: builtin });
@@ -500,11 +500,11 @@ describe("checkParaphernalia — subtype against built-ins (v0.4)", () => {
   });
 });
 
-describe("checkParaphernalia — +N bypass (v0.4)", () => {
+describe("checkParaphernalia: +N bypass (v0.4)", () => {
   function withBypassAe(file, modifier) {
     file.data.effects.push({
       _id: "byp1",
-      name: "Bypass — inhaled",
+      name: "Bypass: inhaled",
       transfer: true,
       system: { changes: [] },
       flags: {
@@ -556,25 +556,25 @@ describe("checkParaphernalia — +N bypass (v0.4)", () => {
     assert.equal(errors.some((e) => /modifier\.type must be one of/.test(e)), true);
   });
 
-  it("accepts an auto-pass AE (regression — existing v0.3 type)", () => {
+  it("accepts an auto-pass AE (regression: existing v0.3 type)", () => {
     const file = withBypassAe(baseParaphernalia(), { type: "auto-pass" });
     const { errors } = checkParaphernalia(file);
     assert.deepEqual(errors, []);
   });
 
-  it("accepts an advantage AE (regression — existing v0.3 type)", () => {
+  it("accepts an advantage AE (regression: existing v0.3 type)", () => {
     const file = withBypassAe(baseParaphernalia(), { type: "advantage" });
     const { errors } = checkParaphernalia(file);
     assert.deepEqual(errors, []);
   });
 });
 
-describe("checkParaphernalia — daily-recovery contract (regression)", () => {
+describe("checkParaphernalia: daily-recovery contract (regression)", () => {
   it("errors when usesPerDay is set without daily recovery", () => {
     const file = baseParaphernalia();
     file.data.effects.push({
       _id: "byp1",
-      name: "Bypass — inhaled",
+      name: "Bypass: inhaled",
       transfer: true,
       system: { changes: [] },
       flags: {
@@ -601,7 +601,7 @@ describe("checkParaphernalia — daily-recovery contract (regression)", () => {
     file.data.system.uses.recovery = [{ period: "day", type: "recoverAll" }];
     file.data.effects.push({
       _id: "byp1",
-      name: "Bypass — inhaled",
+      name: "Bypass: inhaled",
       transfer: true,
       system: { changes: [] },
       flags: {
@@ -630,7 +630,7 @@ describe("MODIFIER_TYPES (reroll-on-fail)", () => {
       effects: [
         {
           _id: "ae-reroll-test",
-          name: "Reroll Test — Bypass",
+          name: "Reroll Test: Bypass",
           transfer: true,
           system: { changes: [] },
           flags: {
@@ -656,7 +656,7 @@ describe("MODIFIER_TYPES (reroll-on-fail)", () => {
   });
 });
 
-describe("checkSubstance — V14 effect shape (v0.9)", () => {
+describe("checkSubstance: V14 effect shape (v0.9)", () => {
   function withWithdrawalAe(file, ae) {
     file.data.effects.push(ae);
     file.data.flags[SCOPE].withdrawal.effectIds = [ae._id];
