@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A pale silver tincture distilled from leaves harvested only on cloudless nights. Bards swear by it; sober courts forbid it. The taste is faintly metallic and the aftertaste hums in the back of the throat.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you speak in unintended cadences and have advantage on Charisma (Persuasion) checks made to convince listeners of small or beautiful things.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 12 Constitution saving throw. On a failed save, you gain the Addicted condition from Moonleaf Tincture (see below).</p><p><strong><em>Addicted from Moonleaf Tincture.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Intelligence saving throws (your thoughts wander toward verses you can't quite finish).</p><p><strong><em>Withdrawal Modifier: 2.</em></strong> Withdrawal lasts max(2 &minus; your Constitution modifier, 1) long rests, minimum 1.</p><p><em>Requires: Tincture Dropper.</em></p>"
+      "value": "<p>A pale silver tincture distilled from leaves harvested only on cloudless nights. Bards swear by it; sober courts forbid it. The taste is faintly metallic and the aftertaste hums in the back of the throat.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you speak in unintended cadences and have advantage on Charisma (Persuasion) checks made to convince listeners of small or beautiful things.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 12 Constitution saving throw. On a failed save, you gain the Addicted condition from Moonleaf Tincture (see below).</p><p><strong><em>Addicted from Moonleaf Tincture.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Intelligence saving throws (your thoughts wander toward verses you can't quite finish).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 10 Wisdom check to resist the craving; on a failure, make a DC 10 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days. If you have no doses left, you must abstain and go straight to the saving throw.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as a Tincture Dropper.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -149,17 +149,20 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 3600
+        "value": 3600,
+        "units": "seconds"
       },
       "description": "<p>Advantage on Charisma (Persuasion) checks for small or beautiful things.</p>",
-      "changes": [
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-fantasy-mind-altering",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-fantasy-mind-altering",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -177,8 +180,10 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Intelligence saving throws until withdrawal completes.</p>",
-      "changes": [],
+      "description": "<p>Poisoned. Disadvantage on Intelligence saving throws.</p>",
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -193,15 +198,17 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#3a5e84",
-          "priority": 20
-        }
-      ],
+      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#3a5e84",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

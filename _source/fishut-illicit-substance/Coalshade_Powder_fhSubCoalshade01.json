@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A jet-black snuff ground from the resin of coalshade trees. A pinch sharpens the senses and steadies the hands; the price is a bone-deep restlessness that lingers for hours.</p><p><strong><em>Desired effects on use.</em></strong> For one hour you have a +2 bonus to Wisdom (Perception) and Dexterity (Sleight of Hand) checks, and you have advantage on initiative rolls.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Coalshade Powder (see below).</p><p><strong><em>Addicted from Coalshade Powder.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom checks.</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 − your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Snuff Horn.</em></p>"
+      "value": "<p>A jet-black snuff ground from the resin of coalshade trees. A pinch sharpens the senses and steadies the hands; the price is a bone-deep restlessness that lingers for hours.</p><p><strong><em>Desired effects on use.</em></strong> For one hour you have a +2 bonus to Wisdom (Perception) and Dexterity (Sleight of Hand) checks, and you have advantage on initiative rolls.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Coalshade Powder (see below).</p><p><strong><em>Addicted from Coalshade Powder.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom checks.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, make a DC 20 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days. If you have no doses left, you must abstain and go straight to the saving throw.</p><p><em>Requires ready paraphernalia that applies to inhaled substances, such as a Snuff Horn.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -149,29 +149,32 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 3600
+        "value": 3600,
+        "units": "seconds"
       },
       "description": "<p>+2 to Wisdom (Perception) and Dexterity (Sleight of Hand) checks. Advantage on initiative rolls.</p>",
-      "changes": [
-        {
-          "key": "system.skills.prc.bonuses.check",
-          "mode": 2,
-          "value": "+2",
-          "priority": 20
-        },
-        {
-          "key": "system.skills.slt.bonuses.check",
-          "mode": 2,
-          "value": "+2",
-          "priority": 20
-        },
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-fantasy-stimulant",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "system.skills.prc.bonuses.check",
+            "value": "+2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.skills.slt.bonuses.check",
+            "value": "+2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-fantasy-stimulant",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -189,8 +192,10 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Wisdom checks until withdrawal completes.</p>",
-      "changes": [],
+      "description": "<p>Poisoned. Disadvantage on Wisdom checks.</p>",
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -205,15 +210,17 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#a25a1a",
-          "priority": 20
-        }
-      ],
+      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#a25a1a",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

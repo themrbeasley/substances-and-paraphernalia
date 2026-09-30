@@ -1,12 +1,14 @@
 // scripts/hooks/withdrawal-cleanup.js
 /**
- * When DAE's Times-Up bundle removes a Withdrawal AE at duration expiry, clear
- * the matching actor-flag entry. Active actor-flag is canonical state; AE is
- * the UI mirror.
+ * When a Withdrawal AE is deleted, clear the matching actor-flag entry. The
+ * actor flag is canonical state; the AE is the UI mirror.
  *
- * Listens on `deleteActiveEffect`. Foundry V13 fires this hook with
- * `(effect, options, userId)`; we don't gate on userId because the same client
- * that owns the AE delete owns the actor flag write.
+ * On V14, core only marks a timed AE as expired. The House Automation
+ * module's "Delete expired effects" switch (on by default) deletes it
+ * instead, which fires this hook. Manual deletes and the Remove Withdrawal
+ * macro fire it too.
+ *
+ * Listens on `deleteActiveEffect` `(effect, options, userId)`. GM-arbitrated.
  */
 
 import { MODULE_ID } from "../config.js";

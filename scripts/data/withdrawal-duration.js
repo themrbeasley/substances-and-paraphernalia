@@ -1,9 +1,10 @@
 /**
- * Convert an authored withdrawal duration `{value, unit}` to seconds for
- * Foundry AE `duration.seconds`. Times-Up (bundled with DAE) handles expiry
- * cleanup; we just deposit the seconds count and listen for the deletion.
+ * Convert an authored withdrawal duration `{value, unit}` to seconds for the
+ * applied AE's V14 `duration` (`value` + `units: "seconds"`). Foundry core
+ * marks the AE expired when world time passes it; House Automation's
+ * "Delete expired effects" switch then deletes it, which fires our cleanup.
  *
- * Months use 30-day months. The conversion is approximate by design — the
+ * Months use 30-day months. The conversion is approximate by design: the
  * fiction is "a few weeks of withdrawal" and exact wall-clock semantics don't
  * matter for the game.
  */

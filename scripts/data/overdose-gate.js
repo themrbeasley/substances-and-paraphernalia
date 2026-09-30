@@ -1,5 +1,5 @@
 /**
- * Pure overdose helpers — threshold gate + chance roll.
+ * Pure overdose helpers: threshold gate + chance roll.
  *
  * Why split: the threshold check runs against tier-derived state and is
  * deterministic. The chance roll is the only stochastic step. Splitting them

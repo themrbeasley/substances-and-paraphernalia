@@ -24,29 +24,29 @@ Theme 1 (GM Guide moved to GitHub wiki + CI link-check), Theme 3
 cell), three new Remove-X macros (Tolerance, Overdose, Withdrawal),
 and the Paraphernalia Subtype Manager settings sub-menu.
 
-v0.5 is shipped: Theme 4 (TokenMagic FX integration — `Altered by *`
+v0.5 is shipped: Theme 4 (TokenMagic FX integration: `Altered by *`
 AEs carry a `macro.execute` Change row pointing at one of the 9
 setting × category macros in the new `fishut-illicit-macros`
 compendium; DAE invokes the macro on apply/remove. There is no
-TMFX-aware hook and no `flags[…].tmfx` block — authoring happens
+TMFX-aware hook and no `flags[…].tmfx` block; authoring happens
 directly on the AE Changes table), per-integration boolean settings
 (`daeIntegration`, `midiqolIntegration`, `timesUpIntegration`,
 `tmfxIntegration`; default-on, off-state ignores the integration
 even when installed), admin-type paraphernalia gating (gate keys
-off the dnd5e Poison subtype on the substance — `system.type.subtype`
-∈ contact/ingested/inhaled/injury — and matches against paraphernalia
+off the dnd5e Poison subtype on the substance, `system.type.subtype`
+∈ contact/ingested/inhaled/injury, and matches against paraphernalia
 `appliesTo`; substances no longer carry `requiredSubtypes`,
 authoring is a Details-tab "Paraphernalia Properties" fieldset of
 admin-type checkboxes), the per-owner CSS withdrawal vignette
 (mounted to `#interface`, color sourced from an authored AE Change
-row on each substance's withdrawal AE template — `key:
+row on each substance's withdrawal AE template: `key:
 "flags.substances-and-paraphernalia.vignetteColor"`, mode 5
 OVERRIDE, hand-picked hex per substance), Theme 6 round 3
 paraphernalia (ritual incense burner / pill cutter / neural shunt,
 paired into Coalshade Powder / Ironhour Caps / Memorywire
 respectively), and the pre-sprint integration license audit
 (`docs/INTEGRATION-LICENSES.md`). JB2A integration was dropped
-from v0.5 — the audit could not clear CC-BY-NC-SA-4.0 for our
+from v0.5: the audit could not clear CC-BY-NC-SA-4.0 for our
 distribution model and there is no signed clearance from JB2A's
 authors. Users who own JB2A can still drive Sequencer effects via
 a world-local macro UUID in the `macro.execute` Change row.
@@ -56,14 +56,14 @@ a world-local macro UUID in the `macro.execute` Change row.
 ## Explicitly out of scope
 
 - **Custom "Addicted" condition.** Active Effects + the existing
-  Poisoned condition cover this — adding a bespoke condition record
+  Poisoned condition cover this; adding a bespoke condition record
   is a hat on a hat.
 - **Foundry package registry submission.** Defer until the module is
   shipped, stable, and in real worlds. Foundry's own guidance prefers
   proven modules at submission time.
 - **Schema migration framework.** Sheet-level rendering with
   default-on-missing flag reads is the right "migration" path for
-  this module — when we change how items render, the new code reads
+  this module: when we change how items render, the new code reads
   whatever's there and falls back to defaults. Documents aren't
   touched. World items GMs have edited stay edited. GM-from-scratch
   items are unaffected. Module-shipped compendium items get replaced
@@ -75,7 +75,7 @@ a world-local macro UUID in the `macro.execute` Change row.
 
 ---
 
-## Theme 1 — GM Guide refactor (wiki-first) — **shipped v0.4**
+## Theme 1: GM Guide refactor (wiki-first), **shipped v0.4**
 
 **Status today.** Single-page in-world journal at
 `_source/fishut-journals/gm-guide.json` covering Overview, Addiction
@@ -110,7 +110,7 @@ in-world journal with a single short page that:
 
 ---
 
-## Theme 2 — Sheet-level Details-tab integration (replaces the 3-dot form) — **shipped v0.3**
+## Theme 2: Sheet-level Details-tab integration (replaces the 3-dot form), **shipped v0.3**
 
 **Status today.** v0.2 ships
 `scripts/ui/item-settings-form.js` + `templates/item-settings-form.hbs`,
@@ -121,11 +121,11 @@ age well:
 - It's hidden out of the natural left-to-right authoring flow
   (Description → Details → Activities → Effects). Authors don't think
   to look there.
-- It's a separate surface that has to mirror item state — every field
+- It's a separate surface that has to mirror item state: every field
   is a round-trip through `flags["substances-and-paraphernalia"]`
   rather than living where dnd5e already persists item data.
 - The shipped `FISHUT.ItemSettings.*` localization keys never resolved
-  in the v0.2 build — the form currently displays raw key strings to
+  in the v0.2 build; the form currently displays raw key strings to
   anyone who opens it. (Cosmetic, but representative of the form
   living off to the side of the rest of the module's UI.)
 
@@ -142,13 +142,13 @@ Properties).
 - On `equipment` items: add a **Paraphernalia** checkbox under the
   equivalent Properties section. Toggling it on reveals
   paraphernalia fields (Setting, Paraphernalia ID, Save Bypass
-  subform — type, appliesTo, usesPerDay).
+  subform: type, appliesTo, usesPerDay).
 - All persistence flows through the sheet's existing form-submit
-  pipeline — same path the *Magical* checkbox uses. No bespoke
+  pipeline, the same path the *Magical* checkbox uses. No bespoke
   ApplicationV2.
 
 **Mechanism.** Hook `renderItemSheet5e2` (or whatever the dnd5e 4.x
-class hook turns out to be — confirm at implementation time) and
+class hook turns out to be; confirm at implementation time) and
 inject the new fields into the rendered DOM. Field names use the
 flag-path convention (`flags.substances-and-paraphernalia.kind`,
 etc.) so dnd5e's form-submit picks them up natively.
@@ -182,7 +182,7 @@ etc.) so dnd5e's form-submit picks them up natively.
 
 **Open questions for spec.**
 
-- For the *Required Paraphernalia* editor specifically — keep it
+- For the *Required Paraphernalia* editor specifically: keep it
   inside the Details tab section, or move it to a small floating
   sub-dialog launched from a button in that section? The full editor
   may be too tall for the Details tab.
@@ -192,7 +192,7 @@ etc.) so dnd5e's form-submit picks them up natively.
 
 ---
 
-## Theme 3 — Bypass type expansion — **`auto-pass` + `advantage` shipped v0.3, `+N` shipped v0.4**
+## Theme 3: Bypass type expansion, **`auto-pass` + `advantage` shipped v0.3, `+N` shipped v0.4**
 
 **Status today.** `addictionSaveBypass.type` is reserved for
 `auto-pass`, `advantage`, `+N`, and `reroll-on-fail`. Schema accepts
@@ -201,17 +201,17 @@ the strings; only `auto-pass` is implemented in
 
 **Direction.**
 
-- **`advantage`** — pass `advantage: true` into `actor.rollAbilitySave`.
+- **`advantage`**: pass `advantage: true` into `actor.rollAbilitySave`.
   No new chat string needed; the standard 5e save dialog shows the
   advantage state.
-- **`+N`** — add a numeric situational bonus to the save roll.
+- **`+N`**: add a numeric situational bonus to the save roll.
   `usesPerDay` still gates how often the bonus applies. Schema needs
   a `bonus` field (number or formula).
-- **`reroll-on-fail`** — observe the rolled result; if it's a fail,
+- **`reroll-on-fail`**: observe the rolled result; if it's a fail,
   re-roll once. Probably implemented as a wrapper around
   `actor.rollAbilitySave` rather than a flag passed in.
 
-**Order to implement.** `advantage` is the smallest delta — it's a
+**Order to implement.** `advantage` is the smallest delta; it's a
 single boolean change at the call site. `+N` adds one schema field
 and one bonus resolution path. `reroll-on-fail` is the most
 intrusive and should be last; it changes the post-hook control flow.
@@ -222,12 +222,12 @@ intrusive and should be last; it changes the post-hook control flow.
   (Per-use is the natural reading; spec should call it out so it's
   not a question at review time.)
 - Stacking rules when multiple gate-satisfying paraphernalia each
-  grant a different bypass type — current `consumeBypassIfAvailable`
+  grant a different bypass type: current `consumeBypassIfAvailable`
   picks the first match deterministically. Does that change?
 
 ---
 
-## Theme 4 — Token Magic FX visual filters — **shipped v0.5**
+## Theme 4: Token Magic FX visual filters, **shipped v0.5**
 
 **Status today.** TokenMagic is in `relationships.recommends` but
 the module never invokes its API. The integration warning is
@@ -252,7 +252,7 @@ section (Theme 2).
 
 **Why this is bigger than it looks.**
 
-- TMFX filter parameters are a non-trivial config surface — a
+- TMFX filter parameters are a non-trivial config surface: a
   full filter is a `params` object with dozens of fields.
 - The Details-tab substance section needs a TMFX subform that
   doesn't drown new authors. Probably "preset name" with a
@@ -264,13 +264,13 @@ section (Theme 2).
 **Open questions for spec.**
 
 - Bind to the benefit AE only, or also to the `{Substance}
-  Addiction` AE? (Addiction filter would be useful — washed-out,
-  greyish — but doubles the per-substance config burden.)
-- Per-token vs per-actor — TMFX supports both; pick one.
+  Addiction` AE? (Addiction filter would be useful, washed-out and
+  greyish, but doubles the per-substance config burden.)
+- Per-token vs per-actor: TMFX supports both; pick one.
 
 ---
 
-## Theme 5 — Deeper Midi-QoL workflow chaining
+## Theme 5: Deeper Midi-QoL workflow chaining
 
 **Status today.** When midi-qol is active, our save-on-use
 post-hook lets midi own the save dialog (it intercepts
@@ -282,21 +282,21 @@ no midi-specific feature toggles.
 don't take:
 
 - **On-use macros.** Some substances have side effects beyond an
-  AE — e.g. a smokable that imposes 1d4 psychic damage on
+  AE, e.g. a smokable that imposes 1d4 psychic damage on
   inhalation. Midi's `onUseMacroName` lets the substance run a
   macro at a defined workflow phase.
 - **Damage on failed save.** Substances that hurt when the body
   rejects them. Midi's damage chain handles this cleanly; we'd
   configure damage parts on the activity and let midi roll them.
 - **Saves with auto-targeting.** For multi-target substances
-  (gas grenades, smoke clouds — post-MVP content), midi's
+  (gas grenades, smoke clouds, all post-MVP content), midi's
   template-based save targeting is the natural fit.
 
 **Why this is theme 5, not theme 1.** Each midi feature ships a
 new substance-flag knob and a new conditional path through the
 post-hook. The Details-tab substance section needs new fields. The
 content invariants validator needs new assertions. None of it is
-load-bearing for the core loop — the v0.2 loop already works with
+load-bearing for the core loop; the v0.2 loop already works with
 midi active or absent.
 
 **Open questions for spec.**
@@ -304,12 +304,12 @@ midi active or absent.
 - Which midi features warrant a substance-flag knob vs which the
   author should configure on the activity directly using midi's own
   flags? (The latter is cheaper for us; the former is friendlier.)
-- Test plan for midi-active integration tests — Quench under midi
+- Test plan for midi-active integration tests: Quench under midi
   active, or a separate harness?
 
 ---
 
-## Theme 6 — Compendia content expansion (3×3 matrix) — **round 1 shipped v0.3, round 2 shipped v0.4, round 3 shipped v0.5**
+## Theme 6: Compendia content expansion (3×3 matrix), **round 1 shipped v0.3, round 2 shipped v0.4, round 3 shipped v0.5**
 
 **Status today.** v0.2 ships 7 substances + 5 paraphernalia,
 exercising every code path (gating, readiness, automation, bypass,
@@ -317,19 +317,19 @@ UUID resolution) but not filling the 3×3 matrix
 (setting × category = `{fantasy, modern, sciFi} × {stimulant,
 mindAltering, performanceEnhancing}`).
 
-**Direction.** Pace fills over minor releases — 0.3 fills the gaps
+**Direction.** Pace fills over minor releases: 0.3 fills the gaps
 in the matrix; 0.4 adds a second example per cell for variety;
 0.5 adds setting-flavor paraphernalia (e.g. fantasy
 ritual-incense burner, modern pill-cutter, sci-fi neural shunt)
 that pair with the new substances.
 
-**Per release — author-driven.**
+**Per release (author-driven).**
 
 - One substance per cell minimum.
 - Each new substance ships full canonical description, AE pair,
   flag block, and a passing content-invariants assertion.
 - Each cell should exercise at least one behavior the existing 7
-  don't — empty `requiredParaphernalia`, multi-group `anyOf`,
+  don't: empty `requiredParaphernalia`, multi-group `anyOf`,
   consumable-uses-driven readiness, UUID reference, DAE-required
   variant, bypass interaction.
 
@@ -350,12 +350,12 @@ worlds before the next lands.
 
 ## What ships when (rough)
 
-- **0.3 — shipped.** Theme 2 (Details-tab integration; deleted
+- **0.3 (shipped).** Theme 2 (Details-tab integration; deleted
   the 3-dot form) + Theme 3 partial (`auto-pass` + `advantage`
   bypass types via the AE-flag modifier pipeline) + Theme 6 round 1
   (matrix fill) + drag-to-inventory state-injection dialog +
   subtype-based paraphernalia model.
-- **0.4 — shipped.** Theme 3 (`+N` bypass type) + Theme 6 round 2
+- **0.4 (shipped).** Theme 3 (`+N` bypass type) + Theme 6 round 2
   (≥2 substances per matrix cell + a `+N`-bypass paraphernalia) +
   Theme 1 (GM Guide moved to GitHub wiki, in-world journal reduced
   to a pointer page, CI link-check). Mechanics-depth additions
@@ -363,7 +363,7 @@ worlds before the next lands.
   d100, withdrawal-bite picker, voluntary-abstain dialog, poisoned-
   coupling tri-state setting, simulate-dose 3-dot menu, three
   Remove-X macros, and the Paraphernalia Subtype Manager.
-- **0.5 — shipped.** Theme 4 (TokenMagic FX integration via DAE
+- **0.5 (shipped).** Theme 4 (TokenMagic FX integration via DAE
   `macro.execute` Change rows on `Altered by *` benefit AEs; 9-macro
   setting × category palette in the new `fishut-illicit-macros`
   compendium; no custom TMFX hook, no `flags[…].tmfx` block) +
@@ -381,12 +381,12 @@ worlds before the next lands.
   (ritual incense burner / pill cutter / neural shunt, paired into
   Coalshade Powder / Ironhour Caps / Memorywire) + pre-sprint
   integration license audit (`docs/INTEGRATION-LICENSES.md`). JB2A
-  integration dropped — CC-BY-NC-SA-4.0 vs. author Patreon
+  integration dropped: CC-BY-NC-SA-4.0 vs. author Patreon
   ambiguity, no signed clearance; revisit if licensing posture
   changes.
-- **0.6** — Theme 3 finish (`reroll-on-fail`) + Theme 5 first
+- **0.6**: Theme 3 finish (`reroll-on-fail`) + Theme 5 first
   cut (on-use macro hook).
-- **1.0** — stability pass + Foundry package registry submission.
+- **1.0**: stability pass + Foundry package registry submission.
 
 This ordering is editable. Pin nothing in this doc that should be
 pinned in a spec.

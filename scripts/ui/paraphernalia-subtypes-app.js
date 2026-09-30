@@ -1,5 +1,5 @@
 /**
- * Paraphernalia Subtype Manager — ApplicationV2 form attached to the world
+ * Paraphernalia Subtype Manager: ApplicationV2 form attached to the world
  * setting `customParaphernaliaSubtypes` via `game.settings.registerMenu`.
  * Reads the composed list from `getEffectiveParaphernaliaSubtypes()` so
  * built-ins render alongside (but distinct from) GM-managed customs.

@@ -1,20 +1,18 @@
 import { MODULE_ID, FLAGS } from "../config.js";
+import { effectChanges } from "../data/effect-data.js";
 
 /**
  * Detect whether an Active Effect needs DAE to apply correctly.
  *
  * Two signals, OR-combined:
- *  1. Implicit: any `change.mode` of CUSTOM (`0`). Vanilla 5e ships no handler
- *     for CUSTOM-mode changes — they only do something when DAE (or a peer
- *     module) is active to interpret them. This is the primary signal and
- *     covers the common case where authors reach for a CUSTOM-mode change
- *     because the keypath is a DAE-only formula (e.g. `+1d4` to all saves).
+ *  1. Implicit: any change row of V14 type `"custom"`. Core and dnd5e ship no
+ *     handler for custom changes; they only do something when DAE (or a peer
+ *     module) interprets them, e.g. `macro.tokenMagic`.
  *  2. Explicit: `effect.flags[MODULE_ID].requiresDae === true`. Authoring
- *     escape hatch — set on a per-AE basis from the item-settings form for
- *     edge cases the implicit signal misses.
+ *     escape hatch for edge cases the implicit signal misses.
  *
  * DAE is a `relationships.requires` module, so the function always assumes
- * DAE is present and skips the previous user-toggle short-circuit.
+ * DAE is present.
  *
  * @param {ActiveEffect} effect
  * @returns {boolean}
@@ -22,12 +20,7 @@ import { MODULE_ID, FLAGS } from "../config.js";
 export function aeRequiresDae(effect) {
   if (!effect) return false;
   if (effect.flags?.[MODULE_ID]?.[FLAGS.requiresDae] === true) return true;
-  const customMode = CONST?.ACTIVE_EFFECT_MODES?.CUSTOM ?? 0;
-  const changes = Array.isArray(effect.changes) ? effect.changes : [];
-  for (const change of changes) {
-    if (change?.mode === customMode) return true;
-  }
-  return false;
+  return effectChanges(effect).some((change) => change?.type === "custom");
 }
 
 /**

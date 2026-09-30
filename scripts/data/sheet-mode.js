@@ -2,7 +2,7 @@
 // document-level edit permission. `app.isEditable` only reflects ownership; the
 // toggle drives `app._mode` (PLAY=1, EDIT=2), and dnd5e's own `_disableFields`
 // runs when `_mode === PLAY`. Our hook fires after dnd5e finishes, so we have
-// to repeat the resolution ourselves — checking only `isEditable` lets the
+// to repeat the resolution ourselves; checking only `isEditable` lets the
 // view-mode lock leak through, which is the v0.8.5/v0.8.6 regression class.
 
 export const SHEET_MODE_PLAY = 1;

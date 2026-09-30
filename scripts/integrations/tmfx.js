@@ -2,12 +2,12 @@ import { logger } from "../logger.js";
 import { isIntegrationEnabled } from "./index.js";
 
 /**
- * TMFX preset palette — 3 settings × 3 categories = 9 presets.
+ * TMFX preset palette: 3 settings × 3 categories = 9 presets.
  *
  * Substance benefit AEs reference these by name from a DAE
  * `macro.tokenMagic` Change row. DAE forwards `change.value` verbatim to
  * `TokenMagic.addFilters(token, value)` on apply and removes the matching
- * filter on remove. The preset name doubles as filterId — TMFX overwrites
+ * filter on remove. The preset name doubles as filterId; TMFX overwrites
  * each param's `filterId` with the preset name during registration, so add
  * / remove key cleanly off the same string.
  *
@@ -179,7 +179,7 @@ export function registerTmfxPresets() {
     Hooks.once("canvasReady", async () => {
       if (await tryRegisterPresets("canvasReady")) return;
       logger.warn(
-        "tmfx: TokenMagic global still unavailable at canvasReady — presets not registered",
+        "tmfx: TokenMagic global still unavailable at canvasReady; presets not registered",
       );
     });
   });
@@ -205,7 +205,7 @@ async function syncPresets(tm) {
       try {
         await tm.deletePreset({ name, library: PRESET_LIBRARY }, /* silent */ true);
       } catch {
-        // Not-found / never-registered — fine; addPreset will create it fresh.
+        // Not-found / never-registered is fine; addPreset will create it fresh.
       }
     }
     try {

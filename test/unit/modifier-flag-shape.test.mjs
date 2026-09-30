@@ -10,7 +10,7 @@ import {
 
 const SCOPE = "substances-and-paraphernalia";
 const PREFIX = modifierChangeKeyPrefix(SCOPE);
-const OVERRIDE_MODE = 5;
+const OVERRIDE_TYPE = "override";
 
 describe("readModifier(flagsScope)", () => {
   it("returns the modifier block verbatim when present", () => {
@@ -76,7 +76,8 @@ describe("writeModifierAsChanges + readModifierFromChanges round-trip", () => {
     assert.ok(Array.isArray(changes) && changes.length > 0);
     for (const row of changes) {
       assert.ok(row.key.startsWith(PREFIX));
-      assert.equal(row.mode, OVERRIDE_MODE);
+      assert.equal(row.type, OVERRIDE_TYPE);
+      assert.equal("mode" in row, false);
       assert.equal(typeof row.value, "string");
     }
     const decoded = readModifierFromChanges(changes, SCOPE);
@@ -143,9 +144,9 @@ describe("writeModifierAsChanges + readModifierFromChanges round-trip", () => {
 describe("mergeModifierIntoChanges", () => {
   it("preserves non-modifier rows and replaces modifier rows", () => {
     const existing = [
-      { key: "system.attributes.hp.value", mode: OVERRIDE_MODE, value: "10", priority: 20 },
-      { key: `${PREFIX}kind`, mode: OVERRIDE_MODE, value: "bypass", priority: 20 },
-      { key: `${PREFIX}type`, mode: OVERRIDE_MODE, value: "auto-pass", priority: 20 },
+      { key: "system.attributes.hp.value", type: OVERRIDE_TYPE, value: "10", priority: 20 },
+      { key: `${PREFIX}kind`, type: OVERRIDE_TYPE, value: "bypass", priority: 20 },
+      { key: `${PREFIX}type`, type: OVERRIDE_TYPE, value: "auto-pass", priority: 20 },
     ];
     const block = { kind: "bypass", type: "+N", appliesTo: [], bonus: 1 };
     const merged = mergeModifierIntoChanges(existing, block, SCOPE);
@@ -161,5 +162,30 @@ describe("mergeModifierIntoChanges", () => {
     const merged = mergeModifierIntoChanges(null, block, SCOPE);
     const decoded = readModifierFromChanges(merged, SCOPE);
     assert.deepEqual(decoded, block);
+  });
+});
+
+describe("readModifierFromChanges: V14-migrated native values", () => {
+  it("decodes numbers and booleans the same as their string forms", () => {
+    const rows = [
+      { key: `${PREFIX}kind`, type: "override", value: "tolerance" },
+      { key: `${PREFIX}substanceId`, type: "override", value: "abc" },
+      { key: `${PREFIX}addictionDcBump`, type: "override", value: 2 },
+      { key: `${PREFIX}attenuateAltered.dropAdvantage`, type: "override", value: true },
+    ];
+    assert.deepEqual(readModifierFromChanges(rows, SCOPE), {
+      kind: "tolerance",
+      substanceId: "abc",
+      addictionDcBump: 2,
+      attenuateAltered: { dropAdvantage: true },
+    });
+  });
+
+  it("decodes a native appliesTo array", () => {
+    const rows = [
+      { key: `${PREFIX}kind`, type: "override", value: "bypass" },
+      { key: `${PREFIX}appliesTo`, type: "override", value: ["inhaled", "ingested"] },
+    ];
+    assert.deepEqual(readModifierFromChanges(rows, SCOPE).appliesTo, ["inhaled", "ingested"]);
   });
 });

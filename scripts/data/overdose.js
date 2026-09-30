@@ -1,10 +1,10 @@
 /**
- * Overdose roll — pure d100 helper. Per `SPEC.md` lines 117-127, each
+ * Overdose roll: pure d100 helper. Per `SPEC.md` lines 117-127, each
  * consumption rolls d100; on roll ≤ `chancePercent` the substance overdose
  * fires alongside (not in place of) the addiction save.
  *
  * `randomFn` is injectable so tests can drive the roll deterministically.
- * It must return a float in [0, 1) — same contract as `Math.random`.
+ * It must return a float in [0, 1), the same contract as `Math.random`.
  */
 
 /**

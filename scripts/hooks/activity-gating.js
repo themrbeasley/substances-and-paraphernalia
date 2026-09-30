@@ -30,7 +30,7 @@ export function registerForcedUseBypass(activityId) {
  * Clear a previously-registered forced-use bypass for an activity id.
  * Used by external callers (e.g. `long-rest-abstain.js`) to roll back
  * the bypass if their `activity.use()` call throws before the next
- * `preUseActivity` consumes it — symmetric with `registerForcedUseBypass`.
+ * `preUseActivity` consumes it (symmetric with `registerForcedUseBypass`).
  *
  * @param {string} activityId
  */

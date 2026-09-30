@@ -6,7 +6,7 @@
   "folder": "fhSubSciFi000001",
   "system": {
     "description": {
-      "value": "<p>A single-shot polymer thread, injected at the base of the skull, that overlays raw sense-data from compromised neural archives onto the user's perception. Slicers use it to read systems like books; the comedown is paranoid and fragmentary.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have advantage on Intelligence (Investigation) checks made to discern hidden patterns, encoded data, or surveillance feeds.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Memorywire (see below).</p><p><strong><em>Addicted from Memorywire.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (you tend to narrate other people's intentions before they do).</p><p><strong><em>Withdrawal Modifier: 3.</em></strong> Withdrawal lasts max(3 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Syringe.</em></p>"
+      "value": "<p>A single-shot polymer thread, injected at the base of the skull, that overlays raw sense-data from compromised neural archives onto the user's perception. Slicers use it to read systems like books; the comedown is paranoid and fragmentary.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have advantage on Intelligence (Investigation) checks made to discern hidden patterns, encoded data, or surveillance feeds.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Memorywire (see below).</p><p><strong><em>Addicted from Memorywire.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (you tend to narrate other people's intentions before they do).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 11 Wisdom check to resist the craving; on a failure, make a DC 15 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days. If you have no doses left, you must abstain and go straight to the saving throw.</p><p><em>Requires ready paraphernalia that applies to injury substances, such as a Neural Shunt or an Athlete's Logbook.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -149,17 +149,20 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 600
+        "value": 600,
+        "units": "seconds"
       },
       "description": "<p>Advantage on Intelligence (Investigation) checks for hidden patterns, encoded data, or surveillance feeds.</p>",
-      "changes": [
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-scifi-mind-altering",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-scifi-mind-altering",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -177,8 +180,10 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Charisma checks until withdrawal completes.</p>",
-      "changes": [],
+      "description": "<p>Poisoned. Disadvantage on Charisma checks.</p>",
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -193,15 +198,17 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#1f5d99",
-          "priority": 20
-        }
-      ],
+      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#1f5d99",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

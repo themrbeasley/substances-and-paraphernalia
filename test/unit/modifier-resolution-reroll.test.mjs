@@ -15,7 +15,7 @@ const reroll = (overrides = {}) => ({
   ...overrides,
 });
 
-describe("pickBypassResolution — reroll-on-fail tier", () => {
+describe("pickBypassResolution: reroll-on-fail tier", () => {
   it("returns a single-source reroll-on-fail resolution with bonus:0", () => {
     const c = reroll();
     const r = pickBypassResolution("inhaled", [c]);

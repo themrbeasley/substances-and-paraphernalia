@@ -8,7 +8,7 @@ import {
 
 // Regression guard for the v0.8.3-v0.8.6 view-mode lock leak. The Details-tab
 // injection had been reading `app.isEditable !== false` and treating that as
-// "sheet is in edit mode" — but dnd5e's `isEditable` only reflects ownership.
+// "sheet is in edit mode", but dnd5e's `isEditable` only reflects ownership.
 // The pencil-icon toggle drives `app._mode` (PLAY=1 / EDIT=2). For an owner
 // who has flipped the sheet to view mode, `isEditable === true` but
 // `_mode === 1`, so our gate let writes and visual interaction through. This
@@ -43,7 +43,7 @@ describe("resolveSheetEditable", () => {
   });
 
   it("MODES constants match dnd5e ItemSheet5e.MODES values", () => {
-    // dnd5e.mjs:50919-50922 — { PLAY: 1, EDIT: 2 }. If dnd5e ever renumbers
+    // dnd5e.mjs:50919-50922 defines { PLAY: 1, EDIT: 2 }. If dnd5e ever renumbers
     // these, this test breaks on purpose so the resolver can be updated.
     assert.equal(SHEET_MODE_PLAY, 1);
     assert.equal(SHEET_MODE_EDIT, 2);

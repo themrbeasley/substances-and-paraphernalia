@@ -4,7 +4,7 @@ import { PRESETS, PRESET_LIBRARY } from "../../scripts/integrations/tmfx.js";
 
 // The valid filter type set is sourced from TMFX 0.7.6.3+'s filter registry
 // (Feu-Secret/Tokenmagic master, tokenmagic/module/tokenmagic.js). The
-// palette must only use types from this list — unknown types fail
+// palette must only use types from this list; unknown types fail
 // registration silently in TMFX, which is exactly the v0.5.0 bug we shipped.
 const VALID_TMFX_FILTER_TYPES = new Set([
   "adjustment",
@@ -110,12 +110,12 @@ describe("TMFX preset palette", () => {
           }
         });
 
-        it("never names a filter `bloom` (it's `xbloom` in TMFX — `bloom` was the v0.5.0 regression)", () => {
+        it("never names a filter `bloom` (it's `xbloom` in TMFX; `bloom` was the v0.5.0 regression)", () => {
           for (const block of params) {
             assert.notEqual(
               block.filterType,
               "bloom",
-              `${name}: "bloom" is not a valid TMFX filter type — use "xbloom"`,
+              `${name}: "bloom" is not a valid TMFX filter type; use "xbloom"`,
             );
           }
         });

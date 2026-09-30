@@ -1,4 +1,4 @@
-# v0.4 Sprint Plan — Mechanics + Wiki + Authoring polish
+# v0.4 Sprint Plan: Mechanics + Wiki + Authoring polish
 
 ## Context
 
@@ -6,7 +6,7 @@
 
 v0.4 ships per `SPEC.md` line 28: tolerance system (auto-tracked stacks), overdose system (d100 chance per use), withdrawal-bite (AE template picker + content guidance), voluntary abstain (long-rest dialog option), poisoned-coupling tri-state setting, Theme 1 (GM Guide → wiki), simulate-dose authoring tool, macro parity (three Remove-X macros), `+N` bypass type, Theme 6 round 2.
 
-**v0.4 user adds (this sprint scope, not in SPEC.md):** a Paraphernalia Subtype Manager — a settings sub-menu the GM uses to add / edit / remove paraphernalia subtypes that authors then pick from in the Details tab.
+**v0.4 user adds (this sprint scope, not in SPEC.md):** a Paraphernalia Subtype Manager: a settings sub-menu the GM uses to add / edit / remove paraphernalia subtypes that authors then pick from in the Details tab.
 
 Module remains pre-1.0 with no shipped users; clean breaks preferred over migration shims.
 
@@ -26,7 +26,7 @@ Module remains pre-1.0 with no shipped users; clean breaks preferred over migrat
   }
   ```
 - **Auto-application** (`SPEC.md` line 86): each successful addiction save → tolerance AE applied OR an existing AE's `flags.stacks` counter incremented. Lives in `addiction.js applyOutcome` on the pass branch.
-- Composition: `SPEC.md` says *"sums stack effect."* Plain read: stack count multiplies the per-stack delta (e.g. `addictionDcBump: 1` × 3 stacks = +3 DC). For factor fields (`durationFactor`, `modifierFactor`), the per-stack semantic is genuinely ambiguous — flagged as **open execution-time question** (see Risks).
+- Composition: `SPEC.md` says *"sums stack effect."* Plain read: stack count multiplies the per-stack delta (e.g. `addictionDcBump: 1` × 3 stacks = +3 DC). For factor fields (`durationFactor`, `modifierFactor`), the per-stack semantic is genuinely ambiguous; flagged as **open execution-time question** (see Risks).
 - Lives in `scripts/data/tolerance.js` (per `SPEC.md` line 249) as a pure helper, unit-testable without Foundry globals.
 - Stack representation: single AE per (actor, substance) with an integer `flags.stacks` counter. Cleaner UI than N duplicate AEs; matches dnd5e 5.2.5 status-counter convention. Verify at execution.
 
@@ -46,7 +46,7 @@ Module remains pre-1.0 with no shipped users; clean breaks preferred over migrat
 
 ### Withdrawal-bite: AE template picker, application stays on long-rest tick
 
-- `flag-schema.js` adds `getWithdrawalEffectId(item) / setWithdrawalEffectId(item)` — item-level pointer to a withdrawal AE template on the same item.
+- `flag-schema.js` adds `getWithdrawalEffectId(item) / setWithdrawalEffectId(item)`: item-level pointer to a withdrawal AE template on the same item.
 - v0.3 long-rest tick already applies a default withdrawal AE; v0.4 makes it pick from the authored template per `SPEC.md` line 148. Application path itself doesn't move.
 - AE name must contain `withdraw` (per `SPEC.md` line 273).
 - Details-tab adds a hint string under the picker per `SPEC.md` line 142: *"Don't duplicate poisoned (disadv on attacks/checks). Escalate: exhaustion, disadv on saves, speed reduction, stat penalty."*
@@ -59,9 +59,9 @@ Module remains pre-1.0 with no shipped users; clean breaks preferred over migrat
 
 ### Poisoned-coupling: world setting, three modes, read at AE-apply
 
-- World setting `addictionPoisonedCoupling` per `SPEC.md` lines 168-178. Choices: `linked-cascade` (default — current v0.3 behavior), `linked-isolated`, `independent`.
+- World setting `addictionPoisonedCoupling` per `SPEC.md` lines 168-178. Choices: `linked-cascade` (default: current v0.3 behavior), `linked-isolated`, `independent`.
 - Read at addiction-AE apply time. Existing AEs not retroactively rewritten when the setting changes (per `SPEC.md` line 178).
-- `linked-isolated` mode requires a `preDeleteActiveEffect` hook to prevent cascade-removal of the addiction AE when poisoned is removed externally. If this turns out to need DAE, mark "DAE recommended" and document — verify at execution.
+- `linked-isolated` mode requires a `preDeleteActiveEffect` hook to prevent cascade-removal of the addiction AE when poisoned is removed externally. If this turns out to need DAE, mark "DAE recommended" and document; verify at execution.
 
 ### `+N` bypass tier
 
@@ -72,14 +72,14 @@ Module remains pre-1.0 with no shipped users; clean breaks preferred over migrat
 
 ### Simulate-dose: 3-dot menu entry on substance items (not header button)
 
-- The dnd5e ApplicationV2 item sheet's built-in 3-dot menu (header context menu — verify exact V2 API name at execution Phase 1) gets a "Simulate dose…" entry on substance items.
+- The dnd5e ApplicationV2 item sheet's built-in 3-dot menu (header context menu; verify exact V2 API name at execution Phase 1) gets a "Simulate dose…" entry on substance items.
 - Opens a dialog with knobs per `SPEC.md` line 204: Con mod override, current addiction state, paraphernalia available.
 - Engine creates an ephemeral actor named `__fishut-test-<uuid>__`, runs the activity, captures chat output, deletes the actor.
 - Cleanup: deleted on dialog close, on error, and a `ready` hook sweeps any orphaned `__fishut-test-*` actors (GM-arbitrated).
 
 ### Paraphernalia Subtype Manager (user addition)
 
-- New `game.settings.registerMenu` entry "Manage Paraphernalia Subtypes" opens an ApplicationV2 sub-menu — CRUD UI for a custom subtypes list.
+- New `game.settings.registerMenu` entry "Manage Paraphernalia Subtypes" opens an ApplicationV2 sub-menu: CRUD UI for a custom subtypes list.
 - Storage: world setting `customParaphernaliaSubtypes` of shape `[{ id, label }, ...]`. Default empty.
 - Read path: a new `getEffectiveParaphernaliaSubtypes()` helper composes `SCHEMA.paraphernalia.subtypes` (built-in defaults) + the custom list. Built-ins are not deletable; custom entries are user-managed. The Details-tab subtype select consumes this composed list.
 - Built-ins remain in `schema.json` so authoring docs and content invariants stay schema-as-data. Custom entries are runtime-only and don't get content-validation hooks (the validator's job is to verify enum membership against the live composed list).
@@ -88,10 +88,10 @@ Module remains pre-1.0 with no shipped users; clean breaks preferred over migrat
 ### Settings registered in v0.4
 
 Per `SPEC.md` and the user addition:
-- `addictionPoisonedCoupling` — choice (`linked-cascade` | `linked-isolated` | `independent`), default `linked-cascade`.
-- `voluntaryAbstainEnabled` — boolean, default `true`.
+- `addictionPoisonedCoupling`: choice (`linked-cascade` | `linked-isolated` | `independent`), default `linked-cascade`.
+- `voluntaryAbstainEnabled`: boolean, default `true`.
 - Integration toggles per `SPEC.md` lines 196-200: `<integrationId>Integration` keys, default-on if module active. v0.4 needs these for `daeIntegration` (already in v0.3?). Audit at execution; only register what v0.4 actually consumes.
-- `customParaphernaliaSubtypes` — hidden world data setting (no UI; written by the manager sub-menu).
+- `customParaphernaliaSubtypes`: hidden world data setting (no UI; written by the manager sub-menu).
 - Settings menu entry "Manage Paraphernalia Subtypes" pointing at the new sub-app.
 
 Per CLAUDE.md memory ("Prefer baked-in over settings"), I'm only registering what `SPEC.md` explicitly scopes plus the user-added subtype manager. No drift.
@@ -120,19 +120,19 @@ schema.json (kinds += tolerance, types += "+N", overdose shape, coupling modes f
     │
     ├── pure helpers (tolerance.js, overdose.js, abstain.js)
     │     │
-    │     └── modifier-pipeline.js — +N tier in pickBypassResolution; consumeToleranceForSubstance
+    │     └── modifier-pipeline.js: +N tier in pickBypassResolution; consumeToleranceForSubstance
     │
     └── consumers
-          ├── addiction.js — +N save bonus; tolerance auto-stack on pass; coupling read at AE-apply
-          ├── overdose.js (NEW hook) — d100 in postUseActivity, marker AE
-          ├── long-rest-abstain.js (NEW hook) — abstain dialog button
-          └── validate-content.mjs — new shape invariants
+          ├── addiction.js: +N save bonus; tolerance auto-stack on pass; coupling read at AE-apply
+          ├── overdose.js (NEW hook): d100 in postUseActivity, marker AE
+          ├── long-rest-abstain.js (NEW hook): abstain dialog button
+          └── validate-content.mjs: new shape invariants
 
 Authoring surface
-    ├── details-tab/substance-fields.hbs — withdrawalEffectId picker + hint, overdose fieldset
-    ├── details-tab/paraphernalia-fields.hbs — subtype select reads composed list
-    ├── details-tab/bypass-section.hbs — +N display
-    └── details-tab.js — 3-dot menu hook for "Simulate dose…"
+    ├── details-tab/substance-fields.hbs: withdrawalEffectId picker + hint, overdose fieldset
+    ├── details-tab/paraphernalia-fields.hbs: subtype select reads composed list
+    ├── details-tab/bypass-section.hbs: +N display
+    └── details-tab.js: 3-dot menu hook for "Simulate dose…"
 
 Macros: Remove Tolerance, Remove Overdose, Remove Withdrawal (parallel to existing Remove Addiction)
 
@@ -145,7 +145,7 @@ Build order: schema + settings + accessors → pure helpers → pipeline → con
 
 ## Phases
 
-### Phase 1 — Foundation
+### Phase 1: Foundation
 
 #### Task 1: Extend `schema.json`
 
@@ -164,7 +164,7 @@ Build order: schema + settings + accessors → pure helpers → pipeline → con
 
 ---
 
-#### Task 2: Item-flag accessors — `getOverdose / setOverdose`, `getWithdrawalEffectId / setWithdrawalEffectId`
+#### Task 2: Item-flag accessors (`getOverdose / setOverdose`, `getWithdrawalEffectId / setWithdrawalEffectId`)
 
 **Description.** Item-level accessors in `flag-schema.js`. `getOverdose(item)` returns `{ enabled, chancePercent, description } | null`. `getWithdrawalEffectId(item)` returns AE id string or null. Setters write to canonical keys.
 
@@ -182,11 +182,11 @@ Build order: schema + settings + accessors → pure helpers → pipeline → con
 #### Task 3: Register world settings
 
 **Description.** Register in `module.mjs init`:
-- `addictionPoisonedCoupling` — choice (three modes from `SCHEMA.coupling.modes`), default `linked-cascade`.
-- `voluntaryAbstainEnabled` — boolean, default `true`.
+- `addictionPoisonedCoupling`: choice (three modes from `SCHEMA.coupling.modes`), default `linked-cascade`.
+- `voluntaryAbstainEnabled`: boolean, default `true`.
 - Integration toggles audit: enumerate active integrations referenced by v0.4 code; register a setting per the `<integrationId>Integration` pattern, default-on-if-active.
-- `customParaphernaliaSubtypes` — hidden data setting, default `[]`.
-- `manageParaphernaliaSubtypes` — `registerMenu` entry pointing at the FormApp from Task 4.
+- `customParaphernaliaSubtypes`: hidden data setting, default `[]`.
+- `manageParaphernaliaSubtypes`: `registerMenu` entry pointing at the FormApp from Task 4.
 
 **Acceptance.**
 - [ ] All four settings + the menu entry appear in the module's settings panel as appropriate.
@@ -195,13 +195,13 @@ Build order: schema + settings + accessors → pure helpers → pipeline → con
 
 **Verify.** Quench: `settings-registration` test confirms presence + defaults. Manual hand-test the settings panel renders cleanly.
 
-**Files.** `scripts/module.mjs`, `scripts/settings.js` (new — verify if a settings module already exists at execution), `lang/en.json`. **Scope.** S.
+**Files.** `scripts/module.mjs`, `scripts/settings.js` (new: verify if a settings module already exists at execution), `lang/en.json`. **Scope.** S.
 
 ---
 
 #### Task 4: Paraphernalia Subtype Manager
 
-**Description.** New `scripts/ui/paraphernalia-subtypes-app.js` — an ApplicationV2 form that reads/writes the `customParaphernaliaSubtypes` setting. UI: list rows of `{ id, label }`, an "Add row" button, per-row delete and inline edit, a "Save" footer. `id` is kebab-case-validated (matches existing schema convention); `label` is free-text.
+**Description.** New `scripts/ui/paraphernalia-subtypes-app.js`: an ApplicationV2 form that reads/writes the `customParaphernaliaSubtypes` setting. UI: list rows of `{ id, label }`, an "Add row" button, per-row delete and inline edit, a "Save" footer. `id` is kebab-case-validated (matches existing schema convention); `label` is free-text.
 
 Add a pure helper `scripts/data/paraphernalia-subtypes.js` exporting `getEffectiveParaphernaliaSubtypes()` that composes `SCHEMA.paraphernalia.subtypes` (built-ins, frozen) + the custom list (from setting). Returns the merged list with built-in entries flagged `readOnly: true` for UI use.
 
@@ -220,16 +220,16 @@ Update `details-tab.js buildParaphernaliaContext` to call `getEffectiveParaphern
 
 ---
 
-#### Task 5: Pure helpers — `tolerance.js`, `overdose.js`, `abstain.js`
+#### Task 5: Pure helpers (`tolerance.js`, `overdose.js`, `abstain.js`)
 
 **Description.** Three pure modules:
 
-1. `scripts/data/tolerance.js` — exports `composeToleranceFor(actor, substanceId, candidates)` returning the summed effect: `{ attenuateAltered, addictionDcBump, withdrawalAmplify }`. Sum is per-stack × stack count, per AE, then summed across AEs.
-2. `scripts/data/overdose.js` — exports `rollOverdose(chancePercent, randomFn = Math.random)` returning `{ hit: boolean, roll: number }`. Pure d100 with injectable RNG so the unit test can assert hit rates.
-3. `scripts/data/abstain.js` — exports `defaultAbstainDc(withdrawalMod)` and `applyAbstainOutcome(passed, currentRests)` returning `{ newRests, removed: boolean }`.
+1. `scripts/data/tolerance.js`: exports `composeToleranceFor(actor, substanceId, candidates)` returning the summed effect: `{ attenuateAltered, addictionDcBump, withdrawalAmplify }`. Sum is per-stack × stack count, per AE, then summed across AEs.
+2. `scripts/data/overdose.js`: exports `rollOverdose(chancePercent, randomFn = Math.random)` returning `{ hit: boolean, roll: number }`. Pure d100 with injectable RNG so the unit test can assert hit rates.
+3. `scripts/data/abstain.js`: exports `defaultAbstainDc(withdrawalMod)` and `applyAbstainOutcome(passed, currentRests)` returning `{ newRests, removed: boolean }`.
 
 **Acceptance.**
-- [ ] All three importable in plain Node — no Foundry globals.
+- [ ] All three importable in plain Node: no Foundry globals.
 - [ ] Tolerance: 2-AE × 3-stack scenario sums correctly.
 - [ ] Overdose: with seeded RNG, hit-rate over 1000 trials matches `chancePercent` ±5 per `SPEC.md` line 133.
 - [ ] Abstain: pass → `newRests = max(0, currentRests - 2)`, `removed = newRests === 0`. Fail → `newRests = max(0, currentRests - 1)`.
@@ -258,7 +258,7 @@ Update `details-tab.js buildParaphernaliaContext` to call `getEffectiveParaphern
 
 ---
 
-### Checkpoint A — Foundation
+### Checkpoint A: Foundation
 
 - [ ] `npm run lint && npm run validate && npm run test:unit && npm run pack` clean.
 - [ ] Settings panel shows the four new settings + Manage Subtypes menu.
@@ -268,11 +268,11 @@ Update `details-tab.js buildParaphernaliaContext` to call `getEffectiveParaphern
 
 ---
 
-### Phase 2 — Consumers
+### Phase 2: Consumers
 
 #### Task 7: Wire `+N` into the addiction save path
 
-**Description.** When pipeline returns `+N`, pass the bonus to `actor.rollSavingThrow` (verify exact dnd5e 5.2.5 API name — `parts`, `bonus`, or `data` — at execution). Chat card cites all `sources`.
+**Description.** When pipeline returns `+N`, pass the bonus to `actor.rollSavingThrow` (verify at execution which dnd5e 5.2.5 API name applies: `parts`, `bonus`, or `data`). Chat card cites all `sources`.
 
 **Acceptance.** `+N` bonus reaches the rolled save total; chat lists each contributing AE; `auto-pass` / `advantage` paths unchanged.
 
@@ -302,7 +302,7 @@ Update `details-tab.js buildParaphernaliaContext` to call `getEffectiveParaphern
 
 **Description.** In `addiction.js applyOutcome`, on save **pass**, look for an existing tolerance AE on the actor matching this substance's id. If present: increment `flags.stacks` (and re-render). If absent: apply a new tolerance AE templated from the substance item's authored tolerance template AE (or a built-in default if none authored), with `flags.stacks: 1`.
 
-Authoring of the per-stack values lives on the substance item's tolerance template AE (a normal AE with the modifier flag block). v0.4 does **not** add a Details-tab field for tolerance authoring — GMs author it on the Active Effects tab. Documented in the wiki (Theme 1 task).
+Authoring of the per-stack values lives on the substance item's tolerance template AE (a normal AE with the modifier flag block). v0.4 does **not** add a Details-tab field for tolerance authoring; GMs author it on the Active Effects tab. Documented in the wiki (Theme 1 task).
 
 **Acceptance.**
 - [ ] First successful save → tolerance AE applied with `stacks: 1`.
@@ -334,7 +334,7 @@ Authoring of the per-stack values lives on the substance item's tolerance templa
 #### Task 11: Poisoned-coupling tri-state at AE-apply
 
 **Description.** In the addiction-AE apply path, read `game.settings.get(MODULE_ID, "addictionPoisonedCoupling")` and configure the applied AE's `statuses` array:
-- `linked-cascade`: `statuses = ["poisoned"]`. Foundry's native cascade-on-removal of poisoned removes the addiction AE — current v0.3 behavior.
+- `linked-cascade`: `statuses = ["poisoned"]`. Foundry's native cascade-on-removal of poisoned removes the addiction AE: current v0.3 behavior.
 - `linked-isolated`: `statuses = ["poisoned"]` AND register a `preDeleteActiveEffect` guard that prevents the addiction AE's removal when triggered by external poisoned-clear.
 - `independent`: `statuses = []`.
 
@@ -366,14 +366,14 @@ If the `linked-isolated` guard turns out to need DAE, downgrade to "DAE recommen
 
 ---
 
-### Checkpoint B — Consumers complete
+### Checkpoint B: Consumers complete
 
 - [ ] All unit + Quench tests pass; v0.3 behavior unchanged where unaffected.
-- [ ] User hand-tests: full v0.3 substance with no v0.4 features (regression check); a v0.4 substance with overdose enabled (10% chance, dose 20× — observe roughly 2 hits); a substance + tolerance AE template (3 saves → 3 stacks).
+- [ ] User hand-tests: full v0.3 substance with no v0.4 features (regression check); a v0.4 substance with overdose enabled (10% chance, dose 20×; observe roughly 2 hits); a substance + tolerance AE template (3 saves → 3 stacks).
 
 ---
 
-### Phase 3 — Authoring surface
+### Phase 3: Authoring surface
 
 #### Task 13: Withdrawal effect picker + content guidance hint
 
@@ -413,7 +413,7 @@ If the `linked-isolated` guard turns out to need DAE, downgrade to "DAE recommen
 
 #### Task 16: Simulate-dose 3-dot menu entry + dialog
 
-**Description.** Hook the dnd5e ApplicationV2 item-sheet header context menu (the built-in 3-dot menu next to Close) — verify exact V2 API (`_getHeaderControls` override, `getApplicationHeaderButtons` hook, or equivalent) at execution Phase 1. On substance items only, add a "Simulate dose…" entry.
+**Description.** Hook the dnd5e ApplicationV2 item-sheet header context menu (the built-in 3-dot menu next to Close); verify exact V2 API (`_getHeaderControls` override, `getApplicationHeaderButtons` hook, or equivalent) at execution Phase 1. On substance items only, add a "Simulate dose…" entry.
 
 Click opens an ApplicationV2 dialog with knobs per `SPEC.md` line 204: Con mod override, current addiction state (none / addicted / withdrawing), paraphernalia ready (toggle list of the substance's required paraphernalia). Submit creates an ephemeral actor `__fishut-test-<uuid>__<original-name>`, runs the activity end-to-end (gate → save → AEs → tolerance → overdose), captures chat output and renders a summary in the dialog. Dialog close → delete the temp actor.
 
@@ -431,7 +431,7 @@ Click opens an ApplicationV2 dialog with knobs per `SPEC.md` line 204: Con mod o
 
 ---
 
-### Checkpoint C — Authoring surface complete
+### Checkpoint C: Authoring surface complete
 
 - [ ] All v0.3 authoring still reachable.
 - [ ] New fields persist round-trip; simulate-dose round-trips and cleans up.
@@ -439,11 +439,11 @@ Click opens an ApplicationV2 dialog with knobs per `SPEC.md` line 204: Con mod o
 
 ---
 
-### Phase 4 — Long-rest abstain + macros + drag dialog
+### Phase 4: Long-rest abstain + macros + drag dialog
 
 #### Task 17: Long-rest abstain dialog hook
 
-**Description.** New `scripts/hooks/long-rest-abstain.js`. Hooks the dnd5e long-rest dialog (verify exact hook at execution — likely `renderLongRestDialog` or `dnd5e.preRestCompleted`). When `voluntaryAbstainEnabled === true` AND the actor has any active withdrawal AE, the dialog shows an "Abstain this rest" button per active withdrawal substance. Click → roll Wis save vs `defaultAbstainDc(withdrawalMod)`. Pass: decrement `restsRemaining` by 2 (clamped at 0; AE removed via existing tick logic). Fail: normal 1-rest progress.
+**Description.** New `scripts/hooks/long-rest-abstain.js`. Hooks the dnd5e long-rest dialog (verify exact hook at execution; likely `renderLongRestDialog` or `dnd5e.preRestCompleted`). When `voluntaryAbstainEnabled === true` AND the actor has any active withdrawal AE, the dialog shows an "Abstain this rest" button per active withdrawal substance. Click → roll Wis save vs `defaultAbstainDc(withdrawalMod)`. Pass: decrement `restsRemaining` by 2 (clamped at 0; AE removed via existing tick logic). Fail: normal 1-rest progress.
 
 **Acceptance.**
 - [ ] Setting on + active withdrawal AE → button appears.
@@ -460,9 +460,9 @@ Click opens an ApplicationV2 dialog with knobs per `SPEC.md` line 204: Con mod o
 #### Task 18: Three Remove-X macros
 
 **Description.** Three new macros in `_source/fishut-illicit-macros/` parallel to existing Remove Addiction:
-- `remove-tolerance.json` — match by `flags[MODULE_ID].sourceSubstanceId` first; regex fallback `/tolerance/i`.
-- `remove-overdose.json` — same pattern; regex `/overdose/i`.
-- `remove-withdrawal.json` — same; regex `/withdraw/i`.
+- `remove-tolerance.json`: match by `flags[MODULE_ID].sourceSubstanceId` first; regex fallback `/tolerance/i`.
+- `remove-overdose.json`: same pattern; regex `/overdose/i`.
+- `remove-withdrawal.json`: same; regex `/withdraw/i`.
 
 Each macro: GM-only (per existing pattern), shows a dialog with a checkbox per matching AE on the selected actor, removes checked AEs.
 
@@ -491,20 +491,20 @@ Each macro: GM-only (per existing pattern), shows a dialog with a checkbox per m
 
 ---
 
-### Checkpoint D — Mechanics complete
+### Checkpoint D: Mechanics complete
 
 - [ ] All Phase 1-4 unit + Quench tests pass.
 - [ ] User hand-tests the full v0.4 loop: author a substance with overdose + tolerance template, drag onto PC via dialog (apply Altered), dose multiple times, observe tolerance stacking, observe occasional overdose; voluntary abstain on long rest skips a rest correctly.
 
 ---
 
-### Phase 5 — Theme 1 wiki + content + docs
+### Phase 5: Theme 1 wiki + content + docs
 
 #### Matrix re-verification (do this first)
 
-Run `Glob _source/fishut-illicit-substance/*.json`, read each file's `setting` and `category`, tabulate. Round-2 target: every cell has ≥2 substances. Earlier session memory disagreed with one explorer's report — trust the source files.
+Run `Glob _source/fishut-illicit-substance/*.json`, read each file's `setting` and `category`, tabulate. Round-2 target: every cell has ≥2 substances. Earlier session memory disagreed with one explorer's report; trust the source files.
 
-#### Task 20: Theme 1 — GM Guide wiki migration
+#### Task 20: Theme 1 (GM Guide wiki migration)
 
 **Description.** Per `SPEC.md` line 215:
 - Reduce the in-world journal to a single short pointer page linking to the GitHub wiki.
@@ -547,7 +547,7 @@ Run `Glob _source/fishut-illicit-substance/*.json`, read each file's `setting` a
 
 ---
 
-### Checkpoint E — Sprint complete
+### Checkpoint E: Sprint complete
 
 - [ ] All unit tests pass.
 - [ ] All Quench tests pass in a fresh world.
@@ -566,13 +566,13 @@ Run `Glob _source/fishut-illicit-substance/*.json`, read each file's `setting` a
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| **Tolerance per-stack semantics ambiguous in SPEC.md.** "sums stack effect" — for `durationFactor` (e.g. 0.8), is the 3-stack effect 0.8×3 = 2.4, 0.8^3 = 0.51, or 1 - (0.2×3) = 0.4? | Medium — wrong choice gives unintuitive math | **Open question for execution Phase 1: confirm the per-stack interpretation with the user before locking in `composeToleranceFor`.** Best-judgment default (subject to confirmation): per-stack delta is **additive on the result**, i.e. `addictionDcBump: 1` × 3 stacks = +3 DC; `durationFactor: 0.1` × 3 stacks = duration × (1 - 0.3) = 70%. Document the choice in `tolerance.js`. |
+| **Tolerance per-stack semantics ambiguous in SPEC.md.** "sums stack effect": for `durationFactor` (e.g. 0.8), is the 3-stack effect 0.8×3 = 2.4, 0.8^3 = 0.51, or 1 - (0.2×3) = 0.4? | Medium: wrong choice gives unintuitive math | **Open question for execution Phase 1: confirm the per-stack interpretation with the user before locking in `composeToleranceFor`.** Best-judgment default (subject to confirmation): per-stack delta is **additive on the result**, i.e. `addictionDcBump: 1` × 3 stacks = +3 DC; `durationFactor: 0.1` × 3 stacks = duration × (1 - 0.3) = 70%. Document the choice in `tolerance.js`. |
 | **dnd5e 5.2.5 V2 3-dot-menu API name.** | Low | Verify at execution Phase 1 of Task 16. If the V2 hook is renamed or restructured, adapt; the dialog itself doesn't depend on the menu API. |
 | **`linked-isolated` coupling needs DAE.** | Low-Med | Prototype with a minimal `preDeleteActiveEffect` first. If it requires DAE, downgrade to "DAE recommended" with a `getNotifications` warning when the setting is `linked-isolated` and DAE is absent. |
 | **Tolerance stack representation: single AE + counter vs N AEs.** | Low | Single AE + `flags.stacks` counter chosen for cleaner UI. Verify dnd5e 5.2.5 status-counter UI conventions at execution. |
 | **Matrix re-verification reveals more cells than budgeted.** | Low | Phase 5 task is sized post-verify; budget grows to fit. Content tasks parallelize. |
 | **Wiki repo creation outside the code repo is a one-time chore.** | Low | Document the wiki repo URL in `module.json` and `README.md`. CI link-check is the ongoing guard. |
-| **Paraphernalia subtype manager UI complexity.** | Low-Med | Keep the FormApp simple — list, add, edit, delete, save. No drag-reorder, no batch ops in v0.4. |
+| **Paraphernalia subtype manager UI complexity.** | Low-Med | Keep the FormApp simple: list, add, edit, delete, save. No drag-reorder, no batch ops in v0.4. |
 
 ## Resolved decisions
 
@@ -582,21 +582,21 @@ Run `Glob _source/fishut-illicit-substance/*.json`, read each file's `setting` a
 4. **Withdrawal-bite is picker + persistence + content-guidance hint**, application path stays at long-rest tick.
 5. **Voluntary abstain is a long-rest dialog button**, gated by `voluntaryAbstainEnabled`. Pass: -2 rests. Fail: -1 rest, no penalty.
 6. **Poisoned-coupling is a world setting** (`addictionPoisonedCoupling`), three modes, read at AE-apply.
-7. **Simulate-dose is a 3-dot menu entry on substance items** (NOT a header button — Foundry V13 convention).
+7. **Simulate-dose is a 3-dot menu entry on substance items** (NOT a header button, per Foundry V13 convention).
 8. **Macros are three Remove-X**: Remove Tolerance, Remove Overdose, Remove Withdrawal.
 9. **Theme 1 wiki migration is a real Phase 5 task** with CI link-check.
 10. **`+N` is the weakest tier**; auto-pass > advantage > +N > none. Within `+N`, all matching AEs sum.
 11. **Paraphernalia Subtype Manager** added (user request, non-spec) via `registerMenu` + FormApp V2 + `customParaphernaliaSubtypes` setting + `getEffectiveParaphernaliaSubtypes()` composition helper.
 12. **Settings registered in v0.4**: `addictionPoisonedCoupling`, `voluntaryAbstainEnabled`, integration toggles (audit), `customParaphernaliaSubtypes`, "Manage Paraphernalia Subtypes" menu entry.
-13. **Round-2 content does not need to "exercise a v0.4 mechanic"** — content stays orthogonal to mechanics work. (Content authoring will naturally use new mechanics where it fits.)
+13. **Round-2 content does not need to "exercise a v0.4 mechanic"**: content stays orthogonal to mechanics work. (Content authoring will naturally use new mechanics where it fits.)
 
 ## Parallelization notes
 
 After Tasks 1-3 land (~half a day), three streams open:
 
-- **Stream A — Mechanics:** Tasks 5 → 6 → 7/8/9/10/11/12.
-- **Stream B — Authoring:** Tasks 4 (subtype manager) parallel with Tasks 13/14/15/16 (sheet extensions). Task 16 is the largest in this stream.
-- **Stream C — Content + wiki:** Tasks 20/21/22 — independent of mechanics; matrix re-verify first.
+- **Stream A (Mechanics):** Tasks 5 → 6 → 7/8/9/10/11/12.
+- **Stream B (Authoring):** Tasks 4 (subtype manager) parallel with Tasks 13/14/15/16 (sheet extensions). Task 16 is the largest in this stream.
+- **Stream C (Content + wiki):** Tasks 20/21/22, independent of mechanics; matrix re-verify first.
 
 Phase 4 (Tasks 17-19) sequences after Stream A. Three sub-agents can work in parallel after Task 3 lands.
 
@@ -607,43 +607,43 @@ Phase 4 (Tasks 17-19) sequences after Stream A. Three sub-agents can work in par
 ```markdown
 # v0.4 Sprint Todo
 
-## Phase 1 — Foundation
+## Phase 1: Foundation
 - [ ] Task 1: Extend schema.json (tolerance kind, +N type, overdose flag shape, coupling.modes, paraphernalia.subtypes)
-- [ ] Task 2: Item-flag accessors — getOverdose/setOverdose, getWithdrawalEffectId/setWithdrawalEffectId
+- [ ] Task 2: Item-flag accessors (getOverdose/setOverdose, getWithdrawalEffectId/setWithdrawalEffectId)
 - [ ] Task 3: Register world settings (addictionPoisonedCoupling, voluntaryAbstainEnabled, integration toggles, customParaphernaliaSubtypes + menu)
 - [ ] Task 4: Paraphernalia Subtype Manager (FormApp V2 + composition helper + details-tab consumer update)
-- [ ] Task 5: Pure helpers — tolerance.js, overdose.js, abstain.js
+- [ ] Task 5: Pure helpers (tolerance.js, overdose.js, abstain.js)
 - [ ] Task 6: Extend modifier-resolution (+N tier) + modifier-pipeline (consumeToleranceForSubstance)
-- [ ] CHECKPOINT A — Foundation review (user hand-tests)
+- [ ] CHECKPOINT A: Foundation review (user hand-tests)
 
-## Phase 2 — Consumers
+## Phase 2: Consumers
 - [ ] Task 7: Wire +N into addiction save path
 - [ ] Task 8: Wire overdose d100 trigger + marker AE in postUseActivity
 - [ ] Task 9: Wire tolerance auto-stack into applyOutcome (save pass branch)
 - [ ] Task 10: Wire withdrawal AE template selection at long-rest tick
 - [ ] Task 11: Wire poisoned-coupling tri-state at AE-apply (reads setting)
 - [ ] Task 12: Update validate-content.mjs for new shapes
-- [ ] CHECKPOINT B — Consumers complete (user hand-tests)
+- [ ] CHECKPOINT B: Consumers complete (user hand-tests)
 
-## Phase 3 — Authoring surface
+## Phase 3: Authoring surface
 - [ ] Task 13: Withdrawal effect picker + content guidance hint
 - [ ] Task 14: Overdose fieldset (enabled/chancePercent/description)
 - [ ] Task 15: Bypass-section displays +N bonus
 - [ ] Task 16: Simulate-dose 3-dot menu entry + dialog
-- [ ] CHECKPOINT C — Authoring surface complete (user hand-tests)
+- [ ] CHECKPOINT C: Authoring surface complete (user hand-tests)
 
-## Phase 4 — Long-rest abstain + macros + drag dialog
+## Phase 4: Long-rest abstain + macros + drag dialog
 - [ ] Task 17: Long-rest abstain dialog hook
 - [ ] Task 18: Three Remove-X macros (Tolerance, Overdose, Withdrawal)
 - [ ] Task 19: Replace v0.3 stubs in drag-to-inventory dialog
-- [ ] CHECKPOINT D — Mechanics complete (user hand-tests)
+- [ ] CHECKPOINT D: Mechanics complete (user hand-tests)
 
-## Phase 5 — Theme 1 wiki + content
+## Phase 5: Theme 1 wiki + content
 - [ ] Matrix re-verification (Glob substances, tabulate cells)
-- [ ] Task 20: Theme 1 — GM Guide wiki migration + CI link-check
+- [ ] Task 20: Theme 1 (GM Guide wiki migration + CI link-check)
 - [ ] Task 21: Round-2 substances (count post-verify)
 - [ ] Task 22: One +N-bypass paraphernalia for content coverage
-- [ ] CHECKPOINT E — Sprint complete; tag v0.4.0
+- [ ] CHECKPOINT E: Sprint complete; tag v0.4.0
 ```
 
 ---

@@ -1,6 +1,6 @@
 # Paraphernalia Subtype Manager
 
-Authors pick paraphernalia subtypes from a list when filling in the Details tab. The shipped list of built-ins (pipe, snuff-horn, syringe, vial, papers, inhaler, rolling-papers, tincture-dropper, athletes-logbook) is rarely enough — every setting wants its own gear taxonomy. The **Manage Paraphernalia Subtypes** sub-menu is the GM's editor for adding custom subtypes.
+Authors pick paraphernalia subtypes from a list when filling in the Details tab. The shipped list of built-ins (pipe, snuff-horn, syringe, vial, papers, inhaler, rolling-papers, tincture-dropper, athletes-logbook) is rarely enough: every setting wants its own gear taxonomy. The **Manage Paraphernalia Subtypes** sub-menu is the GM's editor for adding custom subtypes.
 
 ## Opening the manager
 
@@ -10,7 +10,7 @@ Authors pick paraphernalia subtypes from a list when filling in the Details tab.
 
 A simple ApplicationV2 form:
 
-- **List rows.** Each row is `{ id, label }`. Built-ins are listed first (read-only — name and id can't be edited or deleted).
+- **List rows.** Each row is `{ id, label }`. Built-ins are listed first (read-only; name and id can't be edited or deleted).
 - **Add row.** Inserts a new editable row. Pick an `id` (kebab-case) and a label.
 - **Edit / Delete.** Custom rows are editable and deletable. Built-ins are not.
 - **Save.** Persists the custom list to the world setting `customParaphernaliaSubtypes`.
@@ -32,7 +32,7 @@ The Details-tab subtype select on **paraphernalia** items composes built-ins + c
 
 - `customParaphernaliaSubtypes` is a hidden world data setting (no settings-panel UI; written exclusively by the manager).
 - Default is the empty array.
-- Built-in subtypes live in `scripts/data/schema.json` and never move into the setting — they're authoritative defaults.
+- Built-in subtypes live in `scripts/data/schema.json` and never move into the setting; they're authoritative defaults.
 
 ## Removing a custom subtype
 

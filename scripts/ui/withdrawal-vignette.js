@@ -1,5 +1,5 @@
 import { logger } from "../logger.js";
-import { resolveVignetteColor } from "../data/vignette-color.js";
+import { resolveVignetteColor, isLiveWithdrawalEffect } from "../data/vignette-color.js";
 
 const VIGNETTE_CLASS = "fishut-vignette";
 const DEFAULT_COLOR = "#b91c1c";
@@ -52,9 +52,7 @@ function findOwnedWithdrawalActor() {
   for (const actor of game.actors ?? []) {
     if (!actor.isOwner) continue;
     for (const effect of actor.effects ?? []) {
-      if (!/withdraw/i.test(effect.name ?? "")) continue;
-      if (effect.disabled) continue;
-      return actor;
+      if (isLiveWithdrawalEffect(effect)) return actor;
     }
   }
   return null;

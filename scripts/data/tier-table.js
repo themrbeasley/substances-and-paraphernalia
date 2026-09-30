@@ -1,5 +1,5 @@
 /**
- * Tier table — internal scaffold mapping a 5e DC ladder to Rate / Threshold /
+ * Tier table: internal scaffold mapping a 5e DC ladder to Rate / Threshold /
  * MaxCount. The Withdrawal DC author-types becomes the snap key; the snapped
  * tier drives Tolerance/Overdose math only (the save itself rolls against the
  * authored DC, not the nominal tier DC).

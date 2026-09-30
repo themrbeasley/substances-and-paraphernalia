@@ -49,13 +49,13 @@ if (cmd === "pack") {
     const src = join(sourceRoot, pack.name);
     const dst = resolve(ROOT, pack.path);
     if (!existsSync(src)) {
-      console.log(`[skip] _source/${pack.name} missing — nothing to compile.`);
+      console.log(`[skip] _source/${pack.name} missing; nothing to compile.`);
       continue;
     }
     const entries = await readdir(src);
     const docEntries = entries.filter((e) => !e.startsWith("."));
     if (docEntries.length === 0) {
-      console.log(`[skip] _source/${pack.name} is empty — nothing to compile.`);
+      console.log(`[skip] _source/${pack.name} is empty; nothing to compile.`);
       continue;
     }
     await rm(dst, { recursive: true, force: true });
@@ -69,7 +69,7 @@ if (cmd === "pack") {
     const src = resolve(ROOT, pack.path);
     const dst = join(sourceRoot, pack.name);
     if (!existsSync(src)) {
-      console.log(`[skip] packs/${pack.name} missing — nothing to extract.`);
+      console.log(`[skip] packs/${pack.name} missing; nothing to extract.`);
       continue;
     }
     await mkdir(dst, { recursive: true });

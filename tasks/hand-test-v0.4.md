@@ -1,6 +1,6 @@
 # v0.4 hand-test checklist
 
-Walk through these in order. Each section is roughly self-contained; you can stop after any sub-section and pick up later. Anywhere it says "verify" — eyeball it; no automation, no assertions.
+Walk through these in order. Each section is roughly self-contained; you can stop after any sub-section and pick up later. Anywhere it says "verify", eyeball it; no automation, no assertions.
 
 ---
 
@@ -13,10 +13,10 @@ Open any substance (e.g. the new **Triple Burn** or any v0.3 substance).
 - [x] Details tab renders without console errors.
 - [x] **Kind / Category / Setting** selectors show current values; each persists round-trip (change → close → reopen).
 - [x] **Required subtypes** picker lists all 9 built-ins plus any custom subtypes you've added (test 1.3 first, then come back here).
-- [x] **Addiction** block — ability, DC, withdrawal mod, addiction-AE picker — each persists.
+- [x] **Addiction** block (ability, DC, withdrawal mod, addiction-AE picker): each persists.
 - [x] **Withdrawal AE picker** appears and lists the substance's own AEs whose name contains `withdraw`. Hint text below it reads coherently and warns against duplicating *poisoned*.
 - [x] **Overdose fieldset**: enabled toggle, chancePercent (1–100 number), description (textarea). Toggle off → other fields visually inert. ChancePercent clamps client-side at 1 and 100. All three persist.
-- [x] Schema-version / writeback: change a field, hit Save, reopen — value still there.
+- [x] Schema-version / writeback: change a field, hit Save, reopen: value still there.
 
 ### 1.2 Paraphernalia Details tab
 
@@ -24,7 +24,7 @@ Open **Calibrated Inhaler** (new, modern, inhaler).
 
 - [x] **Subtype** select shows built-ins + custom; current value (`inhaler`) is selected.
 - [x] No substance fields leak onto paraphernalia (no Required subtypes, no Addiction block, no Overdose fieldset).
-- [x] Open the AE tab, open the **Calibrated Inhaler — Save Modifier** AE — verify the modifier flag block on the AE flags tab (`kind: bypass`, `type: +N`, `bonus: 2`, `appliesTo: ["inhaled"]`).
+- [x] Open the AE tab, open the **Calibrated Inhaler: Save Modifier** AE; verify the modifier flag block on the AE flags tab (`kind: bypass`, `type: +N`, `bonus: 2`, `appliesTo: ["inhaled"]`).
 - [x] **Addiction Save Modifiers** section on the Details tab shows `Save Bonus: +2`.
 
 ### 1.3 Paraphernalia Subtype Manager
@@ -32,12 +32,12 @@ Open **Calibrated Inhaler** (new, modern, inhaler).
 *Game Settings → Module Settings → Manage Paraphernalia Subtypes*.
 
 - [x] Built-ins listed (pipe, snuff-horn, syringe, vial, papers, inhaler, rolling-papers, tincture-dropper, athletes-logbook); not deletable, not editable.
-- [x] **Add row** → enter `ritual-incense` with label "Ritual Incense" — saves cleanly.
+- [x] **Add row** → enter `ritual-incense` with label "Ritual Incense": saves cleanly.
 - [x] Try to add `pipe` (built-in collision) → form rejects with an error before save.
 - [x] Try to add `Ritual_Incense` (non-kebab-case) → form rejects.
 - [x] Add a second custom row with the same id as the first → form rejects (duplicate).
 - [x] Reload the world. Open the manager again. Custom subtype still present.
-- [x] Open a substance, look at Required subtypes — `ritual-incense` appears as an option.
+- [x] Open a substance, look at Required subtypes: `ritual-incense` appears as an option.
 - [x] Open a paraphernalia, the Subtype select offers `ritual-incense`.
 - [x] Delete the custom row from the manager. It vanishes from both pickers (after sheet re-render).
 
@@ -48,10 +48,10 @@ Open any substance item sheet → header **3-dot menu**.
 - [x] **Simulate dose…** entry appears on substance items only.
 - [x] On a paraphernalia (e.g. Calibrated Inhaler), the entry is absent.
 - [x] Click it. Dialog opens with: Con-mod override, addiction state (none / addicted / withdrawing), per-required-subtype paraphernalia toggles.
-- [x] Run with all defaults — chat output captured in the dialog summary, not posted to the live log.
-- [x] Run with Con +5 — observable in the addiction-save line of the captured chat.
-- [x] Run with paraphernalia OFF — gate fires, dialog summary shows the missing-paraphernalia message.
-- [x] Run with paraphernalia ON — gate passes; addiction save rolls.
+- [x] Run with all defaults: chat output captured in the dialog summary, not posted to the live log.
+- [x] Run with Con +5: observable in the addiction-save line of the captured chat.
+- [x] Run with paraphernalia OFF: gate fires, dialog summary shows the missing-paraphernalia message.
+- [x] Run with paraphernalia ON: gate passes; addiction save rolls.
 - [x] Close the dialog. Open the actor directory. **No `__fishut-test-*` actors remain.**
 - [x] (If you can force one): leave a `__fishut-test-*` actor in the directory and reload the world. The active GM's `ready` hook should sweep it on next world load.
 
@@ -65,16 +65,16 @@ Open any substance item sheet → header **3-dot menu**.
 
 - [x] Drop the substance on a PC who has **no inhaler equipped/ready**. Use it. Missing-paraphernalia dialog appears.
 - [x] Dialog is visible to a logged-in **player** (not just GM).
-- [x] Click **Use anyway** — activity proceeds; no further gate prompt for that activity ID.
-- [x] Equip a Calibrated Inhaler on the PC, retry — gate passes silently, activity runs.
+- [x] Click **Use anyway**: activity proceeds; no further gate prompt for that activity ID.
+- [x] Equip a Calibrated Inhaler on the PC, retry: gate passes silently, activity runs.
 - [x] *Game Settings → Enforce paraphernalia requirements* off → gate skipped entirely; addiction logic still fires (verify by failing a save).
 
 ### 2.2 Addiction (`postUseActivity`)
 
-- [x] Use a substance with a low DC (e.g. DC 5) and a high withdrawalMod — let the actor fail the save. Addiction AE applied, name contains `addict`. Console shows no errors.
+- [x] Use a substance with a low DC (e.g. DC 5) and a high withdrawalMod; let the actor fail the save. Addiction AE applied, name contains `addict`. Console shows no errors.
 - [ ] Actor flag `flags["substances-and-paraphernalia"].withdrawal[<itemId>]` populated with `{ restsRemaining, appliedAt }`.
 - [x] Re-use the substance while still addicted. **Withdrawal extended** to `max(currentRests, newComputed)`; doesn't reroll, doesn't shorten.
-- [x] Use a different substance whose save the actor passes — addiction AE NOT applied; tolerance AE IS applied (next section).
+- [x] Use a different substance whose save the actor passes: addiction AE NOT applied; tolerance AE IS applied (next section).
 
 ### 2.3 Withdrawal (`restCompleted`)
 
@@ -101,7 +101,7 @@ Set a substance's overdose: `enabled: true, chancePercent: 100, description: "<s
 
 - [x] Use the substance. Marker AE **Overdosed on {Substance}** applied. Name contains `overdose`. Chat card posted with the description.
 - [x] Set `chancePercent: 0` and use 5×. Marker never fires.
-- [x] At `chancePercent: 100`, use a substance the actor passes the addiction save on — overdose **still fires**. (Overdose is independent of save outcome.)
+- [x] At `chancePercent: 100`, use a substance the actor passes the addiction save on: overdose **still fires**. (Overdose is independent of save outcome.)
 - [x] Disable overdose. Marker doesn't fire. No chat card.
 
 ### 2.6 Voluntary abstain
@@ -156,12 +156,12 @@ Drag each from the `fishut-illicit-macros` compendium to the hotbar.
 ### 3.3 Remove Overdose
 
 - [x] Actor with an overdose marker AE. Run macro. Dialog lists it. Confirm. AE removed.
-- [x] Actor with no overdose markers → macro reports nothing to remove (or the dialog shows an empty list — verify the UX is reasonable, not a console error).
+- [x] Actor with no overdose markers → macro reports nothing to remove (or the dialog shows an empty list; verify the UX is reasonable, not a console error).
 
 ### 3.4 Remove Withdrawal
 
-- [x] Actor with a withdrawal AE. Run macro. Dialog lists it. Remove. AE goes; **actor flag remains** (this is the intentional difference vs Remove Addiction — note in the wiki Macros page).
-- [x] Compare with Remove Addiction: Addiction clears AE **and** flag; Withdrawal clears only the AE. Spot-check this is the desired semantic — if not, raise it as a tweak.
+- [x] Actor with a withdrawal AE. Run macro. Dialog lists it. Remove. AE goes; **actor flag remains** (this is the intentional difference vs Remove Addiction; note in the wiki Macros page).
+- [x] Compare with Remove Addiction: Addiction clears AE **and** flag; Withdrawal clears only the AE. Spot-check this is the desired semantic; if not, raise it as a tweak.
 
 ---
 
@@ -192,8 +192,8 @@ For each:
 
 - [x] Sheet renders cleanly.
 - [x] Equipped on a PC, the bypass AE (`transfer: true`) applies passively.
-- [x] Pair with **Triple Burn** (modern, inhaled, requires `inhaler`) — gate passes, save rolls with `+2`.
-- [x] Pair with a non-inhaled substance whose required subtype is `inhaler` (none ship currently) — bypass does NOT fire because `appliesTo: ["inhaled"]`. Verify by trying with a different administration.
+- [x] Pair with **Triple Burn** (modern, inhaled, requires `inhaler`): gate passes, save rolls with `+2`.
+- [x] Pair with a non-inhaled substance whose required subtype is `inhaler` (none ship currently): bypass does NOT fire because `appliesTo: ["inhaled"]`. Verify by trying with a different administration.
 
 ---
 

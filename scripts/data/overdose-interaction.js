@@ -7,7 +7,7 @@
  *   diminishing buff with higher doses).
  * `none`: no interaction; baseChance returned unchanged.
  *
- * Stacks are read at roll time, not apply time — see the v0.7 spec §2.4.
+ * Stacks are read at roll time, not apply time; see the v0.7 spec §2.4.
  *
  * @param {number} baseChance        - block.chancePercent (0..100)
  * @param {number} stacks            - current tolerance-stack count

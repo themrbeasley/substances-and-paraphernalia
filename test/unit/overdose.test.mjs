@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { rollOverdose } from "../../scripts/data/overdose.js";
 
-// Mulberry32 PRNG — deterministic, fast, well-distributed enough for hit-rate
+// Mulberry32 PRNG: deterministic, fast, well-distributed enough for hit-rate
 // assertions over a 1k-trial budget.
 function seededRandom(seed) {
   let t = seed >>> 0;

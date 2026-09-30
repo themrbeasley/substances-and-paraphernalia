@@ -70,7 +70,7 @@ function onRenderApplicationV2(app, _htmlElement) {
 function patchSheetClass(cls) {
   if (typeof cls?.prototype?._getHeaderControls !== "function") {
     logger.warn?.(
-      "simulate-dose: sheet class has no _getHeaderControls — patch skipped",
+      "simulate-dose: sheet class has no _getHeaderControls; patch skipped",
     );
     return false;
   }
@@ -287,7 +287,7 @@ export async function runSimulation({
   } finally {
     Hooks.off("createChatMessage", captureFn);
     // Reap captured chat messages so simulation artifacts do not pollute the
-    // live chat log. Best-effort — failures are non-fatal.
+    // live chat log. Best-effort: failures are non-fatal.
     if (capturedIds.length > 0) {
       try {
         await ChatMessage.deleteDocuments(capturedIds);

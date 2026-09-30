@@ -21,7 +21,7 @@ const NONE = Object.freeze({ resolution: "none" });
 
 /**
  * Walk the actor's applied AEs, find any whose modifier flag block has
- * `kind: "bypass"`, derive each candidate's `appliesTo` from its source —
+ * `kind: "bypass"`, derive each candidate's `appliesTo` from its source:
  * the paraphernalia item's `appliesTo` for paraphernalia-sourced bypasses
  * (the canonical case), the AE block's `appliesTo` for non-paraphernalia
  * sources (extension path). `pickBypassResolution` then filters by the
@@ -41,8 +41,8 @@ const NONE = Object.freeze({ resolution: "none" });
 export async function consumeBypassIfAvailable(actor, substance) {
   if (!actor || !substance) return { ...NONE };
 
-  // Administration is the dnd5e Poison Type subtype on the consumable —
-  // contact | ingested | inhaled | injury — not a module-owned flag.
+  // Administration is the dnd5e Poison Type subtype on the consumable
+  // (contact | ingested | inhaled | injury), not a module-owned flag.
   const administration = substance?.system?.type?.subtype || null;
   if (!administration) return { ...NONE };
 
@@ -65,7 +65,7 @@ export async function consumeBypassIfAvailable(actor, substance) {
     const block = rawBlock ?? {};
 
     const sourceItem = resolveSourceItem(actor, effect);
-    // Paraphernalia is the only authored bypass source — its `appliesTo`
+    // Paraphernalia is the only authored bypass source; its `appliesTo`
     // is the canonical filter for resolution. Non-paraphernalia sources
     // fall back to the AE block's `appliesTo` (extension path; nothing
     // we ship uses it).
@@ -127,7 +127,7 @@ export async function consumeBypassIfAvailable(actor, substance) {
 }
 
 /**
- * Resolve the AE's source item — walks `effect.origin` for an `Item.<id>`
+ * Resolve the AE's source item. Walks `effect.origin` for an `Item.<id>`
  * segment first (covers `transfer:true` AEs cloned onto an actor), falling
  * back to `fromUuidSync` for cross-document origins. Returns null when no
  * traceable item exists.
@@ -152,7 +152,7 @@ function resolveSourceItem(actor, effect) {
       const doc = sync(origin);
       if (doc?.documentName === "Item") return doc;
     } catch {
-      /* unresolvable origin — fall through to null */
+      /* unresolvable origin; fall through to null */
     }
   }
   return null;

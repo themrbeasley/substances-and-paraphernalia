@@ -73,7 +73,7 @@ if (!Array.isArray(manifest.languages) || manifest.languages.length === 0) {
 }
 
 if (manifest.flags?.canUpload) {
-  warn("flags.canUpload is set — make sure this is intentional and documented.");
+  warn("flags.canUpload is set; make sure this is intentional and documented.");
 }
 
 if (!Array.isArray(manifest.packs) || manifest.packs.length === 0) {

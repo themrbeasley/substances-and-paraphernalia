@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveVignetteColor } from "../../scripts/data/vignette-color.js";
+import { resolveVignetteColor, isLiveWithdrawalEffect } from "../../scripts/data/vignette-color.js";
 
 const SCOPE = "substances-and-paraphernalia";
 
@@ -29,4 +29,17 @@ test("resolveVignetteColor rejects non-string values", () => {
     const actor = { flags: { [SCOPE]: { vignetteColor: value } } };
     assert.equal(resolveVignetteColor(actor), null);
   }
+});
+
+test("isLiveWithdrawalEffect counts an active withdrawal effect", () => {
+  assert.equal(isLiveWithdrawalEffect({ name: "Withdrawal from Voltbeans", active: true }), true);
+});
+
+test("isLiveWithdrawalEffect ignores a V14-expired withdrawal effect that is not disabled", () => {
+  assert.equal(isLiveWithdrawalEffect({ name: "Withdrawal from Voltbeans", disabled: false, active: false }), false);
+});
+
+test("isLiveWithdrawalEffect ignores effects not named for withdrawal", () => {
+  assert.equal(isLiveWithdrawalEffect({ name: "Altered by Voltbeans", active: true }), false);
+  assert.equal(isLiveWithdrawalEffect(null), false);
 });

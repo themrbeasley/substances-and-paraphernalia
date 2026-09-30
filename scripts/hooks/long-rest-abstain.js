@@ -1,6 +1,6 @@
 // scripts/hooks/long-rest-abstain.js
 /**
- * Phase 2 — long rest dialog + Abstain Check + Withdrawal Save pipeline.
+ * Phase 2: long rest dialog + Abstain Check + Withdrawal Save pipeline.
  *
  * Fires on `dnd5e.preRestCompleted` (GM-arbitrated). For each substance the
  * actor is currently addicted to, opens the combined Abstain dialog
@@ -14,8 +14,9 @@
  *                         Withdrawal AE; decay regardless.
  *
  * `actor.flags.S&P.withdrawal[id]` is set when the AE applies (with
- * `appliedAt` + `endsAt`). Times-Up handles removal at duration expiry;
- * `withdrawal-cleanup.js` clears the flag entry on AE delete.
+ * `appliedAt` + `endsAt`). Foundry core marks the AE expired at the end of
+ * its duration and House Automation's "Delete expired effects" switch
+ * deletes it; `withdrawal-cleanup.js` clears the flag entry on AE delete.
  */
 
 import { MODULE_ID } from "../config.js";
@@ -32,6 +33,7 @@ import {
 } from "../data/flag-schema.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
+import { prepareEffectPayload } from "../data/effect-data.js";
 import { applyToleranceDecay } from "./tolerance-decay.js";
 import { openAbstainDialog } from "../ui/abstain-dialog.js";
 import { registerForcedUseBypass, clearForcedUseBypass } from "./activity-gating.js";
@@ -39,7 +41,7 @@ import { registerForcedUseBypass, clearForcedUseBypass } from "./activity-gating
 let dialogImpl = openAbstainDialog;
 
 /**
- * Test seam — Quench tests call this to install a stub returning a
+ * Test seam: Quench tests call this to install a stub returning a
  * deterministic per-row decision map before invoking runPhase2.
  *
  * @param {(actor: Actor, rows: any[]) => Promise<Record<string, string>>} stub
@@ -206,20 +208,14 @@ async function applyWithdrawalAeFromTemplate(actor, item) {
   const now = new Date();
   const endsAt = new Date(now.getTime() + seconds * 1000).toISOString();
 
-  const payloads = templates.map((tpl) => {
-    const data = tpl.toObject();
-    delete data._id;
-    data.flags = data.flags ?? {};
-    data.flags[MODULE_ID] = {
-      ...(data.flags[MODULE_ID] ?? {}),
+  const payloads = templates.map((tpl) =>
+    prepareEffectPayload(tpl.toObject(), {
       sourceSubstanceId: item.id,
-      aeRole: "withdrawal",
-    };
-    data.origin = item.uuid;
-    data.disabled = false;
-    data.duration = { ...(data.duration ?? {}), seconds };
-    return data;
-  });
+      origin: item.uuid,
+      role: "withdrawal",
+      duration: seconds,
+    }),
+  );
   await actor.createEmbeddedDocuments("ActiveEffect", payloads);
   await setActorWithdrawalEntry(actor, item.id, {
     appliedAt: now.toISOString(),

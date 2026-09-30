@@ -5,7 +5,7 @@
  * the standard Foundry "Changes" tab is the canonical authoring surface:
  * GMs see and edit the per-stack tunables in the same place they edit any
  * other AE change. Storage convention: rows whose `key` is
- * `flags.<scope>.modifier.<field>` with mode `OVERRIDE`. Nested objects
+ * `flags.<scope>.modifier.<field>` with V14 change type `"override"`. Nested objects
  * (`attenuateAltered`, `withdrawalAmplify`) are flattened across rows
  * (`...modifier.attenuateAltered.durationFactor`).
  *
@@ -14,7 +14,7 @@
  * coupled wrappers `getModifier` / `setModifier` live in `flag-schema.js`.
  *
  * @typedef {"bypass" | "tolerance"} ModifierKind
- *   v0.4 adds "tolerance" — actor-side stack-counted state (no per-shot consumption).
+ *   v0.4 adds "tolerance": actor-side stack-counted state (no per-shot consumption).
  *   "bypass" is the original paraphernalia-grants-save-relief pipeline.
  *
  * @typedef {"auto-pass" | "reroll-on-fail" | "advantage" | "+N"} ModifierType
@@ -43,7 +43,7 @@
  */
 
 const MODIFIER_KEY = "modifier";
-const OVERRIDE_MODE = 5;
+const OVERRIDE_TYPE = "override";
 const DEFAULT_PRIORITY = 20;
 
 const NUMERIC_LEAVES = new Set([
@@ -113,7 +113,7 @@ export function readModifierFromChanges(changes, scope) {
 }
 
 /**
- * Render a `ModifierBlock` as an array of `{ key, mode, value, priority }`
+ * Render a `ModifierBlock` as an array of `{ key, type, value, priority }`
  * Change rows for an AE. Nested objects are flattened to one row per leaf.
  *
  * Numeric values become strings (Foundry stores Change values as strings);
@@ -124,7 +124,7 @@ export function readModifierFromChanges(changes, scope) {
  * @param {ModifierBlock} block
  * @param {string} scope
  * @param {{ priority?: number }} [opts]
- * @returns {Array<{key:string, mode:number, value:string, priority:number}>}
+ * @returns {Array<{key:string, type:string, value:string, priority:number}>}
  */
 export function writeModifierAsChanges(block, scope, { priority = DEFAULT_PRIORITY } = {}) {
   if (!block || typeof block !== "object") return [];
@@ -133,7 +133,7 @@ export function writeModifierAsChanges(block, scope, { priority = DEFAULT_PRIORI
   for (const [path, leaf] of flattenLeaves(block)) {
     rows.push({
       key: `${prefix}${path}`,
-      mode: OVERRIDE_MODE,
+      type: OVERRIDE_TYPE,
       value: encodeChangeValue(path, leaf),
       priority,
     });
@@ -153,7 +153,7 @@ export function writeModifierAsChanges(block, scope, { priority = DEFAULT_PRIORI
  * @param {ModifierBlock} block
  * @param {string} scope
  * @param {{ priority?: number }} [opts]
- * @returns {Array<{key:string, mode:number, value:string, priority:number}>}
+ * @returns {Array<{key:string, type:string, value:string, priority:number}>}
  */
 export function mergeModifierIntoChanges(existingChanges, block, scope, opts) {
   const prefix = modifierChangeKeyPrefix(scope);

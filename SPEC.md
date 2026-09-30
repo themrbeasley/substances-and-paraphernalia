@@ -1,4 +1,4 @@
-# Substances and Paraphernalia — v0.3 → v1.0 Spec
+# Substances and Paraphernalia: v0.3 → v1.0 Spec
 
 ## Context
 
@@ -14,7 +14,7 @@ Move the module from a working v0.2 core loop to a 1.0-grade release with:
 
 - A native dnd5e item-sheet authoring surface (replaces the 3-dot form).
 - A general AE-flag-based modifier pipeline that unifies bypass, tolerance, and future modifiers.
-- Rounded mechanics: tolerance, overdose, withdrawal-that-bites, voluntary abstain — each AE-driven and GM-authorable.
+- Rounded mechanics: tolerance, overdose, withdrawal-that-bites, voluntary abstain, each AE-driven and GM-authorable.
 - Visual layers (TMFX for altered, CSS vignette for withdrawal) with graceful degradation.
 - Documentation moved to a maintainable surface (GitHub wiki).
 - A 3×3 setting × category matrix of compendium content with author-friendly tooling.
@@ -26,8 +26,8 @@ Each release has a single thesis. Slipping a feature out of a release is preferr
 
 | Release | Thesis | Contents |
 |---|---|---|
-| **v0.3** — *shipped* | Foundation: native sheet + bypass canonicalization | Theme 2 (Details-tab integration; deletes 3-dot form). AE-flag bypass canonicalization (auto-pass + advantage `type`). Drag-to-inventory state-injection dialog. Module-integration settings pattern (groundwork — toggles per recommended module). Theme 6 round 1 (matrix fill). |
-| **v0.4** — *shipped* | Mechanics + Wiki + Authoring polish | Tolerance system. Overdose system. Withdrawal-bite (AE picker + content guidance). Voluntary abstain at long rest. Poisoned-coupling tri-state setting. Theme 1 (GM Guide → wiki). Simulate-dose authoring tool. Macro parity (Remove Tolerance/Overdose/Withdrawal). Bypass `type: '+N'`. Theme 6 round 2. Paraphernalia Subtype Manager (user addition, not original spec). |
+| **v0.3** (*shipped*) | Foundation: native sheet + bypass canonicalization | Theme 2 (Details-tab integration; deletes 3-dot form). AE-flag bypass canonicalization (auto-pass + advantage `type`). Drag-to-inventory state-injection dialog. Module-integration settings pattern (groundwork: toggles per recommended module). Theme 6 round 1 (matrix fill). |
+| **v0.4** (*shipped*) | Mechanics + Wiki + Authoring polish | Tolerance system. Overdose system. Withdrawal-bite (AE picker + content guidance). Voluntary abstain at long rest. Poisoned-coupling tri-state setting. Theme 1 (GM Guide → wiki). Simulate-dose authoring tool. Macro parity (Remove Tolerance/Overdose/Withdrawal). Bypass `type: '+N'`. Theme 6 round 2. Paraphernalia Subtype Manager (user addition, not original spec). |
 | **v0.5** | Visuals | Theme 4 (TMFX integration for "Altered" AEs, gated by setting, default-on-if-installed). CSS withdrawal vignette (built-in, hex from AE flag, per-player). JB2A licensing evaluation; if cleared, JB2A added to recommends and used as preferred overlay. Theme 6 round 3. |
 | **v0.6** | Advanced bypass + Midi | Bypass `type: 'reroll-on-fail'`. Theme 5 first cut (midi-qol on-use macros for substances; midi-driven overdose adjudication if installed). |
 | **v1.0** | Stability + submission | No new features. Bug fixes, content polish, wiki completeness, Foundry package registry submission. |
@@ -75,7 +75,7 @@ Hooks: `dropItemSheetData` (or current dnd5e equivalent), gated on `game.user.is
 - Vehicle actor accepts the dialog without error.
 - Quench: dialog renders, decline path no-ops, each option applies the right AE.
 
-### Theme 2 — Details-tab integration (v0.3)
+### Theme 2: Details-tab integration (v0.3)
 
 Per existing ROADMAP. Confirmed unchanged; details there. Authoring fields exposed in the Details tab now include: substance fields (Setting, Category, Administration, Save Ability, Save DC, Withdrawal Mod, Addiction Effect picker, Required Paraphernalia editor), paraphernalia fields, and an AE-flag-aware Bypass field on items that grant a bypass via AE.
 
@@ -87,7 +87,7 @@ A `Tolerance to {Substance}` AE accumulates over time and acts as a multi-direct
 
 **Accumulation.** Each successful addiction save applies one stack of Tolerance for that substance.
 
-**Mechanical bites — three knobs on the Tolerance AE flag.**
+**Mechanical bites: three knobs on the Tolerance AE flag.**
 
 ```
 flags["substances-and-paraphernalia"].modifier = {
@@ -137,7 +137,7 @@ Engine rolls d100 in the post-use hook. On hit: applies the marker AE, posts a c
 - No-midi path: chat card appears with the description.
 - Midi path (Theme 5): documented but not implemented in v0.4.
 
-### Withdrawal-bite — AE picker + content guidance (v0.4)
+### Withdrawal-bite: AE picker + content guidance (v0.4)
 
 Today, the Withdrawal AE is auto-applied with `restsRemaining` set; its mechanical content is whatever the author writes in the AE.
 
@@ -170,7 +170,7 @@ GM-toggleable via setting `voluntaryAbstainEnabled` (default on).
 
 Setting key: `addictionPoisonedCoupling`. Tri-state:
 
-- `linked-cascade` (default — current v0.2 behavior). Addiction AE adds poisoned. Removing poisoned cascades to remove addiction (and Altered/Tolerance/Withdrawal end with it).
+- `linked-cascade` (default; current v0.2 behavior). Addiction AE adds poisoned. Removing poisoned cascades to remove addiction (and Altered/Tolerance/Withdrawal end with it).
 - `linked-isolated`. Addiction AE adds poisoned. Removing poisoned does NOT remove addiction.
 - `independent`. Addiction AE does NOT add poisoned. Removing poisoned has no effect on addiction state.
 
@@ -179,13 +179,13 @@ Setting key: `addictionPoisonedCoupling`. Tri-state:
 - All three states observable in a Quench test (apply addiction, run remove-poisoned macro, observe state).
 - Setting changes take effect on next addiction-AE application; existing AEs are not retroactively rewritten.
 
-### Trip overlay — visual layer (v0.5)
+### Trip overlay: visual layer (v0.5)
 
-**Altered → TMFX (token-level).** When the integration setting `tmfxIntegration` is on (default on if `tokenmagic` module is active), the module registers a 3×3 palette of TMFX presets (setting × category — e.g. `fishut-tmfx-fantasy-stimulant`) into the `tmfx-main` library at `ready`. Each substance's Altered AE carries a Change row with `key: "macro.tokenMagic"`, `mode: 0` (CUSTOM), `value: "<preset-name>"` — DAE forwards that value verbatim to `TokenMagic.addFilters(token, value)` on apply and removes the matching filter on remove. The preset name doubles as filterId (TMFX overwrites each param's `filterId` with the preset name during registration). Authoring happens on the AE's Changes table (Foundry's standard surface) — there is no Details-tab TMFX picker and no `flags[…].tmfxFilterParams` block. Authors can override with their own preset name or omit the Change to opt out. No TMFX or DAE → silent no-op (the CUSTOM-mode Change is the implicit "needs DAE" signal that `aeRequiresDae` already detects).
+**Altered → TMFX (token-level).** When the integration setting `tmfxIntegration` is on (default on if `tokenmagic` module is active), the module registers a 3×3 palette of TMFX presets (setting × category, e.g. `fishut-tmfx-fantasy-stimulant`) into the `tmfx-main` library at `ready`. Each substance's Altered AE carries a Change row with `key: "macro.tokenMagic"`, `mode: 0` (CUSTOM), `value: "<preset-name>"`; DAE forwards that value verbatim to `TokenMagic.addFilters(token, value)` on apply and removes the matching filter on remove. The preset name doubles as filterId (TMFX overwrites each param's `filterId` with the preset name during registration). Authoring happens on the AE's Changes table (Foundry's standard surface); there is no Details-tab TMFX picker and no `flags[…].tmfxFilterParams` block. Authors can override with their own preset name or omit the Change to opt out. No TMFX or DAE → silent no-op (the CUSTOM-mode Change is the implicit "needs DAE" signal that `aeRequiresDae` already detects).
 
 **Withdrawing → CSS vignette (screen-level).** When the Withdrawal AE applies to a token the current player owns, a screen-edge color vignette renders. Hex code from `flags["substances-and-paraphernalia"].vignetteColor` on the AE (or substance, with AE inheriting). Built-in CSS, no external dep.
 
-**JB2A evaluation.** Their free pack is CC BY-NC-SA 4.0 and includes screen overlays. Eval: confirm license compatibility (this module is free; "non-commercial" may apply or not depending on monetization model — the module is gratis but the author runs a Patreon, which needs review). If cleared, JB2A overlays become a "preferred-path" upgrade above the CSS vignette, gated by `jb2aIntegration` setting.
+**JB2A evaluation.** Their free pack is CC BY-NC-SA 4.0 and includes screen overlays. Eval: confirm license compatibility (this module is free; "non-commercial" may apply or not depending on monetization model; the module is gratis but the author runs a Patreon, which needs review). If cleared, JB2A overlays become a "preferred-path" upgrade above the CSS vignette, gated by `jb2aIntegration` setting.
 
 **Acceptance criteria.**
 
@@ -205,7 +205,7 @@ The setting exists so users with the integration module installed for unrelated 
 
 Header button on substance items: "Simulate dose..." Opens a dialog with knobs (Con mod override, current addiction state, paraphernalia available, etc.). Engine creates a temporary actor (named `__fishut-test-<uuid>__`), runs the activity against it, captures chat output, then deletes the actor.
 
-Cleanup is critical — the temporary actor MUST be deleted on dialog close, on error, on world reload (worldReady hook sweeps any orphaned `__fishut-test-*` actors).
+Cleanup is critical: the temporary actor MUST be deleted on dialog close, on error, on world reload (worldReady hook sweeps any orphaned `__fishut-test-*` actors).
 
 **Acceptance criteria.**
 
@@ -214,11 +214,11 @@ Cleanup is critical — the temporary actor MUST be deleted on dialog close, on 
 - World reload finds and cleans orphaned test actors.
 - Quench test on the round-trip.
 
-### Theme 1 — GM Guide → wiki (v0.4)
+### Theme 1: GM Guide → wiki (v0.4)
 
-Per existing ROADMAP. The in-world journal becomes a single short pointer page; the full guide moves to the GitHub wiki repo. CI link-check on the in-world page (lightweight — fetch the wiki URL, expect 200).
+Per existing ROADMAP. The in-world journal becomes a single short pointer page; the full guide moves to the GitHub wiki repo. CI link-check on the in-world page (lightweight: fetch the wiki URL, expect 200).
 
-### Theme 5 — Midi on-use macros (v0.6)
+### Theme 5: Midi on-use macros (v0.6)
 
 Per existing ROADMAP. Substance flag carries `onUseMacro` reference. When midi-qol is active and the integration is enabled, midi runs the macro at the configured workflow phase. Without midi, the flag is ignored. Used principally for damage-on-failed-save substances.
 
@@ -244,16 +244,16 @@ No change. `npm run lint`, `npm run validate`, `npm run test:unit`, `npm run pac
 
 Additions during the arc:
 
-- `scripts/data/modifier-pipeline.js` — replaces `scripts/data/save-bypass.js` (or rename in place). Generic AE-flag modifier walker.
-- `scripts/hooks/drag-to-inventory.js` — handles state injection dialog.
-- `scripts/hooks/long-rest-abstain.js` — voluntary abstain dialog.
-- `scripts/hooks/overdose.js` — d100 trigger + marker AE application.
-- `scripts/data/tolerance.js` — pure tolerance accumulation logic; called from `addiction.js` post-hook.
-- `scripts/ui/details-tab.js` — Theme 2 sheet injection (replaces `scripts/ui/item-settings-form.js`).
-- `scripts/ui/simulate-dose.js` — authoring tool.
-- `scripts/integrations/jb2a.js` — when JB2A clears licensing.
-- `templates/details-tab/*.hbs` — partials for the Details-tab sub-sections.
-- `styles/withdrawal-vignette.css` — withdrawal vignette CSS.
+- `scripts/data/modifier-pipeline.js`: replaces `scripts/data/save-bypass.js` (or rename in place). Generic AE-flag modifier walker.
+- `scripts/hooks/drag-to-inventory.js`: handles state injection dialog.
+- `scripts/hooks/long-rest-abstain.js`: voluntary abstain dialog.
+- `scripts/hooks/overdose.js`: d100 trigger + marker AE application.
+- `scripts/data/tolerance.js`: pure tolerance accumulation logic; called from `addiction.js` post-hook.
+- `scripts/ui/details-tab.js`: Theme 2 sheet injection (replaces `scripts/ui/item-settings-form.js`).
+- `scripts/ui/simulate-dose.js`: authoring tool.
+- `scripts/integrations/jb2a.js`: when JB2A clears licensing.
+- `templates/details-tab/*.hbs`: partials for the Details-tab sub-sections.
+- `styles/withdrawal-vignette.css`: withdrawal vignette CSS.
 
 Deletions during the arc:
 
@@ -280,11 +280,11 @@ Pattern matches v0.2's split.
 
 **Unit tests** (`test/unit/*.test.mjs`, pure Node, no Foundry globals).
 
-- `modifier-pipeline.test.mjs` — composition rules, deterministic ordering, `appliesTo` filtering.
-- `tolerance.test.mjs` — accumulation, three-knob composition.
-- `overdose.test.mjs` — chance roll boundary cases.
-- `withdrawal.test.mjs` (existing) — extend with abstain DC calculation.
-- `poisoned-coupling.test.mjs` — tri-state behavior (uses pure-function wrappers).
+- `modifier-pipeline.test.mjs`: composition rules, deterministic ordering, `appliesTo` filtering.
+- `tolerance.test.mjs`: accumulation, three-knob composition.
+- `overdose.test.mjs`: chance roll boundary cases.
+- `withdrawal.test.mjs` (existing): extend with abstain DC calculation.
+- `poisoned-coupling.test.mjs`: tri-state behavior (uses pure-function wrappers).
 
 Each new file added explicitly to `package.json`'s `test:unit` script.
 
@@ -303,14 +303,14 @@ Each new file added explicitly to `package.json`'s `test:unit` script.
 
 - Tolerance AE has `flags["substances-and-paraphernalia"].modifier.kind === "tolerance"`.
 - Overdose flag block, if `enabled`, has `chancePercent` 1–100 and non-empty `description`.
-- Withdrawal AE doesn't impose `disadvantage` on `attack` or `check` (warning, not error — author can override with confirmation).
+- Withdrawal AE doesn't impose `disadvantage` on `attack` or `check` (warning, not error; author can override with confirmation).
 - AE name contracts (`tolerance`, `overdose`, `withdraw`).
 
 ## Boundaries
 
 ### Always do
 
-- Read settings via `game.settings.get()` not via cached module-level constants — settings change at runtime.
+- Read settings via `game.settings.get()` not via cached module-level constants; settings change at runtime.
 - Respect the GM-arbiter pattern for `restCompleted` and any new "exactly one client should run this" hooks.
 - Surface gating dialogs and override buttons to all users (CLAUDE.md feedback memory).
 - Default-on integrations when their module is active and a setting is exposed for opt-out (CLAUDE.md feedback memory: don't ship a setting whose off-state nobody wants).
@@ -320,26 +320,26 @@ Each new file added explicitly to `package.json`'s `test:unit` script.
 ### Ask first
 
 - Adding a new world setting beyond the ones in this spec (`addictionPoisonedCoupling`, `voluntaryAbstainEnabled`, integration toggles).
-- Document-level migrators for flag-shape changes — sheet-level rendering with default-on-missing reads is the explicit migration path; framework-level migrators are out of scope per CLAUDE.md and ROADMAP.
+- Document-level migrators for flag-shape changes: sheet-level rendering with default-on-missing reads is the explicit migration path; framework-level migrators are out of scope per CLAUDE.md and ROADMAP.
 - Adding a new external-module dependency to `relationships.recommends`.
-- Touching the AE-naming contract (substring rules) — downstream macros depend on it.
+- Touching the AE-naming contract (substring rules): downstream macros depend on it.
 
 ### Never do
 
-- Hardcode enum values in JS (`kind`, `category`, `type`, etc.) — always read from `SCHEMA`.
+- Hardcode enum values in JS (`kind`, `category`, `type`, etc.): always read from `SCHEMA`.
 - Add a setting whose off-state has no real use case.
-- Re-introduce an item-level `requiresDae` flag — DAE-required detection is per-AE only.
+- Re-introduce an item-level `requiresDae` flag: DAE-required detection is per-AE only.
 - Downgrade pack ownership from `PLAYER: OBSERVER, ASSISTANT: OWNER` (CLAUDE.md feedback memory).
 - Restrict gating dialogs / overrides to GMs only (CLAUDE.md feedback memory).
-- Ship withdrawal AEs whose mechanical bite duplicates poisoned (disadv on attacks + checks) — escalate per the content guidance hint.
-- Stuff a release beyond its single thesis (Path B principle from this spec — slipping is preferred).
+- Ship withdrawal AEs whose mechanical bite duplicates poisoned (disadv on attacks + checks); escalate per the content guidance hint.
+- Stuff a release beyond its single thesis (Path B principle from this spec; slipping is preferred).
 
 ## Out of scope
 
 Two future-companion-module ideas captured in `COMPANION-MODULE-IDEA.md` (separate file at project root, to be moved by author):
 
-1. Module A — Content & Narrative companion (premium): scenarios, encounter tables, dealer NPCs, smuggling/criminal mechanics, recovery arcs, narrative beats.
-2. Module B — Expansion + Crafting Integration companion (premium): additional substances/paraphernalia, recipe journals for The Cauldron and Mastercrafted, mixed-substance interactions.
+1. Module A: Content & Narrative companion (premium): scenarios, encounter tables, dealer NPCs, smuggling/criminal mechanics, recovery arcs, narrative beats.
+2. Module B: Expansion + Crafting Integration companion (premium): additional substances/paraphernalia, recipe journals for The Cauldron and Mastercrafted, mixed-substance interactions.
 
 Both companion modules require substances-and-paraphernalia as a base.
 

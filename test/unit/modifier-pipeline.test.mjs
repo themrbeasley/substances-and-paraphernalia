@@ -63,7 +63,7 @@ describe("pickBypassResolution(administration, candidates)", () => {
     let r = pickBypassResolution("inhaled", [adv, auto]);
     assert.equal(r.resolution, "auto-pass");
     assert.equal(r.sources[0], auto);
-    // Order in the input doesn't matter — composition rule wins.
+    // Order in the input doesn't matter; composition rule wins.
     r = pickBypassResolution("inhaled", [auto, adv]);
     assert.equal(r.resolution, "auto-pass");
     assert.equal(r.sources[0], auto);
@@ -141,7 +141,7 @@ describe("pickBypassResolution(administration, candidates)", () => {
     assert.equal(r.sources[0], autoZ);
   });
 
-  // ── +N tier — weakest, sums across all matching AEs ───────────────────
+  // ── +N tier: weakest, sums across all matching AEs ────────────────────
   it("returns +N with the bonus for a single matching +N candidate", () => {
     const c = candidate({ id: "ae-pn", type: "+N", bonus: 2 });
     const r = pickBypassResolution("inhaled", [c]);
@@ -215,7 +215,7 @@ describe("pickBypassResolution(administration, candidates)", () => {
     assert.equal(r.sources.length, 1);
   });
 
-  // ── reroll-on-fail tier — sits between auto-pass and advantage ──────
+  // ── reroll-on-fail tier: sits between auto-pass and advantage ───────
   it("returns reroll-on-fail when only a reroll AE matches", () => {
     const c = candidate({ id: "ae-rr", type: "reroll-on-fail" });
     const r = pickBypassResolution("inhaled", [c]);

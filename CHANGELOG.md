@@ -7,7 +7,27 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
-## [0.8.8] — 2026-05-18
+## [0.9.0] (2026-09-30)
+
+### Changed
+- **Foundry V14 only.** `compatibility` is now minimum 14, verified 14.368; dnd5e minimum 5.3.0, verified 5.3.3. V13 is no longer supported (the module never shipped there).
+- **Active Effects use the V14 data shape.** Change rows live at `system.changes` with string `type`s (`"custom"`, `"add"`, `"override"`, …) instead of numeric `mode`s; durations are `duration.value` + `duration.units`. All compendium effects are converted. Every effect the module applies to an actor goes through one helper, `prepareEffectPayload` in `scripts/data/effect-data.js`.
+- **A zero or missing withdrawal duration makes withdrawal permanent**, as on V13. V14 treats a 0 duration as already expired, so the helper turns it into "no duration" instead.
+
+### Fixed
+- **Withdrawal never wore off on V14.** The withdrawal effect was created without a V14 duration, so it was permanent.
+- **Tolerance stopped weakening repeat doses on V14.** The scaled "Altered by" values were discarded in favor of the template's.
+- **"Permanent" effects kept their timers on V14** (drag-to-inventory benefit effects, and any authored addiction or withdrawal template with a duration).
+- **A copied effect template could keep a stale start time** and expire on arrival.
+- **Drag-to-inventory addiction effects now carry `aeRole: "addiction"`**, per the v0.7 contract.
+
+### Removed
+- **Times Up.** It has no V14 build. The `recommends` entry, the "missing module" notice and the dead "Wire into Times Up" world setting are gone. On V14, Foundry only marks an expired effect as expired and leaves it on the character. The House Automation module's "Delete expired effects" switch (on by default) deletes it instead, which triggers the withdrawal cleanup.
+
+### Added
+- **Guards against V13-era shapes.** `validate-content` errors on legacy effect shapes; ESLint rejects V14-removed globals, `CONST.ACTIVE_EFFECT_MODES`, `.changes` outside `system`, and legacy duration fields.
+
+## [0.8.8] (2026-05-18)
 
 ### Fixed
 - **Lowercase "long rest" in the Phase 2 dialog intro.** `FISHUT.Phase2.Dialog.Intro` referenced the rest as lowercase prose; the project's language convention is to capitalize 5e mechanic names (`Long Rest`). The warn-only language validator caught the drift in `tools/validate-content-language.mjs`.
@@ -18,31 +38,31 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 ### Changed
 - **Wiki + CLAUDE.md withdrawal docs rewritten for the duration/unit model.** `docs/wiki/Mechanics.md`, `docs/wiki/Authoring.md`, and `CLAUDE.md` still described the obsolete `withdrawalMod` rest-counting formula and the long-since-removed `scripts/data/withdrawal.js` / `computeRestsRemaining` helper. They now describe the shipped pipeline: Phase 1 applies the addiction AE only; Phase 2 (`dnd5e.preRestCompleted`) opens the Abstain dialog, rolls Wis Abstain Check → Con Withdrawal Save, and applies a Withdrawal AE whose duration is `durationToSeconds(value, unit)`. Times-Up owns expiry; `scripts/hooks/withdrawal-cleanup.js` clears the actor flag on `deleteActiveEffect`. Actor flag shape updated from `{ restsRemaining, appliedAt }` to `{ appliedAt, endsAt }`. Stale test reference `withdrawal-formula.test.mjs` → `withdrawal-duration.test.mjs`.
 
-## [0.8.7] — 2026-05-18
+## [0.8.7] (2026-05-18)
 
 ### Fixed
-- **View-mode field lock leak across the whole Details tab.** Owners who flipped the dnd5e item sheet to view mode (pencil icon off) could still edit every Substances-and-Paraphernalia control — Illicit Substance toggle, Save Ability, Addictiveness DC, Withdrawal Mod, sub-feature checkboxes, dropdowns. The v0.8.3 and v0.8.5 attempts both gated on `app.isEditable !== false`, but dnd5e's `isEditable` only reflects *ownership* (Foundry's document-level permission). The view/edit pencil drives a *separate* signal, `app._mode` (PLAY=1 / EDIT=2), which dnd5e's own `_disableFields` reads at `_onRender` time — but only on dnd5e's own fields. Our injection runs after dnd5e finishes, so we have to repeat the resolution ourselves. The new pure helper `resolveSheetEditable({ isEditable, mode })` in `scripts/data/sheet-mode.js` returns true only when both signals agree, and `lockInjectedFields(wrapper)` mirrors dnd5e's `_disableFields` selector (INPUT, SELECT, TEXTAREA, BUTTON, DND5E-CHECKBOX, COLOR-PICKER, DOCUMENT-TAGS, FILE-PICKER, HUE-SLIDER, MULTI-SELECT, PROSE-MIRROR, RANGE-PICKER, STRING-TAGS) and applies the same lock to every control we inject.
+- **View-mode field lock leak across the whole Details tab.** Owners who flipped the dnd5e item sheet to view mode (pencil icon off) could still edit every Substances-and-Paraphernalia control: Illicit Substance toggle, Save Ability, Addictiveness DC, Withdrawal Mod, sub-feature checkboxes, dropdowns. The v0.8.3 and v0.8.5 attempts both gated on `app.isEditable !== false`, but dnd5e's `isEditable` only reflects *ownership* (Foundry's document-level permission). The view/edit pencil drives a *separate* signal, `app._mode` (PLAY=1 / EDIT=2), which dnd5e's own `_disableFields` reads at `_onRender` time, but only on dnd5e's own fields. Our injection runs after dnd5e finishes, so we have to repeat the resolution ourselves. The new pure helper `resolveSheetEditable({ isEditable, mode })` in `scripts/data/sheet-mode.js` returns true only when both signals agree, and `lockInjectedFields(wrapper)` mirrors dnd5e's `_disableFields` selector (INPUT, SELECT, TEXTAREA, BUTTON, DND5E-CHECKBOX, COLOR-PICKER, DOCUMENT-TAGS, FILE-PICKER, HUE-SLIDER, MULTI-SELECT, PROSE-MIRROR, RANGE-PICKER, STRING-TAGS) and applies the same lock to every control we inject.
 
 ### Added
 - **New regression guard:** `test/unit/sheet-mode.test.mjs` locks in the truth table for `resolveSheetEditable` and verifies the `SHEET_MODE_PLAY`/`SHEET_MODE_EDIT` constants still match dnd5e's `ItemSheet5e.MODES` values. If dnd5e renumbers them in a future release, this test breaks on purpose so the resolver can be updated before users hit a regression.
 
-## [0.8.6] — 2026-05-18
+## [0.8.6] (2026-05-18)
 
 ### Fixed
-- **`lang/en.json` failed to load in Foundry**, rendering every `FISHUT.*` label as the literal key string across the entire Details tab. Foundry runs translation files through `foundry.utils.expandObject`, which turns dotted keys into a nested tree. v0.8.3 declared both `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit": "Unit"` and `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit.minutes": "Minutes"` (plus four sibling unit suffixes), so expansion tried to set a child key on top of a leaf string and threw `Cannot use 'in' operator to search for 'minutes' in Unit`. That throw aborted the entire file load — not just the offending key. Renamed the parent to `…WithdrawalDurationUnit.Label` and updated the single JS reference. The v0.8.3 lang-keys regression test verified keys *exist* but not that they can be structurally parsed; this release also adds a Foundry-equivalent prefix-collision check.
+- **`lang/en.json` failed to load in Foundry**, rendering every `FISHUT.*` label as the literal key string across the entire Details tab. Foundry runs translation files through `foundry.utils.expandObject`, which turns dotted keys into a nested tree. v0.8.3 declared both `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit": "Unit"` and `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit.minutes": "Minutes"` (plus four sibling unit suffixes), so expansion tried to set a child key on top of a leaf string and threw `Cannot use 'in' operator to search for 'minutes' in Unit`. That throw aborted the entire file load, not just the offending key. Renamed the parent to `…WithdrawalDurationUnit.Label` and updated the single JS reference. The v0.8.3 lang-keys regression test verified keys *exist* but not that they can be structurally parsed; this release also adds a Foundry-equivalent prefix-collision check.
 
 ### Added
 - **New regression guard:** `test/unit/details-tab-lang-keys.test.mjs` now asserts that no key in `lang/en.json` is a strict dotted-prefix of another key. Catches the v0.8.3 → v0.8.5 failure class at CI time without requiring Foundry to be in the Node test runtime.
 
-## [0.8.5] — 2026-05-18
+## [0.8.5] (2026-05-18)
 
 ### Fixed
-- **View-mode field lock leak on the kind toggle.** The master Substance/Paraphernalia checkbox (`<dnd5e-checkbox>` web component) honored `setAttribute("disabled", "")` visually but still fired `change` events when clicked, allowing the kind flag to be flipped from a view-mode sheet. Mirrors the JS-side `isEditable` guard added to `wireDetails` in v0.8.3 — same class of leak, different element.
+- **View-mode field lock leak on the kind toggle.** The master Substance/Paraphernalia checkbox (`<dnd5e-checkbox>` web component) honored `setAttribute("disabled", "")` visually but still fired `change` events when clicked, allowing the kind flag to be flipped from a view-mode sheet. Mirrors the JS-side `isEditable` guard added to `wireDetails` in v0.8.3; same class of leak, different element.
 
 ### Added
 - **One-shot i18n diagnostic on the Details tab.** If `game.i18n.localize("FISHUT.*")` returns the key verbatim (Foundry's behavior when no translation is loaded), log a single `logger.warn` per session pointing at the world install. Helps triage stale-install / world-translation-override reports without blaming the source.
 
-## [0.8.0] — 2026-05-13
+## [0.8.0] (2026-05-13)
 
 ### Added
 - DC-tier scaling design statement on the Mechanics wiki, including a recommended DC range table per character tier. (Item 13)
@@ -52,15 +72,15 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - Details-tab withdrawal preview: live "Estimated withdrawal: ~N long rests (assumes Con +0; varies per character)" span beneath the Withdrawal Mod input, recomputed on each keystroke. (Item 4)
 - Details-tab appliesTo preview on paraphernalia: live "Required for: …" admin-list span beneath the appliesTo checkbox grid. (Item 5)
 - "Tuning Withdrawal Duration" section in the Authoring wiki, with a worked-examples grid covering Con +0 / +3 / +5 across `withdrawalMod` 2–6. (Item 4)
-- `tools/validate-content-language.mjs` — pure 2024 D&D 5e phrasing invariant (`checkLanguagePhrasing`) covering condition capitalization, "saving throw" vs "save", "regain HP" vs "restore/recover", "Long Rest" / "Short Rest" capitalization, "once per day" recovery anti-pattern, and lowercase damage types in prose. Warn-only in v0.8; flips to error-blocking in v0.9. (Item 11)
+- `tools/validate-content-language.mjs`: pure 2024 D&D 5e phrasing invariant (`checkLanguagePhrasing`) covering condition capitalization, "saving throw" vs "save", "regain HP" vs "restore/recover", "Long Rest" / "Short Rest" capitalization, "once per day" recovery anti-pattern, and lowercase damage types in prose. Warn-only in v0.8; flips to error-blocking in v0.9. (Item 11)
 - `validate-content.mjs` now scans every `lang/en.json` string and every `templates/**/*.hbs` template (Handlebars and HTML stripped) and reports findings as warnings. (Item 11)
 - "Language Conventions" section in the Authoring wiki with the anti-pattern → recommended-phrasing table and the prose-vs-data-field rule. (Item 11)
 
 ### Changed
-- Substance subsystem fields on the Details tab (Addiction, Withdrawal, Overdose, Tolerance) now **collapse** when their parent enable toggle is off instead of greying out. Wraps the dependent inputs in `[data-fishut-collapse="<name>"]` divs that toggle `.fishut-hidden` synchronously on checkbox change — clearer than disabled-but-visible inputs that read as "broken." (Item 4)
+- Substance subsystem fields on the Details tab (Addiction, Withdrawal, Overdose, Tolerance) now **collapse** when their parent enable toggle is off instead of greying out. Wraps the dependent inputs in `[data-fishut-collapse="<name>"]` divs that toggle `.fishut-hidden` synchronously on checkbox change, which is clearer than disabled-but-visible inputs that read as "broken." (Item 4)
 - `lang/en.json` strings rewritten to satisfy the new language invariant (Long Rest capitalization, "saving throw" spelled out, capitalized condition names). (Item 11)
 
-## [0.7.0] — 2026-05-12
+## [0.7.0] (2026-05-12)
 
 ### Added
 - `aeRole` flag on every module-created Active Effect (`addiction`, `withdrawal`, `altered`, `tolerance`, `overdose`, `bypass`). Substring matching against the AE name remains as a warn-logged fallback for hand-authored AEs.
@@ -86,10 +106,10 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - Chat strings reworded to willpower/craving language (`Pass`, `FailGiveIn`, `FailNoSubstance`).
 
 ### Deferred
-- Shipped-content rewrite to apply Wisdom-saves convention to every mind-altering substance — deferred to v0.9 / Item 12.
-- DC tuning for the abstain Wis save (consider escalating DC with consumption count) — held until post-v0.7 playtest per spec §3.5.
+- Shipped-content rewrite to apply Wisdom-saves convention to every mind-altering substance (deferred to v0.9 / Item 12).
+- DC tuning for the abstain Wis save (consider escalating DC with consumption count), held until post-v0.7 playtest per spec §3.5.
 
-## [0.6.0] — 2026-05-11
+## [0.6.0] (2026-05-11)
 
 ### Added
 - **`reroll-on-fail` save-bypass tier.** New `modifier.type` enum entry. When a
@@ -99,8 +119,8 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   result is canonical. Sits between `auto-pass` and `advantage` in tier order
   (`auto-pass > reroll-on-fail > advantage > +N`). Use is consumed once per
   consumption attempt regardless of whether the reroll fires.
-- `Tongue of the Oracle` paraphernalia (fantasy / ingested / `tincture-dropper`)
-  — once-per-day reroll-on-fail vial; canonical example of the new tier.
+- `Tongue of the Oracle` paraphernalia (fantasy / ingested / `tincture-dropper`):
+  once-per-day reroll-on-fail vial; canonical example of the new tier.
 
 ### Breaking
 - **Dead `addictionSaveBypassTypes` enum removed from `scripts/data/schema.json`.**
@@ -108,7 +128,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   read it post-v0.3. Removed alongside its dead localization key
   `FISHUT.SaveBypass.Type.AutoPass`.
 
-## [0.5.2] — 2026-05-11
+## [0.5.2] (2026-05-11)
 
 ### Fixed
 - **GM Guide macro list incomplete.** Added "Toggle Paraphernalia Enforcement"
@@ -118,7 +138,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   stale LevelDB data from a prior pack build; a fresh `npm run pack` resolves it.
 
 ### Changed
-- **README rewritten for v0.5.x.** The README described v0.2 exclusively —
+- **README rewritten for v0.5.x.** The README described v0.2 exclusively:
   wrong dependency info, removed 3-dot authoring form, obsolete flag shapes,
   and zero coverage of v0.3+ features. Rewritten to reflect current reality
   with wiki pointers for authoring details.
@@ -128,7 +148,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - **Backfilled CHANGELOG for v0.4.0 and v0.5.0.** The log jumped from 0.3.0
   to 0.5.1; added entries from the shipped-version summaries in `ROADMAP.md`.
 
-## [0.5.1] — 2026-05-10
+## [0.5.1] (2026-05-10)
 
 ### Breaking
 - **`dae`, `midi-qol`, and `tokenmagic` are now `relationships.requires`.**
@@ -137,19 +157,19 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   removed (their off-states would silently break the addiction pipeline
   and weren't honest options). The `tmfxIntegration` toggle remains as a
   per-world visuals opt-out. Existing v0.5.0 worlds will hit Foundry's
-  required-modules dialog on next load — install/activate the prereqs.
+  required-modules dialog on next load: install/activate the prereqs.
 
 ### Fixed
 - **TMFX preset palette now actually registers under TMFX 0.7.6.3+.**
   Three preset bugs that silently no-op'd against the maintained TMFX
   fork (Feu-Secret/Tokenmagic):
-  - `fishut-tmfx-modern-stimulant` declared `filterType: "bloom"` — the
+  - `fishut-tmfx-modern-stimulant` declared `filterType: "bloom"`; the
     real enum is `xbloom`.
   - `fishut-tmfx-fantasy-mind-altering` (`wave`) used `amplitude` /
-    `wavelength` — the actual `wave` filter takes `strength` /
+    `wavelength`: the actual `wave` filter takes `strength` /
     `frequency`.
   - `fishut-tmfx-scifi-mind-altering` (`ray`) used `intensity` /
-    `amplitude` / `blend` / `divergence` — the actual `ray` filter
+    `amplitude` / `blend` / `divergence`: the actual `ray` filter
     takes `divisor` / `alpha`.
   Unknown filter types and unknown params are silently ignored by TMFX
   at construction time, which is exactly why this slipped past v0.5.0.
@@ -166,26 +186,26 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   warn-log if it's still missing then.
 
 ### Added
-- `Remove Altered` macro in the `fishut-illicit-macros` compendium —
+- `Remove Altered` macro in the `fishut-illicit-macros` compendium. It
   fills the gap left by v0.4: the four other lifecycle removers
   (Addiction, Withdrawal, Tolerance, Overdose) all shipped, but the
   benefit AE (`Altered by *`) had no companion remover. Same UX as the
   other removers (preview list, per-AE checkboxes, paste-restore JSON
   whisper). Matches case-insensitively on `/altered/i` per the AE name
   contract.
-- `module.api.integrations.verifyTmfxPresets()` — diagnostic helper
+- `module.api.integrations.verifyTmfxPresets()`: diagnostic helper
   that walks the preset palette, calls `TokenMagic.getPreset` on each
   entry, and returns `{registered, missing}`. Useful for triage from
   the GM console without reloading.
 - Unit tests for the preset palette
-  (`test/unit/tmfx-presets.test.mjs`) — pin every preset's `filterType`
+  (`test/unit/tmfx-presets.test.mjs`); they pin every preset's `filterType`
   to TMFX 0.7.6.3+'s registered filter list so an invalid type fails
   CI rather than the live world.
-- Quench round-trip suite (`S&P · TMFX preset round-trip`) — asserts
+- Quench round-trip suite (`S&P · TMFX preset round-trip`) that asserts
   every preset is retrievable from the `tmfx-main` library and
   optionally exercises `addFilters` against a canvas token.
 
-## [0.5.0] — 2026-05-09
+## [0.5.0] (2026-05-09)
 
 ### Breaking
 - **Per-substance `requiredSubtypes` removed; admin-type paraphernalia gating
@@ -195,7 +215,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   `injury`) matched against a paraphernalia-side `appliesTo` admin list
   authored via new Details-tab "Paraphernalia Properties" admin-type
   checkboxes. The legacy `requiredSubtypes` flag is a hard validator error.
-  Pre-1.0 clean break — no migration shim. Re-import paraphernalia from the
+  Pre-1.0 clean break; no migration shim. Re-import paraphernalia from the
   shipped compendium.
 
 ### Added
@@ -204,7 +224,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   CUSTOM); DAE forwards the preset name to TMFX on apply/remove. Nine preset
   filters (3 settings × 3 categories) registered into the `tmfx-main`
   library under names `fishut-tmfx-{setting}-{category}` at `ready` /
-  `canvasReady`. No custom TMFX hook and no `flags[…].tmfx` block — authoring
+  `canvasReady`. No custom TMFX hook and no `flags[…].tmfx` block; authoring
   is directly on the AE Changes table. `module.api.integrations.verifyTmfxPresets()`
   diagnostic helper exposed for GM console triage.
 - **Per-integration boolean world settings** (`daeIntegration`,
@@ -223,7 +243,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   can drive Sequencer effects via a world-local macro UUID in the
   `macro.tokenMagic` Change row.
 
-## [0.4.0] — 2026-05-08
+## [0.4.0] (2026-05-08)
 
 ### Added
 - **`+N` save-bypass type** added to the modifier pipeline (completes Theme
@@ -231,14 +251,14 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   bonus values.
 - **Theme 6 round 2 content:** ≥2 substances per 3×3 setting × category
   matrix cell, plus a `+N`-bypass paraphernalia item.
-- **Theme 1 — GM Guide moved to GitHub wiki.** In-world journal reduced to a
+- **Theme 1: GM Guide moved to GitHub wiki.** In-world journal reduced to a
   single pointer page; CI link-check added.
-- **Tolerance auto-stacking** on addiction save pass — tolerance AE applied
+- **Tolerance auto-stacking** on addiction save pass: tolerance AE applied
   and stacks automatically.
 - **Overdose d100 per consumption** with a marker Active Effect on the actor.
-- **Withdrawal-bite AE template picker** — substance items carry an authored
+- **Withdrawal-bite AE template picker**: substance items carry an authored
   withdrawal AE template; `applyWithdrawalEffect` clones it onto the actor.
-- **Voluntary-abstain long-rest dialog button** — GM/player can opt a
+- **Voluntary-abstain long-rest dialog button**: GM/player can opt a
   character into voluntary abstinence from the rest dialog.
 - **Poisoned-coupling tri-state world setting** (`linked-cascade`,
   `linked-isolated`, `independent`) governing how addiction AEs interact with
@@ -250,7 +270,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - **Paraphernalia Subtype Manager** settings sub-menu for adding/removing
   custom paraphernalia subtypes as a world setting.
 
-## [0.3.0] — 2026-05-07
+## [0.3.0] (2026-05-07)
 
 ### Breaking
 - **`addictionSaveBypass` removed from paraphernalia flag blocks.** Save
@@ -258,7 +278,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   `flags["substances-and-paraphernalia"].modifier` block carries
   `kind: "bypass"` and an `appliesTo` administration list participates
   in the modifier pipeline. Paraphernalia grant bypass by carrying a
-  `transfer: true` AE with that flag block. Pre-1.0 clean break — no
+  `transfer: true` AE with that flag block. Pre-1.0 clean break; no
   migration shim. Re-import paraphernalia from the shipped compendium;
   the legacy item-level `addictionSaveBypass` shape is now a hard
   validator error.
@@ -277,7 +297,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - AE-flag modifier pipeline (`scripts/data/modifier-pipeline.js`) with
   composition rule `auto-pass > advantage > none`; deterministic
   tie-break by AE id.
-- `advantage` save-bypass type — addiction saves roll with advantage
+- `advantage` save-bypass type: addiction saves roll with advantage
   when a matching `kind: "bypass" / type: "advantage"` AE is on the
   actor.
 - Drag-to-inventory state-injection dialog (GM/ASSISTANT only) that
@@ -286,7 +306,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   withdrawal entry), Withdrawing (withdrawal entry only), Decline
   (chat note). Tolerant / Overdosed buttons stub for v0.4.
 - Theme 6 round 1 content: four substances filling the empty cells of
-  the 3×3 setting × category matrix — Giantsbreath Tonic (fantasy /
+  the 3×3 setting × category matrix: Giantsbreath Tonic (fantasy /
   performance-enhancing), Spaceport Stim-Patch (sci-fi / stimulant),
   Reflex Injector (sci-fi / performance-enhancing), Voltbeans (modern
   / stimulant).
@@ -297,12 +317,12 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
   `{ resolution, source }` (was `{ bypassed, paraphernalia, type }`).
 - `module.json` `compatibility.verified` pinned to dnd5e 5.2.5.
 
-## [0.2.0] — 2026-05-05
+## [0.2.0] (2026-05-05)
 
 ### Breaking
 - **`schemaVersion` bumped to 2.** Substance and paraphernalia flag blocks
   carry new fields (`administration`, `addiction`, `addictionSaveBypass`).
-  No automatic migration is provided — re-import substances and
+  No automatic migration is provided; re-import substances and
   paraphernalia from the shipped compendia. Existing world copies authored
   against schema v1 will continue to load but will not be upgraded; gating
   still works, addiction automation does not fire on them.
@@ -320,7 +340,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - Paraphernalia flag `addictionSaveBypass = { type, appliesTo, usesPerDay }`
   for items that grant a saved-bypass against addiction (e.g. legendary
   attuned pipes).
-- Actor flag `withdrawal[<substanceId>] = { restsRemaining, appliedAt }` —
+- Actor flag `withdrawal[<substanceId>] = { restsRemaining, appliedAt }`:
   canonical state for withdrawal tracking.
 - Active Effect flag `sourceSubstanceId` mirroring the substance item id on
   applied addiction effects.
@@ -356,7 +376,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - `requiresDae(item)` item-level accessor (replaced by per-AE
   `aeRequiresDae(effect)` in `scripts/integrations/dae.js`).
 
-## [0.1.0] — initial scaffold
+## [0.1.0] (initial scaffold)
 
 - Module skeleton, paraphernalia gate hook, AND-of-OR requirement
   evaluator, slug+UUID resolver, DialogV2 override flow, integration

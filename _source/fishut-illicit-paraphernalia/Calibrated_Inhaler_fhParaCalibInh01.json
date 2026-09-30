@@ -6,7 +6,7 @@
   "folder": "fhParaModern0001",
   "system": {
     "description": {
-      "value": "<p>A medical-grade metered inhaler retrofitted for off-label substances. The dose-calibration ring lets a careful user keep below the body's panic threshold — the chemistry hits with the same edge but slightly less of the wallop.</p><p><strong>Buffered intake.</strong> Provides a +2 bonus to Constitution saving throws against addiction from inhaled substances administered through this inhaler.</p>"
+      "value": "<p>A medical-grade metered inhaler retrofitted for off-label substances. The dose-calibration ring lets a careful user keep below the body's panic threshold: the chemistry hits with the same edge but slightly less of the wallop.</p><p><strong>Buffered intake.</strong> Provides a +2 bonus to Constitution saving throws against addiction from inhaled substances administered through this inhaler.</p>"
     },
     "type": {
       "value": "trinket"
@@ -35,13 +35,15 @@
   "effects": [
     {
       "_id": "fhAECalibInhByp",
-      "name": "Calibrated Inhaler — Save Modifier",
+      "name": "Calibrated Inhaler: Save Modifier",
       "img": "icons/svg/aura.svg",
       "transfer": true,
       "disabled": false,
       "duration": {},
       "description": "<p>Grants a +2 bonus to Constitution saving throws against addiction to inhaled substances administered through the Calibrated Inhaler.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "bypass",

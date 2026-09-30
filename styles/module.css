@@ -1,4 +1,4 @@
-/* Substances and Paraphernalia — module styles. */
+/* Substances and Paraphernalia: module styles. */
 
 .fishut.fishut-item-settings .fishut-form {
   display: flex;
@@ -120,7 +120,7 @@
   color: var(--color-text-dark-secondary, #666);
 }
 
-/* Paraphernalia Subtype Manager — chip-cloud UX */
+/* Paraphernalia Subtype Manager: chip-cloud UX */
 
 .fishut-paraphernalia-subtypes {
   display: flex;
@@ -322,14 +322,14 @@
   margin: 0.25rem 0 0 0;
 }
 
-/* Subsystem collapse — hides the dependent-fields block when its parent
+/* Subsystem collapse: hides the dependent-fields block when its parent
    toggle (Addiction / Overdose / Tolerance / Grants Save Bypass) is off.
    Hide, not grey: grey-out reads as "broken"; hide reads as "off." */
 .fishut-hidden {
   display: none;
 }
 
-/* Read-only preview span under inputs — withdrawal duration estimate,
+/* Read-only preview span under inputs: withdrawal duration estimate,
    appliesTo summary, etc. Distinct from .fishut-hint (which is static
    guidance text) by being a live-computed value with the .fishut-preview
    class as a JS hook for in-place update. */

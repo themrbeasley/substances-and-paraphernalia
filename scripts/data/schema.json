@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Substances and Paraphernalia — module schema",
+  "title": "Substances and Paraphernalia: module schema",
   "schemaVersion": 7,
   "moduleId": "substances-and-paraphernalia",
   "flagScope": "substances-and-paraphernalia",

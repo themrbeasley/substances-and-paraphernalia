@@ -1,5 +1,6 @@
 import { MODULE_ID, FLAGS } from "../config.js";
 import { logger } from "../logger.js";
+import { effectChanges } from "./effect-data.js";
 import {
   readModifier,
   readModifierFromChanges,
@@ -34,13 +35,15 @@ import {
  *
  * @typedef {Object} WithdrawalBlock
  * @property {boolean} [enabled]   Defaults to true when omitted; false skips
- *   withdrawal AE application and actor-flag bookkeeping on save fail (the
- *   addiction AE persists with no rest-tick countdown).
- * @property {number} [mod]        Positive integer; floor of withdrawal
- *   duration is `ceil(mod / 2)` long rests.
+ *   the Constitution Withdrawal Save and the withdrawal AE for this substance.
+ * @property {number} dc           Constitution Withdrawal Save DC.
+ * @property {{ability: string, dc: number}} abstain
+ *   Abstain Check rolled at a Long Rest (Wisdom by default).
+ * @property {{value: number, unit: "minutes"|"hours"|"days"|"weeks"|"months"}} duration
+ *   How long the withdrawal AE lasts once it applies (months are 30 days).
  * @property {string[]} [effectIds]
- *   v0.4 canonical: ids of withdrawal AE templates on the same item; the
- *   long-rest tick clones ALL of them onto the actor when withdrawal applies.
+ *   v0.4 canonical: ids of withdrawal AE templates on the same item; ALL of
+ *   them are cloned onto the actor when withdrawal applies at a Long Rest.
  * @property {string} [effectId]
  *   Deprecated pre-v0.4 singular id; readers wrap it in an array on the fly.
  *
@@ -63,7 +66,7 @@ import {
  *
  * @typedef {Object} WithdrawalEntry
  * @property {string} appliedAt    ISO-8601 timestamp when withdrawal landed.
- * @property {string} endsAt       ISO-8601 timestamp computed from AE duration.seconds.
+ * @property {string} endsAt       ISO-8601 timestamp computed from the withdrawal duration in seconds.
  *
  * @typedef {Object<string, WithdrawalEntry>} WithdrawalMap
  *   Keyed by substance item `_id`.
@@ -358,7 +361,7 @@ export const setSourceSubstanceId = (effect, value) =>
 /**
  * Read the modifier block from an AE.
  *
- * v0.4 canonical storage is `effect.changes[]` rows whose key starts with
+ * v0.4 canonical storage is `effect.system.changes[]` rows (V14) whose key starts with
  * `flags.<scope>.modifier.` so the standard Foundry "Changes" tab is the
  * editable surface. Falls back to the legacy `effect.flags.<scope>.modifier`
  * shape so pre-v0.4 authored content (and Quench fixtures that haven't been
@@ -369,7 +372,7 @@ export const setSourceSubstanceId = (effect, value) =>
  */
 export const getModifier = (effect) => {
   if (!effect) return null;
-  const fromChanges = readModifierFromChanges(effect.changes, MODULE_ID);
+  const fromChanges = readModifierFromChanges(effectChanges(effect), MODULE_ID);
   if (fromChanges) return fromChanges;
   return readModifier(effect.flags?.[MODULE_ID]);
 };
@@ -382,8 +385,8 @@ export const getModifier = (effect) => {
  * @param {import("./modifier-flag.js").ModifierBlock} value
  */
 export const setModifier = (effect, value) => {
-  const changes = mergeModifierIntoChanges(effect?.changes, value, MODULE_ID);
-  return effect.update({ changes });
+  const changes = mergeModifierIntoChanges(effectChanges(effect), value, MODULE_ID);
+  return effect.update({ "system.changes": changes });
 };
 
 // ─── Actor flags (withdrawal map) ────────────────────────────────────────────
@@ -416,7 +419,7 @@ export const clearActorWithdrawalEntry = async (actor, substanceId) => {
   return actor.setFlag(MODULE_ID, FLAGS.withdrawal, map);
 };
 
-// ─── Substance withdrawal block (v0.8.1 — DC + Abstain + Duration) ───────────
+// ─── Substance withdrawal block (v0.8.1: DC + Abstain + Duration) ────────────
 
 /** @param {Item} item @returns {number|null} */
 export const getWithdrawalDc = (item) => {
@@ -472,7 +475,7 @@ export const setWithdrawalDuration = (item, value) => {
   return setWithdrawal(item, { ...block, duration: value });
 };
 
-// ─── Substance tolerance block (v0.8.1 — decay + attenuation curve) ──────────
+// ─── Substance tolerance block (v0.8.1: decay + attenuation curve) ───────────
 
 const DEFAULT_TOLERANCE_DECAY = 1;
 
@@ -499,7 +502,7 @@ export const getAttenuationCurve = (item) => {
   return Array.isArray(curve) ? curve : null;
 };
 
-// ─── Actor flags (tolerance map — mirror of withdrawal map shape) ────────────
+// ─── Actor flags (tolerance map: mirror of withdrawal map shape) ─────────────
 
 /**
  * @typedef {Object} ToleranceEntry

@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { checkLanguagePhrasing } from "../../tools/validate-content-language.mjs";
 
-describe("checkLanguagePhrasing — warn-level findings only", () => {
+describe("checkLanguagePhrasing: warn-level findings only", () => {
   it("returns empty array for compliant 2024 phrasing", () => {
     const compliant = [
       "The creature must make a Constitution saving throw against the substance.",

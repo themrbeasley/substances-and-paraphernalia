@@ -9,8 +9,8 @@ import assert from "node:assert/strict";
 // is bypassed (e.g. dynamic imports, plugin misconfiguration).
 //
 // Strategy: stub the Foundry globals that fire at module top-level so we can
-// distinguish a link-time SyntaxError (the regression class — must fail the
-// test) from a runtime ReferenceError (expected — we're not in Foundry).
+// distinguish a link-time SyntaxError (the regression class; must fail the
+// test) from a runtime ReferenceError (expected, since we're not in Foundry).
 describe("module entry imports cleanly", () => {
   it("scripts/module.mjs links without missing-export errors", async () => {
     globalThis.Hooks = { on: () => {}, once: () => {}, callAll: () => {} };
