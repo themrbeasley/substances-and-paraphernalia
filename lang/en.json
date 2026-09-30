@@ -102,6 +102,7 @@
   "FISHUT.Addiction.Save.Bypass": "{actor}'s save against <strong>{item}</strong> addiction was bypassed by <strong>{paraphernalia}</strong>.",
   "FISHUT.Addiction.Already.Maintained": "{actor} is already addicted to <strong>{item}</strong>; the addiction continues.",
   "FISHUT.Withdrawal.Relapse": "{actor} takes <strong>{item}</strong> during withdrawal; the withdrawal ends, but the addiction does not.",
+  "FISHUT.Withdrawal.Recovered": "{actor} has come through withdrawal from <strong>{item}</strong> and is no longer addicted.",
 
   "FISHUT.Overdose.EffectName": "Overdosed on {item}",
   "FISHUT.Overdose.Triggered": "{actor} overdosed on <strong>{item}</strong>: {description}",
