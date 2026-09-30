@@ -101,6 +101,7 @@
   "FISHUT.Addiction.Save.FailWithReroll": "{actor} failed to resist <strong>{item}</strong> even after rerolling (<strong>{source}</strong>); gained the Addicted condition.",
   "FISHUT.Addiction.Save.Bypass": "{actor}'s save against <strong>{item}</strong> addiction was bypassed by <strong>{paraphernalia}</strong>.",
   "FISHUT.Addiction.Already.Maintained": "{actor} is already addicted to <strong>{item}</strong>; the addiction continues.",
+  "FISHUT.Withdrawal.Relapse": "{actor} takes <strong>{item}</strong> during withdrawal; the withdrawal ends, but the addiction does not.",
 
   "FISHUT.Overdose.EffectName": "Overdosed on {item}",
   "FISHUT.Overdose.Triggered": "{actor} overdosed on <strong>{item}</strong>: {description}",

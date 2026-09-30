@@ -3,8 +3,10 @@ import {
   getAddiction,
   getAddictionEffectIds,
   getAddictionEnabled,
+  getAddictedSubstanceIds,
+  getAeRole,
   getWithdrawalEffectIds,
-  getActorWithdrawalEntry,
+  getWithdrawalDuration,
   getToleranceEffectIds,
   getToleranceEnabled,
   findEffectsByRole,
@@ -13,11 +15,15 @@ import {
   getAttenuationCurve,
   getActorToleranceEntry,
   setActorToleranceEntry,
+  setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
 import { attenuateChangeRows } from "../data/tolerance.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
+import { durationToSeconds } from "../data/withdrawal-duration.js";
+import { d20Config } from "../data/roll-config.js";
+import { rollOverdoseAndApply } from "./overdose.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
 
@@ -44,15 +50,40 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
-  if (!getAddictionEnabled(item)) return;
-  const addiction = getAddiction(item);
-  if (!addiction || typeof addiction.save?.dc !== "number") return;
-
   try {
-    await rollSaveAndApply(actor, item);
+    await runDosePipeline(actor, item);
   } catch (err) {
-    logger.error("addiction post-use flow failed", err);
+    logger.error("dose flow failed", err);
   }
+}
+
+/**
+ * One dose, in order (spec D10): a dose during withdrawal cancels it (D7);
+ * the addiction save; the high, scaled by current tolerance; tolerance +1
+ * (every dose, D9); the overdose check against the new total. The only
+ * post-use listener for substances. Simulate Dose runs it too.
+ *
+ * @param {Actor} actor
+ * @param {Item}  item
+ */
+export async function runDosePipeline(actor, item) {
+  await cancelWithdrawalOnRelapse(actor, item);
+  if (getAddictionEnabled(item) && typeof getAddiction(item)?.save?.dc === "number") {
+    await rollSaveAndApply(actor, item);
+  }
+  await applyAlteredEffectGated(actor, item);
+  await incrementActorToleranceCount(actor, item);
+  await rollOverdoseAndApply(actor, item);
+}
+
+async function cancelWithdrawalOnRelapse(actor, item) {
+  const ids = actor.effects
+    .filter((e) => getAeRole(e) === "withdrawal" && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id)
+    .map((e) => e.id);
+  if (ids.length === 0) return;
+  // withdrawal-cleanup.js reads fishutRelapse: clear the record, keep the addiction.
+  await actor.deleteEmbeddedDocuments("ActiveEffect", ids, { fishutRelapse: true });
+  await chat(game.i18n.format("FISHUT.Withdrawal.Relapse", { actor: actor.name, item: item.name }));
 }
 
 /**
@@ -66,8 +97,8 @@ export async function rollSaveAndApply(actor, item) {
   const addiction = getAddiction(item);
   if (!addiction) return;
 
-  const existing = getActorWithdrawalEntry(actor, item.id);
-  if (existing) {
+  // Addicted means carrying the Addiction effect (spec D1): no second save.
+  if (getAddictedSubstanceIds(actor).includes(item.id)) {
     return applyOutcome(actor, item, { alreadyAddicted: true });
   }
 
@@ -108,7 +139,6 @@ export async function applyOutcome(actor, item, outcome) {
   if (!addiction) return;
 
   if (outcome?.alreadyAddicted) {
-    await refreshAddictionEffect(actor, item);
     await chat(
       game.i18n.format("FISHUT.Addiction.Already.Maintained", {
         actor: actor.name,
@@ -152,11 +182,6 @@ export async function applyOutcome(actor, item, outcome) {
         bonus: bonusValue,
       }),
     );
-    try {
-      await incrementActorToleranceCount(actor, item);
-    } catch (err) {
-      logger.error("tolerance flow failed", err);
-    }
     return { applied: "passed" };
   }
 
@@ -189,39 +214,20 @@ function joinSourceNames(modifier) {
 }
 
 async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, reroll = false } = {}) {
-  if (typeof actor.rollAbilitySave !== "function" && typeof actor.rollSavingThrow !== "function") {
-    logger.warn("actor has no rollAbilitySave/rollSavingThrow; skipping save");
+  const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
+  if (typeof fn !== "function") {
+    logger.warn("actor has no rollSavingThrow; skipping save");
     return null;
   }
-  // dnd5e 4.x prefers `rollSavingThrow` (the 3.x `rollAbilitySave` still
-  // exists as an alias on most builds). Try the modern name first.
-  const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
-  // reroll-on-fail wins outright over advantage/+N at resolution time, so
-  // those modifiers can never co-fire on the same call. Build a clean config
-  // and roll once; if it fails the DC, roll a second time with the same
-  // clean config and return that result.
-  const baseConfig = {
-    ability,
-    target: dc,
-    targetValue: dc,
-    fastForward: false,
-    chatMessage: true,
-  };
+  const firstRoll = (result) => (Array.isArray(result) ? (result[0] ?? null) : (result ?? null));
+  // reroll-on-fail outranks advantage and +N at resolution time, so it rolls
+  // twice with no modifiers.
   if (reroll) {
-    const first = await fn.call(actor, { ...baseConfig });
-    const firstRoll = Array.isArray(first) ? (first[0] ?? null) : (first ?? null);
-    if (!firstRoll) return null;
-    if (firstRoll.total >= dc) return firstRoll;
-    const second = await fn.call(actor, { ...baseConfig });
-    const secondRoll = Array.isArray(second) ? (second[0] ?? null) : (second ?? null);
-    return secondRoll ?? firstRoll;
+    const first = firstRoll(await fn.call(actor, d20Config(ability, dc)));
+    if (!first || first.total >= dc) return first;
+    return firstRoll(await fn.call(actor, d20Config(ability, dc))) ?? first;
   }
-  const config = { ...baseConfig, advantage };
-  if (Number.isFinite(bonus) && bonus !== 0) config.parts = [String(bonus)];
-  const roll = await fn.call(actor, config);
-  // Handle both single-roll and array-roll return shapes.
-  if (Array.isArray(roll)) return roll[0] ?? null;
-  return roll ?? null;
+  return firstRoll(await fn.call(actor, d20Config(ability, dc, { advantage, bonus })));
 }
 
 /**
@@ -276,12 +282,6 @@ function applyCouplingMode(data, mode) {
   }
 }
 
-async function refreshAddictionEffect(actor, item) {
-  const existing = findAppliedAddictionEffect(actor, item.id);
-  if (existing) return existing;
-  return applyAddictionEffect(actor, item);
-}
-
 function findAddictionTemplates(item) {
   const effects = item?.effects;
   if (!effects) return [];
@@ -301,18 +301,6 @@ function findAddictionTemplates(item) {
   return list.filter((e) => /addict/i.test(e.name ?? ""));
 }
 
-function findAppliedAddictionEffect(actor, substanceId) {
-  return findAllAppliedAddictionEffects(actor, substanceId)[0] ?? null;
-}
-
-function findAllAppliedAddictionEffects(actor, substanceId) {
-  const matches = findEffectsByRole(actor, "addiction");
-  if (substanceId === undefined) return matches;
-  return matches.filter(
-    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
-  );
-}
-
 /**
  * Identify an applied addiction AE on an actor. Used by the linked-isolated
  * coupling guard to decide whether to block external deletes. Exported as part
@@ -322,13 +310,11 @@ function findAllAppliedAddictionEffects(actor, substanceId) {
  * @returns {boolean}
  */
 export function isAppliedAddictionEffect(effect) {
-  if (!effect) return false;
-  if (!effect.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId]) return false;
-  const name = effect.name ?? "";
-  if (/tolerance/i.test(name)) return false;
-  if (/withdraw/i.test(name)) return false;
-  // Either an "addict"-named AE or a pre-v0.4 unnamed-by-convention AE counts.
-  return true;
+  if (!effect?.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId]) return false;
+  // Highs and overdose markers carry a source id too; only addictions count,
+  // or the linked-isolated guard would block House Automation from expiring them.
+  const role = getAeRole(effect);
+  return role ? role === "addiction" : /addict/i.test(effect.name ?? "");
 }
 
 /**
@@ -380,40 +366,47 @@ export async function incrementActorToleranceCount(actor, item) {
 }
 
 /**
- * Apply the Altered AE, scaling every numeric Change-row `value` by the
- * substance's attenuation curve at the actor's current tolerance Count. Deletes
- * any prior Altered AE for this substance first so re-application with a
- * different scalar replaces in-place (avoids stacking).
+ * Apply the substance's Altered effects (every altered template: Stellar Mist
+ * ships a visual and a save bonus), scaling each numeric Change-row `value` by
+ * the attenuation curve at the actor's current tolerance count. Earlier highs
+ * from this substance are deleted first, so a re-dose replaces rather than
+ * stacks.
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @returns {Promise<ActiveEffect|null>} the first applied effect
  */
 export async function applyAlteredEffectGated(actor, item) {
   const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
   const curve = getAttenuationCurve(item) ?? DEFAULT_ATTENUATION_CURVE;
-  const prior = findEffectsByRole(actor, "altered").filter(
-    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
-  );
+  // Replace any earlier high from this substance, including a copy Midi-QoL
+  // applied from an older item (it has no sourceSubstanceId, only an origin).
+  const prior = findEffectsByRole(actor, "altered").filter((e) => {
+    const sid = e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId];
+    return sid === item.id || (!sid && e.origin === item.uuid);
+  });
   for (const eff of prior) {
     await eff.delete({ fishutIntentional: true });
   }
-  const template = findAlteredTemplate(item);
-  if (!template) return null;
-  const data = prepareEffectPayload(template.toObject(), {
-    sourceSubstanceId: item.id,
-    origin: item.uuid,
-    role: "altered",
+  const templates = findAlteredTemplates(item);
+  if (templates.length === 0) return null;
+  const payloads = templates.map((template) => {
+    const data = prepareEffectPayload(template.toObject(), {
+      sourceSubstanceId: item.id,
+      origin: item.uuid,
+      role: "altered",
+    });
+    data.system = { ...(data.system ?? {}), changes: attenuateChangeRows(effectChanges(data), count, curve) };
+    return data;
   });
-  data.system = { ...(data.system ?? {}), changes: attenuateChangeRows(effectChanges(data), count, curve) };
-  const [created] = await actor.createEmbeddedDocuments("ActiveEffect", [data]);
-  return created ?? null;
+  const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
+  return created?.[0] ?? null;
 }
 
-function findAlteredTemplate(item) {
-  const effects = item?.effects;
-  if (!effects) return null;
-  const list = [...effects];
-  return list.find((e) => /altered/i.test(e.name ?? "")) ?? null;
+function findAlteredTemplates(item) {
+  const list = [...(item?.effects ?? [])];
+  const byRole = list.filter((e) => e.flags?.[MODULE_ID]?.aeRole === "altered");
+  return byRole.length > 0 ? byRole : list.filter((e) => /altered/i.test(e.name ?? ""));
 }
 
 async function refreshToleranceMarkerAe(actor, item, count) {
@@ -443,44 +436,41 @@ async function refreshToleranceMarkerAe(actor, item, count) {
 }
 
 /**
- * Apply the substance's withdrawal AE templates to the actor. Falls back to a
- * built-in default template when no authored templates exist, so every
- * `withdrawal.enabled` substance produces a visible AE (and thus a vignette)
- * without per-substance authoring. Authored template names must contain
- * `withdraw`; mismatched templates log a warning and are skipped. Test seam:
- * exported for Quench.
+ * Start withdrawal from a substance: clone its withdrawal templates onto the
+ * actor with the authored duration and record it in the actor's withdrawal
+ * record (spec D2). The only place withdrawal starts. Templates come from
+ * `withdrawal.effectIds`, else effects named "withdraw", else a built-in
+ * default that carries the vignette color.
  *
  * @param {Actor} actor
  * @param {Item}  item
- * @returns {Promise<ActiveEffect|null>} the first applied effect.
+ * @param {{elapsedSeconds?: number}} [opts]  Simulate Dose starts mid-withdrawal.
+ * @returns {Promise<ActiveEffect|null>} the first applied effect
  */
-export async function applyWithdrawalEffect(actor, item) {
+export async function applyWithdrawalEffect(actor, item, { elapsedSeconds = 0 } = {}) {
+  const duration = getWithdrawalDuration(item);
+  const total = duration ? durationToSeconds(duration.value, duration.unit) : 0;
+  // 0 means permanent to prepareEffectPayload, so never let elapsed time reach it.
+  const seconds = total > 0 ? Math.max(1, total - elapsedSeconds) : 0;
   const templates = findWithdrawalTemplates(item);
-  const eligible = [];
-  for (const template of templates) {
-    if (!/withdraw/i.test(template.name ?? "")) {
-      logger.warn(
-        `withdrawal template "${template.name}" on ${item.name} does not contain "withdraw"; skipping`,
-      );
-      continue;
-    }
-    eligible.push(template);
-  }
-  // null sentinel → buildWithdrawalPayload uses the default template (matches
-  // the tolerance fallback pattern in applyToleranceEffects).
-  const sources = eligible.length > 0 ? eligible : [null];
-  const payloads = sources.map((template) => buildWithdrawalPayload(template, item));
+  const sources = templates.length > 0 ? templates.map((t) => t.toObject()) : [buildDefaultWithdrawalTemplate(item)];
+  const payloads = sources.map((data) => {
+    const payload = prepareEffectPayload(data, {
+      sourceSubstanceId: item.id,
+      origin: item.uuid,
+      role: "withdrawal",
+      duration: seconds,
+    });
+    payload.transfer = false;
+    return payload;
+  });
   const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
+  const now = Date.now();
+  await setActorWithdrawalEntry(actor, item.id, {
+    appliedAt: new Date(now).toISOString(),
+    endsAt: new Date(now + seconds * 1000).toISOString(),
+  });
   return created?.[0] ?? null;
-}
-
-function buildWithdrawalPayload(template, item) {
-  const data = prepareEffectPayload(
-    template ? template.toObject() : buildDefaultWithdrawalTemplate(item),
-    { sourceSubstanceId: item.id, origin: item.uuid, role: "withdrawal", duration: null },
-  );
-  data.transfer = false;
-  return data;
 }
 
 function buildDefaultWithdrawalTemplate(item) {
@@ -514,20 +504,9 @@ function buildDefaultWithdrawalTemplate(item) {
 }
 
 function findWithdrawalTemplates(item) {
+  const effects = [...(item?.effects ?? [])];
   const ids = getWithdrawalEffectIds(item);
-  if (ids.length === 0) return [];
-  const effects = item?.effects;
-  if (!effects) return [];
-  const list = [...effects];
-  const resolved = [];
-  const seen = new Set();
-  for (const id of ids) {
-    const found = effects.get?.(id) ?? list.find((e) => e.id === id || e._id === id);
-    if (found && !seen.has(found.id ?? found._id)) {
-      resolved.push(found);
-      seen.add(found.id ?? found._id);
-    }
-  }
-  return resolved;
+  if (ids.length > 0) return effects.filter((e) => ids.includes(e.id));
+  return effects.filter((e) => /withdraw/i.test(e.name ?? ""));
 }
 
