@@ -78,7 +78,7 @@ AE names **must contain** the relevant substring (case-insensitive): addiction A
 
 `scripts/hooks/activity-gating.js` (`preUseActivity`) handles **paraphernalia gating** with a `bypassOnce` set keyed on `activity.id`: when the user clicks "Use anyway" on the blocked dialog, the gate adds the activity ID to the set and re-invokes `activity.use()`. The next `preUseActivity` for that ID consumes the bypass and lets the activity through.
 
-`scripts/hooks/addiction.js` (`postUseActivity`) runs one dose in order (`runDosePipeline`): relapse check, bypass and addiction save, the high scaled by tolerance, tolerance +1, overdose. It is the only post-use listener for substances. It does not know or care whether the gate fired. The gate also blocks a substance at 0 doses, and a `dnd5e.activityConsumption` listener keeps the last dose at 0 instead of letting dnd5e delete the item (`scripts/data/last-dose.js`).
+`scripts/hooks/addiction.js` (`postUseActivity`) runs one dose in order (`runDosePipeline`): relapse check, bypass and addiction save, the high scaled by tolerance, tolerance +1, overdose. It is the only post-use listener for substances. It does not know or care whether the gate fired. The gate also blocks a substance at 0 doses, and a `dnd5e.activityConsumption` listener keeps the last dose at 0 instead of letting dnd5e delete the item (`scripts/data/last-dose.js`). A `preCreateActiveEffect` listener cancels any other copy of a drug's high (no `sourceSubstanceId`, origin under one of the actor's drugs; `isStrayHigh` in `scripts/data/prior-high.js`).
 
 This split means turning `enforceParaphernalia` off disables the gate but leaves addiction automation intact (intentional).
 

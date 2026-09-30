@@ -22,7 +22,7 @@ Every use of a substance runs one pipeline, in this order (`runDosePipeline` in 
 
 1. **Relapse check.** If the character is in withdrawal from this substance, the withdrawal effects are deleted and chat says so. The addiction stays.
 2. **Addiction save.** Skipped when the character already carries this substance's Addiction effect. Otherwise a paraphernalia bypass is spent if one applies (see *Save Bypass Tiers*), then the save rolls against `addiction.save.dc` (Con by default). On a fail, every template in `addiction.addictionEffectIds` is cloned onto the actor with `aeRole: "addiction"` and `sourceSubstanceId`.
-3. **The high.** Every Altered effect the substance ships is applied (Stellar Mist has two), its numeric Change values scaled by the attenuation curve at the current tolerance count. An earlier copy of the same high is replaced, so highs never stack. The module applies the high itself: don't list Altered effects on the substance's activity, or Midi-QoL and the chat card add a second, full-strength copy.
+3. **The high.** Every Altered effect the substance ships is applied (Stellar Mist has two), its numeric Change values scaled by the attenuation curve at the current tolerance count. An earlier copy of the same high is replaced, so highs never stack. The module applies the high itself: don't list Altered effects on the substance's activity: the module stops Midi-QoL and the chat card from applying a second copy, but the activity then shows an apply button that does nothing.
 4. **Tolerance +1**, up to the substance's max count.
 5. **Overdose check** (below).
 

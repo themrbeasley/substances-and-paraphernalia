@@ -35,7 +35,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - `validate-content` rejects ids that aren't 16 letters or digits, and warns when a substance's activity lists its Altered effect.
 
 ### Upgrading
-Drugs already in a world's Items directory or on characters keep the old activity that also applies the high, so highs stack for those copies. Re-import them from the compendium (or remove the Altered effects from each drug activity's effect list).
+Drugs already in a world's Items directory or on characters still list their high on the activity. The module now stops Midi-QoL, DAE and the chat card from applying that second copy, so re-importing is optional; re-import from the compendium if you want the activity itself cleaned up.
 
 ## [0.9.0] (2026-09-30)
 

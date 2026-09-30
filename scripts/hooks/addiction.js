@@ -20,7 +20,7 @@ import {
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
 import { attenuateChangeRows } from "../data/tolerance.js";
-import { isPriorHigh } from "../data/prior-high.js";
+import { isPriorHigh, isStrayHigh } from "../data/prior-high.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import { d20Config } from "../data/roll-config.js";
@@ -44,6 +44,11 @@ export function registerAddictionHooks() {
   // addiction AE's persistence in linked-isolated mode by canceling the delete
   // unless we marked it intentional.
   Hooks.on("preDeleteActiveEffect", onPreDeleteActiveEffect);
+
+  // A drug copy made before v0.9.1 still lists its high on the activity, so
+  // Midi-QoL or the chat card would apply a second, full-strength copy after
+  // the dose pipeline. The module applies highs itself (spec D12).
+  Hooks.on("preCreateActiveEffect", onPreCreateActiveEffect);
 }
 
 async function onPostUseActivity(activity, _usageConfig, _results) {
@@ -334,6 +339,23 @@ export function onPreDeleteActiveEffect(effect, options, _userId) {
   logger.log(
     `linked-isolated: blocking external delete of addiction AE "${effect.name}" on ${effect.parent?.name ?? "actor"}`,
   );
+  return false;
+}
+
+/**
+ * Cancel a copy of a drug's high that something other than the module is
+ * applying (see isStrayHigh). Cancelling instead of deleting afterwards keeps
+ * the module high's Token Magic filter on the token: both copies use the same
+ * filter name. Returns false to cancel the creation.
+ *
+ * @param {ActiveEffect} effect
+ * @returns {false|undefined}
+ */
+export function onPreCreateActiveEffect(effect, _data, _options, _userId) {
+  const actor = effect?.parent;
+  if (actor?.documentName !== "Actor") return undefined;
+  if (!isStrayHigh(effect, actor)) return undefined;
+  logger.log(`skipped a second copy of a drug's high on ${actor.name}; the module applies it`);
   return false;
 }
 
