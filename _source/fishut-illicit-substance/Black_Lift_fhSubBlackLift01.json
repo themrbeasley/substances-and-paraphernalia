@@ -198,7 +198,7 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Constitution saving throws. Walking speed −5 ft. until withdrawal completes.</p>",
+      "description": "<p>Poisoned. Disadvantage on Constitution saving throws. Walking speed −5 ft.</p>",
       "system": {
         "changes": [
           {

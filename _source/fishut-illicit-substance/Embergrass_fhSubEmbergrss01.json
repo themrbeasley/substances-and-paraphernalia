@@ -186,7 +186,7 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Intelligence checks until withdrawal completes.</p>",
+      "description": "<p>Poisoned. Disadvantage on Intelligence checks.</p>",
       "system": {
         "changes": []
       },

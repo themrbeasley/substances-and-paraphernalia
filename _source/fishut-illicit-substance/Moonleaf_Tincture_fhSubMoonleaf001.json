@@ -180,7 +180,7 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Intelligence saving throws until withdrawal completes.</p>",
+      "description": "<p>Poisoned. Disadvantage on Intelligence saving throws.</p>",
       "system": {
         "changes": []
       },

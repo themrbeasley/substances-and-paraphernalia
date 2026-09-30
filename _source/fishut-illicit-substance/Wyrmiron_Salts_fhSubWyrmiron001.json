@@ -186,7 +186,7 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Dexterity (Stealth) checks until withdrawal completes.</p>",
+      "description": "<p>Poisoned. Disadvantage on Dexterity (Stealth) checks.</p>",
       "system": {
         "changes": []
       },

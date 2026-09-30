@@ -212,7 +212,7 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Wisdom (Insight) and Wisdom (Perception) checks until withdrawal completes.</p>",
+      "description": "<p>Poisoned. Disadvantage on Wisdom (Insight) and Wisdom (Perception) checks.</p>",
       "system": {
         "changes": []
       },
