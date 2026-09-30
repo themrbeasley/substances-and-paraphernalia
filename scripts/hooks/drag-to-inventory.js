@@ -201,7 +201,8 @@ export async function applyDragOutcome(actor, item, choice) {
         logger.warn(`addicted: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      await applyAddictionEffect(actor, item);
+      // Already addicted: don't stack a second Addiction effect (spec D1).
+      if (!getAddictedSubstanceIds(actor).includes(item.id)) await applyAddictionEffect(actor, item);
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Addicted", {
           actor: actor.name,
