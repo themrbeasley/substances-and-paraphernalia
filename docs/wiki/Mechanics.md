@@ -30,7 +30,7 @@ A character is **addicted** to a substance exactly when they carry its Addiction
 
 ## Long Rest (`dnd5e.preRestCompleted`)
 
-On the GM client only, a Long Rest opens the **Withdrawal Choices** dialog listing every substance the character is addicted to. Each row shows the tolerance count and doses left; rows in withdrawal carry an *in withdrawal* tag. Unticked rows take a dose (the full pipeline above). Ticked rows abstain:
+A Long Rest opens the **Withdrawal Choices** dialog on the client that performs the rest (the player's for their own rest or an accepted group rest request, the GM's for a GM-run rest), listing every substance the character is addicted to. Each row shows the tolerance count and doses left; rows in withdrawal carry an *in withdrawal* tag. Unticked rows take a dose (the full pipeline above). Ticked rows abstain:
 
 | Situation | What happens |
 |---|---|
@@ -45,7 +45,7 @@ A substance with no doses stays in the inventory at 0 instead of being deleted, 
 
 Withdrawal clones the substance's `withdrawal.effectIds` templates (or effects named `withdraw`, or a built-in default) with the authored duration: `withdrawal.duration.value` + `unit` (`minutes | hours | days | weeks | months`; months are 30 days), converted by `durationToSeconds`. The actor record `flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }` marks the character as in withdrawal.
 
-Foundry V14 marks the effect expired when game time passes its end, and House Automation's "Delete expired effects" switch deletes it. When the last withdrawal effect for a substance is deleted, `scripts/hooks/withdrawal-cleanup.js` clears the record and **ends the addiction**: the substance's Addiction effects are removed and chat says the character came through. That holds for expiry, the Remove Withdrawal macro, and a GM deleting the effect by hand. Only a relapse (taking a dose during withdrawal) removes withdrawal without ending the addiction.
+Foundry V14 marks the effect expired when game time passes its end, and House Automation's "Delete expired effects" switch deletes it. Recovery by expiry needs that delete: without House Automation (or another module that deletes expired effects), an expired withdrawal stays on the character, so delete it by hand or run Remove Withdrawal. When the last withdrawal effect for a substance is deleted, `scripts/hooks/withdrawal-cleanup.js` clears the record and **ends the addiction**: the substance's Addiction effects are removed and chat says the character came through. That holds for expiry, the Remove Withdrawal macro, and a GM deleting the effect by hand. Only a relapse (taking a dose during withdrawal) removes withdrawal without ending the addiction.
 
 Other ways out of an addiction: the Remove Addiction macro, deleting the Addiction effect, or (under the default *Poisoned coupling* setting) anything that cures the Poisoned condition.
 
@@ -53,7 +53,7 @@ Withdrawal templates: name them with `withdraw` and pick them in the Details tab
 
 ## Tolerance
 
-Tolerance is a per-substance **count** on the actor (`flags["substances-and-paraphernalia"].tolerance[<substanceItemId>].count`). It rises by 1 with every dose, up to a max count, and drops by the substance's `tolerance.decay` (default 1) whenever the character abstains without relapsing.
+Tolerance is a per-substance **count** on the actor (`flags["substances-and-paraphernalia"].tolerance[<substanceItemId>].count`). It rises by 1 with every dose, up to a max count, and drops by the substance's `tolerance.decay` (default 1) at each Long Rest for a substance the character isn't addicted to, and whenever an addicted character abstains without relapsing.
 
 The substance's **Withdrawal DC** sets its tier, and the tier sets the tolerance numbers:
 
@@ -63,7 +63,7 @@ The substance's **Withdrawal DC** sets its tier, and the tier sets the tolerance
 | Points per count (rate) | 1 | 2 | 3 | 5 | 8 | 13 |
 | Overdose threshold (points) | 8 | 12 | 15 | 20 | 24 | 26 |
 
-The count weakens the high: numeric Change values on the Altered effect are multiplied by the attenuation curve, `[1, 0.5, 0.25, 0.125, 0]` by default (100% at count 0, 50% at 1, and so on; counts past the end use the last value). A substance can author its own curve in `tolerance.attenuationCurve`. Non-numeric values (a Token Magic preset name, a `true` override) are never scaled.
+The count weakens the high: numeric `add` Change values on the Altered effects are multiplied by the attenuation curve and rounded down toward zero when whole (override and upgrade rows are never scaled), `[1, 0.5, 0.25, 0.125, 0]` by default (100% at count 0, 50% at 1, and so on; counts past the end use the last value). A substance can author its own curve in `tolerance.attenuationCurve`. Non-numeric values (a Token Magic preset name, a `true` override) are never scaled.
 
 If a substance ships a tolerance template (`tolerance.effectIds`), the module applies it as a marker and keeps its `count` flag current. None of the shipped substances do, so players see tolerance only in the Long Rest dialog. The Remove Tolerance macro resets the count.
 

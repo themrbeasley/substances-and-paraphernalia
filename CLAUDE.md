@@ -99,9 +99,9 @@ Paraphernalia readiness comes from `scripts/data/references.js` `inspectParapher
 
 Bypass-granting paraphernalia must satisfy the gate's `appliesTo` for the substance's admin; the bypass isn't a free aura. Per-day uses ride on dnd5e's native `system.uses.recovery = [{ period: "day", type: "recoverAll" }]`; we don't write our own recovery hook.
 
-### Long-rest handling is GM-arbitrated
+### Long-rest handling runs on the resting client
 
-The `dnd5e.preRestCompleted` handler in `scripts/hooks/long-rest-abstain.js` (Phase 2: Abstain dialog → Wis Abstain Check, where failure is a relapse → Con Withdrawal Save → withdrawal AE apply; the branch table is `scripts/data/abstain-branch.js`) and the `deleteActiveEffect` cleanup in `scripts/hooks/withdrawal-cleanup.js` both early-return unless `game.users.activeGM === game.user`. This is the same single-arbiter pattern Foundry uses for other "exactly one client should run this" cases. Don't add per-actor-owner logic to either hook.
+The `dnd5e.preRestCompleted` handler in `scripts/hooks/long-rest-abstain.js` runs on the client that performs the rest: dnd5e calls that hook locally, on exactly one client (the player's for their own rest or an accepted group rest request, the GM's for a GM-run rest), and that client owns the actor. The `deleteActiveEffect` cleanup in `scripts/hooks/withdrawal-cleanup.js` fires on every client, so it early-returns unless `game.users.activeGM === game.user`. Don't add a GM check to the rest hook: player rests would never reach the Withdrawal Choices.
 
 ### Optional-integration detection is presence-only
 

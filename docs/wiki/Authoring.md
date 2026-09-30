@@ -11,7 +11,7 @@ flags["substances-and-paraphernalia"] = {
   setting: "fantasy" | "sciFi" | "modern",
   addiction: {
     enabled: true,
-    save: { ability: "con", dc: 13 },         // rolled after each use
+    save: { ability: "con", dc: 13 },         // rolled after each use, unless the character is already addicted
     addictionEffectIds: ["<ae._id>"]          // addiction AE templates on this item
   },
   withdrawal: {
@@ -136,8 +136,10 @@ expires it when world time passes.
 Because game time owns expiry, withdrawal no longer ticks down per long rest
 and no longer scales against Constitution: every addict on a given substance
 suffers the same authored duration window. The actor's Con modifier still
-gates onset via the Withdrawal Save DC; once the AE lands, only game time
-removes it.
+gates onset via the Withdrawal Save DC. Withdrawal ends when its time runs
+out, when a GM or the Remove Withdrawal macro removes it (both end the
+addiction too), or when the character takes a dose during it (a relapse, which
+keeps the addiction).
 
 **Picking a value:** choose a unit that matches the narrative weight of the
 substance and the table's expected pacing.

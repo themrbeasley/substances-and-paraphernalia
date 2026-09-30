@@ -20,16 +20,22 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - **Remove Addiction removed every module effect.** It now removes only Addiction effects. Remove Tolerance now resets the tolerance count.
 - **Ten compendium ids weren't 16 characters** and loaded as ghost duplicates.
 - **The linked-isolated Poisoned guard blocked highs and overdose markers from expiring.**
+- **Long Rests a player took on their own character never opened the Withdrawal Choices window.** The Long Rest step now runs on the client that performs the rest.
+- **A scaled high showed fractional bonuses** (AC +0.5). Whole-number bonuses now round toward zero, and override and upgrade rows are never scaled.
 
 ### Changed
 - **Finishing withdrawal ends the addiction.** When withdrawal runs out (or the GM or the Remove Withdrawal macro removes it), the Addiction effect goes too. Taking a dose during withdrawal ends the withdrawal but not the addiction.
 - **Quitting follows the designed order:** the Wisdom check comes first, and failing it means giving in and taking a dose; passing it leads to the Constitution save against withdrawal. In withdrawal, abstaining takes only the Wisdom check. All 18 substance descriptions say so.
 - **Tolerance rises on every dose,** not only on a passed save.
 - **One dose runs in a fixed order:** addiction save, the high, tolerance, then overdose.
+- **Tolerance fades at each Long Rest** for substances the character isn't addicted to.
 
 ### Added
 - The Long Rest dialog tags rows that are in withdrawal.
 - `validate-content` rejects ids that aren't 16 letters or digits, and warns when a substance's activity lists its Altered effect.
+
+### Upgrading
+Drugs already in a world's Items directory or on characters keep the old activity that also applies the high, so highs stack for those copies. Re-import them from the compendium (or remove the Altered effects from each drug activity's effect list).
 
 ## [0.9.0] (2026-09-30)
 

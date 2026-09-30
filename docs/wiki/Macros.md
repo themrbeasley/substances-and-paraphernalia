@@ -1,11 +1,12 @@
 # Macros
 
-The module ships four GM macros for clearing module-applied AEs from selected actors. Each follows the same pattern: flag-based primary match, regex name fallback.
+The module ships five GM macros for clearing module-applied AEs from selected actors. Each follows the same pattern: flag-based primary match, regex name fallback.
 
 | Macro | Primary match | Regex fallback |
 |---|---|---|
-| **Remove Addiction** | `flags[MODULE_ID].sourceSubstanceId` | `/addict/i` |
-| **Remove Tolerance** | `flags[MODULE_ID].sourceSubstanceId` on AE with `modifier.kind: "tolerance"` | `/tolerance/i` |
+| **Remove Addiction** | `aeRole: "addiction"`, or an unflagged effect named with "addict" | `/addict/i` |
+| **Remove Tolerance** | `aeRole: "tolerance"` effects plus the actor's tolerance record | `/tolerance/i` |
+| **Remove Altered** | `aeRole: "altered"`, or an unflagged effect named with "altered" | `/altered/i` |
 | **Remove Overdose** | (no source-substance flag; overdose markers don't carry one) | `/overdose/i` |
 | **Remove Withdrawal** | `flags[MODULE_ID].sourceSubstanceId` on AE with `withdrawal` substring | `/withdraw/i` |
 
@@ -24,12 +25,13 @@ The flag-based match is the primary path because it's robust against name rename
 
 - **Remove Addiction**: Removes the chosen Addiction effects and nothing else. Use it when a character is cured mid-campaign.
 - **Remove Tolerance**: Resets tolerance per substance: clears the tolerance count, and the tolerance marker effect when there is one.
+- **Remove Altered**: Removes the chosen Altered (high) effects. Use it to end a high early.
 - **Remove Overdose**: Clears the overdose marker. Cosmetic: the marker doesn't drive any active behavior, but tables that surface marker AEs in macros or dashboards may want to clean up after the fiction has resolved.
 - **Remove Withdrawal**: Removes the withdrawal effect, which **also ends the addiction**, the same as withdrawal running its course. Use it for a magical detox (Greater Restoration and the like). It also clears leftover withdrawal records that have no effect.
 
 ## Permissions
 
-All four are GM-only. They run on the selected token's actor.
+All five are GM-only. They run on the selected token's actor.
 
 ## Where they live
 
