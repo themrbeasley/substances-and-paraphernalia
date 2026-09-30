@@ -2,36 +2,18 @@ import { MODULE_ID } from "../config.js";
 import {
   getOverdose,
   getOverdoseEffectIds,
-  isSubstance,
   getActorToleranceEntry,
   getWithdrawalDc,
 } from "../data/flag-schema.js";
 import { shouldRollOverdose, rollOverdoseChance } from "../data/overdose-gate.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { currentPoints } from "../data/tolerance.js";
-import { logger } from "../logger.js";
 import { prepareEffectPayload } from "../data/effect-data.js";
 
 /**
- * Overdose runs alongside the addiction save in `dnd5e.postUseActivity`.
- * Independent of addiction outcome; a saved dose can still overdose.
+ * Overdose runs as the last step of the dose pipeline (runDosePipeline in
+ * addiction.js), after tolerance has risen for this dose.
  */
-export function registerOverdoseHooks() {
-  Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
-}
-
-async function onPostUseActivity(activity, _usageConfig, _results) {
-  const item = activity?.item;
-  const actor = activity?.actor;
-  if (!item || !actor) return;
-  if (!isSubstance(item)) return;
-
-  try {
-    await rollOverdoseAndApply(actor, item);
-  } catch (err) {
-    logger.error("overdose post-use flow failed", err);
-  }
-}
 
 /**
  * Phase 1 overdose gate. Returns the created Overdose AE on hit, null

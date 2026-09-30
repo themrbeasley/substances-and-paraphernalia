@@ -25,12 +25,12 @@ import {
   getOverdoseEffectIds,
   getToleranceEffectIds,
   getWithdrawalDuration,
-  setActorWithdrawalEntry,
+  getAddictedSubstanceIds,
+  getActorWithdrawalEntry,
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
-import { durationToSeconds } from "../data/withdrawal-duration.js";
 import { prepareEffectPayload } from "../data/effect-data.js";
-import { incrementActorToleranceCount } from "./addiction.js";
+import { applyAddictionEffect, applyWithdrawalEffect, incrementActorToleranceCount } from "./addiction.js";
 import { applyOverdoseEffect } from "./overdose.js";
 import { logger } from "../logger.js";
 
@@ -110,7 +110,19 @@ export function shouldShowDialog(user, actor, item) {
 
 async function promptAndApply(actor, item) {
   const choice = await openDialog(actor, item);
-  return applyDragOutcome(actor, item, choice);
+  return applyDragOutcome(actor, ownedCopy(actor, item), choice);
+}
+
+// Key effects to the character's own copy of the drug, not the dropped
+// original: dnd5e can stack the drop into an item the character already has.
+function ownedCopy(actor, item) {
+  return (
+    actor.items.get(item.id) ??
+    actor.items.find(
+      (i) => i._stats?.compendiumSource === (item._stats?.compendiumSource ?? item.uuid) && i.name === item.name,
+    ) ??
+    item
+  );
 }
 
 async function openDialog(actor, item) {
@@ -160,6 +172,7 @@ async function openDialog(actor, item) {
  * @param {Item}  item
  * @param {"altered"|"addicted"|"withdrawing"|"tolerant"|"overdosed"|"decline"} choice
  * @returns {Promise<{applied: string, endsAt?: string, stacks?: number, effectId?: string|null}>}
+ *   `endsAt` is only returned for `withdrawing`.
  */
 export async function applyDragOutcome(actor, item, choice) {
   if (!actor || !item) return { applied: "noop" };
@@ -186,41 +199,38 @@ export async function applyDragOutcome(actor, item, choice) {
     }
 
     case CHOICES.ADDICTED: {
-      const addiction = getAddiction(item);
-      if (!addiction) {
+      if (!getAddiction(item)) {
         logger.warn(`addicted: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const { appliedAt, endsAt, durationText } = computeWithdrawalWindow(item);
-      await applyAddictionEffect(actor, item);
-      await setActorWithdrawalEntry(actor, item.id, { appliedAt, endsAt });
+      // Already addicted: don't stack a second Addiction effect (spec D1).
+      if (!getAddictedSubstanceIds(actor).includes(item.id)) await applyAddictionEffect(actor, item);
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Addicted", {
           actor: actor.name,
           item: item.name,
-          duration: durationText,
+          duration: humanizeDuration(getWithdrawalDuration(item)),
         }),
       );
-      return { applied: "addicted", endsAt };
+      return { applied: "addicted" };
     }
 
     case CHOICES.WITHDRAWING: {
-      const addiction = getAddiction(item);
-      if (!addiction) {
+      if (!getAddiction(item)) {
         logger.warn(`withdrawing: no addiction block on ${item.name}; skipping`);
         return { applied: "noop" };
       }
-      const { appliedAt, endsAt, durationText, seconds } = computeWithdrawalWindow(item);
-      await cloneWithdrawalAesOntoActor(actor, item, seconds);
-      await setActorWithdrawalEntry(actor, item.id, { appliedAt, endsAt });
+      // Only the addicted go through withdrawal (spec D1, D3).
+      if (!getAddictedSubstanceIds(actor).includes(item.id)) await applyAddictionEffect(actor, item);
+      await applyWithdrawalEffect(actor, item);
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Withdrawing", {
           actor: actor.name,
           item: item.name,
-          duration: durationText,
+          duration: humanizeDuration(getWithdrawalDuration(item)),
         }),
       );
-      return { applied: "withdrawing", endsAt };
+      return { applied: "withdrawing", endsAt: getActorWithdrawalEntry(actor, item.id)?.endsAt };
     }
 
     case CHOICES.TOLERANT: {
@@ -254,16 +264,6 @@ export async function applyDragOutcome(actor, item, choice) {
   }
 }
 
-function computeWithdrawalWindow(item) {
-  const duration = getWithdrawalDuration(item);
-  const seconds = duration ? durationToSeconds(duration.value, duration.unit) : 0;
-  const now = new Date();
-  const appliedAt = now.toISOString();
-  const endsAt = new Date(now.getTime() + seconds * 1000).toISOString();
-  const durationText = humanizeDuration(duration);
-  return { appliedAt, endsAt, durationText, seconds };
-}
-
 function humanizeDuration(duration) {
   const value = Number(duration?.value) || 0;
   // prepareEffectPayload makes a missing or non-positive duration permanent.
@@ -273,31 +273,6 @@ function humanizeDuration(duration) {
       ? duration.unit.replace(/s$/, "")
       : duration.unit;
   return `${value} ${unit}`;
-}
-
-async function cloneWithdrawalAesOntoActor(actor, item, seconds) {
-  const templates = findWithdrawalTemplates(item);
-  if (templates.length === 0) {
-    logger.warn(`withdrawing: no withdrawal AE template on ${item.name}; chat-only`);
-    return;
-  }
-  const payloads = templates.map((tpl) =>
-    prepareEffectPayload(typeof tpl.toObject === "function" ? tpl.toObject() : { ...tpl }, {
-      sourceSubstanceId: item.id,
-      origin: item.uuid,
-      role: "withdrawal",
-      duration: seconds,
-    }),
-  );
-  await actor.createEmbeddedDocuments("ActiveEffect", payloads);
-}
-
-function findWithdrawalTemplates(item) {
-  const ids = getWithdrawalEffectIds(item);
-  if (ids.length === 0) {
-    return [...(item?.effects ?? [])].filter((e) => /withdraw/i.test(e.name ?? ""));
-  }
-  return ids.map((id) => item.effects?.get?.(id)).filter(Boolean);
 }
 
 async function applyBenefitEffects(actor, item) {
@@ -328,40 +303,6 @@ async function applyBenefitEffects(actor, item) {
     }),
   );
   return actor.createEmbeddedDocuments("ActiveEffect", payloads);
-}
-
-async function applyAddictionEffect(actor, item) {
-  const templates = findAddictionTemplates(item);
-  if (templates.length === 0) {
-    logger.warn(`addiction template not found on ${item.name}; chat-only fail outcome`);
-    return null;
-  }
-  const payloads = templates.map((template) =>
-    prepareEffectPayload(
-      typeof template.toObject === "function" ? template.toObject() : { ...template },
-      { sourceSubstanceId: item.id, origin: item.uuid, role: "addiction", duration: null },
-    ),
-  );
-  const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
-  return created?.[0] ?? null;
-}
-
-function findAddictionTemplates(item) {
-  const effects = item?.effects;
-  if (!effects) return [];
-  const list = [...effects];
-  const ids = getAddictionEffectIds(item);
-  const resolved = [];
-  const seen = new Set();
-  for (const id of ids) {
-    const found = effects.get?.(id) ?? list.find((e) => e.id === id || e._id === id);
-    if (found && !seen.has(found.id ?? found._id)) {
-      resolved.push(found);
-      seen.add(found.id ?? found._id);
-    }
-  }
-  if (resolved.length > 0) return resolved;
-  return list.filter((e) => /addict/i.test(e.name ?? ""));
 }
 
 async function chat(content) {

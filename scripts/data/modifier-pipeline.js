@@ -127,16 +127,19 @@ export async function consumeBypassIfAvailable(actor, substance) {
 }
 
 /**
- * Resolve the AE's source item. Walks `effect.origin` for an `Item.<id>`
- * segment first (covers `transfer:true` AEs cloned onto an actor), falling
- * back to `fromUuidSync` for cross-document origins. Returns null when no
- * traceable item exists.
+ * Resolve the AE's source item: the parent item for item-transferred effects,
+ * else an `Item.<id>` segment in `effect.origin`, else `fromUuidSync(origin)`.
+ * Returns null when no traceable item exists.
  *
  * @param {Actor}        actor
  * @param {ActiveEffect} effect
  * @returns {Item|null}
  */
-function resolveSourceItem(actor, effect) {
+export function resolveSourceItem(actor, effect) {
+  // Effects transferred from an owned item live on that item (V11+), so the
+  // item is `parent` and `origin` is often empty.
+  if (effect?.parent?.documentName === "Item") return effect.parent;
+
   const origin = effect?.origin;
   if (typeof origin !== "string" || origin.length === 0) return null;
 

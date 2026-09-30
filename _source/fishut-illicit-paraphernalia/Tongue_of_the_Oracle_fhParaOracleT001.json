@@ -1,5 +1,5 @@
 {
-  "_id": "fhParaOracleT01",
+  "_id": "fhParaOracleT001",
   "name": "Tongue of the Oracle",
   "type": "equipment",
   "img": "icons/svg/regen.svg",
@@ -47,7 +47,7 @@
   },
   "effects": [
     {
-      "_id": "fhAEOracleTByp",
+      "_id": "fhAEOracleTByp01",
       "name": "Tongue of the Oracle: Save Modifier",
       "img": "icons/svg/regen.svg",
       "transfer": true,
@@ -70,11 +70,11 @@
           }
         }
       },
-      "_key": "!items.effects!fhParaOracleT01.fhAEOracleTByp"
+      "_key": "!items.effects!fhParaOracleT001.fhAEOracleTByp01"
     }
   ],
   "ownership": {
     "default": 0
   },
-  "_key": "!items!fhParaOracleT01"
+  "_key": "!items!fhParaOracleT001"
 }

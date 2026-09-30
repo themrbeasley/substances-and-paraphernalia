@@ -11,7 +11,7 @@ flags["substances-and-paraphernalia"] = {
   setting: "fantasy" | "sciFi" | "modern",
   addiction: {
     enabled: true,
-    save: { ability: "con", dc: 13 },         // rolled after each use
+    save: { ability: "con", dc: 13 },         // rolled after each use, unless the character is already addicted
     addictionEffectIds: ["<ae._id>"]          // addiction AE templates on this item
   },
   withdrawal: {
@@ -24,7 +24,7 @@ flags["substances-and-paraphernalia"] = {
   overdose: {                                 // optional
     enabled: true,
     chancePercent: 5,
-    description: "<chat-card body>"
+    description: "<description shown on the overdose effect>"
   },
   schemaVersion: 7
 };
@@ -32,7 +32,7 @@ flags["substances-and-paraphernalia"] = {
 
 `system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury`; that's the administration channel the gate and bypass logic key on. (The legacy per-substance `requiredSubtypes` callout was removed in v0.5; gating now keys on this admin type matched against a paraphernalia-side `appliesTo` admin list.)
 
-`system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type *Item Uses* with value 1 so dnd5e auto-destroys the consumable on use.
+`system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type *Item Uses* with value 1, so each use spends one dose from the quantity. When the last dose goes, the module keeps the substance at 0 instead of letting dnd5e delete it, so the Long Rest can still list it. Don't add Altered effects to the activity's effect list: the module applies them itself, scaled by tolerance, and blocks the copy Midi-QoL or the chat card would add, so listing them only leaves a dead apply button.
 
 ## Paraphernalia flag block
 
@@ -77,7 +77,7 @@ The module prefers the `flags.substances-and-paraphernalia.aeRole` flag (see *AE
 | Addiction | `addict` | Pointed-to by `addiction.addictionEffectId`. |
 | Benefit (altered) | (no contract) | Convention: `Altered by {Substance}`. |
 | Withdrawal | `withdraw` | Pointed-to by `withdrawalEffectId`. Validator warns if it imposes disadvantage on attacks/checks (duplicates *poisoned*). |
-| Tolerance | `tolerance` | Template lives on the substance with the `tolerance` modifier flag block. |
+| Tolerance | `tolerance` | Optional marker template on the substance (`tolerance.effectIds`); the module keeps its `count` flag current. Tolerance itself is a count on the actor (see Mechanics). |
 | Overdose marker | `overdose` | Applied when the d100 roll hits. |
 | Bypass (paraphernalia) | (no contract) | Lives on the paraphernalia as a `transfer: true` AE with the `bypass` modifier flag block. |
 
@@ -89,9 +89,9 @@ Every module-created Active Effect carries a flag at
 | `aeRole`     | Used for                                         |
 |--------------|--------------------------------------------------|
 | `addiction`  | The persistent addiction AE on an addicted actor |
-| `withdrawal` | The withdrawal AE applied when an addiction expires |
+| `withdrawal` | The withdrawal AE, applied on a failed Constitution Withdrawal Save at a Long Rest; when it ends, so does the addiction |
 | `altered`    | The benefit AE applied during the substance's altered state |
-| `tolerance`  | Per-substance tolerance stacks                   |
+| `tolerance`  | Optional tolerance marker; the count lives on the actor |
 | `overdose`   | Overdose marker AE                               |
 | `bypass`     | Paraphernalia bypass AE                          |
 
@@ -106,7 +106,7 @@ the flag manually when authoring conventions are uncertain.
 templates (e.g. directly in the AE editor), add the `aeRole` flag. The
 Remove-X macros and the modifier pipeline both prefer the flag.
 
-## Modifier flag block (on bypass / tolerance AEs)
+## Modifier flag block (on bypass AEs)
 
 ```js
 // Bypass (paraphernalia, transfer:true)
@@ -117,16 +117,9 @@ flags["substances-and-paraphernalia"].modifier = {
   appliesTo: ["inhaled"],                     // administration ids the bypass covers
   usesPerDay: "@prof"                         // optional; rides on system.uses
 };
-
-// Tolerance (substance, template AE; module clones onto actor on save pass)
-flags["substances-and-paraphernalia"].modifier = {
-  kind: "tolerance",
-  substanceId: "<itemId>",
-  attenuateAltered: { durationFactor: 0.1, modifierFactor: 0.1, dropAdvantage: false },
-  addictionDcBump: 1,
-  withdrawalAmplify: { durationFactor: 0.1, modifierFactor: 0.1, addDisadvantage: false }
-};
 ```
+
+Tolerance does not use a modifier block: it is a count on the actor, tuned per substance by `tolerance.decay` and optionally `tolerance.attenuationCurve` (see Mechanics).
 
 ## Tuning Withdrawal Duration
 
@@ -143,8 +136,10 @@ expires it when world time passes.
 Because game time owns expiry, withdrawal no longer ticks down per long rest
 and no longer scales against Constitution: every addict on a given substance
 suffers the same authored duration window. The actor's Con modifier still
-gates onset via the Withdrawal Save DC; once the AE lands, only game time
-removes it.
+gates onset via the Withdrawal Save DC. Withdrawal ends when its time runs
+out, when a GM or the Remove Withdrawal macro removes it (both end the
+addiction too), or when the character takes a dose during it (a relapse, which
+keeps the addiction).
 
 **Picking a value:** choose a unit that matches the narrative weight of the
 substance and the table's expected pacing.

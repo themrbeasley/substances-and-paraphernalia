@@ -108,3 +108,25 @@ test("attenuateChangeRows leaves non-numeric values untouched at any tolerance (
     }
   }
 });
+
+test("attenuateChangeRows rounds a whole-number bonus toward zero", () => {
+  const rows = [{ key: "system.attributes.ac.bonus", type: "add", value: "1" }];
+  assert.equal(attenuateChangeRows(rows, 1, CURVE)[0].value, "0");
+  const five = [{ key: "system.attributes.movement.walk", type: "add", value: "5" }];
+  assert.equal(attenuateChangeRows(five, 1, CURVE)[0].value, "2");
+  const minus = [{ key: "system.bonuses.abilities.check", type: "add", value: "-3" }];
+  assert.equal(attenuateChangeRows(minus, 1, CURVE)[0].value, "-1");
+});
+
+test("attenuateChangeRows keeps an authored fraction exact", () => {
+  const rows = [{ key: "k", type: "add", value: "0.5" }];
+  assert.equal(attenuateChangeRows(rows, 1, CURVE)[0].value, "0.25");
+});
+
+test("attenuateChangeRows leaves override and upgrade rows unscaled", () => {
+  const rows = [
+    { key: "system.attributes.movement.walk", type: "override", value: "40" },
+    { key: "system.attributes.movement.fly", type: "upgrade", value: "30" },
+  ];
+  assert.deepEqual(attenuateChangeRows(rows, 1, CURVE), rows);
+});

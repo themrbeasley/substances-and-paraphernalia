@@ -7,6 +7,7 @@ import { actorHasSubtype, inspectSubtypeOnActor } from "./data/references.js";
 import { registerActivityGating } from "./hooks/activity-gating.js";
 import {
   registerAddictionHooks,
+  runDosePipeline,
   rollSaveAndApply,
   applyOutcome,
   incrementActorToleranceCount,
@@ -15,7 +16,7 @@ import {
   isAppliedAddictionEffect,
   onPreDeleteActiveEffect,
 } from "./hooks/addiction.js";
-import { registerOverdoseHooks, rollOverdoseAndApply } from "./hooks/overdose.js";
+import { rollOverdoseAndApply } from "./hooks/overdose.js";
 import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
 import { registerLongRestAbstain } from "./hooks/long-rest-abstain.js";
 import { registerToleranceDecay, applyToleranceDecay } from "./hooks/tolerance-decay.js";
@@ -42,7 +43,6 @@ Hooks.once("init", () => {
   registerSettings();
   registerActivityGating();
   registerAddictionHooks();
-  registerOverdoseHooks();
   registerDragToInventory();
   registerLongRestAbstain();
   registerToleranceDecay();
@@ -63,6 +63,7 @@ Hooks.once("ready", async () => {
       references: { actorHasSubtype, inspectSubtypeOnActor },
       addiction: {
         rollSaveAndApply,
+        runDosePipeline,
         applyOutcome,
         incrementActorToleranceCount,
         applyWithdrawalEffect,

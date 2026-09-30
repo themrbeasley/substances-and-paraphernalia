@@ -5,6 +5,7 @@ import { actorSatisfiesAdmin } from "../data/admin-match.js";
 import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
+import { keepLastDose } from "../data/last-dose.js";
 
 // preUseActivity is synchronous, so the override flow cancels the current
 // attempt and re-triggers activity.use() after the dialog resolves. The
@@ -42,6 +43,15 @@ export function clearForcedUseBypass(activityId) {
 
 export function registerActivityGating() {
   Hooks.on("dnd5e.preUseActivity", onPreUseActivity);
+  Hooks.on("dnd5e.activityConsumption", onActivityConsumption);
+}
+
+// dnd5e would delete the drug with its last dose; keep it at 0 so the Long
+// Rest can still list it (spec D11).
+function onActivityConsumption(activity, _usageConfig, _messageConfig, updates) {
+  const item = activity?.item;
+  if (!item || !isSubstance(item)) return;
+  keepLastDose(updates, item.id);
 }
 
 function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
@@ -49,6 +59,14 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
   const actor = activity?.actor;
   if (!item || !actor) return true;
   if (!isSubstance(item)) return true;
+
+  // An empty drug stays at 0 doses (keepLastDose); it can't be used, and
+  // there's no "Use anyway".
+  if ((Number(item.system?.quantity) || 0) < 1) {
+    ui.notifications.warn(game.i18n.format("FISHUT.Gating.NoDoses", { item: item.name }));
+    return false;
+  }
+
   if (!game.settings.get(MODULE_ID, "enforceParaphernalia")) return true;
 
   if (bypassOnce.has(activity.id)) {

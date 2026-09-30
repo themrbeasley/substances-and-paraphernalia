@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A blend of dragon-scaled herbs and powdered tongue-coal, prepared by Shen Feng Wa's surviving apprentices. Burns clean only in the bowl of the Dubious Pipe; in any other vessel it produces foul black smoke and nothing else.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have a +2 bonus to Wisdom (Insight) checks and your passive Perception increases by 2.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wa's Reserve (see below).</p><p><strong><em>Addicted from Wa's Reserve.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (the smoke leaves a black residue on the tongue).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 11 Wisdom check to resist the craving; on a failure, make a DC 15 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days. If you have no doses left, you must abstain and go straight to the saving throw.</p><p><em>Requires ready paraphernalia that applies to inhaled substances, such as Shen Feng Wa's Dubious Pipe.</em></p>"
+      "value": "<p>A blend of dragon-scaled herbs and powdered tongue-coal, prepared by Shen Feng Wa's surviving apprentices. Burns clean only in the bowl of the Dubious Pipe; in any other vessel it produces foul black smoke and nothing else.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have a +2 bonus to Wisdom (Insight) checks and your passive Perception increases by 2.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wa's Reserve (see below).</p><p><strong><em>Addicted from Wa's Reserve.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (the smoke leaves a black residue on the tongue).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 11 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 15 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to inhaled substances, such as Shen Feng Wa's Dubious Pipe.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -59,11 +59,7 @@
           "concentration": false,
           "override": false
         },
-        "effects": [
-          {
-            "_id": "fhAEWasReservBen"
-          }
-        ],
+        "effects": [],
         "flags": {},
         "range": {
           "units": "self",

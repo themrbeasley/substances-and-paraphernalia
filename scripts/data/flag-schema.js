@@ -69,6 +69,8 @@ import {
  * @property {string} endsAt       ISO-8601 timestamp computed from the withdrawal duration in seconds.
  *
  * @typedef {Object<string, WithdrawalEntry>} WithdrawalMap
+ *   Actor-level record of substances the actor is in withdrawal from. Not the
+ *   addicted list: that's the Addiction effects (`getAddictedSubstanceIds`).
  *   Keyed by substance item `_id`.
  */
 
@@ -411,12 +413,16 @@ export const setActorWithdrawalEntry = async (actor, substanceId, entry) => {
   return actor.setFlag(MODULE_ID, FLAGS.withdrawal, map);
 };
 
-/** @param {Actor} actor @param {string} substanceId */
+/**
+ * Remove one entry. `setFlag` merges, so saving a copied map without the key
+ * leaves it in place; V14 removes a key only through `ForcedDeletion`.
+ * @param {Actor} actor @param {string} substanceId
+ */
 export const clearActorWithdrawalEntry = async (actor, substanceId) => {
-  const map = { ...getActorWithdrawal(actor) };
-  if (!(substanceId in map)) return null;
-  delete map[substanceId];
-  return actor.setFlag(MODULE_ID, FLAGS.withdrawal, map);
+  if (!(substanceId in getActorWithdrawal(actor))) return null;
+  return actor.update({
+    [`flags.${MODULE_ID}.${FLAGS.withdrawal}.${substanceId}`]: new foundry.data.operators.ForcedDeletion(),
+  });
 };
 
 // ─── Substance withdrawal block (v0.8.1: DC + Abstain + Duration) ────────────
@@ -527,12 +533,12 @@ export const setActorToleranceEntry = async (actor, substanceId, entry) => {
   return actor.setFlag(MODULE_ID, "tolerance", map);
 };
 
-/** @param {Actor} actor @param {string} substanceId */
+/** Remove one entry (see clearActorWithdrawalEntry). @param {Actor} actor @param {string} substanceId */
 export const clearActorToleranceEntry = async (actor, substanceId) => {
-  const map = { ...getActorTolerance(actor) };
-  if (!(substanceId in map)) return null;
-  delete map[substanceId];
-  return actor.setFlag(MODULE_ID, "tolerance", map);
+  if (!(substanceId in getActorTolerance(actor))) return null;
+  return actor.update({
+    [`flags.${MODULE_ID}.tolerance.${substanceId}`]: new foundry.data.operators.ForcedDeletion(),
+  });
 };
 
 // ─── Active Effect role lookup (locale-independent) ──────────────────────────
@@ -592,4 +598,19 @@ export function findEffectsByRole(actor, role, { warn } = {}) {
     }
   }
   return matches;
+}
+
+/**
+ * The substances an actor is addicted to: the distinct `sourceSubstanceId`s of
+ * its Addiction effects (spec D1). The withdrawal record means only "in
+ * withdrawal" and plays no part here.
+ *
+ * @param {Actor} actor
+ * @returns {string[]}
+ */
+export function getAddictedSubstanceIds(actor) {
+  const ids = findEffectsByRole(actor, "addiction").map(
+    (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId],
+  );
+  return [...new Set(ids.filter(Boolean))];
 }

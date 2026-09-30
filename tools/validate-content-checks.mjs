@@ -14,6 +14,35 @@ export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]
 export const MODIFIER_TYPES = new Set(["auto-pass", "reroll-on-fail", "advantage", "+N"]);
 export const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
+const FOUNDRY_ID = /^[a-zA-Z0-9]{16}$/;
+
+/**
+ * Foundry ids are exactly 16 letters or digits; anything else loads as a null
+ * id and shows up as a ghost duplicate in the compendium. Walks every `_id`,
+ * top-level and embedded.
+ *
+ * @param {{relPath: string, data: object}} file
+ * @returns {{errors: string[], warnings: string[]}}
+ */
+export function checkDocumentIds(file) {
+  const errors = [];
+  const walk = (node, path) => {
+    if (Array.isArray(node)) {
+      node.forEach((child, i) => walk(child, `${path}[${i}]`));
+      return;
+    }
+    if (!node || typeof node !== "object") return;
+    if ("_id" in node && !FOUNDRY_ID.test(String(node._id))) {
+      errors.push(`${file.relPath}: ${path || "document"} _id "${node._id}" must be 16 letters or digits`);
+    }
+    for (const [key, value] of Object.entries(node)) {
+      if (key !== "_stats") walk(value, path ? `${path}.${key}` : key);
+    }
+  };
+  walk(file.data, "");
+  return { errors, warnings: [] };
+}
+
 const ROLE_PATTERNS = {
   addiction: /addict/i,
   withdrawal: /withdraw/i,
@@ -294,6 +323,20 @@ export function checkSubstance(file) {
     errors.push(...modErrs);
     checkAeRole(ae, tag, errors);
     checkAeV14Shape(ae, tag, errors);
+  }
+
+  // v0.9.1: the module applies the high itself, scaled by tolerance (spec D12).
+  // An activity that also lists it makes Midi-QoL and the chat card apply a
+  // second, full-strength copy.
+  for (const activity of Object.values(data?.system?.activities ?? {})) {
+    for (const ref of activity?.effects ?? []) {
+      const ae = findEffect(data, ref?._id);
+      if (ae?.flags?.[FLAG_SCOPE]?.aeRole === "altered") {
+        warn(
+          `activity "${activity.name ?? activity._id}" lists the Altered effect "${ae.name}"; the module applies it itself and blocks the second copy, so the listing only adds a dead apply button`,
+        );
+      }
+    }
   }
 
   return { errors, warnings };

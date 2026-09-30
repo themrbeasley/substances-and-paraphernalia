@@ -36,7 +36,7 @@
   },
   "effects": [
     {
-      "_id": "fhAENeurShntByp",
+      "_id": "fhAENeurShntByp1",
       "name": "Neural Shunt: Save Modifier",
       "img": "icons/svg/aura.svg",
       "transfer": true,
@@ -58,7 +58,7 @@
           }
         }
       },
-      "_key": "!items.effects!fhParaNeurShnt01.fhAENeurShntByp"
+      "_key": "!items.effects!fhParaNeurShnt01.fhAENeurShntByp1"
     }
   ],
   "ownership": {

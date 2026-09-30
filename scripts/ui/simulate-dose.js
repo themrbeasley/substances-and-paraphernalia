@@ -4,7 +4,7 @@
 // dropdown (dnd5e 5.2.5 ApplicationV2). Clicking it spawns an ephemeral test
 // actor named `__fishut-test-<uuid>__<substance.name>`, embeds a clone of the
 // substance, runs the same test seams the live `dnd5e.postUseActivity` flow
-// uses (`rollSaveAndApply` + `rollOverdoseAndApply`), captures any chat output
+// uses (`runDosePipeline`), captures any chat output
 // it produces, and renders a result dialog. The temp actor is reaped on dialog
 // close. A `ready`-time orphan sweep cleans up actors left behind by crashes
 // (GM-arbitrated).
@@ -19,18 +19,15 @@
 import { MODULE_ID, FLAGS } from "../config.js";
 import {
   getAddiction,
-  getOverdose,
   getWithdrawalDuration,
   isSubstance,
-  setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import {
   applyAddictionEffect,
   applyWithdrawalEffect,
-  rollSaveAndApply,
+  runDosePipeline,
 } from "../hooks/addiction.js";
-import { rollOverdoseAndApply } from "../hooks/overdose.js";
 import { logger } from "../logger.js";
 
 const DIALOG_TEMPLATE = `modules/${MODULE_ID}/templates/simulate-dose-dialog.hbs`;
@@ -255,11 +252,7 @@ export async function runSimulation({
       await preSeedAddictionState(testActor, embeddedSubstance, addictionState);
     }
 
-    await rollSaveAndApply(testActor, embeddedSubstance);
-    const overdoseBlock = getOverdose(embeddedSubstance);
-    if (overdoseBlock?.enabled === true) {
-      await rollOverdoseAndApply(testActor, embeddedSubstance, overdoseBlock);
-    }
+    await runDosePipeline(testActor, embeddedSubstance);
 
     // Snapshot final AEs before cleanup so the result dialog has data.
     const finalAEs = [...(testActor.effects ?? [])].map((e) => e.name).filter(Boolean);
@@ -356,21 +349,13 @@ async function embedSubstanceClone(actor, sourceItem) {
 }
 
 async function preSeedAddictionState(actor, item, state) {
-  const addiction = getAddiction(item);
-  if (!addiction) return;
+  if (!getAddiction(item)) return;
+  await applyAddictionEffect(actor, item);
+  if (state !== "withdrawing") return;
+  // Land mid-withdrawal rather than at its leading edge.
   const duration = getWithdrawalDuration(item);
   const seconds = duration ? durationToSeconds(duration.value, duration.unit) : 0;
-  const now = new Date();
-  const appliedAt = now.toISOString();
-  // "addicted" → window fully ahead; "withdrawing" → already half-elapsed so
-  // the simulated actor lands mid-withdrawal rather than at the leading edge.
-  const elapsedSeconds = state === "withdrawing" ? Math.floor(seconds / 2) : 0;
-  const endsAt = new Date(now.getTime() + (seconds - elapsedSeconds) * 1000).toISOString();
-  if (state === "addicted") {
-    await applyAddictionEffect(actor, item);
-  }
-  await applyWithdrawalEffect(actor, item).catch(() => null);
-  await setActorWithdrawalEntry(actor, item.id, { appliedAt, endsAt });
+  await applyWithdrawalEffect(actor, item, { elapsedSeconds: Math.floor(seconds / 2) });
 }
 
 /**

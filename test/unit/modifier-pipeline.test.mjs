@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { pickBypassResolution } from "../../scripts/data/modifier-resolution.js";
+import { resolveSourceItem } from "../../scripts/data/modifier-pipeline.js";
 
 const candidate = (overrides = {}) => ({
   id: "ae-default",
@@ -275,5 +276,23 @@ describe("pickBypassResolution(administration, candidates)", () => {
       appliesTo: ["contact"],
     });
     assert.equal(pickBypassResolution("inhaled", [c]), null);
+  });
+});
+
+describe("resolveSourceItem", () => {
+  it("returns the owning item for an item-transferred effect with no origin", () => {
+    const item = { documentName: "Item", id: "pipe" };
+    assert.equal(resolveSourceItem({ items: new Map() }, { parent: item, origin: "" }), item);
+  });
+
+  it("falls back to the Item id in origin for an actor-owned effect", () => {
+    const item = { documentName: "Item", id: "pipe" };
+    const actor = { documentName: "Actor", items: new Map([["pipe", item]]) };
+    assert.equal(resolveSourceItem(actor, { parent: actor, origin: "Actor.a1.Item.pipe" }), item);
+  });
+
+  it("returns null when nothing traces back to an item", () => {
+    const actor = { documentName: "Actor", items: new Map() };
+    assert.equal(resolveSourceItem(actor, { parent: actor, origin: "" }), null);
   });
 });

@@ -1,5 +1,5 @@
 {
-  "_id": "fhMacRemoveAlter01",
+  "_id": "fhMacRemAlter001",
   "name": "Remove Altered",
   "type": "script",
   "scope": "global",
@@ -10,5 +10,5 @@
     "default": 0
   },
   "flags": {},
-  "_key": "!macros!fhMacRemoveAlter01"
+  "_key": "!macros!fhMacRemAlter001"
 }

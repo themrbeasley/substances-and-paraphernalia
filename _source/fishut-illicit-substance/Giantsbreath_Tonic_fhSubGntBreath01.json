@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws made to resist being grappled, shoved, or restrained.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, make a DC 20 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days. If you have no doses left, you must abstain and go straight to the saving throw.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as a Tincture Dropper.</em></p>"
+      "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws made to resist being grappled, shoved, or restrained.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 20 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as a Tincture Dropper.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -59,11 +59,7 @@
           "concentration": false,
           "override": false
         },
-        "effects": [
-          {
-            "_id": "fhAEGntBreathBen"
-          }
-        ],
+        "effects": [],
         "flags": {},
         "range": {
           "units": "self",

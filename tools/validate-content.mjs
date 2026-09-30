@@ -56,7 +56,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { checkSubstance, checkParaphernalia } from "./validate-content-checks.mjs";
+import { checkSubstance, checkParaphernalia, checkDocumentIds } from "./validate-content-checks.mjs";
 import { checkLanguagePhrasing } from "./validate-content-language.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -97,6 +97,8 @@ const warnings = [];
 
 const substanceFiles = await loadJsonFiles("_source/fishut-illicit-substance");
 const paraphernaliaFiles = await loadJsonFiles("_source/fishut-illicit-paraphernalia");
+const macroFiles = await loadJsonFiles("_source/fishut-illicit-macros");
+const journalFiles = await loadJsonFiles("_source/fishut-journals");
 const builtinSubtypes = await loadBuiltinSubtypes();
 
 if (substanceFiles.length === 0) {
@@ -125,6 +127,12 @@ for (const file of paraphernaliaFiles) {
   const result = checkParaphernalia(file, { builtinSubtypes });
   errors.push(...result.errors);
   warnings.push(...result.warnings);
+}
+for (const file of [...macroFiles, ...journalFiles]) {
+  if (file.parseError) errors.push(`${file.relPath}: invalid JSON: ${file.parseError}`);
+}
+for (const file of [...substanceFiles, ...paraphernaliaFiles, ...macroFiles, ...journalFiles]) {
+  if (!file.parseError) errors.push(...checkDocumentIds(file).errors);
 }
 
 // 2024 language audit (warn-only in v0.8; flips to error-blocking in v0.9).
@@ -187,7 +195,7 @@ async function scanTemplatesForPhrasing() {
 await scanLangStringsForPhrasing();
 await scanTemplatesForPhrasing();
 
-const checked = substanceFiles.length + paraphernaliaFiles.length;
+const checked = substanceFiles.length + paraphernaliaFiles.length + macroFiles.length + journalFiles.length;
 if (warnings.length) {
   console.warn(`content: ${warnings.length} warning(s):`);
   for (const w of warnings) console.warn(`  - ${w}`);
