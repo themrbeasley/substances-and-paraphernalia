@@ -83,6 +83,7 @@
   "FISHUT.Gating.Blocked.Body": "<p><strong>{item}</strong> is an {admin} substance, but you have no ready paraphernalia that applies to {admin} substances.</p>",
   "FISHUT.Gating.Blocked.Override": "Use anyway",
   "FISHUT.Gating.Blocked.Cancel": "Cancel",
+  "FISHUT.Gating.NoDoses": "{item} has no doses left.",
 
   "FISHUT.Integrations.Module.Tokenmagic": "Token Magic FX (tokenmagic)",
   "FISHUT.Integrations.Missing.Notice": "Substances and Paraphernalia recommends modules that aren't active: {missing}. Disable this notice in the module settings.",
