@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A FoundryVTT V14 / dnd5e 5.3.x module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; current is v0.9.0 (Foundry V14 only). Clean breaks preferred over migration shims (no shipped users).
+A FoundryVTT V14 / dnd5e 5.3.x module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; current is v0.9.1 (Foundry V14 only). Clean breaks preferred over migration shims (no shipped users).
 
 ## Common commands
 
@@ -67,8 +67,8 @@ Paraphernalia subtypes are an exception: the legal list is **runtime-composed** 
 ### Three-layer data model
 
 1. **Item flags** (the canonical source). `scripts/data/flag-schema.js` is the only place that reads/writes `flags["substances-and-paraphernalia"]`. Every other module talks to flags through these accessors.
-2. **Actor flags** (`flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }`): canonical state for an active withdrawal window on a given actor. `appliedAt` and `endsAt` are ISO timestamps; `endsAt` is derived from the AE's authored duration at apply time.
-3. **Active Effects on the actor**: UI mirror of the actor flag. Applied addiction and withdrawal AEs carry `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so callers can match the AE back to its substance. On V14, core only marks an expired withdrawal AE as expired; the user's House Automation module deletes it instead (its "Delete expired effects" switch, on by default), and then `scripts/hooks/withdrawal-cleanup.js` listens on `deleteActiveEffect` and clears the matching actor flag entry. We do not poll or tick; the flag entry and AE come up and go down together.
+2. **Actor flags** (`flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }`): canonical state for an active withdrawal window on a given actor. It means "in withdrawal" and nothing else: "addicted" is the Addiction effect itself (`getAddictedSubstanceIds`). `appliedAt` and `endsAt` are ISO timestamps; `endsAt` is derived from the AE's authored duration at apply time.
+3. **Active Effects on the actor**: UI mirror of the actor flag. Applied addiction and withdrawal AEs carry `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so callers can match the AE back to its substance. On V14, core only marks an expired withdrawal AE as expired; the user's House Automation module deletes it instead (its "Delete expired effects" switch, on by default), and then `scripts/hooks/withdrawal-cleanup.js` listens on `deleteActiveEffect`: when a substance's last withdrawal effect goes, it clears the matching actor flag entry and, unless the delete came from a relapse (`options.fishutRelapse`), removes the substance's Addiction effects. Finishing withdrawal ends the addiction. We do not poll or tick; the flag entry and AE come up and go down together.
 
 ### AE naming contract
 
@@ -78,7 +78,7 @@ AE names **must contain** the relevant substring (case-insensitive): addiction A
 
 `scripts/hooks/activity-gating.js` (`preUseActivity`) handles **paraphernalia gating** with a `bypassOnce` set keyed on `activity.id`: when the user clicks "Use anyway" on the blocked dialog, the gate adds the activity ID to the set and re-invokes `activity.use()`. The next `preUseActivity` for that ID consumes the bypass and lets the activity through.
 
-`scripts/hooks/addiction.js` (`postUseActivity`) handles **save-on-use + addiction AE application + bypass consumption**. It does not know or care whether the gate fired; it only checks the substance's own addiction block.
+`scripts/hooks/addiction.js` (`postUseActivity`) runs one dose in order (`runDosePipeline`): relapse check, bypass and addiction save, the high scaled by tolerance, tolerance +1, overdose. It is the only post-use listener for substances. It does not know or care whether the gate fired. The gate also blocks a substance at 0 doses, and a `dnd5e.activityConsumption` listener keeps the last dose at 0 instead of letting dnd5e delete the item (`scripts/data/last-dose.js`).
 
 This split means turning `enforceParaphernalia` off disables the gate but leaves addiction automation intact (intentional).
 
@@ -101,7 +101,7 @@ Bypass-granting paraphernalia must satisfy the gate's `appliesTo` for the substa
 
 ### Long-rest handling is GM-arbitrated
 
-The `dnd5e.preRestCompleted` handler in `scripts/hooks/long-rest-abstain.js` (Phase 2: Abstain dialog → Wis Abstain Check → Con Withdrawal Save → withdrawal AE apply) and the `deleteActiveEffect` cleanup in `scripts/hooks/withdrawal-cleanup.js` both early-return unless `game.users.activeGM === game.user`. This is the same single-arbiter pattern Foundry uses for other "exactly one client should run this" cases. Don't add per-actor-owner logic to either hook.
+The `dnd5e.preRestCompleted` handler in `scripts/hooks/long-rest-abstain.js` (Phase 2: Abstain dialog → Wis Abstain Check, where failure is a relapse → Con Withdrawal Save → withdrawal AE apply; the branch table is `scripts/data/abstain-branch.js`) and the `deleteActiveEffect` cleanup in `scripts/hooks/withdrawal-cleanup.js` both early-return unless `game.users.activeGM === game.user`. This is the same single-arbiter pattern Foundry uses for other "exactly one client should run this" cases. Don't add per-actor-owner logic to either hook.
 
 ### Optional-integration detection is presence-only
 

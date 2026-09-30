@@ -22,10 +22,10 @@ The flag-based match is the primary path because it's robust against name rename
 
 ## When to use which
 
-- **Remove Addiction**: Clears the addiction AE *and* the actor flag entry that drives the long-rest withdrawal countdown. This is the macro to use when you want to "you're cured" a character mid-campaign.
-- **Remove Tolerance**: Clears tolerance stacks on a per-substance basis (the dialog lets you pick which substance's tolerance AE to remove).
-- **Remove Overdose**: Clears the overdose marker. Cosmetic: the marker doesn't drive any active behavior, but tables that surface marker AEs in macros / dashboards may want to clean up after the fiction has resolved.
-- **Remove Withdrawal**: Removes the withdrawal AE without touching the actor flag. Use when a player gets a magical detox (Greater Restoration, etc.). For *full* cleanup including the long-rest tracker, use Remove Addiction.
+- **Remove Addiction**: Removes the chosen Addiction effects and nothing else. Use it when a character is cured mid-campaign.
+- **Remove Tolerance**: Resets tolerance per substance: clears the tolerance count, and the tolerance marker effect when there is one.
+- **Remove Overdose**: Clears the overdose marker. Cosmetic: the marker doesn't drive any active behavior, but tables that surface marker AEs in macros or dashboards may want to clean up after the fiction has resolved.
+- **Remove Withdrawal**: Removes the withdrawal effect, which **also ends the addiction**, the same as withdrawal running its course. Use it for a magical detox (Greater Restoration and the like). It also clears leftover withdrawal records that have no effect.
 
 ## Permissions
 

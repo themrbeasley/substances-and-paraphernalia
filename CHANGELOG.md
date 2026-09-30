@@ -7,6 +7,30 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.9.1] (2026-09-30)
+
+### Fixed
+- **Withdrawal never started in normal play.** The Long Rest looked for addicted characters in the withdrawal record, which only fills once withdrawal has begun. It now lists every substance whose Addiction effect the character carries.
+- **Repeat doses stacked Addiction effects.** A character who is already addicted no longer rolls again.
+- **Using the last dose deleted the drug,** so the Long Rest couldn't offer the forced abstain. The drug now stays at 0 doses; it can't be used at 0, and dropping more from the compendium refills it.
+- **+N and advantage bypasses didn't change the roll** (dnd5e 5.x reads bonuses from `rolls[0]`; Midi-QoL recomputes advantage unless it is passed in). The Abstain Check and Withdrawal Save bonuses had the same problem.
+- **Bypass gear never spent its daily uses and ignored its administration types**: the gear was looked up through an empty `origin`.
+- **Tolerance never weakened the high,** and highs stacked. The module now applies every Altered effect itself, scaled by tolerance, and replaces the previous ones.
+- **Withdrawal and tolerance records were never cleared** (`setFlag` merges; V14 removes keys through `ForcedDeletion`).
+- **Remove Addiction removed every module effect.** It now removes only Addiction effects. Remove Tolerance now resets the tolerance count.
+- **Ten compendium ids weren't 16 characters** and loaded as ghost duplicates.
+- **The linked-isolated Poisoned guard blocked highs and overdose markers from expiring.**
+
+### Changed
+- **Finishing withdrawal ends the addiction.** When withdrawal runs out (or the GM or the Remove Withdrawal macro removes it), the Addiction effect goes too. Taking a dose during withdrawal ends the withdrawal but not the addiction.
+- **Quitting follows the designed order:** the Wisdom check comes first, and failing it means giving in and taking a dose; passing it leads to the Constitution save against withdrawal. In withdrawal, abstaining takes only the Wisdom check. All 18 substance descriptions say so.
+- **Tolerance rises on every dose,** not only on a passed save.
+- **One dose runs in a fixed order:** addiction save, the high, tolerance, then overdose.
+
+### Added
+- The Long Rest dialog tags rows that are in withdrawal.
+- `validate-content` rejects ids that aren't 16 letters or digits, and warns when a substance's activity lists its Altered effect.
+
 ## [0.9.0] (2026-09-30)
 
 ### Changed

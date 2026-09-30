@@ -32,7 +32,7 @@ flags["substances-and-paraphernalia"] = {
 
 `system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury`; that's the administration channel the gate and bypass logic key on. (The legacy per-substance `requiredSubtypes` callout was removed in v0.5; gating now keys on this admin type matched against a paraphernalia-side `appliesTo` admin list.)
 
-`system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type *Item Uses* with value 1 so dnd5e auto-destroys the consumable on use.
+`system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type *Item Uses* with value 1, so each use spends one dose from the quantity. When the last dose goes, the module keeps the substance at 0 instead of letting dnd5e delete it, so the Long Rest can still list it. Don't add Altered effects to the activity's effect list: the module applies them itself, scaled by tolerance, and a listed copy would stack a second, full-strength high.
 
 ## Paraphernalia flag block
 

@@ -1,6 +1,6 @@
 # Mechanics
 
-This page covers the four mechanical systems the module layers on top of dnd5e: the **consumption gate**, the **addiction loop**, **withdrawal**, **tolerance**, and **overdose**.
+This page covers the mechanical systems the module layers on top of dnd5e: the **consumption gate**, the **addiction loop**, **withdrawal**, **tolerance**, and **overdose**.
 
 ## Consumption gate (`preUseActivity`)
 
@@ -12,108 +12,66 @@ Each substance carries a dnd5e Poison administration type at `system.type.subtyp
 
 If no paraphernalia matches the substance's administration, the user sees a *Missing paraphernalia* dialog with a **Use anyway** override. The dialog is visible to all users (player or GM); the override is intentional.
 
+A substance at 0 doses can't be used at all. The module blocks it before the paraphernalia check, with no override.
+
 The world setting **Enforce paraphernalia requirements** (default on) is the master switch. With it off, gating is bypassed but addiction automation continues to fire.
 
-> **v0.5 note.** The earlier per-substance `requiredSubtypes` callout (a flat list of subtype ids) was removed in v0.5; gating now keys on the dnd5e administration type instead. Phase 4 of the v0.5 dig-out lands the live admin-type gate; until then the gate stub allows substances through unconditionally (DAE-strict guard intact).
+## One dose (`postUseActivity`)
 
-## Addiction: Phase 1 (`postUseActivity`)
+Every use of a substance runs one pipeline, in this order (`runDosePipeline` in `scripts/hooks/addiction.js`):
 
-After a substance is used, the module rolls a save against the substance's authored DC and ability (Con by default). On a failed save, **every** addiction Active Effect template listed in `flags[…].addiction.addictionEffectIds` is cloned onto the actor.
+1. **Relapse check.** If the character is in withdrawal from this substance, the withdrawal effects are deleted and chat says so. The addiction stays.
+2. **Addiction save.** Skipped when the character already carries this substance's Addiction effect. Otherwise a paraphernalia bypass is spent if one applies (see *Save Bypass Tiers*), then the save rolls against `addiction.save.dc` (Con by default). On a fail, every template in `addiction.addictionEffectIds` is cloned onto the actor with `aeRole: "addiction"` and `sourceSubstanceId`.
+3. **The high.** Every Altered effect the substance ships is applied (Stellar Mist has two), its numeric Change values scaled by the attenuation curve at the current tolerance count. An earlier copy of the same high is replaced, so highs never stack. The module applies the high itself: don't list Altered effects on the substance's activity, or Midi-QoL and the chat card add a second, full-strength copy.
+4. **Tolerance +1**, up to the substance's max count.
+5. **Overdose check** (below).
 
-- Each applied AE is keyed back to the substance via `flags["substances-and-paraphernalia"].sourceSubstanceId` so the Remove Addiction macro can match by source. The macro falls back to a name regex (`/addict/i`) when the source flag is missing on a legacy AE.
-- Phase 1 **does not** apply a Withdrawal AE or write to the actor's withdrawal flag map. Withdrawal onset is a long-rest event (Phase 2, below).
-- Re-using a substance you're already addicted to runs the save again, which can stack additional addiction AEs or trigger overdose, but does not retro-apply withdrawal.
+A character is **addicted** to a substance exactly when they carry its Addiction effect. Using the substance again while addicted doesn't roll again and doesn't add a second Addiction effect.
 
-## Withdrawal: Phase 2 (`dnd5e.preRestCompleted`, long rest only)
+## Long Rest (`dnd5e.preRestCompleted`)
 
-On the GM client only (`game.users.activeGM === game.user`), the long-rest hook walks every substance the actor is currently addicted to and opens the **Abstain dialog** (`scripts/ui/abstain-dialog.js`). Each row offers one of three actions:
+On the GM client only, a Long Rest opens the **Withdrawal Choices** dialog listing every substance the character is addicted to. Each row shows the tolerance count and doses left; rows in withdrawal carry an *in withdrawal* tag. Unticked rows take a dose (the full pipeline above). Ticked rows abstain:
 
-- **Use**: force-consumes one dose through the normal `activity.use()` chain with the paraphernalia gate bypassed for this single use. Goes through full Phase 1 again.
-- **Abstain**: rolls a Wisdom *Abstain Check* against the substance's `withdrawal.abstain.dc`. On pass, tolerance decays one tier; on fail, a Constitution *Withdrawal Save* against `withdrawal.dc` is rolled, and on that failure the Withdrawal AE applies.
-- **Forced abstain**: automatic when the actor has no doses left of an addictive substance. Skips the Wis check, rolls the Con Withdrawal Save directly, and decays tolerance regardless of outcome.
+| Situation | What happens |
+|---|---|
+| Abstain, not in withdrawal | Wisdom check vs `withdrawal.abstain.dc`. Fail: the character gives in and takes a dose. Pass: tolerance decays, then a Constitution save vs `withdrawal.dc`; on a fail, withdrawal starts. |
+| Abstain, in withdrawal | Wisdom check only. Fail: the character takes a dose, which ends the withdrawal (the addiction stays). Pass: tolerance decays and the withdrawal carries on. |
+| No doses left, not in withdrawal | Ticked and locked. No Wisdom check: tolerance decays and the Constitution save rolls. |
+| No doses left, in withdrawal | Ticked and locked. Tolerance decays and the withdrawal carries on. |
 
-When the Withdrawal AE applies, its duration is computed from the authored `withdrawal.duration.value` + `withdrawal.duration.unit` (one of `minutes | hours | days | weeks | months`, where months are 30-day months) via `durationToSeconds` in `scripts/data/withdrawal-duration.js`. The actor flag `flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }` records the lifecycle window. Foundry V14 marks the AE expired when game time passes `endsAt` but does not delete it. Deleting expired effects takes a separate module (the author uses the "Delete expired effects" switch in their House Automation module); once the AE is deleted, `scripts/hooks/withdrawal-cleanup.js` listens for `deleteActiveEffect` and clears the matching flag entry. The module ships no rest-decrement counter; game time owns expiry.
+A substance with no doses stays in the inventory at 0 instead of being deleted, so it keeps its row. It can't be used at 0; dropping more of the same substance from the compendium refills it.
 
-The withdrawal AE templates are selected per substance via the `withdrawal.effectIds` flag. Author them on the substance's Active Effects tab, give each a name containing `withdraw`, and pick them in the Details tab. The validator warns if any AE imposes disadvantage on attacks or checks, or carries the `poisoned` status; those duplicate the addiction AE. Escalate instead with exhaustion, disadvantage on saves, speed reduction, or a stat penalty. The per-owner CSS vignette color is set by a Change row on the withdrawal AE itself (`flags.substances-and-paraphernalia.vignetteColor`, change type `"override"`); the default authored template ships `#a02020`.
+## Withdrawal and recovery
+
+Withdrawal clones the substance's `withdrawal.effectIds` templates (or effects named `withdraw`, or a built-in default) with the authored duration: `withdrawal.duration.value` + `unit` (`minutes | hours | days | weeks | months`; months are 30 days), converted by `durationToSeconds`. The actor record `flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }` marks the character as in withdrawal.
+
+Foundry V14 marks the effect expired when game time passes its end, and House Automation's "Delete expired effects" switch deletes it. When the last withdrawal effect for a substance is deleted, `scripts/hooks/withdrawal-cleanup.js` clears the record and **ends the addiction**: the substance's Addiction effects are removed and chat says the character came through. That holds for expiry, the Remove Withdrawal macro, and a GM deleting the effect by hand. Only a relapse (taking a dose during withdrawal) removes withdrawal without ending the addiction.
+
+Other ways out of an addiction: the Remove Addiction macro, deleting the Addiction effect, or (under the default *Poisoned coupling* setting) anything that cures the Poisoned condition.
+
+Withdrawal templates: name them with `withdraw` and pick them in the Details tab. The validator warns if one imposes disadvantage on attacks or checks, or carries `poisoned`; those duplicate the Addiction effect. Escalate instead with exhaustion, disadvantage on saves, speed reduction, or a stat penalty. The screen-edge vignette color comes from a Change row on the withdrawal template (`flags.substances-and-paraphernalia.vignetteColor`, type `"override"`); the default template uses `#a02020`.
 
 ## Tolerance
 
-Each successful addiction save applies (or stacks) a tolerance Active Effect on the actor. Tolerance is authored on the substance as a template AE with the modifier flag block:
+Tolerance is a per-substance **count** on the actor (`flags["substances-and-paraphernalia"].tolerance[<substanceItemId>].count`). It rises by 1 with every dose, up to a max count, and drops by the substance's `tolerance.decay` (default 1) whenever the character abstains without relapsing.
 
-```js
-flags["substances-and-paraphernalia"].modifier = {
-  kind: "tolerance",
-  substanceId: "<itemId>",
-  attenuateAltered: { durationFactor: 0.1, modifierFactor: 0.1, dropAdvantage: false },
-  addictionDcBump: 1,
-  withdrawalAmplify: { durationFactor: 0.1, modifierFactor: 0.1, addDisadvantage: false }
-};
-```
+The substance's **Withdrawal DC** sets its tier, and the tier sets the tolerance numbers:
 
-A single AE per (actor, substance) tracks stacks via `flags.stacks`. Per-stack effects sum on the result: three stacks of `addictionDcBump: 1` become +3 DC; three stacks of `durationFactor: 0.1` become 70% of the base duration. AE name **must contain** `tolerance`.
+| Withdrawal DC nearest | 5 | 10 | 15 | 20 | 25 | 30 |
+|---|---|---|---|---|---|---|
+| Max count | 8 | 6 | 5 | 4 | 3 | 2 |
+| Points per count (rate) | 1 | 2 | 3 | 5 | 8 | 13 |
+| Overdose threshold (points) | 8 | 12 | 15 | 20 | 24 | 26 |
 
-## Tolerance: Bounds and Authoring Guidance
+The count weakens the high: numeric Change values on the Altered effect are multiplied by the attenuation curve, `[1, 0.5, 0.25, 0.125, 0]` by default (100% at count 0, 50% at 1, and so on; counts past the end use the last value). A substance can author its own curve in `tolerance.attenuationCurve`. Non-numeric values (a Token Magic preset name, a `true` override) are never scaled.
 
-The Tolerance system has three knobs (`attenuateAltered`,
-`addictionDcBump`, `withdrawalAmplify`) that all make the next
-consumption worse. To prevent runaway states where consumption is a
-pure mathematical loss, the engine applies these soft caps by default:
-
-| Cap                             | Default | Effect                              |
-|---------------------------------|---------|-------------------------------------|
-| `maxStacks`                     | 5       | Max tolerance stacks per substance  |
-| `modifierFactorFloor`           | 0.25    | Buff modifier cannot drop below ¼   |
-| `addictionDcBumpCap`            | 5       | Cumulative DC bump caps at +5       |
-| `withdrawalDurationFactorCap`   | 2.0     | Withdrawal cannot stack past 2× duration |
-
-Authors may override any subset per substance by writing a `caps` block
-under the substance's `tolerance` flag:
-
-```json
-{
-  "flags": {
-    "substances-and-paraphernalia": {
-      "tolerance": {
-        "caps": { "maxStacks": 10 }
-      }
-    }
-  }
-}
-```
-
-The validator warns (not errors) when an override loosens a cap beyond
-the engine default. The design intent: tolerance should produce
-**diminishing returns**, never a state where consumption is a pure
-loss. Overrides exist so authors who want true escalation can opt in
-explicitly.
+If a substance ships a tolerance template (`tolerance.effectIds`), the module applies it as a marker and keeps its `count` flag current. None of the shipped substances do, so players see tolerance only in the Long Rest dialog. The Remove Tolerance macro resets the count.
 
 ## Overdose
 
-Each consumption rolls d100 against the substance's `chancePercent`. On a hit, a marker AE *Overdosed on {Substance}* is applied and the authored description is posted to chat. Overdose runs alongside the addiction save; both can fire on the same dose. AE name **must contain** `overdose`.
+Overdose is off unless the substance enables it. After each dose, **points** = count × rate. If the points reach the tier's overdose threshold (plus any `flags.substances-and-paraphernalia.overdose.thresholdModifier` on the actor), the module rolls d100; at or under `overdose.chancePercent` (plus any `overdose.chanceModifier`, clamped to 0 to 100), the overdose effect is applied and its description posted to chat. AE name **must contain** `overdose`.
 
-Author it via the overdose fieldset on the Details tab: enable, set the percent, write a description.
-
-## Overdose × Tolerance Interaction
-
-The `overdose.toleranceInteraction` field on each substance chooses
-how the d100 overdose chance modulates with the actor's current
-tolerance-stack count:
-
-- **None (default):** Tolerance and overdose are mechanically unrelated.
-  d100 rolls against the raw `chancePercent` always.
-- **Mitigate:** The body adapts. Each tolerance stack reduces overdose
-  chance by `toleranceInteractionMagnitude` percentage points.
-- **Compound:** Users escalate doses to chase the diminishing buff.
-  Each tolerance stack raises overdose chance by
-  `toleranceInteractionMagnitude` percentage points.
-
-The adjusted chance is clamped to `[0, 100]`. Stacks are read at the
-moment the d100 fires (not at AE apply time); see the v0.7 spec
-§2.4 for why.
-
-The maximum modulation envelope is bounded by `tolerance.caps.maxStacks`
-(default 5). Combined with the default magnitude of 0 in the schema,
-existing pre-v0.7 substances keep their pre-v0.7 behavior.
+Author it via the overdose fieldset on the Details tab: enable it, set the percent, write a description.
 
 ## DC Scaling Across Tiers
 

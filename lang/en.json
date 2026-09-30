@@ -124,7 +124,7 @@
   "FISHUT.RemoveTolerance.NoCandidates": "{actor} has no tolerance to remove.",
   "FISHUT.RemoveTolerance.PreviewIntro": "<p>Choose tolerance to reset for <strong>{actor}</strong>.</p>",
   "FISHUT.RemoveTolerance.RowDetail": "{name} (source: {sourceId}, count: {stacks})",
-  "FISHUT.RemoveTolerance.Removed": "Reset tolerance to <strong>{count}</strong> substance(s) for <strong>{actor}</strong>.",
+  "FISHUT.RemoveTolerance.Removed": "Reset tolerance for <strong>{count}</strong> substance(s) on <strong>{actor}</strong>.",
   "FISHUT.RemoveTolerance.LogTitle": "Removed tolerance (paste-restore JSON)",
 
   "FISHUT.RemoveOverdose.Title": "Remove Overdose",
@@ -138,7 +138,7 @@
   "FISHUT.RemoveWithdrawal.NoCandidates": "{actor} has no withdrawal effects or entries to remove.",
   "FISHUT.RemoveWithdrawal.PreviewIntro": "<p>Choose withdrawal effects to remove from <strong>{actor}</strong>.</p>",
   "FISHUT.RemoveWithdrawal.RowDetail": "{name} (source: {sourceId})",
-  "FISHUT.RemoveWithdrawal.Removed": "Removed <strong>{count}</strong> withdrawal row(s) from <strong>{actor}</strong>. Removing withdrawal ends the addiction too.",
+  "FISHUT.RemoveWithdrawal.Removed": "Removed <strong>{count}</strong> withdrawal row(s) from <strong>{actor}</strong>. Removing a substance's last withdrawal effect ends that addiction too.",
   "FISHUT.RemoveWithdrawal.LogTitle": "Removed withdrawal (paste-restore JSON)",
 
   "FISHUT.RemoveAltered.Title": "Remove Altered",
