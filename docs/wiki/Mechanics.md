@@ -69,7 +69,7 @@ If a substance ships a tolerance template (`tolerance.effectIds`), the module ap
 
 ## Overdose
 
-Overdose is off unless the substance enables it. After each dose, **points** = count × rate. If the points reach the tier's overdose threshold (plus any `flags.substances-and-paraphernalia.overdose.thresholdModifier` on the actor), the module rolls d100; at or under `overdose.chancePercent` (plus any `overdose.chanceModifier`, clamped to 0 to 100), the overdose effect is applied and its description posted to chat. AE name **must contain** `overdose`.
+Overdose is off unless the substance enables it. After each dose, **points** = count × rate. If the points reach the tier's overdose threshold (plus any `flags.substances-and-paraphernalia.overdose.thresholdModifier` on the actor), the module rolls d100; at or under `overdose.chancePercent` (plus any `overdose.chanceModifier`, clamped to 0 to 100), the overdose effect is applied, carrying the authored description. AE name **must contain** `overdose`.
 
 Author it via the overdose fieldset on the Details tab: enable it, set the percent, write a description.
 

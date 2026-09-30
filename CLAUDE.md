@@ -93,7 +93,7 @@ Paraphernalia readiness comes from `scripts/data/references.js` `inspectParapher
 `scripts/data/modifier-pipeline.js` `consumeBypassIfAvailable(actor, substance)`:
 
 1. Reads the substance's admin from `system.type.subtype` (same source the gate uses).
-2. Walks `actor.appliedEffects` for AEs whose `flags[MODULE_ID].modifier` block has `kind: "bypass"`. Resolves each AE's source item via `effect.origin`; if the source is paraphernalia, requires its `appliesTo` to include the admin.
+2. Walks `actor.appliedEffects` for AEs whose `flags[MODULE_ID].modifier` block has `kind: "bypass"`. Resolves each AE's source item from `effect.parent` (item-transferred effects), falling back to `effect.origin`; if the source is paraphernalia, requires its `appliesTo` to include the admin.
 3. Composes contributors via `pickBypassResolution`: `auto-pass > advantage > +N`. Within `auto-pass` / `advantage`, deterministic ascending-by-AE-id picks one. Within `+N`, ALL eligible AEs contribute and their `bonus` values sum.
 4. For each contributing AE whose source item has a `system.uses` config, increments `system.uses.spent` by 1.
 

@@ -38,5 +38,5 @@ Packed into the `fishut-illicit-macros` compendium. Drag the macro to your hotba
 ## What they don't do
 
 - Remove status effects unrelated to this module.
-- Touch the substance item itself (consumables auto-destroy on use via dnd5e's native handling).
+- Touch the substance item itself (an empty substance stays in the inventory at 0 doses; see Mechanics).
 - Roll any saves or fire any chat cards; these are pure cleanup macros.
