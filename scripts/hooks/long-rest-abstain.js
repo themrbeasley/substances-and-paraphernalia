@@ -26,6 +26,7 @@ import {
   getWithdrawalEnabled,
   getAddictedSubstanceIds,
   getActorWithdrawalEntry,
+  getActorTolerance,
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
@@ -58,8 +59,17 @@ export function registerLongRestAbstain() {
 }
 
 export async function runPhase2(actor) {
+  const addicted = getAddictedSubstanceIds(actor);
+  // Tolerance fades with rest (v6 design): substances the character isn't
+  // addicted to decay here; addicted ones follow the abstain rules below.
+  for (const substanceId of Object.keys(getActorTolerance(actor))) {
+    if (addicted.includes(substanceId)) continue;
+    const item = actor.items?.get?.(substanceId);
+    if (item) await applyToleranceDecay(actor, item);
+  }
+
   const rows = [];
-  for (const substanceId of getAddictedSubstanceIds(actor)) {
+  for (const substanceId of addicted) {
     const item = actor.items?.get?.(substanceId);
     if (!item) {
       logger.warn(`Phase 2: ${actor.name} is addicted to item ${substanceId}, which is gone; skipping`);
