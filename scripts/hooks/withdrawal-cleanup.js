@@ -14,6 +14,12 @@ import { MODULE_ID } from "../config.js";
 import { logger } from "../logger.js";
 import { clearActorWithdrawalEntry, getAeRole } from "../data/flag-schema.js";
 
+// Several withdrawal effects of one substance deleted in one batch are all gone
+// from actor.effects before the first hook runs, so every handler would pass the
+// "last one" check. Handlers run their synchronous part before any awaits, so a
+// claim taken there lets exactly one of them act.
+const inFlight = new Set();
+
 export function registerWithdrawalCleanup() {
   Hooks.on("deleteActiveEffect", onDeleteActiveEffect);
 }
@@ -30,6 +36,9 @@ async function onDeleteActiveEffect(effect, options, _userId) {
     actor.effects.filter((e) => getAeRole(e) === role && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId);
   // A substance can clone several withdrawal templates; act when the last goes.
   if (mine("withdrawal").length > 0) return;
+  const key = `${actor.id}:${substanceId}`;
+  if (inFlight.has(key)) return;
+  inFlight.add(key);
   try {
     await clearActorWithdrawalEntry(actor, substanceId);
     if (options?.fishutRelapse) return;
@@ -45,5 +54,7 @@ async function onDeleteActiveEffect(effect, options, _userId) {
     });
   } catch (e) {
     logger.warn("withdrawal-cleanup: failed", { actorId: actor.id, substanceId, error: e?.message });
+  } finally {
+    inFlight.delete(key);
   }
 }
