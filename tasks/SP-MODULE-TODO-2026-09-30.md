@@ -4,7 +4,7 @@ Pre-existing bugs found by the V14 live test (`reports/live-test-2026-09-30-v14.
 
 ## Decision needed first
 
-- [ ] **What ends an addiction?** Today nothing does except the GM running Remove Addiction. The answer decides how item 1 is fixed: whether the actor's `withdrawal` map means "addicted to", "in withdrawal", or both, and what clears an entry.
+- [x] **What ends an addiction?** Decided 2026-09-30: finishing withdrawal ends it (v6 design, step 8), alongside Poisoned cures, the GM, and the Remove macros. "Addicted" means having the Addiction effect; the `withdrawal` map means "in withdrawal" only. Full decision list: `docs/superpowers/specs/2026-09-30-v0.9.1-addiction-cycle-design.md` §2.
 
 ## Bugs, most severe first
 
