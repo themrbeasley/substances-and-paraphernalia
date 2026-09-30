@@ -63,7 +63,7 @@ import {
  *
  * @typedef {Object} WithdrawalEntry
  * @property {string} appliedAt    ISO-8601 timestamp when withdrawal landed.
- * @property {string} endsAt       ISO-8601 timestamp computed from AE duration.seconds.
+ * @property {string} endsAt       ISO-8601 timestamp computed from the withdrawal duration in seconds.
  *
  * @typedef {Object<string, WithdrawalEntry>} WithdrawalMap
  *   Keyed by substance item `_id`.

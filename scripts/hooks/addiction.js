@@ -16,7 +16,8 @@ import {
 } from "../data/flag-schema.js";
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
-import { applyAttenuation } from "../data/tolerance.js";
+import { attenuateChangeRows } from "../data/tolerance.js";
+import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
 
@@ -249,20 +250,12 @@ export async function applyAddictionEffect(actor, item) {
 }
 
 function buildAddictionPayload(template, item, couplingMode) {
-  const data = template.toObject();
-  delete data._id;
-  data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = {
-    ...(data.flags[MODULE_ID] ?? {}),
-    [FLAGS.sourceSubstanceId]: item.id,
-    aeRole: "addiction",
-  };
-  data.origin = item.uuid;
-  data.disabled = false;
-  if (data.duration) {
-    data.duration.rounds = undefined;
-    data.duration.seconds = undefined;
-  }
+  const data = prepareEffectPayload(template.toObject(), {
+    sourceSubstanceId: item.id,
+    origin: item.uuid,
+    role: "addiction",
+    duration: null,
+  });
   applyCouplingMode(data, couplingMode);
   return data;
 }
@@ -406,32 +399,14 @@ export async function applyAlteredEffectGated(actor, item) {
   }
   const template = findAlteredTemplate(item);
   if (!template) return null;
-  const data = template.toObject();
-  delete data._id;
-  data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = {
-    ...(data.flags[MODULE_ID] ?? {}),
-    [FLAGS.sourceSubstanceId]: item.id,
-    aeRole: "altered",
-  };
-  data.origin = item.uuid;
-  data.disabled = false;
-  data.changes = (data.changes ?? []).map((row) => ({
-    ...row,
-    value: stringifyScalar(applyAttenuation(parseScalar(row.value), count, curve)),
-  }));
+  const data = prepareEffectPayload(template.toObject(), {
+    sourceSubstanceId: item.id,
+    origin: item.uuid,
+    role: "altered",
+  });
+  data.system = { ...(data.system ?? {}), changes: attenuateChangeRows(effectChanges(data), count, curve) };
   const [created] = await actor.createEmbeddedDocuments("ActiveEffect", [data]);
   return created ?? null;
-}
-
-function parseScalar(v) {
-  if (typeof v === "number") return v;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : v;
-}
-
-function stringifyScalar(v) {
-  return typeof v === "number" ? String(v) : v;
 }
 
 function findAlteredTemplate(item) {
@@ -457,17 +432,12 @@ async function refreshToleranceMarkerAe(actor, item, count) {
         ? item.effects.get(tplIds[0])
         : null;
     if (!tpl) return;
-    const data = tpl.toObject();
-    delete data._id;
-    data.flags = data.flags ?? {};
-    data.flags[MODULE_ID] = {
-      ...(data.flags[MODULE_ID] ?? {}),
-      [FLAGS.sourceSubstanceId]: item.id,
-      aeRole: "tolerance",
-      count,
-    };
-    data.origin = item.uuid;
-    data.disabled = false;
+    const data = prepareEffectPayload(tpl.toObject(), {
+      sourceSubstanceId: item.id,
+      origin: item.uuid,
+      role: "tolerance",
+    });
+    data.flags[MODULE_ID].count = count;
     await actor.createEmbeddedDocuments("ActiveEffect", [data]);
   }
 }
@@ -505,21 +475,11 @@ export async function applyWithdrawalEffect(actor, item) {
 }
 
 function buildWithdrawalPayload(template, item) {
-  const data = template ? template.toObject() : buildDefaultWithdrawalTemplate(item);
-  delete data._id;
-  data.flags = data.flags ?? {};
-  data.flags[MODULE_ID] = {
-    ...(data.flags[MODULE_ID] ?? {}),
-    [FLAGS.sourceSubstanceId]: item.id,
-    aeRole: "withdrawal",
-  };
-  data.origin = item.uuid;
-  data.disabled = false;
+  const data = prepareEffectPayload(
+    template ? template.toObject() : buildDefaultWithdrawalTemplate(item),
+    { sourceSubstanceId: item.id, origin: item.uuid, role: "withdrawal", duration: null },
+  );
   data.transfer = false;
-  if (data.duration) {
-    data.duration.rounds = undefined;
-    data.duration.seconds = undefined;
-  }
   return data;
 }
 
@@ -535,14 +495,16 @@ function buildDefaultWithdrawalTemplate(item) {
     img: item.img ?? "icons/svg/blood.svg",
     statuses: [],
     description: "",
-    changes: [
-      {
-        key: `flags.${MODULE_ID}.vignetteColor`,
-        mode: 5,
-        value: "#a02020",
-        priority: 20,
-      },
-    ],
+    system: {
+      changes: [
+        {
+          key: `flags.${MODULE_ID}.vignetteColor`,
+          type: "override",
+          value: "#a02020",
+          priority: 20,
+        },
+      ],
+    },
     flags: {
       [MODULE_ID]: {
         aeRole: "withdrawal",

@@ -15,7 +15,7 @@
 // re-create dance and keeps the user-visible behaviour consistent if a player
 // (no dialog) does the drop.
 
-import { MODULE_ID, FLAGS } from "../config.js";
+import { MODULE_ID } from "../config.js";
 import {
   isSubstance,
   getAddiction,
@@ -29,6 +29,7 @@ import {
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
+import { prepareEffectPayload } from "../data/effect-data.js";
 import { incrementActorToleranceCount } from "./addiction.js";
 import { applyOverdoseEffect } from "./overdose.js";
 import { logger } from "../logger.js";
@@ -117,7 +118,7 @@ async function openDialog(actor, item) {
     actor: actor.name,
     item: item.name,
   });
-  const content = await renderTemplate(DIALOG_TEMPLATE, { body });
+  const content = await foundry.applications.handlebars.renderTemplate(DIALOG_TEMPLATE, { body });
   const buttons = [
     { action: CHOICES.ALTERED, label: game.i18n.localize("FISHUT.DragInventory.Button.Altered") },
     { action: CHOICES.ADDICTED, label: game.i18n.localize("FISHUT.DragInventory.Button.Addicted") },
@@ -279,20 +280,14 @@ async function cloneWithdrawalAesOntoActor(actor, item, seconds) {
     logger.warn(`withdrawing: no withdrawal AE template on ${item.name}; chat-only`);
     return;
   }
-  const payloads = templates.map((tpl) => {
-    const data = typeof tpl.toObject === "function" ? tpl.toObject() : { ...tpl };
-    delete data._id;
-    data.flags = data.flags ?? {};
-    data.flags[MODULE_ID] = {
-      ...(data.flags[MODULE_ID] ?? {}),
-      [FLAGS.sourceSubstanceId]: item.id,
-      aeRole: "withdrawal",
-    };
-    data.origin = item.uuid;
-    data.disabled = false;
-    data.duration = { ...(data.duration ?? {}), seconds };
-    return data;
-  });
+  const payloads = templates.map((tpl) =>
+    prepareEffectPayload(typeof tpl.toObject === "function" ? tpl.toObject() : { ...tpl }, {
+      sourceSubstanceId: item.id,
+      origin: item.uuid,
+      role: "withdrawal",
+      duration: seconds,
+    }),
+  );
   await actor.createEmbeddedDocuments("ActiveEffect", payloads);
 }
 
@@ -324,22 +319,13 @@ async function applyBenefitEffects(actor, item) {
   });
   if (benefits.length === 0) return [];
 
-  const payloads = benefits.map((effect) => {
-    const data = typeof effect.toObject === "function" ? effect.toObject() : { ...effect };
-    delete data._id;
-    data.flags = data.flags ?? {};
-    data.flags[MODULE_ID] = {
-      ...(data.flags[MODULE_ID] ?? {}),
-      [FLAGS.sourceSubstanceId]: item.id,
-    };
-    data.origin = item.uuid;
-    data.disabled = false;
-    if (data.duration) {
-      data.duration.rounds = undefined;
-      data.duration.seconds = undefined;
-    }
-    return data;
-  });
+  const payloads = benefits.map((effect) =>
+    prepareEffectPayload(typeof effect.toObject === "function" ? effect.toObject() : { ...effect }, {
+      sourceSubstanceId: item.id,
+      origin: item.uuid,
+      duration: null,
+    }),
+  );
   return actor.createEmbeddedDocuments("ActiveEffect", payloads);
 }
 
@@ -349,22 +335,12 @@ async function applyAddictionEffect(actor, item) {
     logger.warn(`addiction template not found on ${item.name}; chat-only fail outcome`);
     return null;
   }
-  const payloads = templates.map((template) => {
-    const data = typeof template.toObject === "function" ? template.toObject() : { ...template };
-    delete data._id;
-    data.flags = data.flags ?? {};
-    data.flags[MODULE_ID] = {
-      ...(data.flags[MODULE_ID] ?? {}),
-      [FLAGS.sourceSubstanceId]: item.id,
-    };
-    data.origin = item.uuid;
-    data.disabled = false;
-    if (data.duration) {
-      data.duration.rounds = undefined;
-      data.duration.seconds = undefined;
-    }
-    return data;
-  });
+  const payloads = templates.map((template) =>
+    prepareEffectPayload(
+      typeof template.toObject === "function" ? template.toObject() : { ...template },
+      { sourceSubstanceId: item.id, origin: item.uuid, role: "addiction", duration: null },
+    ),
+  );
   const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
   return created?.[0] ?? null;
 }
