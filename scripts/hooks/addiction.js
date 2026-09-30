@@ -20,6 +20,7 @@ import {
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
 import { attenuateChangeRows } from "../data/tolerance.js";
+import { isPriorHigh } from "../data/prior-high.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import { d20Config } from "../data/roll-config.js";
@@ -379,14 +380,11 @@ export async function incrementActorToleranceCount(actor, item) {
 export async function applyAlteredEffectGated(actor, item) {
   const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
   const curve = getAttenuationCurve(item) ?? DEFAULT_ATTENUATION_CURVE;
-  // Replace any earlier high from this substance, including a copy Midi-QoL
-  // applied from an older item (it has no sourceSubstanceId, only an origin).
-  const prior = findEffectsByRole(actor, "altered").filter((e) => {
-    const sid = e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId];
-    return sid === item.id || (!sid && e.origin === item.uuid);
-  });
-  for (const eff of prior) {
-    await eff.delete({ fishutIntentional: true });
+  // actor.effects, not appliedEffects: the item's own transfer templates never
+  // match, and an expired high that was never deleted still does.
+  const priorIds = actor.effects.filter((e) => isPriorHigh(e, item)).map((e) => e.id);
+  if (priorIds.length > 0) {
+    await actor.deleteEmbeddedDocuments("ActiveEffect", priorIds, { fishutIntentional: true });
   }
   const templates = findAlteredTemplates(item);
   if (templates.length === 0) return null;
