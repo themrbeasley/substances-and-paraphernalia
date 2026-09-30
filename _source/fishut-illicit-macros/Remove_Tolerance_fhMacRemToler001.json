@@ -1,5 +1,5 @@
 {
-  "_id": "fhMacRemoveToler01",
+  "_id": "fhMacRemToler001",
   "name": "Remove Tolerance",
   "type": "script",
   "scope": "global",
@@ -10,5 +10,5 @@
     "default": 0
   },
   "flags": {},
-  "_key": "!macros!fhMacRemoveToler01"
+  "_key": "!macros!fhMacRemToler001"
 }

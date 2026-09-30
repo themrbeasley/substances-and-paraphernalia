@@ -47,7 +47,7 @@
   },
   "effects": [
     {
-      "_id": "fhAEDubsPipeByp",
+      "_id": "fhAEDubsPipeByp1",
       "name": "Dubious Pipe: Save Modifier",
       "img": "icons/svg/aura.svg",
       "transfer": true,
@@ -70,7 +70,7 @@
           }
         }
       },
-      "_key": "!items.effects!fhParaDubsPipe01.fhAEDubsPipeByp"
+      "_key": "!items.effects!fhParaDubsPipe01.fhAEDubsPipeByp1"
     }
   ],
   "ownership": {

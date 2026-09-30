@@ -34,7 +34,7 @@
   },
   "effects": [
     {
-      "_id": "fhAECalibInhByp",
+      "_id": "fhAECalibInhByp1",
       "name": "Calibrated Inhaler: Save Modifier",
       "img": "icons/svg/aura.svg",
       "transfer": true,
@@ -57,7 +57,7 @@
           }
         }
       },
-      "_key": "!items.effects!fhParaCalibInh01.fhAECalibInhByp"
+      "_key": "!items.effects!fhParaCalibInh01.fhAECalibInhByp1"
     }
   ],
   "ownership": {

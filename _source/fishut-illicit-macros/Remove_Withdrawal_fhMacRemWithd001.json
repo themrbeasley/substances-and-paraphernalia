@@ -1,5 +1,5 @@
 {
-  "_id": "fhMacRemoveWithd01",
+  "_id": "fhMacRemWithd001",
   "name": "Remove Withdrawal",
   "type": "script",
   "scope": "global",
@@ -10,5 +10,5 @@
     "default": 0
   },
   "flags": {},
-  "_key": "!macros!fhMacRemoveWithd01"
+  "_key": "!macros!fhMacRemWithd001"
 }

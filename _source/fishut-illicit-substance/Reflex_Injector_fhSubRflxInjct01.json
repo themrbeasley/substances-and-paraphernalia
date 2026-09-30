@@ -6,7 +6,7 @@
   "folder": "fhSubSciFi000001",
   "system": {
     "description": {
-      "value": "<p>A spring-loaded combat injector preloaded with synthetic adrenocortical accelerant. Strapped to the thigh, deployed under fire. Brand-name stocks are mil-spec; the gray-market versions occasionally crystallize.</p><p><strong><em>Desired effects on use.</em></strong> For 1 minute you have a +2 bonus to Dexterity (initiative is rolled with this bonus if used as a reaction at the start of combat) and your walking speed increases by 10 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Reflex Injector (see below).</p><p><strong><em>Addicted from Reflex Injector.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on saving throws against being frightened, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 13 Wisdom check to resist the craving; on a failure, make a DC 25 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days. If you have no doses left, you must abstain and go straight to the saving throw.</p><p><em>Requires ready paraphernalia that applies to injury substances, such as a Neural Shunt or an Athlete's Logbook.</em></p>"
+      "value": "<p>A spring-loaded combat injector preloaded with synthetic adrenocortical accelerant. Strapped to the thigh, deployed under fire. Brand-name stocks are mil-spec; the gray-market versions occasionally crystallize.</p><p><strong><em>Desired effects on use.</em></strong> For 1 minute you have a +2 bonus to Dexterity (initiative is rolled with this bonus if used as a reaction at the start of combat) and your walking speed increases by 10 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Reflex Injector (see below).</p><p><strong><em>Addicted from Reflex Injector.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on saving throws against being frightened, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 13 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 25 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to injury substances, such as a Neural Shunt or an Athlete's Logbook.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -59,11 +59,7 @@
           "concentration": false,
           "override": false
         },
-        "effects": [
-          {
-            "_id": "fhAERflxInjctBen"
-          }
-        ],
+        "effects": [],
         "flags": {},
         "range": {
           "units": "self",

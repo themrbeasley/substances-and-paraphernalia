@@ -1,5 +1,5 @@
 {
-  "_id": "fhMacRemoveAddict01",
+  "_id": "fhMacRemAddict01",
   "name": "Remove Addiction",
   "type": "script",
   "scope": "global",
@@ -10,5 +10,5 @@
     "default": 0
   },
   "flags": {},
-  "_key": "!macros!fhMacRemoveAddict01"
+  "_key": "!macros!fhMacRemAddict01"
 }

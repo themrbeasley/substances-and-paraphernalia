@@ -1,5 +1,5 @@
 {
-  "_id": "fhMacRemoveOverd01",
+  "_id": "fhMacRemOverd001",
   "name": "Remove Overdose",
   "type": "script",
   "scope": "global",
@@ -10,5 +10,5 @@
     "default": 0
   },
   "flags": {},
-  "_key": "!macros!fhMacRemoveOverd01"
+  "_key": "!macros!fhMacRemOverd001"
 }
