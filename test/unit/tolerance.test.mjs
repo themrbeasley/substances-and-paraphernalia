@@ -1,7 +1,7 @@
 // test/unit/tolerance.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { currentPoints, applyAttenuation, decayCount } from "../../scripts/data/tolerance.js";
+import { currentPoints, applyAttenuation, decayCount, attenuateChangeRows } from "../../scripts/data/tolerance.js";
 
 test("currentPoints returns count * rate", () => {
   assert.equal(currentPoints(0, 3), 0);
@@ -64,4 +64,38 @@ test("decayCount subtracts decay from count and clamps at 0", () => {
 test("decayCount coerces non-finite decay to 0", () => {
   assert.equal(decayCount(5, NaN), 5);
   assert.equal(decayCount(5, "foo"), 5);
+});
+
+const CURVE = [1, 0.5];
+
+test("attenuateChangeRows scales numeric string values and writes them back as strings", () => {
+  const rows = [{ key: "system.bonuses.mwak.attack", type: "add", value: "4" }];
+  assert.deepEqual(attenuateChangeRows(rows, 1, CURVE), [
+    { key: "system.bonuses.mwak.attack", type: "add", value: "2" },
+  ]);
+});
+
+test("attenuateChangeRows scales native number values (V14-migrated world items)", () => {
+  const rows = [{ key: "system.attributes.movement.walk", type: "add", value: 10 }];
+  assert.equal(attenuateChangeRows(rows, 1, CURVE)[0].value, "5");
+});
+
+test("attenuateChangeRows passes non-numeric values through untouched (Token Magic preset names)", () => {
+  const rows = [{ key: "macro.tokenMagic", type: "custom", value: "fishut-tmfx-fantasy-stimulant" }];
+  assert.deepEqual(attenuateChangeRows(rows, 1, CURVE), rows);
+});
+
+test("attenuateChangeRows leaves a missing value alone", () => {
+  const rows = [{ key: "k", type: "add" }];
+  assert.equal(attenuateChangeRows(rows, 1, CURVE)[0].value, undefined);
+});
+
+test("attenuateChangeRows does not mutate the input rows", () => {
+  const rows = [{ key: "k", type: "add", value: "4" }];
+  attenuateChangeRows(rows, 1, CURVE);
+  assert.equal(rows[0].value, "4");
+});
+
+test("attenuateChangeRows returns [] for a missing row list", () => {
+  assert.deepEqual(attenuateChangeRows(undefined, 1, CURVE), []);
 });

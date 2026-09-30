@@ -43,6 +43,25 @@ export function applyAttenuation(value, count, curve) {
 }
 
 /**
+ * Scale every numeric change-row value by the attenuation curve at `count`.
+ * Values are parsed from strings or taken as numbers (V14-migrated data holds
+ * real numbers), and written back as strings. Non-numeric values such as
+ * `macro.tokenMagic` preset names pass through unchanged.
+ *
+ * @param {Array<{value:any}>|null|undefined} rows
+ * @param {number} count
+ * @param {number[]} curve
+ * @returns {Array<object>} new rows; the input is not mutated
+ */
+export function attenuateChangeRows(rows, count, curve) {
+  return (rows ?? []).map((row) => {
+    const n = Number(row.value);
+    const scaled = applyAttenuation(Number.isFinite(n) ? n : row.value, count, curve);
+    return { ...row, value: typeof scaled === "number" ? String(scaled) : scaled };
+  });
+}
+
+/**
  * count -= decay, floored at 0.
  *
  * @param {number} count
