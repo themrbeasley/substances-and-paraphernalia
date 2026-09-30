@@ -43,7 +43,9 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Grants advantage on Constitution saving throws against addiction to injury-administered substances delivered through the shunt.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "bypass",

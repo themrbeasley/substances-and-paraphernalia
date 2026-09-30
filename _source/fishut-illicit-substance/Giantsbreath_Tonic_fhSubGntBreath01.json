@@ -149,23 +149,26 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 600
+        "value": 600,
+        "units": "seconds"
       },
       "description": "<p>+2 to Strength (Athletics) checks. Advantage on Strength saves vs. grapple/shove/restrain.</p>",
-      "changes": [
-        {
-          "key": "system.skills.ath.bonuses.check",
-          "mode": 2,
-          "value": "+2",
-          "priority": 20
-        },
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-fantasy-performance-enhancing",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "system.skills.ath.bonuses.check",
+            "value": "+2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-fantasy-performance-enhancing",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -184,7 +187,9 @@
       ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Dexterity (Sleight of Hand) checks until withdrawal completes.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -200,14 +205,16 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#5e3b1f",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#5e3b1f",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

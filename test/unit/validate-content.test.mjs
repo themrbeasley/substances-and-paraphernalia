@@ -57,13 +57,13 @@ function makeValidSubstance(flagOverrides = {}) {
         {
           _id: "ae-addict-001",
           name: "Addicted to Test Substance",
-          changes: [],
+          system: { changes: [] },
           flags: { [SCOPE]: { aeRole: "addiction" } },
         },
         {
           _id: "ae-withdraw-001",
           name: "Withdrawing from Test Substance",
-          changes: [],
+          system: { changes: [] },
           statuses: [],
           flags: { [SCOPE]: { aeRole: "withdrawal" } },
         },
@@ -100,7 +100,7 @@ function baseSubstance(overrides = {}) {
         {
           _id: "ae-addict-001",
           name: "Addicted to Test Substance",
-          changes: [],
+          system: { changes: [] },
           flags: { [SCOPE]: { aeRole: "addiction" } },
         },
       ],
@@ -253,7 +253,7 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
 
   it("errors when the resolved AE name does not contain 'withdraw'", () => {
     const file = baseSubstance();
-    withWithdrawalAe(file, { _id: "wd1", name: "Crash Phase", changes: [], flags: {} });
+    withWithdrawalAe(file, { _id: "wd1", name: "Crash Phase", system: { changes: [] }, flags: {} });
     const { errors } = checkSubstance(file);
     assert.equal(errors.some((e) => /withdrawal AE name .+ must contain "withdraw"/.test(e)), true);
   });
@@ -263,9 +263,11 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
     withWithdrawalAe(file, {
       _id: "wd1",
       name: "Withdrawing from Test",
-      changes: [
-        { key: "system.attributes.exhaustion", mode: 2, value: "1", priority: 20 },
-      ],
+      system: {
+        changes: [
+          { key: "system.attributes.exhaustion", type: "add", value: "1", priority: 20 },
+        ],
+      },
       flags: { [SCOPE]: { aeRole: "withdrawal" } },
     });
     const { errors, warnings } = checkSubstance(file);
@@ -278,9 +280,11 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
     withWithdrawalAe(file, {
       _id: "wd1",
       name: "Withdrawing from Test",
-      changes: [
-        { key: "system.bonuses.msak.attack", mode: 2, value: "disadvantage", priority: 20 },
-      ],
+      system: {
+        changes: [
+          { key: "system.bonuses.msak.attack", type: "add", value: "disadvantage", priority: 20 },
+        ],
+      },
       flags: { [SCOPE]: { aeRole: "withdrawal" } },
     });
     const { errors, warnings } = checkSubstance(file);
@@ -294,7 +298,7 @@ describe("checkSubstance — withdrawal.effectId (v0.4)", () => {
     withWithdrawalAe(file, {
       _id: "wd1",
       name: "Withdrawing from Test",
-      changes: [],
+      system: { changes: [] },
       statuses: ["poisoned"],
       flags: { [SCOPE]: { aeRole: "withdrawal" } },
     });
@@ -404,7 +408,7 @@ describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
     file.data.effects.push({
       _id: "tol1",
       name: "Tolerance to Test",
-      changes: [],
+      system: { changes: [] },
       flags: {
         [SCOPE]: {
           aeRole: "tolerance",
@@ -421,7 +425,7 @@ describe("checkSubstance — modifier-bearing AEs (v0.4)", () => {
     file.data.effects.push({
       _id: "tol1",
       name: "Tolerance to Test",
-      changes: [],
+      system: { changes: [] },
       flags: {
         [SCOPE]: {
           aeRole: "tolerance",
@@ -502,7 +506,7 @@ describe("checkParaphernalia — +N bypass (v0.4)", () => {
       _id: "byp1",
       name: "Bypass — inhaled",
       transfer: true,
-      changes: [],
+      system: { changes: [] },
       flags: {
         [SCOPE]: {
           aeRole: "bypass",
@@ -572,7 +576,7 @@ describe("checkParaphernalia — daily-recovery contract (regression)", () => {
       _id: "byp1",
       name: "Bypass — inhaled",
       transfer: true,
-      changes: [],
+      system: { changes: [] },
       flags: {
         [SCOPE]: {
           aeRole: "bypass",
@@ -599,7 +603,7 @@ describe("checkParaphernalia — daily-recovery contract (regression)", () => {
       _id: "byp1",
       name: "Bypass — inhaled",
       transfer: true,
-      changes: [],
+      system: { changes: [] },
       flags: {
         [SCOPE]: {
           aeRole: "bypass",
@@ -628,7 +632,7 @@ describe("MODIFIER_TYPES (reroll-on-fail)", () => {
           _id: "ae-reroll-test",
           name: "Reroll Test — Bypass",
           transfer: true,
-          changes: [],
+          system: { changes: [] },
           flags: {
             [SCOPE]: {
               aeRole: "bypass",
@@ -649,5 +653,57 @@ describe("MODIFIER_TYPES (reroll-on-fail)", () => {
       undefined,
       `unexpected modifier.type error: ${errors.join(" | ")}`,
     );
+  });
+});
+
+describe("checkSubstance — V14 effect shape (v0.9)", () => {
+  function withWithdrawalAe(file, ae) {
+    file.data.effects.push(ae);
+    file.data.flags[SCOPE].withdrawal.effectIds = [ae._id];
+    return file;
+  }
+
+  const withdrawalAe = (extra) => ({
+    _id: "wd1",
+    name: "Withdrawing from Test",
+    flags: { [SCOPE]: { aeRole: "withdrawal" } },
+    ...extra,
+  });
+
+  it("errors on the legacy top-level changes array", () => {
+    const file = baseSubstance();
+    withWithdrawalAe(file, withdrawalAe({ changes: [] }));
+    const { errors } = checkSubstance(file);
+    assert.ok(errors.some((e) => /legacy top-level "changes"/.test(e)), errors.join("\n"));
+  });
+
+  it("errors on a numeric change mode", () => {
+    const file = baseSubstance();
+    withWithdrawalAe(
+      file,
+      withdrawalAe({ system: { changes: [{ key: "system.attributes.exhaustion", mode: 2, value: "1" }] } }),
+    );
+    const { errors } = checkSubstance(file);
+    assert.ok(errors.some((e) => /string "type"/.test(e)), errors.join("\n"));
+  });
+
+  it("errors on a legacy duration.seconds", () => {
+    const file = baseSubstance();
+    withWithdrawalAe(file, withdrawalAe({ system: { changes: [] }, duration: { seconds: 600 } }));
+    const { errors } = checkSubstance(file);
+    assert.ok(errors.some((e) => /legacy duration\.seconds/.test(e)), errors.join("\n"));
+  });
+
+  it("accepts a V14 duration and typed change rows", () => {
+    const file = baseSubstance();
+    withWithdrawalAe(
+      file,
+      withdrawalAe({
+        system: { changes: [{ key: "system.attributes.exhaustion", type: "add", value: "1" }] },
+        duration: { value: 600, units: "seconds" },
+      }),
+    );
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
   });
 });

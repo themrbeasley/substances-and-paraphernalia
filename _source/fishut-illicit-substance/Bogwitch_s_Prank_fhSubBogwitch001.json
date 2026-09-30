@@ -149,17 +149,20 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 3600
+        "value": 3600,
+        "units": "seconds"
       },
       "description": "<p>Advantage on Charisma (Performance) checks. Disadvantage on sight-based Wisdom (Perception) checks.</p>",
-      "changes": [
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-fantasy-mind-altering",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-fantasy-mind-altering",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -178,7 +181,9 @@
       ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom (Perception) checks until withdrawal completes.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -194,14 +199,16 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#4f6b3a",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#4f6b3a",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

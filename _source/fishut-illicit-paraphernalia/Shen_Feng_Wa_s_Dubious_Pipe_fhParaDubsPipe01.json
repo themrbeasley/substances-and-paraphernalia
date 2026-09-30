@@ -54,7 +54,9 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Grants automatic success on Constitution saving throws against addiction to inhaled substances burned in the Dubious Pipe. Uses recover at the end of a long rest, tracked on the pipe's native uses pool.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "bypass",

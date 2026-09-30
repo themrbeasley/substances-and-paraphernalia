@@ -149,29 +149,32 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 60
+        "value": 60,
+        "units": "seconds"
       },
       "description": "<p>+2 to Dexterity. Walking speed +10 ft.</p>",
-      "changes": [
-        {
-          "key": "system.abilities.dex.bonuses.check",
-          "mode": 2,
-          "value": "+2",
-          "priority": 20
-        },
-        {
-          "key": "system.attributes.movement.walk",
-          "mode": 2,
-          "value": "+10",
-          "priority": 20
-        },
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-scifi-performance-enhancing",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "system.abilities.dex.bonuses.check",
+            "value": "+2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.attributes.movement.walk",
+            "value": "+10",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-scifi-performance-enhancing",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -190,14 +193,16 @@
       ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on saves vs. frightened. Walking speed &minus;5 ft. until withdrawal completes.</p>",
-      "changes": [
-        {
-          "key": "system.attributes.movement.walk",
-          "mode": 2,
-          "value": "-5",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "system.attributes.movement.walk",
+            "value": "-5",
+            "priority": 20,
+            "type": "add"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -213,14 +218,16 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#2da566",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#2da566",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

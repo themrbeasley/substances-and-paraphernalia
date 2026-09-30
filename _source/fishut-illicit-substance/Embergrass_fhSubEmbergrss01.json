@@ -149,23 +149,26 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 3600
+        "value": 3600,
+        "units": "seconds"
       },
       "description": "<p>Advantage on saves against being frightened. +1 to Charisma (Persuasion) checks.</p>",
-      "changes": [
-        {
-          "key": "system.skills.per.bonuses.check",
-          "mode": 2,
-          "value": "+1",
-          "priority": 20
-        },
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-modern-mind-altering",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "system.skills.per.bonuses.check",
+            "value": "+1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-modern-mind-altering",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -184,7 +187,9 @@
       ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Intelligence checks until withdrawal completes.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -200,14 +205,16 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#c2702a",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#c2702a",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

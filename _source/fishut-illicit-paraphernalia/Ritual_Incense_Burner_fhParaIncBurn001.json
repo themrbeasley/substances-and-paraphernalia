@@ -41,7 +41,9 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Grants a +1 bonus to Constitution saving throws against addiction to inhaled substances burned in the censer.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "bypass",

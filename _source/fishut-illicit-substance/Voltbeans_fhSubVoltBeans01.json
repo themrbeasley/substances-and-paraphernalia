@@ -149,23 +149,26 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 3600
+        "value": 3600,
+        "units": "seconds"
       },
       "description": "<p>Advantage on Dexterity (Acrobatics) checks. +2 to Charisma (Performance) checks.</p>",
-      "changes": [
-        {
-          "key": "system.skills.prf.bonuses.check",
-          "mode": 2,
-          "value": "+2",
-          "priority": 20
-        },
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-modern-stimulant",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "system.skills.prf.bonuses.check",
+            "value": "+2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-modern-stimulant",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -184,7 +187,9 @@
       ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Constitution saving throws to maintain concentration until withdrawal completes.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -200,14 +205,16 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#a8b020",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#a8b020",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

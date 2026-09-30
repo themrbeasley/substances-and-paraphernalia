@@ -149,17 +149,20 @@
       "transfer": false,
       "disabled": false,
       "duration": {
-        "seconds": 1800
+        "value": 1800,
+        "units": "seconds"
       },
       "description": "<p>Advantage on Wisdom (Insight) checks and on hearing-based Wisdom (Perception) checks.</p>",
-      "changes": [
-        {
-          "key": "macro.tokenMagic",
-          "mode": 0,
-          "value": "fishut-tmfx-modern-mind-altering",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "macro.tokenMagic",
+            "value": "fishut-tmfx-modern-mind-altering",
+            "priority": 20,
+            "type": "custom"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "altered"
@@ -178,7 +181,9 @@
       ],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom saving throws until withdrawal completes.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "addiction"
@@ -194,14 +199,16 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
-      "changes": [
-        {
-          "key": "flags.substances-and-paraphernalia.vignetteColor",
-          "mode": 5,
-          "value": "#6a4a78",
-          "priority": 20
-        }
-      ],
+      "system": {
+        "changes": [
+          {
+            "key": "flags.substances-and-paraphernalia.vignetteColor",
+            "value": "#6a4a78",
+            "priority": 20,
+            "type": "override"
+          }
+        ]
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "withdrawal"

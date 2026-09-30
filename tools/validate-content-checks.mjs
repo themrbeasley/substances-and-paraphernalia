@@ -38,6 +38,28 @@ function checkAeRole(effect, ownerLabel, errors) {
   }
 }
 
+// Foundry V14 moved change rows to system.changes (string `type`, not numeric
+// `mode`) and duration to value + units. Foundry converts old data on load,
+// but only as a shim that V16 drops, so shipped content must be V14-shaped.
+const LEGACY_DURATION_KEYS = ["seconds", "rounds", "turns", "startTime", "startRound", "startTurn", "combat"];
+
+function checkAeV14Shape(effect, ownerLabel, errors) {
+  const label = `${ownerLabel} AE "${effect?.name ?? effect?._id ?? "?"}"`;
+  if (effect?.changes !== undefined) {
+    errors.push(`${label} uses legacy top-level "changes"; V14 stores them at system.changes`);
+  }
+  for (const row of effect?.system?.changes ?? []) {
+    if (row?.mode !== undefined || typeof row?.type !== "string") {
+      errors.push(`${label} change "${row?.key}" needs a string "type" (V14), not a numeric "mode"`);
+    }
+  }
+  for (const key of LEGACY_DURATION_KEYS) {
+    if (effect?.duration?.[key] !== undefined) {
+      errors.push(`${label} uses legacy duration.${key}; V14 uses duration.value + duration.units`);
+    }
+  }
+}
+
 function flagsOf(data) {
   return data?.flags?.[FLAG_SCOPE] ?? null;
 }
@@ -271,6 +293,7 @@ export function checkSubstance(file) {
     const modErrs = checkModifierShape(ae, tag);
     errors.push(...modErrs);
     checkAeRole(ae, tag, errors);
+    checkAeV14Shape(ae, tag, errors);
   }
 
   return { errors, warnings };
@@ -355,6 +378,7 @@ export function checkParaphernalia(file, opts = {}) {
     const modErrs = checkModifierShape(ae, tag);
     errors.push(...modErrs);
     checkAeRole(ae, tag, errors);
+    checkAeV14Shape(ae, tag, errors);
   }
 
   if (bypassEffects.length === 0) return { errors, warnings };
@@ -452,7 +476,7 @@ function resolveEffectIdList(plural, singular) {
  * flagged (the check is a warning, not an error).
  */
 function aeViolatesContentGuidance(ae) {
-  const changes = Array.isArray(ae?.changes) ? ae.changes : [];
+  const changes = Array.isArray(ae?.system?.changes) ? ae.system.changes : [];
   for (const c of changes) {
     const key = String(c?.key ?? "");
     const value = String(c?.value ?? "");

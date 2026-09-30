@@ -41,7 +41,9 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Grants a +1 bonus to Constitution saving throws against addiction to ingested substances split with the cutter.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "bypass",

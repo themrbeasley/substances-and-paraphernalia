@@ -54,7 +54,9 @@
       "disabled": false,
       "duration": {},
       "description": "<p>Grants a single daily reroll on a failed Constitution saving throw against addiction to ingested substances taken through this dropper. Uses recover at the end of a long rest, tracked on the vial's native uses pool.</p>",
-      "changes": [],
+      "system": {
+        "changes": []
+      },
       "flags": {
         "substances-and-paraphernalia": {
           "aeRole": "bypass",
