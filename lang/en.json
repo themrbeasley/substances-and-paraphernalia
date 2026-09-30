@@ -112,7 +112,7 @@
 
   "FISHUT.RemoveAddiction.Title": "Remove Addiction",
   "FISHUT.RemoveAddiction.NoActor": "Select a token first.",
-  "FISHUT.RemoveAddiction.NoCandidates": "{actor} has no addiction effects or withdrawal entries to remove.",
+  "FISHUT.RemoveAddiction.NoCandidates": "{actor} has no addiction effects to remove.",
   "FISHUT.RemoveAddiction.Confirm": "Remove",
   "FISHUT.RemoveAddiction.Cancel": "Cancel",
   "FISHUT.RemoveAddiction.PreviewIntro": "<p>Choose addiction effects to remove from <strong>{actor}</strong>.</p>",
@@ -121,10 +121,10 @@
   "FISHUT.RemoveAddiction.LogTitle": "Removed addiction (paste-restore JSON)",
 
   "FISHUT.RemoveTolerance.Title": "Remove Tolerance",
-  "FISHUT.RemoveTolerance.NoCandidates": "{actor} has no tolerance effects to remove.",
-  "FISHUT.RemoveTolerance.PreviewIntro": "<p>Choose tolerance effects to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveTolerance.RowDetail": "{name} (source: {sourceId}, stacks: {stacks})",
-  "FISHUT.RemoveTolerance.Removed": "Removed <strong>{count}</strong> tolerance effect(s) from <strong>{actor}</strong>.",
+  "FISHUT.RemoveTolerance.NoCandidates": "{actor} has no tolerance to remove.",
+  "FISHUT.RemoveTolerance.PreviewIntro": "<p>Choose tolerance to reset for <strong>{actor}</strong>.</p>",
+  "FISHUT.RemoveTolerance.RowDetail": "{name} (source: {sourceId}, count: {stacks})",
+  "FISHUT.RemoveTolerance.Removed": "Reset tolerance to <strong>{count}</strong> substance(s) for <strong>{actor}</strong>.",
   "FISHUT.RemoveTolerance.LogTitle": "Removed tolerance (paste-restore JSON)",
 
   "FISHUT.RemoveOverdose.Title": "Remove Overdose",
@@ -138,7 +138,7 @@
   "FISHUT.RemoveWithdrawal.NoCandidates": "{actor} has no withdrawal effects or entries to remove.",
   "FISHUT.RemoveWithdrawal.PreviewIntro": "<p>Choose withdrawal effects to remove from <strong>{actor}</strong>.</p>",
   "FISHUT.RemoveWithdrawal.RowDetail": "{name} (source: {sourceId})",
-  "FISHUT.RemoveWithdrawal.Removed": "Removed <strong>{count}</strong> withdrawal effect(s) from <strong>{actor}</strong>.",
+  "FISHUT.RemoveWithdrawal.Removed": "Removed <strong>{count}</strong> withdrawal row(s) from <strong>{actor}</strong>. Removing withdrawal ends the addiction too.",
   "FISHUT.RemoveWithdrawal.LogTitle": "Removed withdrawal (paste-restore JSON)",
 
   "FISHUT.RemoveAltered.Title": "Remove Altered",
