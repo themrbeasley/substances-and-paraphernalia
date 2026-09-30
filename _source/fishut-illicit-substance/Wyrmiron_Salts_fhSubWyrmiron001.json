@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>Black flakes ground from rust-stained scales shed by elder dragons. Inhaled through a snuff horn, the salts coat the lungs in a brief, glittering ash. Mercenaries pay handsomely; clerics call it desecration.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +1 bonus to AC as your skin hardens with a faint scaly sheen.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wyrmiron Salts (see below).</p><p><strong><em>Addicted from Wyrmiron Salts.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Stealth) checks (your skin makes a faint metallic rasp).</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Snuff Horn.</em></p>"
+      "value": "<p>Black flakes ground from rust-stained scales shed by elder dragons. Inhaled through a snuff horn, the salts coat the lungs in a brief, glittering ash. Mercenaries pay handsomely; clerics call it desecration.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +1 bonus to AC as your skin hardens with a faint scaly sheen.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wyrmiron Salts (see below).</p><p><strong><em>Addicted from Wyrmiron Salts.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Stealth) checks (your skin makes a faint metallic rasp).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, make a DC 20 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days.</p><p><em>Requires: Snuff Horn.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -204,7 +204,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
       "system": {
         "changes": [
           {

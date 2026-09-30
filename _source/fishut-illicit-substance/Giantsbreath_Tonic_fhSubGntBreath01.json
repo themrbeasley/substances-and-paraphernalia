@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws made to resist being grappled, shoved, or restrained.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal Modifier: 4.</em></strong> Withdrawal lasts max(4 &minus; your Constitution modifier, 2) long rests, minimum 1.</p><p><em>Requires: Tincture Dropper.</em></p>"
+      "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws made to resist being grappled, shoved, or restrained.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, make a DC 20 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days.</p><p><em>Requires: Tincture Dropper.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -204,7 +204,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
       "system": {
         "changes": [
           {

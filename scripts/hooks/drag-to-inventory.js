@@ -159,7 +159,7 @@ async function openDialog(actor, item) {
  * @param {Actor} actor
  * @param {Item}  item
  * @param {"altered"|"addicted"|"withdrawing"|"tolerant"|"overdosed"|"decline"} choice
- * @returns {Promise<{applied: string, restsRemaining?: number}>}
+ * @returns {Promise<{applied: string, endsAt?: string, stacks?: number, effectId?: string|null}>}
  */
 export async function applyDragOutcome(actor, item, choice) {
   if (!actor || !item) return { applied: "noop" };

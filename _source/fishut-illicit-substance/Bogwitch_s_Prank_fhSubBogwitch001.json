@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A small purple-capped fungus that grows on rotting logs in marshlands, visually identical to a popular edible variety. Foragers learn to tell the difference; their friends usually don't. Eaten unwittingly more often than not.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour your sense of color is heightened and faintly synesthetic: you have advantage on Charisma (Performance) checks and disadvantage on Wisdom (Perception) checks that rely on sight.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 11 Constitution saving throw. On a failed save, you gain the Addicted condition from Bogwitch's Prank (see below).</p><p><strong><em>Addicted from Bogwitch's Prank.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom (Perception) checks.</p><p><strong><em>Withdrawal Modifier: 2.</em></strong> Withdrawal lasts max(2 &minus; your Constitution modifier, 1) long rests, minimum 1.</p>"
+      "value": "<p>A small purple-capped fungus that grows on rotting logs in marshlands, visually identical to a popular edible variety. Foragers learn to tell the difference; their friends usually don't. Eaten unwittingly more often than not.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour your sense of color is heightened and faintly synesthetic: you have advantage on Charisma (Performance) checks and disadvantage on Wisdom (Perception) checks that rely on sight.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 11 Constitution saving throw. On a failed save, you gain the Addicted condition from Bogwitch's Prank (see below).</p><p><strong><em>Addicted from Bogwitch's Prank.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Wisdom (Perception) checks.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 10 Wisdom check to resist the craving; on a failure, make a DC 10 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days.</p>"
     },
     "type": {
       "value": "poison",
@@ -198,7 +198,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
       "system": {
         "changes": [
           {

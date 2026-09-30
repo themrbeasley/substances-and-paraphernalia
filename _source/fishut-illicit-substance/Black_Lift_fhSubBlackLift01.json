@@ -6,7 +6,7 @@
   "folder": "fhSubModern00001",
   "system": {
     "description": {
-      "value": "<p>An oil-based stack of underground origin. Used responsibly it produces a measurable strength gain; used carelessly it produces a coroner's report. Discipline is the difference, and discipline is written down.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +2 bonus to Strength (Athletics) checks, a +1 bonus to Strength-based weapon attack rolls, and your walking speed increases by 5 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Black Lift (see below).</p><p><strong><em>Addicted from Black Lift.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on Constitution saving throws, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal Modifier: 6.</em></strong> Withdrawal lasts max(6 − your Constitution modifier, 3) long rests, minimum 1.</p><p><em>Requires: Tincture Dropper AND Athlete's Logbook.</em></p>"
+      "value": "<p>An oil-based stack of underground origin. Used responsibly it produces a measurable strength gain; used carelessly it produces a coroner's report. Discipline is the difference, and discipline is written down.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +2 bonus to Strength (Athletics) checks, a +1 bonus to Strength-based weapon attack rolls, and your walking speed increases by 5 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Black Lift (see below).</p><p><strong><em>Addicted from Black Lift.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on Constitution saving throws, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 14 Wisdom check to resist the craving; on a failure, make a DC 30 Constitution saving throw. On a failed save, you suffer withdrawal for 3 days.</p><p><em>Requires: Tincture Dropper AND Athlete's Logbook.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -223,7 +223,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms persist over long rests until the addiction clears.</p>",
+      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
       "system": {
         "changes": [
           {

@@ -35,13 +35,15 @@ import {
  *
  * @typedef {Object} WithdrawalBlock
  * @property {boolean} [enabled]   Defaults to true when omitted; false skips
- *   withdrawal AE application and actor-flag bookkeeping on save fail (the
- *   addiction AE persists with no rest-tick countdown).
- * @property {number} [mod]        Positive integer; floor of withdrawal
- *   duration is `ceil(mod / 2)` long rests.
+ *   the Constitution Withdrawal Save and the withdrawal AE for this substance.
+ * @property {number} dc           Constitution Withdrawal Save DC.
+ * @property {{ability: string, dc: number}} abstain
+ *   Abstain Check rolled at a Long Rest (Wisdom by default).
+ * @property {{value: number, unit: "minutes"|"hours"|"days"|"weeks"|"months"}} duration
+ *   How long the withdrawal AE lasts once it applies (months are 30 days).
  * @property {string[]} [effectIds]
- *   v0.4 canonical: ids of withdrawal AE templates on the same item; the
- *   long-rest tick clones ALL of them onto the actor when withdrawal applies.
+ *   v0.4 canonical: ids of withdrawal AE templates on the same item; ALL of
+ *   them are cloned onto the actor when withdrawal applies at a Long Rest.
  * @property {string} [effectId]
  *   Deprecated pre-v0.4 singular id; readers wrap it in an array on the fly.
  *
