@@ -58,13 +58,6 @@
         "type": "module",
         "reason": "Visual filters dispatched from substance Altered AEs via DAE's macro.tokenMagic."
       }
-    ],
-    "recommends": [
-      {
-        "id": "times-up",
-        "type": "module",
-        "reason": "Reliable Active Effect expiration."
-      }
     ]
   },
   "flags": {},

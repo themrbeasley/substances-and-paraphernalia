@@ -8,7 +8,6 @@ export const SETTING_KEYS = Object.freeze({
   debug: "debug",
   addictionPoisonedCoupling: "addictionPoisonedCoupling",
   customParaphernaliaSubtypes: "customParaphernaliaSubtypes",
-  timesUpIntegration: "timesUpIntegration",
   tmfxIntegration: "tmfxIntegration",
 });
 
@@ -52,15 +51,6 @@ export function registerSettings() {
     type: String,
     default: COUPLING_DEFAULT,
     choices: couplingChoices(),
-  });
-
-  game.settings.register(MODULE_ID, SETTING_KEYS.timesUpIntegration, {
-    name: "FISHUT.Settings.TimesUpIntegration.Name",
-    hint: "FISHUT.Settings.TimesUpIntegration.Hint",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: true,
   });
 
   game.settings.register(MODULE_ID, SETTING_KEYS.tmfxIntegration, {

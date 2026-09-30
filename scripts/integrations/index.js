@@ -12,11 +12,6 @@ import { MODULE_ID } from "../config.js";
 // disable our preset registration while leaving TMFX otherwise active.
 export const KNOWN_INTEGRATIONS = Object.freeze([
   {
-    id: "times-up",
-    labelKey: "FISHUT.Integrations.Module.TimesUp",
-    settingKey: "timesUpIntegration",
-  },
-  {
     id: "tokenmagic",
     labelKey: "FISHUT.Integrations.Module.Tokenmagic",
     settingKey: "tmfxIntegration",

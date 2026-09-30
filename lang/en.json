@@ -53,8 +53,6 @@
   "FISHUT.Settings.AddictionPoisonedCoupling.Name": "Addiction / Poisoned coupling",
   "FISHUT.Settings.AddictionPoisonedCoupling.Hint": "Choose how addiction relates to the Poisoned condition. Linked-cascade: addiction also applies Poisoned, and curing Poisoned cures the addiction. Linked-isolated: addiction also applies Poisoned, but they're cleared separately. Independent: addiction never adds Poisoned. Changes only affect new applications.",
 
-  "FISHUT.Settings.TimesUpIntegration.Name": "Wire into Times Up",
-  "FISHUT.Settings.TimesUpIntegration.Hint": "Disable to make this module ignore Times Up even if it's installed.",
   "FISHUT.Settings.TmfxIntegration.Name": "Wire into Token Magic FX",
   "FISHUT.Settings.TmfxIntegration.Hint": "Disable to make this module ignore Token Magic FX even if it's installed.",
 
@@ -86,7 +84,6 @@
   "FISHUT.Gating.Blocked.Override": "Use anyway",
   "FISHUT.Gating.Blocked.Cancel": "Cancel",
 
-  "FISHUT.Integrations.Module.TimesUp": "Times Up (times-up)",
   "FISHUT.Integrations.Module.Tokenmagic": "Token Magic FX (tokenmagic)",
   "FISHUT.Integrations.Missing.Notice": "Substances and Paraphernalia recommends modules that aren't active: {missing}. Disable this notice in the module settings.",
   "FISHUT.Integrations.RequiresDae.Warn": "{item}: this substance has effects that require DAE. DAE isn't active — those effect modes may silently fail to apply.",
