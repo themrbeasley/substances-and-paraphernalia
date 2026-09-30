@@ -10,17 +10,23 @@ flags["substances-and-paraphernalia"] = {
   category: "stimulant" | "mindAltering" | "performanceEnhancing",
   setting: "fantasy" | "sciFi" | "modern",
   addiction: {
-    save: { ability: "con", dc: 13 },
-    withdrawalMod: 3,
-    addictionEffectId: "<ae._id>"             // points to the addiction AE template
+    enabled: true,
+    save: { ability: "con", dc: 13 },         // rolled after each use
+    addictionEffectIds: ["<ae._id>"]          // addiction AE templates on this item
   },
-  withdrawalEffectId: "<ae._id>",             // optional; defaults to v0.3 template
+  withdrawal: {
+    enabled: true,
+    dc: 15,                                   // Constitution Withdrawal Save
+    abstain: { ability: "wis", dc: 11 },      // Abstain Check at each Long Rest
+    duration: { value: 3, unit: "days" },     // minutes | hours | days | weeks | months
+    effectIds: ["<ae._id>"]                   // withdrawal AE templates on this item
+  },
   overdose: {                                 // optional
     enabled: true,
     chancePercent: 5,
     description: "<chat-card body>"
   },
-  schemaVersion: 3
+  schemaVersion: 7
 };
 ```
 

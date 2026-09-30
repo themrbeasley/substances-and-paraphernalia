@@ -265,8 +265,9 @@ function computeWithdrawalWindow(item) {
 }
 
 function humanizeDuration(duration) {
-  if (!duration) return "none";
-  const value = Number(duration.value) || 0;
+  const value = Number(duration?.value) || 0;
+  // prepareEffectPayload makes a missing or non-positive duration permanent.
+  if (value <= 0) return "indefinitely";
   const unit =
     value === 1 && typeof duration.unit === "string"
       ? duration.unit.replace(/s$/, "")

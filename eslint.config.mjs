@@ -5,6 +5,9 @@ import importPlugin from "eslint-plugin-import";
 // Only globals that exist un-deprecated in Foundry V14. Removed/deprecated ones
 // (mergeObject, renderTemplate, Dialog, …) are left out on purpose so a bare
 // use fails `no-undef`; use the `foundry.*` namespaces instead.
+// V13 duration fields that V14 replaced with duration.value + duration.units.
+const LEGACY_DURATION = "/^(seconds|rounds|turns|startTime|startRound|startTurn)$/";
+
 const foundryGlobals = {
   game: "readonly",
   ui: "readonly",
@@ -65,27 +68,19 @@ export default [
     rules: {
       "no-restricted-syntax": [
         "error",
-        {
-          selector: 'MemberExpression[property.name="changes"]:not([object.property.name="system"])',
-          message: "V14 stores change rows at effect.system.changes. Use effectChanges() from data/effect-data.js.",
-        },
-        {
-          selector:
-            'MemberExpression[object.property.name="duration"][property.name=/^(seconds|rounds|turns|startTime|startRound|startTurn)$/]',
-          message: "V14 durations are duration.value + duration.units. Use prepareEffectPayload() from data/effect-data.js.",
-        },
-        // Write shapes of the same legacy data (the A1 and A3 bug classes).
+        // Legacy V13 effect data, read or written (the A1 and A3 bug classes).
         {
           selector: [
-            'Property[key.name="duration"] > ObjectExpression > Property[key.name=/^(seconds|rounds|turns|startTime|startRound|startTurn)$/]',
-            'AssignmentExpression[left.property.name="duration"] > ObjectExpression > Property[key.name=/^(seconds|rounds|turns|startTime|startRound|startTurn)$/]',
+            `MemberExpression[object.property.name="duration"][property.name=${LEGACY_DURATION}]`,
+            `Property[key.name="duration"] > ObjectExpression > Property[key.name=${LEGACY_DURATION}]`,
+            `AssignmentExpression[left.property.name="duration"] > ObjectExpression > Property[key.name=${LEGACY_DURATION}]`,
           ].join(", "),
           message: "V14 durations are duration.value + duration.units. Use prepareEffectPayload() from data/effect-data.js.",
         },
         {
           selector: [
-            'ObjectExpression:not(Property[key.name="system"] > ObjectExpression):not(AssignmentExpression[left.property.name="system"] > ObjectExpression) > Property[key.name="changes"]',
-            'ObjectExpression:not(Property[key.name="system"] > ObjectExpression):not(AssignmentExpression[left.property.name="system"] > ObjectExpression) > Property[key.value="changes"]',
+            'MemberExpression[property.name="changes"]:not([object.property.name="system"])',
+            'ObjectExpression:not(Property[key.name="system"] > ObjectExpression):not(AssignmentExpression[left.property.name="system"] > ObjectExpression) > Property:matches([key.name="changes"], [key.value="changes"])',
             'ObjectPattern > Property[key.name="changes"]',
             'MemberExpression[computed=true][property.value="changes"]',
             'CallExpression[callee.property.name=/^(getProperty|setProperty|hasProperty)$/] > Literal[value=/^changes(\\.|$)/]',

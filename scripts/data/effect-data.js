@@ -46,18 +46,16 @@ export function prepareEffectPayload(data, { sourceSubstanceId, origin, role, du
   data.origin = origin;
   data.disabled = false;
 
-  if (duration === undefined) {
-    // A template copied from an already-expired effect carries expired: true;
-    // V14 would then never send the "mark expired" update at real expiry.
-    if (data.duration) data.duration = { ...data.duration, expired: false };
-    return data;
-  }
+  // A template copied from an already-expired effect carries expired: true;
+  // V14 would then never send the "mark expired" update at real expiry.
+  data.duration = { ...(data.duration ?? {}), expired: false };
+  if (duration === undefined) return data;
   if (typeof duration === "number" && duration > 0) {
-    data.duration = { ...(data.duration ?? {}), value: duration, units: "seconds", expired: false };
+    Object.assign(data.duration, { value: duration, units: "seconds" });
   } else {
     // Permanent. Clearing `expiry` matters: V14 counts an effect with an expiry
     // event as temporary even without a value, and would expire it at that event.
-    data.duration = { ...(data.duration ?? {}), value: null, expiry: null, expired: false };
+    Object.assign(data.duration, { value: null, expiry: null });
   }
   return data;
 }
