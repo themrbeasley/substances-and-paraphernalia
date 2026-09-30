@@ -118,7 +118,9 @@ async function promptAndApply(actor, item) {
 function ownedCopy(actor, item) {
   return (
     actor.items.get(item.id) ??
-    actor.items.find((i) => i._stats?.compendiumSource === item.uuid && i.name === item.name) ??
+    actor.items.find(
+      (i) => i._stats?.compendiumSource === (item._stats?.compendiumSource ?? item.uuid) && i.name === item.name,
+    ) ??
     item
   );
 }
