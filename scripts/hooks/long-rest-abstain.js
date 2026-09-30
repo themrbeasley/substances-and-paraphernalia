@@ -117,12 +117,10 @@ export async function forceUseSubstance(actor, item) {
   try {
     // dnd5e 5.x: dialog.configure false skips the usage window.
     await activity.use({}, { configure: false });
-  } catch (e) {
-    // The bypass is normally consumed by the preUseActivity gate; if use()
-    // rejects before the gate fires, clean up so it doesn't leak into a
-    // later normal click of the same activity.
+  } finally {
+    // The gate normally consumes the bypass; if use() stopped before or inside
+    // the gate without consuming it, don't let it leak into a later use.
     clearForcedUseBypass(activity.id);
-    throw e;
   }
 }
 
