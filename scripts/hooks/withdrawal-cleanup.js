@@ -3,9 +3,9 @@
  * When a Withdrawal AE is deleted, clear the matching actor-flag entry. The
  * actor flag is canonical state; the AE is the UI mirror.
  *
- * On V14, core expires timed AEs itself; they are deleted (and this hook
- * fires) only when `CONFIG.ActiveEffect.expiryAction` is "delete", which the
- * House Automation module sets. Manual deletes and the Remove Withdrawal
+ * On V14, core only marks a timed AE as expired. The House Automation
+ * module's "Delete expired effects" switch (on by default) deletes it
+ * instead, which fires this hook. Manual deletes and the Remove Withdrawal
  * macro fire it too.
  *
  * Listens on `deleteActiveEffect` `(effect, options, userId)`. GM-arbitrated.

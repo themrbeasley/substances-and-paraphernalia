@@ -68,7 +68,7 @@ Paraphernalia subtypes are an exception: the legal list is **runtime-composed** 
 
 1. **Item flags** (the canonical source). `scripts/data/flag-schema.js` is the only place that reads/writes `flags["substances-and-paraphernalia"]`. Every other module talks to flags through these accessors.
 2. **Actor flags** (`flags["substances-and-paraphernalia"].withdrawal[<substanceItemId>] = { appliedAt, endsAt }`): canonical state for an active withdrawal window on a given actor. `appliedAt` and `endsAt` are ISO timestamps; `endsAt` is derived from the AE's authored duration at apply time.
-3. **Active Effects on the actor**: UI mirror of the actor flag. Applied addiction and withdrawal AEs carry `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so callers can match the AE back to its substance. On V14, core expires the withdrawal AE; it is deleted only when `CONFIG.ActiveEffect.expiryAction` is `"delete"` (set by the user's House Automation module), and then `scripts/hooks/withdrawal-cleanup.js` listens on `deleteActiveEffect` and clears the matching actor flag entry. We do not poll or tick; the flag entry and AE come up and go down together.
+3. **Active Effects on the actor**: UI mirror of the actor flag. Applied addiction and withdrawal AEs carry `flags["substances-and-paraphernalia"].sourceSubstanceId = <itemId>` so callers can match the AE back to its substance. On V14, core only marks an expired withdrawal AE as expired; the user's House Automation module deletes it instead (its "Delete expired effects" switch, on by default), and then `scripts/hooks/withdrawal-cleanup.js` listens on `deleteActiveEffect` and clears the matching actor flag entry. We do not poll or tick; the flag entry and AE come up and go down together.
 
 ### AE naming contract
 
@@ -138,7 +138,7 @@ Note: the addiction AE already carries the `poisoned` status; the withdrawal AE 
 
 ### Withdrawal duration
 
-Withdrawal duration is authored as `withdrawal.duration.value` + `withdrawal.duration.unit` (`minutes | hours | days | weeks | months`, with months = 30 days). `scripts/data/withdrawal-duration.js` `durationToSeconds(value, unit)` is the pure converter (testable without Foundry globals; see `test/unit/withdrawal-duration.test.mjs`). The seconds value rides on the applied AE's V14 duration (`value` + `units: "seconds"`); core expires it, and when it is deleted (`expiryAction: "delete"`) `scripts/hooks/withdrawal-cleanup.js` clears the matching actor flag entry on the resulting `deleteActiveEffect`. We do not ship a rest-decrement counter and withdrawal does not scale against Constitution; Con only gates onset via the Withdrawal Save DC.
+Withdrawal duration is authored as `withdrawal.duration.value` + `withdrawal.duration.unit` (`minutes | hours | days | weeks | months`, with months = 30 days). `scripts/data/withdrawal-duration.js` `durationToSeconds(value, unit)` is the pure converter (testable without Foundry globals; see `test/unit/withdrawal-duration.test.mjs`). The seconds value rides on the applied AE's V14 duration (`value` + `units: "seconds"`); core marks it expired, House Automation's "Delete expired effects" switch deletes it, and `scripts/hooks/withdrawal-cleanup.js` clears the matching actor flag entry on the resulting `deleteActiveEffect`. We do not ship a rest-decrement counter and withdrawal does not scale against Constitution; Con only gates onset via the Withdrawal Save DC.
 
 ### V14 Active Effect data lives in one helper
 

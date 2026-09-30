@@ -118,7 +118,7 @@
   "FISHUT.RemoveAddiction.Confirm": "Remove",
   "FISHUT.RemoveAddiction.Cancel": "Cancel",
   "FISHUT.RemoveAddiction.PreviewIntro": "<p>Choose addiction effects to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveAddiction.RowDetail": "{name} (source: {sourceId}, withdrawal: {rests} LR)",
+  "FISHUT.RemoveAddiction.RowDetail": "{name} (source: {sourceId})",
   "FISHUT.RemoveAddiction.Removed": "Removed <strong>{count}</strong> addiction effect(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveAddiction.LogTitle": "Removed addiction (paste-restore JSON)",
 
@@ -139,7 +139,7 @@
   "FISHUT.RemoveWithdrawal.Title": "Remove Withdrawal",
   "FISHUT.RemoveWithdrawal.NoCandidates": "{actor} has no withdrawal effects or entries to remove.",
   "FISHUT.RemoveWithdrawal.PreviewIntro": "<p>Choose withdrawal effects to remove from <strong>{actor}</strong>.</p>",
-  "FISHUT.RemoveWithdrawal.RowDetail": "{name} (source: {sourceId}, withdrawal: {rests} LR)",
+  "FISHUT.RemoveWithdrawal.RowDetail": "{name} (source: {sourceId})",
   "FISHUT.RemoveWithdrawal.Removed": "Removed <strong>{count}</strong> withdrawal effect(s) from <strong>{actor}</strong>.",
   "FISHUT.RemoveWithdrawal.LogTitle": "Removed withdrawal (paste-restore JSON)",
 

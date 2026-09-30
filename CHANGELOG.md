@@ -22,7 +22,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - **Drag-to-inventory addiction effects now carry `aeRole: "addiction"`**, per the v0.7 contract.
 
 ### Removed
-- **Times Up.** It has no V14 build. The `recommends` entry, the "missing module" notice and the dead "Wire into Times Up" world setting are gone. On V14, core expires effects; deleting them (which triggers the withdrawal cleanup) needs `CONFIG.ActiveEffect.expiryAction = "delete"`, provided by the House Automation module.
+- **Times Up.** It has no V14 build. The `recommends` entry, the "missing module" notice and the dead "Wire into Times Up" world setting are gone. On V14, Foundry only marks an expired effect as expired and leaves it on the character. The House Automation module's "Delete expired effects" switch (on by default) deletes it instead, which triggers the withdrawal cleanup.
 
 ### Added
 - **Guards against V13-era shapes.** `validate-content` errors on legacy effect shapes; ESLint rejects V14-removed globals, `CONST.ACTIVE_EFFECT_MODES`, `.changes` outside `system`, and legacy duration fields.

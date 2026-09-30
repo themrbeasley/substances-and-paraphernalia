@@ -1,9 +1,8 @@
 /**
  * Convert an authored withdrawal duration `{value, unit}` to seconds for the
  * applied AE's V14 `duration` (`value` + `units: "seconds"`). Foundry core
- * expires the AE when world time passes it; deletion (which fires our
- * cleanup) needs `CONFIG.ActiveEffect.expiryAction = "delete"`, set by the
- * House Automation module.
+ * marks the AE expired when world time passes it; House Automation's
+ * "Delete expired effects" switch then deletes it, which fires our cleanup.
  *
  * Months use 30-day months. The conversion is approximate by design: the
  * fiction is "a few weeks of withdrawal" and exact wall-clock semantics don't

@@ -14,9 +14,9 @@
  *                         Withdrawal AE; decay regardless.
  *
  * `actor.flags.S&P.withdrawal[id]` is set when the AE applies (with
- * `appliedAt` + `endsAt`). Foundry core expires the AE at the end of its
- * duration (deletion needs expiryAction "delete", set by House Automation);
- * `withdrawal-cleanup.js` clears the flag entry on AE delete.
+ * `appliedAt` + `endsAt`). Foundry core marks the AE expired at the end of
+ * its duration and House Automation's "Delete expired effects" switch
+ * deletes it; `withdrawal-cleanup.js` clears the flag entry on AE delete.
  */
 
 import { MODULE_ID } from "../config.js";
