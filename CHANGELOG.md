@@ -11,14 +11,14 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ### Changed
 - **Foundry V14 only.** `compatibility` is now minimum 14, verified 14.368; dnd5e minimum 5.3.0, verified 5.3.3. V13 is no longer supported (the module never shipped there).
-- **Active Effects use the V14 data shape.** Change rows live at `system.changes` with string `type`s (`"custom"`, `"add"`, `"override"`, …) instead of numeric `mode`s; durations are `duration.value` + `duration.units`. All compendium effects are converted. Every effect the module creates goes through one helper, `prepareEffectPayload` in `scripts/data/effect-data.js`.
+- **Active Effects use the V14 data shape.** Change rows live at `system.changes` with string `type`s (`"custom"`, `"add"`, `"override"`, …) instead of numeric `mode`s; durations are `duration.value` + `duration.units`. All compendium effects are converted. Every effect the module applies to an actor goes through one helper, `prepareEffectPayload` in `scripts/data/effect-data.js`.
+- **A zero or missing withdrawal duration makes withdrawal permanent**, as on V13. V14 treats a 0 duration as already expired, so the helper turns it into "no duration" instead.
 
 ### Fixed
 - **Withdrawal never wore off on V14.** The withdrawal effect was created without a V14 duration, so it was permanent.
 - **Tolerance stopped weakening repeat doses on V14.** The scaled "Altered by" values were discarded in favor of the template's.
 - **"Permanent" effects kept their timers on V14** (drag-to-inventory benefit effects, and any authored addiction or withdrawal template with a duration).
 - **A copied effect template could keep a stale start time** and expire on arrival.
-- **A missing withdrawal duration no longer expires the effect instantly** (V14 treats a 0 duration as already expired; it is now permanent, as on V13).
 - **Drag-to-inventory addiction effects now carry `aeRole: "addiction"`**, per the v0.7 contract.
 
 ### Removed

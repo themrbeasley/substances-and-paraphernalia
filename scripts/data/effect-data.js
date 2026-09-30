@@ -4,7 +4,7 @@
  * V14 moved change rows to `system.changes` (string `type` instead of numeric
  * `mode`), stores duration as `value` + `units`, treats `value: 0` as already
  * expired, and keeps any `start` already present on data passed to create.
- * Every effect this module creates goes through `prepareEffectPayload`, so
+ * Every effect this module applies to an actor goes through `prepareEffectPayload`, so
  * those rules live here and nowhere else.
  *
  * Pure: operates on plain data (e.g. `template.toObject()`), so it runs under
@@ -46,7 +46,12 @@ export function prepareEffectPayload(data, { sourceSubstanceId, origin, role, du
   data.origin = origin;
   data.disabled = false;
 
-  if (duration === undefined) return data;
+  if (duration === undefined) {
+    // A template copied from an already-expired effect carries expired: true;
+    // V14 would then never send the "mark expired" update at real expiry.
+    if (data.duration) data.duration = { ...data.duration, expired: false };
+    return data;
+  }
   if (typeof duration === "number" && duration > 0) {
     data.duration = { ...(data.duration ?? {}), value: duration, units: "seconds", expired: false };
   } else {

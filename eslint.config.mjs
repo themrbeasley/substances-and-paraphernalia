@@ -74,6 +74,28 @@ export default [
             'MemberExpression[object.property.name="duration"][property.name=/^(seconds|rounds|turns|startTime|startRound|startTurn)$/]',
           message: "V14 durations are duration.value + duration.units. Use prepareEffectPayload() from data/effect-data.js.",
         },
+        // Write shapes of the same legacy data (the A1 and A3 bug classes).
+        {
+          selector: [
+            'Property[key.name="duration"] > ObjectExpression > Property[key.name=/^(seconds|rounds|turns|startTime|startRound|startTurn)$/]',
+            'AssignmentExpression[left.property.name="duration"] > ObjectExpression > Property[key.name=/^(seconds|rounds|turns|startTime|startRound|startTurn)$/]',
+          ].join(", "),
+          message: "V14 durations are duration.value + duration.units. Use prepareEffectPayload() from data/effect-data.js.",
+        },
+        {
+          selector: [
+            'ObjectExpression:not(Property[key.name="system"] > ObjectExpression):not(AssignmentExpression[left.property.name="system"] > ObjectExpression) > Property[key.name="changes"]',
+            'ObjectExpression:not(Property[key.name="system"] > ObjectExpression):not(AssignmentExpression[left.property.name="system"] > ObjectExpression) > Property[key.value="changes"]',
+            'ObjectPattern > Property[key.name="changes"]',
+            'MemberExpression[computed=true][property.value="changes"]',
+            'CallExpression[callee.property.name=/^(getProperty|setProperty|hasProperty)$/] > Literal[value=/^changes(\\.|$)/]',
+          ].join(", "),
+          message: "V14 stores change rows at system.changes. Write { system: { changes } } and read with effectChanges() from data/effect-data.js.",
+        },
+        {
+          selector: 'Property[key.name="mode"][value.type="Literal"], MemberExpression[computed=false][property.name="mode"]',
+          message: "V14 change rows use a string type (\"override\", \"add\", \"custom\"), not a numeric mode.",
+        },
       ],
     },
   },
