@@ -2,8 +2,9 @@
 /**
  * Phase 2: the Long Rest withdrawal choices.
  *
- * Fires on `dnd5e.preRestCompleted` (GM-arbitrated). For each substance the
- * actor is addicted to (it carries the substance's Addiction effect), opens
+ * Fires on `dnd5e.preRestCompleted`, on the client that performs the rest. For
+ * each substance the actor is addicted to (it carries the substance's
+ * Addiction effect), opens
  * the combined Abstain dialog (scripts/ui/abstain-dialog.js) and dispatches
  * per row:
  *
@@ -50,10 +51,13 @@ export function setAbstainDialogStub(stub) {
 }
 
 export function registerLongRestAbstain() {
+  // dnd5e calls preRestCompleted only on the client that performs the rest (a
+  // local Hooks.call): the player's for their own rest or an accepted group
+  // rest request, the GM's for a GM-run rest. That client owns the actor and
+  // runs the choices; a GM-only check here meant player rests never did.
   Hooks.on("dnd5e.preRestCompleted", async (actor, restData) => {
     if (!restData?.longRest) return;
     if (!actor) return;
-    if (game.users?.activeGM && game.users.activeGM !== game.user) return;
     await runPhase2(actor);
   });
 }
