@@ -26,7 +26,7 @@ import {
   getWithdrawalDc,
   getWithdrawalEnabled,
   getAddictedSubstanceIds,
-  getActorWithdrawalEntry,
+  getAeRole,
   getActorTolerance,
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
@@ -87,7 +87,7 @@ export async function runPhase2(actor) {
       count: Number(getActorToleranceEntry(actor, substanceId)?.count) || 0,
       maxCount: profile?.maxCount ?? 0,
       dosesRemaining: Number(item.system?.quantity) || 0,
-      inWithdrawal: getActorWithdrawalEntry(actor, substanceId) !== null,
+      inWithdrawal: inWithdrawalFrom(actor, substanceId),
     });
   }
   if (rows.length === 0) return;
@@ -98,9 +98,13 @@ export async function runPhase2(actor) {
     const action = decisions[row.substanceId] ?? "use";
     const item = actor.items.get(row.substanceId);
     if (!item) continue;
+    // The rest can advance game time while the window is open, ending a
+    // withdrawal and the addiction with it; act on the state as it is now.
+    if (!getAddictedSubstanceIds(actor).includes(row.substanceId)) continue;
+    const inWithdrawal = inWithdrawalFrom(actor, row.substanceId);
     try {
       if (action === "use") await forceUseSubstance(actor, item);
-      else await runAbstainBranch(actor, item, { forced: action === "forced-abstain", inWithdrawal: row.inWithdrawal });
+      else await runAbstainBranch(actor, item, { forced: action === "forced-abstain", inWithdrawal });
     } catch (e) {
       logger.warn(`Phase 2 dispatch failed for ${item.name}: ${e?.message}`, e);
     }
@@ -189,6 +193,14 @@ async function rollWithdrawalSave(actor, dc) {
   const bonus = Number(actor.getFlag?.(MODULE_ID, "withdrawal.save.bonus")) || 0;
   const roll = await fn.call(actor, d20Config("con", dc, { bonus }));
   return Array.isArray(roll) ? (roll[0] ?? null) : (roll ?? null);
+}
+
+// Effects, not the record: relapse and recovery both key off the withdrawal
+// effects, so a stale record can't pin a row at "hold".
+function inWithdrawalFrom(actor, substanceId) {
+  return actor.effects.some(
+    (e) => getAeRole(e) === "withdrawal" && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId,
+  );
 }
 
 async function chat(content) {
