@@ -42,12 +42,17 @@ export function applyAttenuation(value, count, curve) {
   return n * Number(curve[idx]);
 }
 
+// Only additive rows weaken: halving an override or upgrade (walk 40 to 20)
+// would leave the character worse off than taking no dose at all.
+const SCALED_TYPES = new Set(["add", "subtract"]);
+
 /**
  * Scale every numeric change-row value by the attenuation curve at `count`.
  * Only finite numbers and non-blank numeric strings count as numeric; they are
  * written back as strings. Everything else passes through unchanged: preset
  * names, and the booleans, nulls and arrays that V14's effect sheet saves as
  * native JSON (`Number(true)` is 1, which would flip a boolean override).
+ * Only `add` and `subtract` rows are scaled; whole numbers round toward zero.
  *
  * @param {Array<{value:any}>|null|undefined} rows
  * @param {number} count
@@ -56,9 +61,12 @@ export function applyAttenuation(value, count, curve) {
  */
 export function attenuateChangeRows(rows, count, curve) {
   return (rows ?? []).map((row) => {
+    if (!SCALED_TYPES.has(row.type)) return { ...row };
     const n = numericValue(row.value);
     if (n === null) return { ...row };
-    return { ...row, value: String(applyAttenuation(n, count, curve)) };
+    const scaled = applyAttenuation(n, count, curve);
+    // 5e rounds down: a whole-number bonus stays whole, rounded toward zero.
+    return { ...row, value: String(Number.isInteger(n) ? Math.trunc(scaled) : scaled) };
   });
 }
 
