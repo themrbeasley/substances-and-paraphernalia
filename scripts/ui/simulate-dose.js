@@ -21,7 +21,6 @@ import {
   getAddiction,
   getWithdrawalDuration,
   isSubstance,
-  setActorWithdrawalEntry,
 } from "../data/flag-schema.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import {
@@ -350,21 +349,13 @@ async function embedSubstanceClone(actor, sourceItem) {
 }
 
 async function preSeedAddictionState(actor, item, state) {
-  const addiction = getAddiction(item);
-  if (!addiction) return;
+  if (!getAddiction(item)) return;
+  await applyAddictionEffect(actor, item);
+  if (state !== "withdrawing") return;
+  // Land mid-withdrawal rather than at its leading edge.
   const duration = getWithdrawalDuration(item);
   const seconds = duration ? durationToSeconds(duration.value, duration.unit) : 0;
-  const now = new Date();
-  const appliedAt = now.toISOString();
-  // "addicted" → window fully ahead; "withdrawing" → already half-elapsed so
-  // the simulated actor lands mid-withdrawal rather than at the leading edge.
-  const elapsedSeconds = state === "withdrawing" ? Math.floor(seconds / 2) : 0;
-  const endsAt = new Date(now.getTime() + (seconds - elapsedSeconds) * 1000).toISOString();
-  if (state === "addicted") {
-    await applyAddictionEffect(actor, item);
-  }
-  await applyWithdrawalEffect(actor, item).catch(() => null);
-  await setActorWithdrawalEntry(actor, item.id, { appliedAt, endsAt });
+  await applyWithdrawalEffect(actor, item, { elapsedSeconds: Math.floor(seconds / 2) });
 }
 
 /**
