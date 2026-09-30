@@ -13,7 +13,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - **Withdrawal never started in normal play.** The Long Rest looked for addicted characters in the withdrawal record, which only fills once withdrawal has begun. It now lists every substance whose Addiction effect the character carries.
 - **Repeat doses stacked Addiction effects.** A character who is already addicted no longer rolls again.
 - **Using the last dose deleted the drug,** so the Long Rest couldn't offer the forced abstain. The drug now stays at 0 doses; it can't be used at 0, and dropping more from the compendium refills it.
-- **+N and advantage bypasses didn't change the roll** (dnd5e 5.x reads bonuses from `rolls[0]`; Midi-QoL recomputes advantage unless it is passed in). The Abstain Check and Withdrawal Save bonuses had the same problem.
+- **+N and advantage bypasses did not change the roll** (dnd5e 5.x reads bonuses from `rolls[0]`; Midi-QoL recomputes advantage unless it is passed in). The Abstain Check and Withdrawal Save bonuses had the same problem.
 - **Bypass gear never spent its daily uses and ignored its administration types**: the gear was looked up through an empty `origin`.
 - **Tolerance never weakened the high,** and highs stacked. The module now applies every Altered effect itself, scaled by tolerance, and replaces the previous ones.
 - **Withdrawal and tolerance records were never cleared** (`setFlag` merges; V14 removes keys through `ForcedDeletion`).
