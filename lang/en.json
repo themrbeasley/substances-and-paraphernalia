@@ -180,14 +180,16 @@
 
 
   "FISHUT.Phase2.Dialog.Title": "Withdrawal Choices",
-  "FISHUT.Phase2.Dialog.Intro": "You are addicted to the following substances and will automatically consume one dose during the Long Rest unless you specifically choose to abstain. Select all that apply; unselected substances will be consumed as normal.",
+  "FISHUT.Phase2.Dialog.Intro": "You are addicted to the following substances and will automatically consume one dose during the Long Rest unless you specifically choose to abstain. Select all that apply; unselected substances will be consumed as normal. Taking a dose during withdrawal ends the withdrawal, but not the addiction.",
   "FISHUT.Phase2.Dialog.Confirm": "Confirm",
   "FISHUT.Phase2.Dialog.DosesRemaining": "Doses: {n} left",
   "FISHUT.Phase2.Dialog.Tolerance": "Tol {count}/{max}",
   "FISHUT.Phase2.Dialog.ForcedAbstain": "forced Abstain",
+  "FISHUT.Phase2.Dialog.InWithdrawal": "in withdrawal",
   "FISHUT.Phase2.ForcedAbstain.Intro": "{actor} has no doses of {item}; withdrawal onset save vs DC {dc}…",
   "FISHUT.Phase2.AbstainCheck.Pass": "{actor} resists {item} (Abstain {total} ≥ {dc}).",
-  "FISHUT.Phase2.AbstainCheck.Fail": "{actor} succumbs to {item} (Abstain {total} < {dc}).",
+  "FISHUT.Phase2.AbstainCheck.Fail": "{actor} gives in to {item} and takes a dose (Abstain {total} < {dc}).",
+  "FISHUT.Phase2.Hold": "{actor} stays off {item} for another night.",
   "FISHUT.Phase2.WithdrawalSave.Pass": "{actor} weathers {item} withdrawal (Save {total} ≥ {dc}).",
   "FISHUT.Phase2.WithdrawalSave.Fail": "{actor} falls into {item} withdrawal (Save {total} < {dc}).",
 

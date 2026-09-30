@@ -17,6 +17,7 @@
  * @property {number} count                Current Tolerance Count.
  * @property {number} maxCount             Tier-derived MaxCount.
  * @property {number} dosesRemaining       0 → forced-abstain.
+ * @property {boolean} inWithdrawal  Taking a dose ends the withdrawal.
  */
 
 /**
@@ -35,6 +36,7 @@ export async function openAbstainDialog(actor, rows) {
   const tolLabel = (count, max) =>
     game.i18n.format("FISHUT.Phase2.Dialog.Tolerance", { count, max });
   const forcedLabel = game.i18n.localize("FISHUT.Phase2.Dialog.ForcedAbstain");
+  const inWithdrawalLabel = game.i18n.localize("FISHUT.Phase2.Dialog.InWithdrawal");
 
   const rowsHtml = sorted
     .map((row) => {
@@ -50,6 +52,7 @@ export async function openAbstainDialog(actor, rows) {
             <span class="fishut-abstain-tol">${tolLabel(row.count, row.maxCount)}</span>
             <span class="fishut-abstain-doses">${dosesLeftLabel(row.dosesRemaining)}</span>
             ${forced ? `<span class="fishut-abstain-forced">[${forcedLabel}]</span>` : ""}
+            ${row.inWithdrawal ? `<span class="fishut-abstain-withdrawal">[${inWithdrawalLabel}]</span>` : ""}
           </label>
         </div>`;
     })
