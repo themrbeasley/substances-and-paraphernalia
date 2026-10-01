@@ -93,7 +93,11 @@ export async function runDosePipeline(actor, item) {
 
 async function cancelWithdrawalOnRelapse(actor, item) {
   const ids = actor.effects
-    .filter((e) => getAeRole(e) === "withdrawal" && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id)
+    .filter(
+      (e) =>
+        getAeRole(e) === "withdrawal" &&
+        e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
+    )
     .map((e) => e.id);
   if (ids.length === 0) return;
   // withdrawal-cleanup.js reads fishutRelapse: clear the record, keep the addiction.
@@ -181,9 +185,7 @@ export async function applyOutcome(actor, item, outcome) {
   const bonusValue = isPlusN ? Number(outcome.modifier.bonus) || 0 : 0;
   const bonusSources = isPlusN ? joinSourceNames(outcome.modifier) : "";
   const rerollSource =
-    outcome?.modifier?.resolution === "reroll-on-fail"
-      ? (outcome.modifier.source?.name ?? "")
-      : "";
+    outcome?.modifier?.resolution === "reroll-on-fail" ? (outcome.modifier.source?.name ?? "") : "";
 
   if (outcome?.saveResult === "success") {
     let key = "FISHUT.Addiction.Save.Pass";
@@ -283,7 +285,9 @@ function buildAddictionPayload(template, item, couplingMode) {
 
 function readCouplingMode() {
   try {
-    return game.settings?.get?.(MODULE_ID, SETTING_KEYS.addictionPoisonedCoupling) ?? COUPLING_DEFAULT;
+    return (
+      game.settings?.get?.(MODULE_ID, SETTING_KEYS.addictionPoisonedCoupling) ?? COUPLING_DEFAULT
+    );
   } catch {
     return COUPLING_DEFAULT;
   }
@@ -427,7 +431,10 @@ export async function applyAlteredEffectGated(actor, item) {
       origin: item.uuid,
       role: "altered",
     });
-    data.system = { ...(data.system ?? {}), changes: attenuateChangeRows(effectChanges(data), count, curve) };
+    data.system = {
+      ...(data.system ?? {}),
+      changes: attenuateChangeRows(effectChanges(data), count, curve),
+    };
     return data;
   });
   const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
@@ -499,7 +506,10 @@ export async function applyWithdrawalEffect(actor, item, { elapsedSeconds = 0 } 
   // 0 means permanent to prepareEffectPayload, so never let elapsed time reach it.
   const seconds = total > 0 ? Math.max(1, total - elapsedSeconds) : 0;
   const templates = findWithdrawalTemplates(item);
-  const sources = templates.length > 0 ? templates.map((t) => t.toObject()) : [buildDefaultWithdrawalTemplate(item)];
+  const sources =
+    templates.length > 0
+      ? templates.map((t) => t.toObject())
+      : [buildDefaultWithdrawalTemplate(item)];
   const payloads = sources.map((data) => {
     const payload = prepareEffectPayload(data, {
       sourceSubstanceId: item.id,
@@ -558,4 +568,3 @@ function findWithdrawalTemplates(item) {
   // Stale or missing ids: fall back to the name, like findAddictionTemplates.
   return effects.filter((e) => /withdraw/i.test(e.name ?? ""));
 }
-

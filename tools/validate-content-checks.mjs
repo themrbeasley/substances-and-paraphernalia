@@ -38,7 +38,9 @@ export function checkDocumentIds(file) {
     }
     if (!node || typeof node !== "object") return;
     if ("_id" in node && !FOUNDRY_ID.test(String(node._id))) {
-      errors.push(`${file.relPath}: ${path || "document"} _id "${node._id}" must be 16 letters or digits`);
+      errors.push(
+        `${file.relPath}: ${path || "document"} _id "${node._id}" must be 16 letters or digits`,
+      );
     }
     for (const [key, value] of Object.entries(node)) {
       if (key !== "_stats") walk(value, path ? `${path}.${key}` : key);
@@ -75,7 +77,15 @@ function checkAeRole(effect, ownerLabel, errors) {
 // Foundry V14 moved change rows to system.changes (string `type`, not numeric
 // `mode`) and duration to value + units. Foundry converts old data on load,
 // but only as a shim that V16 drops, so shipped content must be V14-shaped.
-const LEGACY_DURATION_KEYS = ["seconds", "rounds", "turns", "startTime", "startRound", "startTurn", "combat"];
+const LEGACY_DURATION_KEYS = [
+  "seconds",
+  "rounds",
+  "turns",
+  "startTime",
+  "startRound",
+  "startTurn",
+  "combat",
+];
 
 function checkAeV14Shape(effect, ownerLabel, errors) {
   const label = `${ownerLabel} AE "${effect?.name ?? effect?._id ?? "?"}"`;
@@ -84,7 +94,9 @@ function checkAeV14Shape(effect, ownerLabel, errors) {
   }
   for (const row of effect?.system?.changes ?? []) {
     if (row?.mode !== undefined || typeof row?.type !== "string") {
-      errors.push(`${label} change "${row?.key}" needs a string "type" (V14), not a numeric "mode"`);
+      errors.push(
+        `${label} change "${row?.key}" needs a string "type" (V14), not a numeric "mode"`,
+      );
     }
   }
   for (const key of LEGACY_DURATION_KEYS) {
@@ -190,7 +202,9 @@ export function checkSubstance(file) {
     if (addiction?.enabled !== false) {
       const dc = withdrawal.dc;
       if (!isSetNumber(dc)) {
-        err(`withdrawal.dc is required (finite number) when addiction.enabled !== false (got ${JSON.stringify(dc)})`);
+        err(
+          `withdrawal.dc is required (finite number) when addiction.enabled !== false (got ${JSON.stringify(dc)})`,
+        );
       }
     }
     if (withdrawal.enabled !== false) {
@@ -199,7 +213,9 @@ export function checkSubstance(file) {
         err(`withdrawal.abstain block is required when withdrawal.enabled !== false`);
       } else {
         if (typeof abstain.ability !== "string" || abstain.ability.length === 0) {
-          err(`withdrawal.abstain.ability must be a non-empty string (got ${JSON.stringify(abstain.ability)})`);
+          err(
+            `withdrawal.abstain.ability must be a non-empty string (got ${JSON.stringify(abstain.ability)})`,
+          );
         }
         if (!isSetNumber(abstain.dc)) {
           err(`withdrawal.abstain.dc must be a finite number (got ${JSON.stringify(abstain.dc)})`);
@@ -211,10 +227,14 @@ export function checkSubstance(file) {
       } else {
         const allowedUnits = new Set(["minutes", "hours", "days", "weeks", "months"]);
         if (!Number.isFinite(Number(duration.value)) || Number(duration.value) <= 0) {
-          err(`withdrawal.duration.value must be a positive number (got ${JSON.stringify(duration.value)})`);
+          err(
+            `withdrawal.duration.value must be a positive number (got ${JSON.stringify(duration.value)})`,
+          );
         }
         if (!allowedUnits.has(duration.unit)) {
-          err(`withdrawal.duration.unit must be one of minutes|hours|days|weeks|months (got ${JSON.stringify(duration.unit)})`);
+          err(
+            `withdrawal.duration.unit must be one of minutes|hours|days|weeks|months (got ${JSON.stringify(duration.unit)})`,
+          );
         }
       }
     }
@@ -291,10 +311,7 @@ export function checkSubstance(file) {
   }
 
   // v0.4: overdose.effectIds resolution + name-contract.
-  const overdoseIds = resolveEffectIdList(
-    flags.overdose?.effectIds,
-    flags.overdose?.effectId,
-  );
+  const overdoseIds = resolveEffectIdList(flags.overdose?.effectIds, flags.overdose?.effectId);
   for (const overdoseId of overdoseIds) {
     const overdoseAe = findEffect(data, overdoseId);
     if (!overdoseAe) {
@@ -307,10 +324,7 @@ export function checkSubstance(file) {
   }
 
   // v0.4: tolerance.effectIds resolution + name-contract.
-  const toleranceIds = resolveEffectIdList(
-    flags.tolerance?.effectIds,
-    flags.tolerance?.effectId,
-  );
+  const toleranceIds = resolveEffectIdList(flags.tolerance?.effectIds, flags.tolerance?.effectId);
   for (const toleranceId of toleranceIds) {
     const toleranceAe = findEffect(data, toleranceId);
     if (!toleranceAe) {
@@ -402,9 +416,7 @@ export function checkParaphernalia(file, opts = {}) {
     );
   }
   if (flags.tags !== undefined) {
-    err(
-      `legacy "tags" flag is removed in v0.3; paraphernalia identity is the subtype id alone`,
-    );
+    err(`legacy "tags" flag is removed in v0.3; paraphernalia identity is the subtype id alone`);
   }
   if (flags.addictionSaveBypass !== undefined) {
     err(

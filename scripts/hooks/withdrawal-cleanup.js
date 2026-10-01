@@ -37,7 +37,9 @@ async function onDeleteActiveEffect(effect, options, _userId) {
   if (game.users?.activeGM && game.users.activeGM !== game.user) return;
   // actor.effects, not appliedEffects: an expired effect can still be present.
   const mine = (role) =>
-    actor.effects.filter((e) => hasAeRole(e, role) && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId);
+    actor.effects.filter(
+      (e) => hasAeRole(e, role) && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId,
+    );
   // A substance can clone several withdrawal templates; act when the last goes.
   const addictionIds = mine("addiction").map((e) => e.id);
   const action = recoveryAction({
@@ -62,7 +64,11 @@ async function onDeleteActiveEffect(effect, options, _userId) {
       whisper: [],
     });
   } catch (e) {
-    logger.warn("withdrawal-cleanup: failed", { actorId: actor.id, substanceId, error: e?.message });
+    logger.warn("withdrawal-cleanup: failed", {
+      actorId: actor.id,
+      substanceId,
+      error: e?.message,
+    });
   } finally {
     inFlight.delete(key);
   }

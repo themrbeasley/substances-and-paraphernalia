@@ -191,11 +191,9 @@ export const setAddictionEffectId = (item, value) =>
  * the runtime per-substance entry map.
  * @param {Item} item @returns {WithdrawalBlock|null}
  */
-export const getWithdrawal = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? null;
+export const getWithdrawal = (item) => item?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? null;
 
-export const setWithdrawal = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.withdrawal, value);
+export const setWithdrawal = (item, value) => item.setFlag(MODULE_ID, FLAGS.withdrawal, value);
 
 /**
  * Whether withdrawal AE application + actor-flag bookkeeping runs on save fail.
@@ -254,11 +252,9 @@ export const setWithdrawalEffectId = (item, value) =>
  */
 
 /** @param {Item} item @returns {OverdoseBlock|null} */
-export const getOverdose = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.overdose) ?? null;
+export const getOverdose = (item) => item?.getFlag?.(MODULE_ID, FLAGS.overdose) ?? null;
 
-export const setOverdose = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.overdose, value);
+export const setOverdose = (item, value) => item.setFlag(MODULE_ID, FLAGS.overdose, value);
 
 /** @param {Item} item @returns {string[]} */
 export const getOverdoseEffectIds = (item) => {
@@ -299,11 +295,9 @@ export const setOverdoseEffectId = (item, value) =>
  */
 
 /** @param {Item} item @returns {ToleranceBlock|null} */
-export const getTolerance = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.tolerance) ?? null;
+export const getTolerance = (item) => item?.getFlag?.(MODULE_ID, FLAGS.tolerance) ?? null;
 
-export const setTolerance = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.tolerance, value);
+export const setTolerance = (item, value) => item.setFlag(MODULE_ID, FLAGS.tolerance, value);
 
 /**
  * Whether tolerance auto-stacking runs on save pass. Undefined defaults to true.
@@ -394,8 +388,7 @@ export const setModifier = (effect, value) => {
 // ─── Actor flags (withdrawal map) ────────────────────────────────────────────
 
 /** @param {Actor} actor @returns {WithdrawalMap} */
-export const getActorWithdrawal = (actor) =>
-  actor?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? {};
+export const getActorWithdrawal = (actor) => actor?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? {};
 
 /** @param {Actor} actor @param {string} substanceId @returns {WithdrawalEntry|null} */
 export const getActorWithdrawalEntry = (actor, substanceId) => {
@@ -421,7 +414,8 @@ export const setActorWithdrawalEntry = async (actor, substanceId, entry) => {
 export const clearActorWithdrawalEntry = async (actor, substanceId) => {
   if (!(substanceId in getActorWithdrawal(actor))) return null;
   return actor.update({
-    [`flags.${MODULE_ID}.${FLAGS.withdrawal}.${substanceId}`]: new foundry.data.operators.ForcedDeletion(),
+    [`flags.${MODULE_ID}.${FLAGS.withdrawal}.${substanceId}`]:
+      new foundry.data.operators.ForcedDeletion(),
   });
 };
 
@@ -522,8 +516,7 @@ export const getAttenuationCurve = (item) => {
  */
 
 /** @param {Actor} actor @returns {Object<string, ToleranceEntry>} */
-export const getActorTolerance = (actor) =>
-  actor?.getFlag?.(MODULE_ID, "tolerance") ?? {};
+export const getActorTolerance = (actor) => actor?.getFlag?.(MODULE_ID, "tolerance") ?? {};
 
 /** @param {Actor} actor @param {string} substanceId @returns {ToleranceEntry|null} */
 export const getActorToleranceEntry = (actor, substanceId) => {
@@ -623,7 +616,8 @@ export function findEffectsByRole(actor, role, { warn } = {}) {
  */
 export function isInWithdrawalFrom(actor, substanceId) {
   return [...(actor?.effects ?? [])].some(
-    (e) => hasAeRole(e, "withdrawal") && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+    (e) =>
+      hasAeRole(e, "withdrawal") && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
   );
 }
 

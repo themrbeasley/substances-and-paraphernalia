@@ -92,11 +92,8 @@ function injectKindToggle(detailsTab, item, isEditable) {
   // checkboxes. Falls back to a native input if the component isn't defined
   // (older dnd5e or non-V2 sheet).
   const useWebComponent =
-    typeof window !== "undefined" &&
-    window.customElements?.get("dnd5e-checkbox");
-  const input = document.createElement(
-    useWebComponent ? "dnd5e-checkbox" : "input",
-  );
+    typeof window !== "undefined" && window.customElements?.get("dnd5e-checkbox");
+  const input = document.createElement(useWebComponent ? "dnd5e-checkbox" : "input");
   if (!useWebComponent) input.type = "checkbox";
   if (isEnabled) input.setAttribute("checked", "");
   if (!isEditable) input.setAttribute("disabled", "");
@@ -206,10 +203,7 @@ async function onRenderApplicationV2(app, htmlElement) {
       substance: kind === "substance" ? buildSubstanceContext(doc) : null,
       paraphernalia: kind === "paraphernalia" ? buildParaphernaliaContext(doc) : null,
     };
-    const html = await foundry.applications.handlebars.renderTemplate(
-      SECTION_TEMPLATE,
-      context,
-    );
+    const html = await foundry.applications.handlebars.renderTemplate(SECTION_TEMPLATE, context);
     const wrapper = document.createElement("div");
     wrapper.setAttribute(INJECTED_MARKER, "");
     wrapper.innerHTML = html;
@@ -459,7 +453,11 @@ function buildAddictionFieldsetContext(item) {
     selected: id === currentAbstainAbility,
   }));
   if (currentAbstainAbility && !abstainAbilityOptions.some((o) => o.selected)) {
-    abstainAbilityOptions.unshift({ id: currentAbstainAbility, label: currentAbstainAbility, selected: true });
+    abstainAbilityOptions.unshift({
+      id: currentAbstainAbility,
+      label: currentAbstainAbility,
+      selected: true,
+    });
   }
 
   const attachedIds = getWithdrawalEffectIds(item);
@@ -468,8 +466,10 @@ function buildAddictionFieldsetContext(item) {
   // (case-insensitive), the same naming contract enforced by validate-content
   // and the long-rest tick. Stale ids are preserved as `isStale` rows so
   // re-saving doesn't silently drop the pointer.
-  const { availableEffects: withdrawalAvailableEffects, attachedEffects: withdrawalAttachedEffects } =
-    buildEffectPicker(allEffects, attachedIds, (e) => /withdraw/i.test(e.name ?? ""));
+  const {
+    availableEffects: withdrawalAvailableEffects,
+    attachedEffects: withdrawalAttachedEffects,
+  } = buildEffectPicker(allEffects, attachedIds, (e) => /withdraw/i.test(e.name ?? ""));
 
   return {
     withdrawalEnabled: getWithdrawalEnabled(item),
@@ -518,10 +518,8 @@ function buildOverdoseContext(item) {
   const allEffects = Array.from(item.effects ?? []);
   // Overdose picker only lists AEs whose name contains "overdose"
   // (case-insensitive) per the AE-naming contract.
-  const { availableEffects, attachedEffects } = buildEffectPicker(
-    allEffects,
-    attachedIds,
-    (e) => /overdose/i.test(e.name ?? ""),
+  const { availableEffects, attachedEffects } = buildEffectPicker(allEffects, attachedIds, (e) =>
+    /overdose/i.test(e.name ?? ""),
   );
 
   return {
@@ -668,8 +666,7 @@ function buildBypassDisplay(match) {
   }));
 
   const usesPerDay = block.usesPerDay;
-  const usesPerDayValue =
-    usesPerDay === undefined || usesPerDay === null ? "" : String(usesPerDay);
+  const usesPerDayValue = usesPerDay === undefined || usesPerDay === null ? "" : String(usesPerDay);
 
   const isPlusN = currentType === "+N";
   const rawBonus = Number(block.bonus);
@@ -740,7 +737,8 @@ function handleCollapseToggle(wrapper, flagField, rawValue) {
     flagField !== "withdrawal.enabled" &&
     flagField !== "overdose.enabled" &&
     flagField !== "tolerance.enabled"
-  ) return;
+  )
+    return;
   const name = flagField.split(".")[0];
   const isOn = rawValue === "true";
   toggleCollapseFor(wrapper, name, isOn);
@@ -766,9 +764,7 @@ function handlePreviewUpdate(wrapper, flagField, rawValue, target) {
 function updateAppliesToPreview(wrapper, _target) {
   const span = wrapper.querySelector('[data-fishut-preview="appliesTo"]');
   if (!span) return;
-  const checkboxes = wrapper.querySelectorAll(
-    '[data-fishut-flag="appliesTo"][data-fishut-admin]',
-  );
+  const checkboxes = wrapper.querySelectorAll('[data-fishut-flag="appliesTo"][data-fishut-admin]');
   const labels = [];
   for (const cb of checkboxes) {
     if (cb.checked !== true) continue;
@@ -789,8 +785,7 @@ function updateAppliesToPreview(wrapper, _target) {
 // uses `.value`. Boolean values are stringified to "true" / "false" so
 // persistField can stay scalar-friendly.
 function readFieldValue(target) {
-  const isCheckbox =
-    target.matches?.("dnd5e-checkbox, input[type='checkbox']") === true;
+  const isCheckbox = target.matches?.("dnd5e-checkbox, input[type='checkbox']") === true;
   if (isCheckbox) return target.checked === true ? "true" : "false";
   return typeof target.value === "string" ? target.value : "";
 }
@@ -862,7 +857,10 @@ export async function persistField(item, field, rawValue, target) {
     }
     case "withdrawal.duration.value": {
       const current = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
-      return setWithdrawalDuration(item, { value: parseIntOrNull(rawValue), unit: current.unit ?? "days" });
+      return setWithdrawalDuration(item, {
+        value: parseIntOrNull(rawValue),
+        unit: current.unit ?? "days",
+      });
     }
     case "withdrawal.duration.unit": {
       const current = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
@@ -877,8 +875,7 @@ export async function persistField(item, field, rawValue, target) {
       const n = parseIntOrNull(rawValue);
       // Validator hard-requires 1..100 when enabled; clamp here so a user
       // typing "0" or "200" doesn't write an out-of-range value.
-      const clamped =
-        n === null ? null : Math.max(1, Math.min(100, n));
+      const clamped = n === null ? null : Math.max(1, Math.min(100, n));
       return persistOverdoseField(item, "chancePercent", clamped);
     }
     case "overdose.description":
@@ -1210,4 +1207,3 @@ async function persistAppliesTo(item, adminId, checked) {
   else return null;
   return setAppliesTo(item, next);
 }
-

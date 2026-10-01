@@ -59,7 +59,10 @@ describe("rollWithoutSkipping", () => {
 
   it("returns the first roll when the window was used", async () => {
     let n = 0;
-    const result = await rollWithoutSkipping(async () => (n++, [{ total: 9 }]), d20Config("wis", 11));
+    const result = await rollWithoutSkipping(
+      async () => (n++, [{ total: 9 }]),
+      d20Config("wis", 11),
+    );
     assert.deepEqual(result, { total: 9 });
     assert.equal(n, 1);
   });

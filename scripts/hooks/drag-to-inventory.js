@@ -31,7 +31,11 @@ import {
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
 import { prepareEffectPayload } from "../data/effect-data.js";
-import { applyAddictionEffect, applyWithdrawalEffect, incrementActorToleranceCount } from "./addiction.js";
+import {
+  applyAddictionEffect,
+  applyWithdrawalEffect,
+  incrementActorToleranceCount,
+} from "./addiction.js";
 import { applyOverdoseEffect } from "./overdose.js";
 import { logger } from "../logger.js";
 
@@ -120,7 +124,9 @@ function ownedCopy(actor, item) {
   return (
     actor.items.get(item.id) ??
     actor.items.find(
-      (i) => i._stats?.compendiumSource === (item._stats?.compendiumSource ?? item.uuid) && i.name === item.name,
+      (i) =>
+        i._stats?.compendiumSource === (item._stats?.compendiumSource ?? item.uuid) &&
+        i.name === item.name,
     ) ??
     item
   );
@@ -205,7 +211,8 @@ export async function applyDragOutcome(actor, item, choice) {
         return { applied: "noop" };
       }
       // Already addicted: don't stack a second Addiction effect (spec D1).
-      if (!getAddictedSubstanceIds(actor).includes(item.id)) await applyAddictionEffect(actor, item);
+      if (!getAddictedSubstanceIds(actor).includes(item.id))
+        await applyAddictionEffect(actor, item);
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Addicted", {
           actor: actor.name,
@@ -222,17 +229,24 @@ export async function applyDragOutcome(actor, item, choice) {
         return { applied: "noop" };
       }
       // Only the addicted go through withdrawal (spec D1, D3).
-      if (!getAddictedSubstanceIds(actor).includes(item.id)) await applyAddictionEffect(actor, item);
+      if (!getAddictedSubstanceIds(actor).includes(item.id))
+        await applyAddictionEffect(actor, item);
       if (!getAddictedSubstanceIds(actor).includes(item.id)) {
         // No Addiction effect to apply: withdrawal alone would never end.
         ui.notifications?.warn(
-          game.i18n.format("FISHUT.DragInventory.NoAddictionEffect", { actor: actor.name, item: item.name }),
+          game.i18n.format("FISHUT.DragInventory.NoAddictionEffect", {
+            actor: actor.name,
+            item: item.name,
+          }),
         );
         return { applied: "noop" };
       }
       if (isInWithdrawalFrom(actor, item.id)) {
         await chat(
-          game.i18n.format("FISHUT.DragInventory.AlreadyWithdrawing", { actor: actor.name, item: item.name }),
+          game.i18n.format("FISHUT.DragInventory.AlreadyWithdrawing", {
+            actor: actor.name,
+            item: item.name,
+          }),
         );
         return { applied: "noop" };
       }
@@ -310,11 +324,14 @@ async function applyBenefitEffects(actor, item) {
   if (benefits.length === 0) return [];
 
   const payloads = benefits.map((effect) =>
-    prepareEffectPayload(typeof effect.toObject === "function" ? effect.toObject() : { ...effect }, {
-      sourceSubstanceId: item.id,
-      origin: item.uuid,
-      duration: null,
-    }),
+    prepareEffectPayload(
+      typeof effect.toObject === "function" ? effect.toObject() : { ...effect },
+      {
+        sourceSubstanceId: item.id,
+        origin: item.uuid,
+        duration: null,
+      },
+    ),
   );
   return actor.createEmbeddedDocuments("ActiveEffect", payloads);
 }

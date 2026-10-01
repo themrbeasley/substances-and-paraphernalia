@@ -1,6 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { findEffectsByRole, getAeRole, hasAeRole, isInWithdrawalFrom } from "../../scripts/data/flag-schema.js";
+import {
+  findEffectsByRole,
+  getAeRole,
+  hasAeRole,
+  isInWithdrawalFrom,
+} from "../../scripts/data/flag-schema.js";
 
 const MODULE_ID = "substances-and-paraphernalia";
 
@@ -38,10 +43,10 @@ describe("findEffectsByRole", () => {
 
   it("falls back to substring match when flag absent", () => {
     const warnLog = [];
-    const actor = mkActor([
-      mkEffect({ id: "1", name: "Hand-authored Addiction AE" }),
-    ]);
-    const out = findEffectsByRole(actor, "addiction", { warn: (msg, ctx) => warnLog.push({ msg, ctx }) });
+    const actor = mkActor([mkEffect({ id: "1", name: "Hand-authored Addiction AE" })]);
+    const out = findEffectsByRole(actor, "addiction", {
+      warn: (msg, ctx) => warnLog.push({ msg, ctx }),
+    });
     assert.equal(out.length, 1);
     assert.equal(out[0].id, "1");
     assert.equal(warnLog.length, 1);
@@ -88,7 +93,10 @@ describe("hasAeRole", () => {
     assert.equal(hasAeRole(mkEffect({ id: "1", name: "Bless" }), "addiction"), false);
   });
   it("never falls back to the name when tagged with another role", () => {
-    assert.equal(hasAeRole(mkEffect({ id: "1", name: "Addiction marker", role: "tolerance" }), "addiction"), false);
+    assert.equal(
+      hasAeRole(mkEffect({ id: "1", name: "Addiction marker", role: "tolerance" }), "addiction"),
+      false,
+    );
   });
 });
 
@@ -96,12 +104,19 @@ describe("findEffectsByRole and switched-off effects (v0.9.2 D7)", () => {
   it("counts an effect that is switched off (in effects, not appliedEffects)", () => {
     const off = mkEffect({ id: "1", name: "Foo Addiction", role: "addiction" });
     const out = findEffectsByRole({ appliedEffects: [], effects: [off] }, "addiction");
-    assert.deepEqual(out.map((e) => e.id), ["1"]);
+    assert.deepEqual(
+      out.map((e) => e.id),
+      ["1"],
+    );
   });
 });
 
 describe("isInWithdrawalFrom", () => {
-  const wd = (sid, extra = {}) => ({ name: "Withdrawal from X", flags: { [MODULE_ID]: { aeRole: "withdrawal", sourceSubstanceId: sid } }, ...extra });
+  const wd = (sid, extra = {}) => ({
+    name: "Withdrawal from X",
+    flags: { [MODULE_ID]: { aeRole: "withdrawal", sourceSubstanceId: sid } },
+    ...extra,
+  });
   it("is true when a withdrawal effect for the substance is on the actor", () => {
     assert.equal(isInWithdrawalFrom({ effects: [wd("x")] }, "x"), true);
   });

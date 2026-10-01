@@ -82,7 +82,9 @@ export async function runPhase2(actor) {
   for (const substanceId of addicted) {
     const item = actor.items?.get?.(substanceId);
     if (!item) {
-      logger.warn(`Phase 2: ${actor.name} is addicted to item ${substanceId}, which is gone; skipping`);
+      logger.warn(
+        `Phase 2: ${actor.name} is addicted to item ${substanceId}, which is gone; skipping`,
+      );
       continue;
     }
     const dc = getWithdrawalDc(item);
@@ -110,7 +112,8 @@ export async function runPhase2(actor) {
     const inWithdrawal = isInWithdrawalFrom(actor, row.substanceId);
     try {
       if (action === "use") await forceUseSubstance(actor, item);
-      else await runAbstainBranch(actor, item, { forced: action === "forced-abstain", inWithdrawal });
+      else
+        await runAbstainBranch(actor, item, { forced: action === "forced-abstain", inWithdrawal });
     } catch (e) {
       logger.warn(`Phase 2 dispatch failed for ${item.name}: ${e?.message}`, e);
     }
@@ -168,7 +171,9 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
   // No Withdrawal DC authored: nothing to resist, so withdrawal sets in and
   // recovery stays reachable (spec v0.9.2 D2).
   if (withdrawalDc === null) {
-    await chat(game.i18n.format("FISHUT.Phase2.WithdrawalSave.NoDc", { actor: actor.name, item: item.name }));
+    await chat(
+      game.i18n.format("FISHUT.Phase2.WithdrawalSave.NoDc", { actor: actor.name, item: item.name }),
+    );
     await applyWithdrawalEffect(actor, item);
     return;
   }

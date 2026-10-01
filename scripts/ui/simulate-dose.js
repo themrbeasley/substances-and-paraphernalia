@@ -17,11 +17,7 @@
 // appears immediately for the currently-open sheet.
 
 import { MODULE_ID } from "../config.js";
-import {
-  getAddiction,
-  getWithdrawalDuration,
-  isSubstance,
-} from "../data/flag-schema.js";
+import { getAddiction, getWithdrawalDuration, isSubstance } from "../data/flag-schema.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import {
   applyAddictionEffect,
@@ -73,9 +69,7 @@ function onRenderApplicationV2(app, _htmlElement) {
 
 function patchSheetClass(cls) {
   if (typeof cls?.prototype?._getHeaderControls !== "function") {
-    logger.warn?.(
-      "simulate-dose: sheet class has no _getHeaderControls; patch skipped",
-    );
+    logger.warn?.("simulate-dose: sheet class has no _getHeaderControls; patch skipped");
     return false;
   }
 
@@ -184,7 +178,8 @@ async function openResultDialog(item, result) {
     ok: result?.ok === true,
     error: result?.error ?? null,
     capturedContent: result?.capturedContent ?? "",
-    hasCapturedContent: typeof result?.capturedContent === "string" && result.capturedContent.length > 0,
+    hasCapturedContent:
+      typeof result?.capturedContent === "string" && result.capturedContent.length > 0,
     finalAEs: result?.finalAEs ?? [],
     hasFinalAEs: Array.isArray(result?.finalAEs) && result.finalAEs.length > 0,
     noChatLabel,
@@ -227,11 +222,7 @@ async function openResultDialog(item, result) {
  *   error?: string,
  * }>}
  */
-export async function runSimulation({
-  substance,
-  conMod = 0,
-  addictionState = "none",
-} = {}) {
+export async function runSimulation({ substance, conMod = 0, addictionState = "none" } = {}) {
   if (!substance || !isSubstance(substance)) {
     return {
       ok: false,
@@ -374,8 +365,8 @@ async function preSeedAddictionState(actor, item, state) {
 export async function sweepOrphanedTestActors() {
   if (typeof game === "undefined" || !game?.actors) return 0;
   if (game.users?.activeGM && game.users.activeGM !== game.user) return 0;
-  const orphans = [...game.actors].filter((a) =>
-    typeof a?.name === "string" && a.name.startsWith(TEST_ACTOR_PREFIX),
+  const orphans = [...game.actors].filter(
+    (a) => typeof a?.name === "string" && a.name.startsWith(TEST_ACTOR_PREFIX),
   );
   let count = 0;
   for (const actor of orphans) {
