@@ -53,22 +53,6 @@ const KIND_BY_ITEM_TYPE = { consumable: "substance", equipment: "paraphernalia" 
 const INJECTED_MARKER = "data-fishut-details-injected";
 const TOGGLE_MARKER = "data-fishut-toggle-injected";
 
-const OVERDOSE_TOLERANCE_INTERACTION_MODES = Object.freeze([
-  "none",
-  "mitigate",
-  "compound",
-]);
-
-function coerceOverdoseToleranceInteraction(value) {
-  return OVERDOSE_TOLERANCE_INTERACTION_MODES.includes(value) ? value : "none";
-}
-
-const OVERDOSE_TOLERANCE_INTERACTION_LABEL_KEYS = Object.freeze({
-  none: "FISHUT.Details.Overdose.ToleranceInteraction.None",
-  mitigate: "FISHUT.Details.Overdose.ToleranceInteraction.Mitigate",
-  compound: "FISHUT.Details.Overdose.ToleranceInteraction.Compound",
-});
-
 // Hook: dnd5e 5.2.5 item sheets are ApplicationV2; the generic V2 render hook
 // fires once the rendered HTMLElement is in place, with payload
 // `(app, htmlElement, context, options)`. We gate on `app.document` being an
@@ -344,12 +328,6 @@ function buildLabels() {
     overdoseEffect: L("FISHUT.DetailsTab.Field.OverdoseEffect.Label"),
     overdoseEffectTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.Tooltip"),
     overdoseEffectCreateTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.CreateTooltip"),
-    overdoseToleranceInteractionLabel: L("FISHUT.Details.Overdose.ToleranceInteraction.Label"),
-    overdoseToleranceInteractionNone: L("FISHUT.Details.Overdose.ToleranceInteraction.None"),
-    overdoseToleranceInteractionMitigate: L("FISHUT.Details.Overdose.ToleranceInteraction.Mitigate"),
-    overdoseToleranceInteractionCompound: L("FISHUT.Details.Overdose.ToleranceInteraction.Compound"),
-    overdoseToleranceInteractionMagnitude: L("FISHUT.Details.Overdose.ToleranceInteraction.Magnitude"),
-    overdoseToleranceInteractionHint: L("FISHUT.Details.Overdose.ToleranceInteraction.Hint"),
     toleranceHeader: L("FISHUT.DetailsTab.Tolerance.Header"),
     toleranceEnabled: L("FISHUT.DetailsTab.Tolerance.Enabled"),
     toleranceDecay: L("FISHUT.DetailsTab.Field.ToleranceDecay"),
@@ -536,16 +514,6 @@ function buildOverdoseContext(item) {
   const chancePercent = Number.isFinite(rawChance) ? rawChance : 5;
   const description = typeof block.description === "string" ? block.description : "";
 
-  const toleranceInteraction = coerceOverdoseToleranceInteraction(block.toleranceInteraction);
-  const rawMagnitude = Number(block.toleranceInteractionMagnitude);
-  const toleranceInteractionMagnitude = Number.isFinite(rawMagnitude) ? rawMagnitude : 0;
-
-  const toleranceInteractionOptions = OVERDOSE_TOLERANCE_INTERACTION_MODES.map((mode) => ({
-    id: mode,
-    label: L(OVERDOSE_TOLERANCE_INTERACTION_LABEL_KEYS[mode]),
-    selected: mode === toleranceInteraction,
-  }));
-
   const attachedIds = getOverdoseEffectIds(item);
   const allEffects = Array.from(item.effects ?? []);
   // Overdose picker only lists AEs whose name contains "overdose"
@@ -560,9 +528,6 @@ function buildOverdoseContext(item) {
     enabled,
     chancePercent,
     description,
-    toleranceInteraction,
-    toleranceInteractionMagnitude,
-    toleranceInteractionOptions,
     fieldsDisabled: !enabled,
     availableEffects,
     attachedEffects,
@@ -918,15 +883,6 @@ export async function persistField(item, field, rawValue, target) {
     }
     case "overdose.description":
       return persistOverdoseField(item, "description", rawValue ?? "");
-    case "overdose.toleranceInteraction": {
-      const v = coerceOverdoseToleranceInteraction(rawValue);
-      return persistOverdoseField(item, "toleranceInteraction", v);
-    }
-    case "overdose.toleranceInteractionMagnitude": {
-      const n = parseIntOrNull(rawValue);
-      const clamped = n === null ? 0 : Math.max(0, n);
-      return persistOverdoseField(item, "toleranceInteractionMagnitude", clamped);
-    }
     case "tolerance.enabled":
       return setToleranceEnabled(item, rawValue === "true");
     case "subtype": {
@@ -1219,10 +1175,6 @@ async function persistOverdoseField(item, key, value) {
       ? Number(current.chancePercent)
       : 5,
     description: typeof current.description === "string" ? current.description : "",
-    toleranceInteraction: coerceOverdoseToleranceInteraction(current.toleranceInteraction),
-    toleranceInteractionMagnitude: Number.isFinite(Number(current.toleranceInteractionMagnitude))
-      ? Number(current.toleranceInteractionMagnitude)
-      : 0,
     [key]: value,
   };
   return setOverdose(item, merged);
