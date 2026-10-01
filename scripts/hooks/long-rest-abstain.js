@@ -32,7 +32,7 @@ import {
 } from "../data/flag-schema.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { abstainBranch } from "../data/abstain-branch.js";
-import { d20Config } from "../data/roll-config.js";
+import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { applyToleranceDecay } from "./tolerance-decay.js";
 import { applyWithdrawalEffect } from "./addiction.js";
 import { openAbstainDialog } from "../ui/abstain-dialog.js";
@@ -134,7 +134,7 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
   if (!forced && abstain) {
     const dc = Number(abstain.dc);
     const roll = await rollAbstainCheck(actor, abstain.ability ?? "wis", dc);
-    if (!roll) return; // roll window closed: nothing happens this rest
+    if (!roll) return; // no roll function: nothing happens this rest
     willpowerPassed = roll.total >= dc;
     await chat(
       game.i18n.format(
@@ -169,7 +169,7 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
     );
   }
   const saveRoll = await rollWithdrawalSave(actor, withdrawalDc);
-  if (!saveRoll) return; // roll window closed
+  if (!saveRoll) return; // no roll function
   const passed = saveRoll.total >= Number(withdrawalDc);
   await chat(
     game.i18n.format(
@@ -180,19 +180,30 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
   if (!passed) await applyWithdrawalEffect(actor, item);
 }
 
+// A closed roll window rolls anyway (rollWithoutSkipping), so closing it
+// can't skip the Wisdom check or the Withdrawal Save.
 async function rollAbstainCheck(actor, ability, dc) {
-  if (typeof actor.rollAbilityCheck !== "function") return null;
+  if (typeof actor.rollAbilityCheck !== "function") {
+    logger.warn("actor has no rollAbilityCheck; skipping the Abstain check");
+    return null;
+  }
   const bonus = Number(actor.getFlag?.(MODULE_ID, "abstaining.check.bonus")) || 0;
-  const roll = await actor.rollAbilityCheck(d20Config(ability, dc, { bonus }));
-  return Array.isArray(roll) ? (roll[0] ?? null) : (roll ?? null);
+  return rollWithoutSkipping(
+    (config, dialog) => actor.rollAbilityCheck(config, dialog),
+    d20Config(ability, dc, { bonus }),
+  );
 }
 
 async function rollWithdrawalSave(actor, dc) {
-  const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
-  if (typeof fn !== "function") return null;
+  if (typeof actor.rollSavingThrow !== "function") {
+    logger.warn("actor has no rollSavingThrow; skipping the Withdrawal Save");
+    return null;
+  }
   const bonus = Number(actor.getFlag?.(MODULE_ID, "withdrawal.save.bonus")) || 0;
-  const roll = await fn.call(actor, d20Config("con", dc, { bonus }));
-  return Array.isArray(roll) ? (roll[0] ?? null) : (roll ?? null);
+  return rollWithoutSkipping(
+    (config, dialog) => actor.rollSavingThrow(config, dialog),
+    d20Config("con", dc, { bonus }),
+  );
 }
 
 // Effects, not the record: relapse and recovery both key off the withdrawal

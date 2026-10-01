@@ -23,7 +23,7 @@ import { attenuateChangeRows } from "../data/tolerance.js";
 import { isPriorHigh, isStrayHigh } from "../data/prior-high.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
-import { d20Config } from "../data/roll-config.js";
+import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { rollOverdoseAndApply } from "./overdose.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
@@ -220,20 +220,20 @@ function joinSourceNames(modifier) {
 }
 
 async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, reroll = false } = {}) {
-  const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
-  if (typeof fn !== "function") {
+  if (typeof actor.rollSavingThrow !== "function") {
     logger.warn("actor has no rollSavingThrow; skipping save");
     return null;
   }
-  const firstRoll = (result) => (Array.isArray(result) ? (result[0] ?? null) : (result ?? null));
+  // A closed roll window rolls anyway, so closing it can't dodge addiction.
+  const roll = (config, dialog) => actor.rollSavingThrow(config, dialog);
   // reroll-on-fail outranks advantage and +N at resolution time, so it rolls
   // twice with no modifiers.
   if (reroll) {
-    const first = firstRoll(await fn.call(actor, d20Config(ability, dc)));
+    const first = await rollWithoutSkipping(roll, d20Config(ability, dc));
     if (!first || first.total >= dc) return first;
-    return firstRoll(await fn.call(actor, d20Config(ability, dc))) ?? first;
+    return (await rollWithoutSkipping(roll, d20Config(ability, dc))) ?? first;
   }
-  return firstRoll(await fn.call(actor, d20Config(ability, dc, { advantage, bonus })));
+  return rollWithoutSkipping(roll, d20Config(ability, dc, { advantage, bonus }));
 }
 
 /**
