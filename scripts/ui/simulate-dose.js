@@ -252,7 +252,7 @@ export async function runSimulation({
       await preSeedAddictionState(testActor, embeddedSubstance, addictionState);
     }
 
-    await runDosePipeline(testActor, embeddedSubstance);
+    const failures = await runDosePipeline(testActor, embeddedSubstance);
 
     // Snapshot final AEs before cleanup so the result dialog has data.
     const finalAEs = [...(testActor.effects ?? [])].map((e) => e.name).filter(Boolean);
@@ -265,9 +265,10 @@ export async function runSimulation({
     }
 
     return {
-      ok: true,
+      ok: failures.length === 0,
       capturedContent: capturedContents.join("\n<hr/>\n"),
       finalAEs,
+      error: failures.map((f) => `${f.step}: ${f.message}`).join("; ") || undefined,
     };
   } catch (err) {
     logger.error("simulate-dose: simulation failed", err);

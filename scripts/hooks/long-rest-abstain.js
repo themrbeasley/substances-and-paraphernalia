@@ -69,7 +69,13 @@ export async function runPhase2(actor) {
   for (const substanceId of Object.keys(getActorTolerance(actor))) {
     if (addicted.includes(substanceId)) continue;
     const item = actor.items?.get?.(substanceId);
-    if (item) await applyToleranceDecay(actor, item);
+    if (!item) continue;
+    // One failed fade must not stop the Withdrawal Choices window opening.
+    try {
+      await applyToleranceDecay(actor, item);
+    } catch (err) {
+      logger.error(`Phase 2: tolerance fade failed for ${item.name}`, err);
+    }
   }
 
   const rows = [];

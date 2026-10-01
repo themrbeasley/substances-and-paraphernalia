@@ -56,11 +56,7 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
-  try {
-    await runDosePipeline(actor, item);
-  } catch (err) {
-    logger.error("dose flow failed", err);
-  }
+  await runDosePipeline(actor, item);
 }
 
 /**
@@ -71,15 +67,28 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @returns {Promise<Array<{step: string, message: string}>>} the steps that failed
  */
 export async function runDosePipeline(actor, item) {
-  await cancelWithdrawalOnRelapse(actor, item);
+  // The dose is already spent, so each step catches its own error: one failure
+  // must not cancel the rest of the dose (spec v0.9.2 D11).
+  const failures = [];
+  const step = async (label, fn) => {
+    try {
+      await fn();
+    } catch (err) {
+      logger.error(`dose step "${label}" failed for ${item.name}`, err);
+      failures.push({ step: label, message: err?.message ?? String(err) });
+    }
+  };
+  await step("relapse check", () => cancelWithdrawalOnRelapse(actor, item));
   if (getAddictionEnabled(item) && typeof getAddiction(item)?.save?.dc === "number") {
-    await rollSaveAndApply(actor, item);
+    await step("addiction save", () => rollSaveAndApply(actor, item));
   }
-  await applyAlteredEffectGated(actor, item);
-  await incrementActorToleranceCount(actor, item);
-  await rollOverdoseAndApply(actor, item);
+  await step("high", () => applyAlteredEffectGated(actor, item));
+  await step("tolerance", () => incrementActorToleranceCount(actor, item));
+  await step("overdose", () => rollOverdoseAndApply(actor, item));
+  return failures;
 }
 
 async function cancelWithdrawalOnRelapse(actor, item) {
