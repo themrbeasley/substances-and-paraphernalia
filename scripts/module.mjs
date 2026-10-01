@@ -15,6 +15,7 @@ import {
   applyAddictionEffect,
   isAppliedAddictionEffect,
   onPreDeleteActiveEffect,
+  onPreCreateActiveEffect,
 } from "./hooks/addiction.js";
 import { rollOverdoseAndApply } from "./hooks/overdose.js";
 import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
@@ -70,6 +71,7 @@ Hooks.once("ready", async () => {
         applyAddictionEffect,
         isAppliedAddictionEffect,
         onPreDeleteActiveEffect,
+        onPreCreateActiveEffect,
       },
       overdose: { rollOverdoseAndApply },
       saveBypass: { consumeBypassIfAvailable },

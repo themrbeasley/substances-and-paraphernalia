@@ -46,3 +46,29 @@ describe("isStrayHigh", () => {
     assert.equal(isStrayHigh(addiction, actor), false);
   });
 });
+
+describe("untagged highs (v0.9.2 D5)", () => {
+  const untagged = (name, origin) => ({ name, flags: {}, origin });
+  const drug = { id: "drug", uuid: "Actor.a1.Item.drug", getFlag: (_s, k) => (k === "kind" ? "substance" : undefined) };
+
+  it("matches an untagged effect named like a high, by name", () => {
+    assert.equal(isPriorHigh(untagged("Altered by Homebrew", "Actor.a1.Item.drug.ActiveEffect.fx9"), item), true);
+  });
+  it("ignores an untagged effect that isn't named like a high", () => {
+    assert.equal(isPriorHigh(untagged("Blessed", "Actor.a1.Item.drug.ActiveEffect.fx9"), item), false);
+  });
+  it("lets a role tag win over the name", () => {
+    const tagged = { name: "Altered by Homebrew", flags: { [S]: { aeRole: "withdrawal" } }, origin: "Actor.a1.Item.drug" };
+    assert.equal(isPriorHigh(tagged, item), false);
+  });
+  it("flags an untagged stray copy", () => {
+    assert.equal(isStrayHigh(untagged("Altered by Homebrew", "Actor.a1.Item.drug.ActiveEffect.fx9"), { items: [drug] }), true);
+  });
+  it("leaves a high with no origin alone", () => {
+    assert.equal(isStrayHigh(high({}, undefined), { items: [drug] }), false);
+  });
+  it("leaves effects alone on an actor with no items", () => {
+    assert.equal(isStrayHigh(high({}, "Actor.a1.Item.drug.ActiveEffect.fx1"), {}), false);
+    assert.equal(isStrayHigh(high({}, "Actor.a1.Item.drug.ActiveEffect.fx1"), null), false);
+  });
+});
