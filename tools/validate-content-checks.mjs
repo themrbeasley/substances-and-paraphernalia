@@ -16,6 +16,11 @@ export const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
 const FOUNDRY_ID = /^[a-zA-Z0-9]{16}$/;
 
+// A blank Details-tab number is stored as null or ""; Number() would read
+// both as 0, so check for them first.
+const isSetNumber = (value) =>
+  value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+
 /**
  * Foundry ids are exactly 16 letters or digits; anything else loads as a null
  * id and shows up as a ghost duplicate in the compendium. Walks every `_id`,
@@ -184,7 +189,7 @@ export function checkSubstance(file) {
     }
     if (addiction?.enabled !== false) {
       const dc = withdrawal.dc;
-      if (!Number.isFinite(Number(dc))) {
+      if (!isSetNumber(dc)) {
         err(`withdrawal.dc is required (finite number) when addiction.enabled !== false (got ${JSON.stringify(dc)})`);
       }
     }
@@ -196,7 +201,7 @@ export function checkSubstance(file) {
         if (typeof abstain.ability !== "string" || abstain.ability.length === 0) {
           err(`withdrawal.abstain.ability must be a non-empty string (got ${JSON.stringify(abstain.ability)})`);
         }
-        if (!Number.isFinite(Number(abstain.dc))) {
+        if (!isSetNumber(abstain.dc)) {
           err(`withdrawal.abstain.dc must be a finite number (got ${JSON.stringify(abstain.dc)})`);
         }
       }

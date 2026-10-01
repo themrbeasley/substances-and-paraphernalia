@@ -8,7 +8,7 @@ import {
   getWithdrawalEnabled,
   getWithdrawalEffectIds,
   getWithdrawalDc,
-  getAbstain,
+  getWithdrawal,
   getWithdrawalDuration,
   getToleranceDecay,
   getOverdose,
@@ -456,10 +456,17 @@ function buildAddictionContext(item) {
   };
 }
 
+// The sheet shows and saves the stored Abstain block as-is (a blank DC stays
+// blank and keeps its ability); getAbstain's "blank means no check" is for play.
+function storedAbstain(item) {
+  const a = getWithdrawal(item)?.abstain;
+  return { ability: a?.ability ?? "wis", dc: a?.dc ?? null };
+}
+
 function buildAddictionFieldsetContext(item) {
   const dc = getWithdrawalDc(item);
   const profile = Number.isFinite(dc) ? tierProfile(snapDcToTier(dc)) : null;
-  const abstain = getAbstain(item) ?? { ability: "wis", dc: null };
+  const abstain = storedAbstain(item);
   const currentAbstainAbility = abstain.ability ?? "wis";
   const duration = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
   const toleranceDecayRaw = getToleranceDecay(item);
@@ -881,11 +888,11 @@ export async function persistField(item, field, rawValue, target) {
     case "withdrawal.dc":
       return setWithdrawalDc(item, parseIntOrNull(rawValue));
     case "withdrawal.abstain.ability": {
-      const current = getAbstain(item) ?? { ability: "wis", dc: null };
+      const current = storedAbstain(item);
       return setAbstain(item, { ability: (rawValue || "wis").trim() || "wis", dc: current.dc });
     }
     case "withdrawal.abstain.dc": {
-      const current = getAbstain(item) ?? { ability: "wis", dc: null };
+      const current = storedAbstain(item);
       return setAbstain(item, { ability: current.ability ?? "wis", dc: parseIntOrNull(rawValue) });
     }
     case "withdrawal.duration.value": {

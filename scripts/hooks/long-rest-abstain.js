@@ -159,6 +159,13 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
 
   if (!getWithdrawalEnabled(item)) return;
   const withdrawalDc = getWithdrawalDc(item);
+  // No Withdrawal DC authored: nothing to resist, so withdrawal sets in and
+  // recovery stays reachable (spec v0.9.2 D2).
+  if (withdrawalDc === null) {
+    await chat(game.i18n.format("FISHUT.Phase2.WithdrawalSave.NoDc", { actor: actor.name, item: item.name }));
+    await applyWithdrawalEffect(actor, item);
+    return;
+  }
   if (forced) {
     await chat(
       game.i18n.format("FISHUT.Phase2.ForcedAbstain.Intro", {

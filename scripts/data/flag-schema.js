@@ -427,11 +427,16 @@ export const clearActorWithdrawalEntry = async (actor, substanceId) => {
 
 // ─── Substance withdrawal block (v0.8.1: DC + Abstain + Duration) ────────────
 
-/** @param {Item} item @returns {number|null} */
-export const getWithdrawalDc = (item) => {
-  const dc = item?.getFlag?.(MODULE_ID, "withdrawal.dc");
-  return Number.isFinite(Number(dc)) ? Number(dc) : null;
+// A blank Details-tab number is stored as null or ""; it means "not set",
+// never 0 (spec v0.9.2 D2).
+const numberOrNull = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 };
+
+/** @param {Item} item @returns {number|null} null when blank: no Withdrawal Save */
+export const getWithdrawalDc = (item) => numberOrNull(item?.getFlag?.(MODULE_ID, "withdrawal.dc"));
 
 /** @param {Item} item @param {number} value */
 export const setWithdrawalDc = (item, value) => {
@@ -447,12 +452,14 @@ export const setWithdrawalDc = (item, value) => {
 
 const DEFAULT_ABSTAIN_ABILITY = "wis";
 
-/** @param {Item} item @returns {AbstainBlock|null} */
+/** @param {Item} item @returns {AbstainBlock|null} null when blank: no Wisdom check */
 export const getAbstain = (item) => {
   const block = getWithdrawal(item);
   if (!block || !block.abstain) return null;
   const a = block.abstain;
-  return { ability: a.ability ?? DEFAULT_ABSTAIN_ABILITY, dc: a.dc };
+  const dc = numberOrNull(a.dc);
+  if (dc === null) return null;
+  return { ability: a.ability ?? DEFAULT_ABSTAIN_ABILITY, dc };
 };
 
 /** @param {Item} item @param {AbstainBlock} value */
@@ -486,11 +493,8 @@ export const setWithdrawalDuration = (item, value) => {
 const DEFAULT_TOLERANCE_DECAY = 1;
 
 /** @param {Item} item @returns {number} */
-export const getToleranceDecay = (item) => {
-  const block = getTolerance(item);
-  const d = Number(block?.decay);
-  return Number.isFinite(d) ? d : DEFAULT_TOLERANCE_DECAY;
-};
+export const getToleranceDecay = (item) =>
+  numberOrNull(getTolerance(item)?.decay) ?? DEFAULT_TOLERANCE_DECAY;
 
 /** @param {Item} item @param {number} value */
 export const setToleranceDecay = (item, value) => {

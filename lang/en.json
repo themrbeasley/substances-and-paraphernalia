@@ -192,6 +192,7 @@
   "FISHUT.Phase2.AbstainCheck.Fail": "{actor} gives in to {item} and takes a dose (Abstain {total} < {dc}).",
   "FISHUT.Phase2.Hold": "{actor} stays off {item} for another night.",
   "FISHUT.Phase2.WithdrawalSave.Pass": "{actor} weathers {item} withdrawal (Save {total} ≥ {dc}).",
+  "FISHUT.Phase2.WithdrawalSave.NoDc": "{actor} has no save against {item} withdrawal and falls into it.",
   "FISHUT.Phase2.WithdrawalSave.Fail": "{actor} falls into {item} withdrawal (Save {total} < {dc}).",
 
   "FISHUT.DetailsTab.Toggle.Substance": "Illicit Substance",

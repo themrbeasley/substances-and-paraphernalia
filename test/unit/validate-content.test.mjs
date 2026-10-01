@@ -753,3 +753,18 @@ describe("checkSubstance: the high on an activity", () => {
     assert.ok(!r.warnings.some((w) => /lists the Altered effect/.test(w)));
   });
 });
+
+describe("checkSubstance: blank DCs (v0.9.2)", () => {
+  for (const blank of [null, ""]) {
+    it(`errors on a ${JSON.stringify(blank)} Withdrawal DC`, () => {
+      const file = baseSubstance();
+      file.data.flags[SCOPE].withdrawal.dc = blank;
+      assert.ok(checkSubstance(file).errors.some((e) => /withdrawal\.dc is required/.test(e)));
+    });
+    it(`errors on a ${JSON.stringify(blank)} Abstain DC`, () => {
+      const file = baseSubstance();
+      file.data.flags[SCOPE].withdrawal.abstain.dc = blank;
+      assert.ok(checkSubstance(file).errors.some((e) => /withdrawal\.abstain\.dc must be a finite number/.test(e)));
+    });
+  }
+});

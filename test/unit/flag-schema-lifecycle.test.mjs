@@ -177,3 +177,29 @@ test("clearActorToleranceEntry removes the key with ForcedDeletion", withForcedD
   assert.equal(key, `flags.${SCOPE}.tolerance.s1`);
   assert.ok(value instanceof ForcedDeletion);
 }));
+
+// v0.9.2 D2: a blank DC on the Details tab is stored as null (or ""); it means
+// "no roll", never 0.
+const withWithdrawal = (withdrawal) =>
+  mockDoc({ "substances-and-paraphernalia": { withdrawal } });
+
+test("getWithdrawalDc reads a blank DC as no DC, not 0", () => {
+  assert.equal(getWithdrawalDc(withWithdrawal({ dc: null })), null);
+  assert.equal(getWithdrawalDc(withWithdrawal({ dc: "" })), null);
+  assert.equal(getWithdrawalDc(withWithdrawal({ dc: "15" })), 15);
+});
+
+test("getAbstain returns null for a blank Abstain DC (no Wisdom check)", () => {
+  assert.equal(getAbstain(withWithdrawal({ abstain: { ability: "wis", dc: null } })), null);
+  assert.equal(getAbstain(withWithdrawal({ abstain: { ability: "wis", dc: "" } })), null);
+  assert.equal(getAbstain(withWithdrawal({ abstain: { ability: "wis" } })), null);
+  assert.deepEqual(getAbstain(withWithdrawal({ abstain: { dc: "12" } })), { ability: "wis", dc: 12 });
+});
+
+test("getToleranceDecay uses the default for a blank fade but keeps an explicit 0", () => {
+  const withDecay = (decay) => mockDoc({ "substances-and-paraphernalia": { tolerance: { decay } } });
+  assert.equal(getToleranceDecay(withDecay(null)), 1);
+  assert.equal(getToleranceDecay(withDecay("")), 1);
+  assert.equal(getToleranceDecay(withDecay(0)), 0);
+  assert.equal(getToleranceDecay(withDecay(2)), 2);
+});
