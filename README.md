@@ -21,6 +21,19 @@ addiction loop with paraphernalia-granted bypasses.
 Foundry refuses to activate the module without DAE, Midi-QoL, and Token Magic FX
 installed and active.
 
+## Installation
+
+In Foundry's **Add-on Modules** tab, choose **Install Module** and paste this
+manifest URL:
+
+```
+https://github.com/themrbeasley/substances-and-paraphernalia/releases/latest/download/module.json
+```
+
+Then enable **Substances and Paraphernalia** (along with DAE, Midi-QoL, and
+Token Magic FX) in the world's module settings. Updates arrive through
+Foundry's usual module update check.
+
 ## What ships
 
 ### Compendium packs (under "Illicit Compendia")
@@ -59,10 +72,13 @@ installed and active.
 - **Tolerance**: rises with every dose, weakens the high, fades at Long Rests,
   and shows on the character as a "Tolerance to X (n)" marker.
 - **Overdose**: once tolerance to a drug is at its cap, each dose rolls d100
-  against the drug's chance; on for the six performance enhancers.
+  against the drug's chance; a hit applies the drug's Overdose effect and
+  announces it in chat. On for the six performance enhancers (10%, Poisoned
+  and Incapacitated for 1 minute).
 - **Poisoned coupling**: three modes (`linked-cascade`, `linked-isolated`,
   `independent`) controlling how the Poisoned condition interacts with addiction.
-- **Withdrawal Choices**: at a Long Rest an addicted character picks, per drug, to abstain or take a dose.
+- **Withdrawal Choices**: at a Long Rest an addicted character picks, per
+  drug, to abstain or take a dose.
 - **Withdrawal vignette**: per-owner CSS overlay with per-substance colors
   authored on the withdrawal AE template.
 - **Simulate-dose**: 3-dot menu dry-run on substance items.
@@ -101,9 +117,8 @@ npm run pack        # _source/*.json → packs/*.leveldb
 npm run unpack      # packs/*.leveldb → _source/*.json
 ```
 
-A Quench-based integration test suite registers automatically when the
-[Quench](https://foundryvtt.com/packages/quench) module is active in the
-test world.
+Behavior that needs Foundry is checked in a live world; each test run's
+report lives under `reports/`.
 
 CI runs lint, validate, unit tests, and pack on every push and pull request
 (see [.github/workflows/ci.yml](.github/workflows/ci.yml)).
