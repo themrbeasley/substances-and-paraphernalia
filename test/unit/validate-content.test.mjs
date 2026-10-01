@@ -752,6 +752,18 @@ describe("checkSubstance: the high on an activity", () => {
     const r = checkSubstance(withAltered([]));
     assert.ok(!r.warnings.some((w) => /lists the Altered effect/.test(w)));
   });
+
+  it("stays quiet when the activity lists only a non-Altered effect", () => {
+    const r = checkSubstance(withAltered([{ _id: "ae-withdraw-001" }]));
+    assert.ok(!r.warnings.some((w) => /lists the Altered effect/.test(w)));
+  });
+
+  it("names the activity by id when its name is empty", () => {
+    const f = withAltered([{ _id: "ae-altered-001" }]);
+    f.data.system.activities.act1.name = "";
+    const r = checkSubstance(f);
+    assert.ok(r.warnings.some((w) => /activity "act1" lists the Altered effect/.test(w)));
+  });
 });
 
 describe("checkSubstance: blank DCs (v0.9.2)", () => {

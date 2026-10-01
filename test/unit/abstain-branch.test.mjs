@@ -6,6 +6,9 @@ describe("abstainBranch", () => {
   const cases = [
     [{ forced: true, inWithdrawal: false }, "withdrawal-save"],
     [{ forced: true, inWithdrawal: true }, "hold"],
+    // Forced (no doses left) never relapses, whatever the check said.
+    [{ forced: true, inWithdrawal: false, willpowerPassed: false }, "withdrawal-save"],
+    [{ forced: true, inWithdrawal: true, willpowerPassed: false }, "hold"],
     [{ forced: false, inWithdrawal: false, willpowerPassed: false }, "relapse"],
     [{ forced: false, inWithdrawal: true, willpowerPassed: false }, "relapse"],
     [{ forced: false, inWithdrawal: false, willpowerPassed: true }, "withdrawal-save"],

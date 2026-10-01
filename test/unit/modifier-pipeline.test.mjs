@@ -291,6 +291,13 @@ describe("resolveSourceItem", () => {
     assert.equal(resolveSourceItem(actor, { parent: actor, origin: "Actor.a1.Item.pipe" }), item);
   });
 
+  it("prefers the owning item over an origin naming another item", () => {
+    const pipe = { documentName: "Item", id: "pipe" };
+    const other = { documentName: "Item", id: "other" };
+    const actor = { documentName: "Actor", items: new Map([["other", other]]) };
+    assert.equal(resolveSourceItem(actor, { parent: pipe, origin: "Actor.a1.Item.other" }), pipe);
+  });
+
   it("returns null when nothing traces back to an item", () => {
     const actor = { documentName: "Actor", items: new Map() };
     assert.equal(resolveSourceItem(actor, { parent: actor, origin: "" }), null);

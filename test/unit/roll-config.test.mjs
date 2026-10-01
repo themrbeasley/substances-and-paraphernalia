@@ -25,6 +25,17 @@ describe("d20Config", () => {
     assert.deepEqual(c.rolls, [{ parts: [], options: {} }]);
   });
 
+  it("sets advantage and a bonus together", () => {
+    const c = d20Config("con", 13, { advantage: true, bonus: 2 });
+    assert.equal(c.advantage, true);
+    assert.deepEqual(c.rolls[0].parts, ["2"]);
+    assert.equal(c.rolls[0].options.advantage, true);
+  });
+
+  it("keeps a negative bonus as a minus part", () => {
+    assert.deepEqual(d20Config("con", 13, { bonus: -2 }).rolls[0].parts, ["-2"]);
+  });
+
   it("ignores a zero or non-finite bonus", () => {
     assert.deepEqual(d20Config("wis", 12, { bonus: 0 }).rolls[0].parts, []);
     assert.deepEqual(d20Config("wis", 12, { bonus: NaN }).rolls[0].parts, []);

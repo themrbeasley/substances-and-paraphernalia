@@ -5,7 +5,9 @@
  * Walks `_source/fishut-illicit-substance/*.json` and
  * `_source/fishut-illicit-paraphernalia/*.json`, then defers per-file checks
  * to the pure helpers in `validate-content-checks.mjs` so the same invariants
- * can be unit-tested with synthetic JSON.
+ * can be unit-tested with synthetic JSON. Every `_source` pack (macros and
+ * journals too) is also parsed and its document ids checked: 16 letters or
+ * digits (`checkDocumentIds`).
  *
  * Substance contract (v0.8.1):
  *   - flags["substances-and-paraphernalia"].kind === "substance"

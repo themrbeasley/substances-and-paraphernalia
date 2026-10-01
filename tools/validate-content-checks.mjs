@@ -330,15 +330,15 @@ export function checkSubstance(file) {
     checkAeV14Shape(ae, tag, errors);
   }
 
-  // v0.9.1: the module applies the high itself, scaled by tolerance (spec D12).
-  // An activity that also lists it makes Midi-QoL and the chat card apply a
-  // second, full-strength copy.
+  // v0.9.1: the module applies the high itself, scaled by tolerance (spec D12),
+  // and blocks the copy Midi-QoL or the chat card would add, so an activity
+  // that lists it only gets an apply button that does nothing.
   for (const activity of Object.values(data?.system?.activities ?? {})) {
     for (const ref of activity?.effects ?? []) {
       const ae = findEffect(data, ref?._id);
       if (ae?.flags?.[FLAG_SCOPE]?.aeRole === "altered") {
         warn(
-          `activity "${activity.name ?? activity._id}" lists the Altered effect "${ae.name}"; the module applies it itself and blocks the second copy, so the listing only adds a dead apply button`,
+          `activity "${activity.name || activity._id}" lists the Altered effect "${ae.name}"; the module applies it itself and blocks the second copy, so the listing only adds a dead apply button`,
         );
       }
     }

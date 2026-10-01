@@ -146,11 +146,13 @@ function actorWithRecords(records) {
 function withForcedDeletion(fn) {
   return async () => {
     class ForcedDeletion {}
+    const previous = globalThis.foundry;
     globalThis.foundry = { data: { operators: { ForcedDeletion } } };
     try {
       await fn(ForcedDeletion);
     } finally {
-      delete globalThis.foundry;
+      if (previous === undefined) delete globalThis.foundry;
+      else globalThis.foundry = previous;
     }
   };
 }
@@ -176,6 +178,12 @@ test("clearActorToleranceEntry removes the key with ForcedDeletion", withForcedD
   const [[key, value]] = Object.entries(calls[0]);
   assert.equal(key, `flags.${SCOPE}.tolerance.s1`);
   assert.ok(value instanceof ForcedDeletion);
+}));
+
+test("clearActorToleranceEntry does nothing when the key is absent", withForcedDeletion(async () => {
+  const { actor, calls } = actorWithRecords({ tolerance: { s2: { count: 1 } } });
+  await clearActorToleranceEntry(actor, "s1");
+  assert.equal(calls.length, 0);
 }));
 
 // v0.9.2 D2: a blank DC on the Details tab is stored as null (or ""); it means
