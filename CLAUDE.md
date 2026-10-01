@@ -39,6 +39,8 @@ The in-repo `module.json` keeps both `manifest` and `download` pointed at `relea
 
 CI (`.github/workflows/ci.yml`) runs lint + validate + unit tests + pack on every push and PR. No release on CI.
 
+The GitHub Wiki tab is published by hand at each release, not by CI (there is no wiki token). After the tag, clone `themrbeasley/substances-and-paraphernalia.wiki.git` (add `-c core.longpaths=true` on Windows), replace its pages with `docs/wiki/*.md` so pages removed from the repo leave the wiki too, commit, and push after the user confirms. Publish only at a release, so the wiki matches the installed version.
+
 If a tag/release pair ends up stale (e.g. tag pushed before a PR landed), recover with `gh release delete vX.Y.Z --yes --cleanup-tag` (which drops both the release and the remote tag), then `git tag -a vX.Y.Z <sha> -m "..."` and `git push origin vX.Y.Z` to re-fire the workflow.
 
 ## Architecture
