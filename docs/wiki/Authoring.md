@@ -199,11 +199,11 @@ warnings before committing.
 Open any substance item; the dnd5e Details tab shows a **Substance Properties** section:
 
 - **Category** selector.
-- **Addiction**: enabled toggle, save ability, save DC (with the tier hint), and the Addiction effect picker.
-- **Withdrawal**: enabled toggle, Withdrawal DC, Abstain ability and DC, duration (value and unit), and the withdrawal effect picker.
+- **Addiction**: enabled toggle, save ability, save DC (with the recommended-range hint), and the Addiction effect picker.
+- **Withdrawal**: enabled toggle, Withdrawal DC (with a preview of its tier), Abstain ability and DC, duration (value and unit), and the withdrawal effect picker.
 - **Overdose**: enabled toggle, chance percent (1 to 100), description, and the Overdose effect picker.
 - **Tolerance**: enabled toggle, decay per Long Rest, and the optional tolerance effect picker.
 
-Each effect picker can create a blank template with the right name and role. The administration type is the dnd5e Poison subtype on the item's own Details fields.
+Each effect picker can create a blank template with the right name; the module tags its role when it applies the effect. The administration type is the dnd5e Poison subtype on the item's own Details fields.
 
 For paraphernalia items, the Details tab shows **Paraphernalia Properties**: the **Subtype** select (built-ins + custom), the administration types it applies to (`appliesTo` checkboxes), and the **Save bypass** section (type, bonus, uses per day, and a button that adds the bypass effect).

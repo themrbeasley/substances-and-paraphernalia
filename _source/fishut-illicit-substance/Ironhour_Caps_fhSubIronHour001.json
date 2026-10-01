@@ -137,7 +137,7 @@
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
-        "description": "Ironhour Caps overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "description": "Too much Ironhour Caps overwhelms the body: Poisoned and Incapacitated for 1 minute.",
         "effectIds": [
           "fhAEIronHourOvd1"
         ]
@@ -234,7 +234,7 @@
         "value": 60,
         "units": "seconds"
       },
-      "description": "<p>Ironhour Caps overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "description": "<p>Too much Ironhour Caps overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
       "system": {
         "changes": []
       },

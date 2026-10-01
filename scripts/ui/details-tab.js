@@ -1120,29 +1120,21 @@ export async function createOverdoseStubAE(item) {
   return effect;
 }
 
-// Create a blank tolerance-template AE on the substance item, pre-stamped with
-// the modifier flag block so the engine recognises it as a tolerance template
-// and so the Effects tab surfaces the per-stack tunables (addictionDcBump,
-// withdrawalAmplify, attenuateAltered) as editable Changes for the GM to
-// extend. `transfer: false` because tolerance is applied programmatically on
-// addiction-save pass. Name must contain `tolerance` (case-insensitive).
+// Create a blank tolerance marker template on the substance item. The module
+// copies it onto the character with the first dose and adds the count to its
+// name; tolerance itself is a count on the actor, so the template needs no
+// Changes. `transfer: false`: the module applies it. Name must contain
+// `tolerance` (case-insensitive).
 export async function createToleranceStubAE(item) {
   const name = game.i18n.format("FISHUT.DetailsTab.Field.ToleranceEffect.AeName.Default", {
     item: item.name,
   });
-  const block = {
-    kind: "tolerance",
-    substanceId: item.id,
-    addictionDcBump: 1,
-    attenuateAltered: { durationFactor: 0, modifierFactor: 0, dropAdvantage: false },
-    withdrawalAmplify: { durationFactor: 0, modifierFactor: 0, addDisadvantage: false },
-  };
   const data = [
     {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: false,
-      system: { changes: writeModifierAsChanges(block, MODULE_ID) },
+      system: { changes: [] },
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);

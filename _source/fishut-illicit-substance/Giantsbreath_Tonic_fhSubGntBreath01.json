@@ -137,7 +137,7 @@
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
-        "description": "Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "description": "Too much Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.",
         "effectIds": [
           "fhAEGntBreathOvd"
         ]
@@ -240,7 +240,7 @@
         "value": 60,
         "units": "seconds"
       },
-      "description": "<p>Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "description": "<p>Too much Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
       "system": {
         "changes": []
       },

@@ -5,6 +5,7 @@ import {
   getAddictionEnabled,
   getAddictedSubstanceIds,
   getAeRole,
+  hasAeRole,
   getWithdrawalEffectIds,
   getWithdrawalDuration,
   getToleranceEffectIds,
@@ -32,13 +33,10 @@ const DEFAULT_SAVE_ABILITY = "con";
 const POISONED_STATUS = "poisoned";
 
 export function registerAddictionHooks() {
-  // B.1: Save-on-use (post-activity).
-  // dnd5e 4.x exposes `dnd5e.postUseActivity`. Signature confirmed in live
-  // world; if it differs we fall back to wrapping `Activity#use` directly
-  // (see comment in onPostUseActivity).
+  // Every substance use runs the dose pipeline.
   Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
 
-  // B.3: Poisoned-coupling guard for linked-isolated mode.
+  // Poisoned-coupling guard for linked-isolated mode.
   // External poisoned-clear cascades into our addiction AE's deletion under
   // Foundry's default "linked-cascade" semantics; this hook re-asserts the
   // addiction AE's persistence in linked-isolated mode by canceling the delete
@@ -56,7 +54,12 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
-  await runDosePipeline(actor, item);
+  // Each step catches its own errors; this catches anything outside them.
+  try {
+    await runDosePipeline(actor, item);
+  } catch (err) {
+    logger.error("dose flow failed", err);
+  }
 }
 
 /**
@@ -95,8 +98,7 @@ async function cancelWithdrawalOnRelapse(actor, item) {
   const ids = actor.effects
     .filter(
       (e) =>
-        getAeRole(e) === "withdrawal" &&
-        e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
+        hasAeRole(e, "withdrawal") && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
     )
     .map((e) => e.id);
   if (ids.length === 0) return;
@@ -252,7 +254,7 @@ async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, rero
  * `getAddictionEffectIds(item)` is cloned in a single batch so a GM can split
  * a complex addiction across multiple AEs and have all of them appear at once.
  * Adjusts `data.statuses` per the `addictionPoisonedCoupling` setting before
- * creation. Test seam: exported for Quench.
+ * creation.
  *
  * @param {Actor} actor
  * @param {Item}  item

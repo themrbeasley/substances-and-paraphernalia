@@ -27,6 +27,9 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 ### Removed
 - The overdose **Tolerance Interaction** setting on the Details tab. It never did anything; overdose has used the tolerance threshold since v0.8.1. `module.api.data` goes with it.
 
+### Upgrading
+Copies of the six performance enhancers already in a world or on characters don't overdose until they're re-imported from the compendium (or overdose is switched on in their Details tab). Tolerance built up before 0.9.2 shows its marker from the next dose.
+
 ## [0.9.1] (2026-09-30)
 
 ### Fixed

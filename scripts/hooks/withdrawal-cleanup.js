@@ -8,8 +8,8 @@
  * Deletes come from House Automation's "Delete expired effects" switch
  * (expiry), the Remove Withdrawal macro, a GM by hand, or a relapse.
  * Listens on `deleteActiveEffect` `(effect, options, userId)`. The active GM
- * runs it; with no GM online every client tries (only owners can write), so
- * a player can still recover.
+ * runs it; with no GM online the actor's owners do, so a player can still
+ * recover.
  */
 
 import { MODULE_ID } from "../config.js";
@@ -33,8 +33,9 @@ async function onDeleteActiveEffect(effect, options, _userId) {
   const actor = effect.parent;
   if (!substanceId || actor?.documentName !== "Actor") return;
   // The active GM writes, so clients don't double-write. With no GM online,
-  // every client tries; only owners can write.
+  // the actor's owners do (a non-owner's write would fail with an error toast).
   if (game.users?.activeGM && game.users.activeGM !== game.user) return;
+  if (!game.users?.activeGM && !actor.isOwner) return;
   // actor.effects, not appliedEffects: an expired effect can still be present.
   const mine = (role) =>
     actor.effects.filter(

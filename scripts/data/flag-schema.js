@@ -66,7 +66,7 @@ import {
  *
  * @typedef {Object} WithdrawalEntry
  * @property {string} appliedAt    ISO-8601 timestamp when withdrawal landed.
- * @property {string} endsAt       ISO-8601 timestamp computed from the withdrawal duration in seconds.
+ * @property {string|null} endsAt  ISO-8601 timestamp computed from the withdrawal duration in seconds; null when permanent.
  *
  * @typedef {Object<string, WithdrawalEntry>} WithdrawalMap
  *   Actor-level record of substances the actor is in withdrawal from. Not the
