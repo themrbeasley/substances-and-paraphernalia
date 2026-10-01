@@ -8,7 +8,7 @@ import {
   getWithdrawalEnabled,
   getWithdrawalEffectIds,
   getWithdrawalDc,
-  getAbstain,
+  getWithdrawal,
   getWithdrawalDuration,
   getToleranceDecay,
   getOverdose,
@@ -53,22 +53,6 @@ const KIND_BY_ITEM_TYPE = { consumable: "substance", equipment: "paraphernalia" 
 const INJECTED_MARKER = "data-fishut-details-injected";
 const TOGGLE_MARKER = "data-fishut-toggle-injected";
 
-const OVERDOSE_TOLERANCE_INTERACTION_MODES = Object.freeze([
-  "none",
-  "mitigate",
-  "compound",
-]);
-
-function coerceOverdoseToleranceInteraction(value) {
-  return OVERDOSE_TOLERANCE_INTERACTION_MODES.includes(value) ? value : "none";
-}
-
-const OVERDOSE_TOLERANCE_INTERACTION_LABEL_KEYS = Object.freeze({
-  none: "FISHUT.Details.Overdose.ToleranceInteraction.None",
-  mitigate: "FISHUT.Details.Overdose.ToleranceInteraction.Mitigate",
-  compound: "FISHUT.Details.Overdose.ToleranceInteraction.Compound",
-});
-
 // Hook: dnd5e 5.2.5 item sheets are ApplicationV2; the generic V2 render hook
 // fires once the rendered HTMLElement is in place, with payload
 // `(app, htmlElement, context, options)`. We gate on `app.document` being an
@@ -108,11 +92,8 @@ function injectKindToggle(detailsTab, item, isEditable) {
   // checkboxes. Falls back to a native input if the component isn't defined
   // (older dnd5e or non-V2 sheet).
   const useWebComponent =
-    typeof window !== "undefined" &&
-    window.customElements?.get("dnd5e-checkbox");
-  const input = document.createElement(
-    useWebComponent ? "dnd5e-checkbox" : "input",
-  );
+    typeof window !== "undefined" && window.customElements?.get("dnd5e-checkbox");
+  const input = document.createElement(useWebComponent ? "dnd5e-checkbox" : "input");
   if (!useWebComponent) input.type = "checkbox";
   if (isEnabled) input.setAttribute("checked", "");
   if (!isEditable) input.setAttribute("disabled", "");
@@ -222,10 +203,7 @@ async function onRenderApplicationV2(app, htmlElement) {
       substance: kind === "substance" ? buildSubstanceContext(doc) : null,
       paraphernalia: kind === "paraphernalia" ? buildParaphernaliaContext(doc) : null,
     };
-    const html = await foundry.applications.handlebars.renderTemplate(
-      SECTION_TEMPLATE,
-      context,
-    );
+    const html = await foundry.applications.handlebars.renderTemplate(SECTION_TEMPLATE, context);
     const wrapper = document.createElement("div");
     wrapper.setAttribute(INJECTED_MARKER, "");
     wrapper.innerHTML = html;
@@ -344,12 +322,6 @@ function buildLabels() {
     overdoseEffect: L("FISHUT.DetailsTab.Field.OverdoseEffect.Label"),
     overdoseEffectTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.Tooltip"),
     overdoseEffectCreateTooltip: L("FISHUT.DetailsTab.Field.OverdoseEffect.CreateTooltip"),
-    overdoseToleranceInteractionLabel: L("FISHUT.Details.Overdose.ToleranceInteraction.Label"),
-    overdoseToleranceInteractionNone: L("FISHUT.Details.Overdose.ToleranceInteraction.None"),
-    overdoseToleranceInteractionMitigate: L("FISHUT.Details.Overdose.ToleranceInteraction.Mitigate"),
-    overdoseToleranceInteractionCompound: L("FISHUT.Details.Overdose.ToleranceInteraction.Compound"),
-    overdoseToleranceInteractionMagnitude: L("FISHUT.Details.Overdose.ToleranceInteraction.Magnitude"),
-    overdoseToleranceInteractionHint: L("FISHUT.Details.Overdose.ToleranceInteraction.Hint"),
     toleranceHeader: L("FISHUT.DetailsTab.Tolerance.Header"),
     toleranceEnabled: L("FISHUT.DetailsTab.Tolerance.Enabled"),
     toleranceDecay: L("FISHUT.DetailsTab.Field.ToleranceDecay"),
@@ -456,10 +428,17 @@ function buildAddictionContext(item) {
   };
 }
 
+// The sheet shows and saves the stored Abstain block as-is (a blank DC stays
+// blank and keeps its ability); getAbstain's "blank means no check" is for play.
+function storedAbstain(item) {
+  const a = getWithdrawal(item)?.abstain;
+  return { ability: a?.ability ?? "wis", dc: a?.dc ?? null };
+}
+
 function buildAddictionFieldsetContext(item) {
   const dc = getWithdrawalDc(item);
   const profile = Number.isFinite(dc) ? tierProfile(snapDcToTier(dc)) : null;
-  const abstain = getAbstain(item) ?? { ability: "wis", dc: null };
+  const abstain = storedAbstain(item);
   const currentAbstainAbility = abstain.ability ?? "wis";
   const duration = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
   const toleranceDecayRaw = getToleranceDecay(item);
@@ -474,7 +453,11 @@ function buildAddictionFieldsetContext(item) {
     selected: id === currentAbstainAbility,
   }));
   if (currentAbstainAbility && !abstainAbilityOptions.some((o) => o.selected)) {
-    abstainAbilityOptions.unshift({ id: currentAbstainAbility, label: currentAbstainAbility, selected: true });
+    abstainAbilityOptions.unshift({
+      id: currentAbstainAbility,
+      label: currentAbstainAbility,
+      selected: true,
+    });
   }
 
   const attachedIds = getWithdrawalEffectIds(item);
@@ -483,8 +466,10 @@ function buildAddictionFieldsetContext(item) {
   // (case-insensitive), the same naming contract enforced by validate-content
   // and the long-rest tick. Stale ids are preserved as `isStale` rows so
   // re-saving doesn't silently drop the pointer.
-  const { availableEffects: withdrawalAvailableEffects, attachedEffects: withdrawalAttachedEffects } =
-    buildEffectPicker(allEffects, attachedIds, (e) => /withdraw/i.test(e.name ?? ""));
+  const {
+    availableEffects: withdrawalAvailableEffects,
+    attachedEffects: withdrawalAttachedEffects,
+  } = buildEffectPicker(allEffects, attachedIds, (e) => /withdraw/i.test(e.name ?? ""));
 
   return {
     withdrawalEnabled: getWithdrawalEnabled(item),
@@ -529,33 +514,18 @@ function buildOverdoseContext(item) {
   const chancePercent = Number.isFinite(rawChance) ? rawChance : 5;
   const description = typeof block.description === "string" ? block.description : "";
 
-  const toleranceInteraction = coerceOverdoseToleranceInteraction(block.toleranceInteraction);
-  const rawMagnitude = Number(block.toleranceInteractionMagnitude);
-  const toleranceInteractionMagnitude = Number.isFinite(rawMagnitude) ? rawMagnitude : 0;
-
-  const toleranceInteractionOptions = OVERDOSE_TOLERANCE_INTERACTION_MODES.map((mode) => ({
-    id: mode,
-    label: L(OVERDOSE_TOLERANCE_INTERACTION_LABEL_KEYS[mode]),
-    selected: mode === toleranceInteraction,
-  }));
-
   const attachedIds = getOverdoseEffectIds(item);
   const allEffects = Array.from(item.effects ?? []);
   // Overdose picker only lists AEs whose name contains "overdose"
   // (case-insensitive) per the AE-naming contract.
-  const { availableEffects, attachedEffects } = buildEffectPicker(
-    allEffects,
-    attachedIds,
-    (e) => /overdose/i.test(e.name ?? ""),
+  const { availableEffects, attachedEffects } = buildEffectPicker(allEffects, attachedIds, (e) =>
+    /overdose/i.test(e.name ?? ""),
   );
 
   return {
     enabled,
     chancePercent,
     description,
-    toleranceInteraction,
-    toleranceInteractionMagnitude,
-    toleranceInteractionOptions,
     fieldsDisabled: !enabled,
     availableEffects,
     attachedEffects,
@@ -696,8 +666,7 @@ function buildBypassDisplay(match) {
   }));
 
   const usesPerDay = block.usesPerDay;
-  const usesPerDayValue =
-    usesPerDay === undefined || usesPerDay === null ? "" : String(usesPerDay);
+  const usesPerDayValue = usesPerDay === undefined || usesPerDay === null ? "" : String(usesPerDay);
 
   const isPlusN = currentType === "+N";
   const rawBonus = Number(block.bonus);
@@ -768,7 +737,8 @@ function handleCollapseToggle(wrapper, flagField, rawValue) {
     flagField !== "withdrawal.enabled" &&
     flagField !== "overdose.enabled" &&
     flagField !== "tolerance.enabled"
-  ) return;
+  )
+    return;
   const name = flagField.split(".")[0];
   const isOn = rawValue === "true";
   toggleCollapseFor(wrapper, name, isOn);
@@ -794,9 +764,7 @@ function handlePreviewUpdate(wrapper, flagField, rawValue, target) {
 function updateAppliesToPreview(wrapper, _target) {
   const span = wrapper.querySelector('[data-fishut-preview="appliesTo"]');
   if (!span) return;
-  const checkboxes = wrapper.querySelectorAll(
-    '[data-fishut-flag="appliesTo"][data-fishut-admin]',
-  );
+  const checkboxes = wrapper.querySelectorAll('[data-fishut-flag="appliesTo"][data-fishut-admin]');
   const labels = [];
   for (const cb of checkboxes) {
     if (cb.checked !== true) continue;
@@ -817,8 +785,7 @@ function updateAppliesToPreview(wrapper, _target) {
 // uses `.value`. Boolean values are stringified to "true" / "false" so
 // persistField can stay scalar-friendly.
 function readFieldValue(target) {
-  const isCheckbox =
-    target.matches?.("dnd5e-checkbox, input[type='checkbox']") === true;
+  const isCheckbox = target.matches?.("dnd5e-checkbox, input[type='checkbox']") === true;
   if (isCheckbox) return target.checked === true ? "true" : "false";
   return typeof target.value === "string" ? target.value : "";
 }
@@ -881,16 +848,19 @@ export async function persistField(item, field, rawValue, target) {
     case "withdrawal.dc":
       return setWithdrawalDc(item, parseIntOrNull(rawValue));
     case "withdrawal.abstain.ability": {
-      const current = getAbstain(item) ?? { ability: "wis", dc: null };
+      const current = storedAbstain(item);
       return setAbstain(item, { ability: (rawValue || "wis").trim() || "wis", dc: current.dc });
     }
     case "withdrawal.abstain.dc": {
-      const current = getAbstain(item) ?? { ability: "wis", dc: null };
+      const current = storedAbstain(item);
       return setAbstain(item, { ability: current.ability ?? "wis", dc: parseIntOrNull(rawValue) });
     }
     case "withdrawal.duration.value": {
       const current = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
-      return setWithdrawalDuration(item, { value: parseIntOrNull(rawValue), unit: current.unit ?? "days" });
+      return setWithdrawalDuration(item, {
+        value: parseIntOrNull(rawValue),
+        unit: current.unit ?? "days",
+      });
     }
     case "withdrawal.duration.unit": {
       const current = getWithdrawalDuration(item) ?? { value: null, unit: "days" };
@@ -905,21 +875,11 @@ export async function persistField(item, field, rawValue, target) {
       const n = parseIntOrNull(rawValue);
       // Validator hard-requires 1..100 when enabled; clamp here so a user
       // typing "0" or "200" doesn't write an out-of-range value.
-      const clamped =
-        n === null ? null : Math.max(1, Math.min(100, n));
+      const clamped = n === null ? null : Math.max(1, Math.min(100, n));
       return persistOverdoseField(item, "chancePercent", clamped);
     }
     case "overdose.description":
       return persistOverdoseField(item, "description", rawValue ?? "");
-    case "overdose.toleranceInteraction": {
-      const v = coerceOverdoseToleranceInteraction(rawValue);
-      return persistOverdoseField(item, "toleranceInteraction", v);
-    }
-    case "overdose.toleranceInteractionMagnitude": {
-      const n = parseIntOrNull(rawValue);
-      const clamped = n === null ? 0 : Math.max(0, n);
-      return persistOverdoseField(item, "toleranceInteractionMagnitude", clamped);
-    }
     case "tolerance.enabled":
       return setToleranceEnabled(item, rawValue === "true");
     case "subtype": {
@@ -1160,29 +1120,21 @@ export async function createOverdoseStubAE(item) {
   return effect;
 }
 
-// Create a blank tolerance-template AE on the substance item, pre-stamped with
-// the modifier flag block so the engine recognises it as a tolerance template
-// and so the Effects tab surfaces the per-stack tunables (addictionDcBump,
-// withdrawalAmplify, attenuateAltered) as editable Changes for the GM to
-// extend. `transfer: false` because tolerance is applied programmatically on
-// addiction-save pass. Name must contain `tolerance` (case-insensitive).
+// Create a blank tolerance marker template on the substance item. The module
+// copies it onto the character with the first dose and adds the count to its
+// name; tolerance itself is a count on the actor, so the template needs no
+// Changes. `transfer: false`: the module applies it. Name must contain
+// `tolerance` (case-insensitive).
 export async function createToleranceStubAE(item) {
   const name = game.i18n.format("FISHUT.DetailsTab.Field.ToleranceEffect.AeName.Default", {
     item: item.name,
   });
-  const block = {
-    kind: "tolerance",
-    substanceId: item.id,
-    addictionDcBump: 1,
-    attenuateAltered: { durationFactor: 0, modifierFactor: 0, dropAdvantage: false },
-    withdrawalAmplify: { durationFactor: 0, modifierFactor: 0, addDisadvantage: false },
-  };
   const data = [
     {
       name,
       img: item.img ?? "icons/svg/aura.svg",
       transfer: false,
-      system: { changes: writeModifierAsChanges(block, MODULE_ID) },
+      system: { changes: [] },
     },
   ];
   const created = await item.createEmbeddedDocuments("ActiveEffect", data);
@@ -1212,10 +1164,6 @@ async function persistOverdoseField(item, key, value) {
       ? Number(current.chancePercent)
       : 5,
     description: typeof current.description === "string" ? current.description : "",
-    toleranceInteraction: coerceOverdoseToleranceInteraction(current.toleranceInteraction),
-    toleranceInteractionMagnitude: Number.isFinite(Number(current.toleranceInteractionMagnitude))
-      ? Number(current.toleranceInteractionMagnitude)
-      : 0,
     [key]: value,
   };
   return setOverdose(item, merged);
@@ -1251,4 +1199,3 @@ async function persistAppliesTo(item, adminId, checked) {
   else return null;
   return setAppliesTo(item, next);
 }
-

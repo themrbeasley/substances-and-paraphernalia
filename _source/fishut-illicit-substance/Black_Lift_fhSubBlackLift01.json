@@ -134,6 +134,14 @@
           "fhAEBlackLiftWit"
         ]
       },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Too much Black Lift overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "effectIds": [
+          "fhAEBlackLiftOvd"
+        ]
+      },
       "schemaVersion": 7
     }
   },
@@ -236,6 +244,31 @@
         }
       },
       "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftWit"
+    },
+    {
+      "_id": "fhAEBlackLiftOvd",
+      "name": "Black Lift Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned",
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 60,
+        "units": "seconds"
+      },
+      "description": "<p>Too much Black Lift overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftOvd"
     }
   ],
   "ownership": {

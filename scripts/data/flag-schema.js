@@ -66,7 +66,7 @@ import {
  *
  * @typedef {Object} WithdrawalEntry
  * @property {string} appliedAt    ISO-8601 timestamp when withdrawal landed.
- * @property {string} endsAt       ISO-8601 timestamp computed from the withdrawal duration in seconds.
+ * @property {string|null} endsAt  ISO-8601 timestamp computed from the withdrawal duration in seconds; null when permanent.
  *
  * @typedef {Object<string, WithdrawalEntry>} WithdrawalMap
  *   Actor-level record of substances the actor is in withdrawal from. Not the
@@ -191,11 +191,9 @@ export const setAddictionEffectId = (item, value) =>
  * the runtime per-substance entry map.
  * @param {Item} item @returns {WithdrawalBlock|null}
  */
-export const getWithdrawal = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? null;
+export const getWithdrawal = (item) => item?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? null;
 
-export const setWithdrawal = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.withdrawal, value);
+export const setWithdrawal = (item, value) => item.setFlag(MODULE_ID, FLAGS.withdrawal, value);
 
 /**
  * Whether withdrawal AE application + actor-flag bookkeeping runs on save fail.
@@ -254,11 +252,9 @@ export const setWithdrawalEffectId = (item, value) =>
  */
 
 /** @param {Item} item @returns {OverdoseBlock|null} */
-export const getOverdose = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.overdose) ?? null;
+export const getOverdose = (item) => item?.getFlag?.(MODULE_ID, FLAGS.overdose) ?? null;
 
-export const setOverdose = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.overdose, value);
+export const setOverdose = (item, value) => item.setFlag(MODULE_ID, FLAGS.overdose, value);
 
 /** @param {Item} item @returns {string[]} */
 export const getOverdoseEffectIds = (item) => {
@@ -299,11 +295,9 @@ export const setOverdoseEffectId = (item, value) =>
  */
 
 /** @param {Item} item @returns {ToleranceBlock|null} */
-export const getTolerance = (item) =>
-  item?.getFlag?.(MODULE_ID, FLAGS.tolerance) ?? null;
+export const getTolerance = (item) => item?.getFlag?.(MODULE_ID, FLAGS.tolerance) ?? null;
 
-export const setTolerance = (item, value) =>
-  item.setFlag(MODULE_ID, FLAGS.tolerance, value);
+export const setTolerance = (item, value) => item.setFlag(MODULE_ID, FLAGS.tolerance, value);
 
 /**
  * Whether tolerance auto-stacking runs on save pass. Undefined defaults to true.
@@ -394,8 +388,7 @@ export const setModifier = (effect, value) => {
 // ─── Actor flags (withdrawal map) ────────────────────────────────────────────
 
 /** @param {Actor} actor @returns {WithdrawalMap} */
-export const getActorWithdrawal = (actor) =>
-  actor?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? {};
+export const getActorWithdrawal = (actor) => actor?.getFlag?.(MODULE_ID, FLAGS.withdrawal) ?? {};
 
 /** @param {Actor} actor @param {string} substanceId @returns {WithdrawalEntry|null} */
 export const getActorWithdrawalEntry = (actor, substanceId) => {
@@ -421,17 +414,23 @@ export const setActorWithdrawalEntry = async (actor, substanceId, entry) => {
 export const clearActorWithdrawalEntry = async (actor, substanceId) => {
   if (!(substanceId in getActorWithdrawal(actor))) return null;
   return actor.update({
-    [`flags.${MODULE_ID}.${FLAGS.withdrawal}.${substanceId}`]: new foundry.data.operators.ForcedDeletion(),
+    [`flags.${MODULE_ID}.${FLAGS.withdrawal}.${substanceId}`]:
+      new foundry.data.operators.ForcedDeletion(),
   });
 };
 
 // ─── Substance withdrawal block (v0.8.1: DC + Abstain + Duration) ────────────
 
-/** @param {Item} item @returns {number|null} */
-export const getWithdrawalDc = (item) => {
-  const dc = item?.getFlag?.(MODULE_ID, "withdrawal.dc");
-  return Number.isFinite(Number(dc)) ? Number(dc) : null;
+// A blank Details-tab number is stored as null or ""; it means "not set",
+// never 0 (spec v0.9.2 D2).
+const numberOrNull = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 };
+
+/** @param {Item} item @returns {number|null} null when blank: no Withdrawal Save */
+export const getWithdrawalDc = (item) => numberOrNull(item?.getFlag?.(MODULE_ID, "withdrawal.dc"));
 
 /** @param {Item} item @param {number} value */
 export const setWithdrawalDc = (item, value) => {
@@ -447,12 +446,14 @@ export const setWithdrawalDc = (item, value) => {
 
 const DEFAULT_ABSTAIN_ABILITY = "wis";
 
-/** @param {Item} item @returns {AbstainBlock|null} */
+/** @param {Item} item @returns {AbstainBlock|null} null when blank: no Wisdom check */
 export const getAbstain = (item) => {
   const block = getWithdrawal(item);
   if (!block || !block.abstain) return null;
   const a = block.abstain;
-  return { ability: a.ability ?? DEFAULT_ABSTAIN_ABILITY, dc: a.dc };
+  const dc = numberOrNull(a.dc);
+  if (dc === null) return null;
+  return { ability: a.ability ?? DEFAULT_ABSTAIN_ABILITY, dc };
 };
 
 /** @param {Item} item @param {AbstainBlock} value */
@@ -486,11 +487,8 @@ export const setWithdrawalDuration = (item, value) => {
 const DEFAULT_TOLERANCE_DECAY = 1;
 
 /** @param {Item} item @returns {number} */
-export const getToleranceDecay = (item) => {
-  const block = getTolerance(item);
-  const d = Number(block?.decay);
-  return Number.isFinite(d) ? d : DEFAULT_TOLERANCE_DECAY;
-};
+export const getToleranceDecay = (item) =>
+  numberOrNull(getTolerance(item)?.decay) ?? DEFAULT_TOLERANCE_DECAY;
 
 /** @param {Item} item @param {number} value */
 export const setToleranceDecay = (item, value) => {
@@ -518,8 +516,7 @@ export const getAttenuationCurve = (item) => {
  */
 
 /** @param {Actor} actor @returns {Object<string, ToleranceEntry>} */
-export const getActorTolerance = (actor) =>
-  actor?.getFlag?.(MODULE_ID, "tolerance") ?? {};
+export const getActorTolerance = (actor) => actor?.getFlag?.(MODULE_ID, "tolerance") ?? {};
 
 /** @param {Actor} actor @param {string} substanceId @returns {ToleranceEntry|null} */
 export const getActorToleranceEntry = (actor, substanceId) => {
@@ -563,10 +560,26 @@ export function getAeRole(effect) {
 }
 
 /**
+ * Is `effect` an AE of `role`? The `aeRole` tag decides; an untagged effect
+ * (hand-authored) falls back to its name. A tag for another role never falls
+ * back. Recovery and every role lookup share this one test.
+ *
+ * @param {ActiveEffect|{name?: string, flags?: object}} effect
+ * @param {"addiction"|"withdrawal"|"altered"|"tolerance"|"overdose"|"bypass"} role
+ * @returns {boolean}
+ */
+export function hasAeRole(effect, role) {
+  const flagRole = getAeRole(effect);
+  if (flagRole) return flagRole === role;
+  return AE_ROLE_SUBSTRINGS[role]?.test(effect?.name ?? "") ?? false;
+}
+
+/**
  * Locale-independent AE lookup. Returns every AE on the actor whose
  * `aeRole` flag matches `role`, plus any AEs whose flag is absent but
  * whose name matches the substring fallback. Each fallback match emits
- * a warn so hand-authored AEs are observable.
+ * a warn so hand-authored AEs are observable. Reads `actor.effects`, so a
+ * switched-off effect still counts (a paused Addiction is still an addiction).
  *
  * @param {Actor} actor
  * @param {"addiction"|"withdrawal"|"altered"|"tolerance"|"overdose"|"bypass"} role
@@ -574,30 +587,38 @@ export function getAeRole(effect) {
  * @returns {ActiveEffect[]}
  */
 export function findEffectsByRole(actor, role, { warn } = {}) {
-  const re = AE_ROLE_SUBSTRINGS[role];
-  if (!re) return [];
-  const effects = actor?.appliedEffects ?? actor?.effects ?? [];
+  if (!AE_ROLE_SUBSTRINGS[role]) return [];
   const warnFn = warn ?? ((msg, ctx) => logger.warn(msg, ctx));
   const matches = [];
-  for (const effect of effects) {
-    const flagRole = getAeRole(effect);
-    if (flagRole === role) {
-      matches.push(effect);
-      continue;
-    }
-    if (flagRole) continue; // wrong role explicitly; never fall back
-    const name = effect?.name ?? "";
-    if (re.test(name)) {
+  for (const effect of actor?.effects ?? []) {
+    if (!hasAeRole(effect, role)) continue;
+    if (!getAeRole(effect)) {
       warnFn("aeRole flag missing on AE matched by substring fallback", {
         actorId: actor?.id ?? null,
         effectId: effect?.id ?? effect?._id ?? null,
-        effectName: name,
+        effectName: effect?.name ?? "",
         role,
       });
-      matches.push(effect);
     }
+    matches.push(effect);
   }
   return matches;
+}
+
+/**
+ * Is the actor in withdrawal from this substance? Effects, not the record:
+ * relapse and recovery both key off the withdrawal effects, so a stale record
+ * can't say yes.
+ *
+ * @param {Actor} actor
+ * @param {string} substanceId
+ * @returns {boolean}
+ */
+export function isInWithdrawalFrom(actor, substanceId) {
+  return [...(actor?.effects ?? [])].some(
+    (e) =>
+      hasAeRole(e, "withdrawal") && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
 }
 
 /**

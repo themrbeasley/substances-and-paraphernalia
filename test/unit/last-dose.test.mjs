@@ -30,3 +30,22 @@ describe("keepLastDose", () => {
     assert.deepEqual(u.delete, ["arrow"]);
   });
 });
+
+describe("keepLastDose with two consumption rows (v0.9.2)", () => {
+  it("removes every delete of the drug, not just the first", () => {
+    const u = updates({ delete: ["drug", "arrow", "drug"] });
+    assert.equal(keepLastDose(u, "drug"), true);
+    assert.deepEqual(u.delete, ["arrow"]);
+    assert.equal(u.item.length, 1);
+  });
+});
+
+describe("keepLastDose keeps dnd5e's array", () => {
+  it("edits the delete array in place", () => {
+    const list = ["drug", "drug"];
+    const u = updates({ delete: list });
+    keepLastDose(u, "drug");
+    assert.equal(u.delete, list);
+    assert.deepEqual(list, []);
+  });
+});

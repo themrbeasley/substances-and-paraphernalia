@@ -21,14 +21,28 @@ addiction loop with paraphernalia-granted bypasses.
 Foundry refuses to activate the module without DAE, Midi-QoL, and Token Magic FX
 installed and active.
 
+## Installation
+
+In Foundry's **Add-on Modules** tab, choose **Install Module** and paste this
+manifest URL:
+
+```
+https://github.com/themrbeasley/substances-and-paraphernalia/releases/latest/download/module.json
+```
+
+Then enable **Substances and Paraphernalia** (along with DAE, Midi-QoL, and
+Token Magic FX) in the world's module settings. Updates arrive through
+Foundry's usual module update check.
+
 ## What ships
 
 ### Compendium packs (under "Illicit Compendia")
 
-- **Illicit Substances**: 19+ consumables across the 3x3 setting x category
-  matrix, each with addiction tuning, benefit AE, addiction AE, and withdrawal
-  AE templates.
-- **Illicit Paraphernalia**: 11+ equipment and consumable items with subtype,
+- **Illicit Substances**: 18 consumables across the 3x3 setting x category
+  matrix, each with addiction tuning and benefit (Altered), addiction, and
+  withdrawal AE templates; the six performance enhancers also carry an
+  overdose AE.
+- **Illicit Paraphernalia**: 12 equipment and consumable items with subtype,
   administration-type matching (`appliesTo`), and optional save-bypass AEs.
 - **Illicit Macros**: Remove Addiction, Remove Altered, Remove Overdose,
   Remove Tolerance, Remove Withdrawal, and Toggle Paraphernalia Enforcement.
@@ -42,20 +56,29 @@ installed and active.
   paraphernalia is missing or unready. The gate keys off the dnd5e Poison
   subtype on the substance (`system.type.subtype`) and matches against
   paraphernalia `appliesTo`. "Use anyway" override available to all users.
-- **`dnd5e.postUseActivity` addiction loop**: rolls a Constitution save
-  against the substance's DC, consults the modifier pipeline for save bypasses
-  (`auto-pass > advantage > +N`), and applies the Addiction AE on failure.
-- **`dnd5e.restCompleted` long-rest tick**: GM-arbitrated; decrements
-  withdrawal counters, removes addiction/withdrawal AEs when the count reaches
-  zero, and prompts voluntary abstain.
+- **`dnd5e.postUseActivity` dose pipeline**: a dose during withdrawal ends
+  the withdrawal (relapse); the addiction save, with save bypasses from
+  paraphernalia (`auto-pass > advantage > +N`), applies the Addiction AE on a
+  fail; the high is applied, scaled by tolerance; tolerance rises; overdose is
+  checked.
+- **`dnd5e.preRestCompleted` Long Rest**: runs on the client that rests.
+  Tolerance fades for drugs the character isn't addicted to; the Withdrawal
+  Choices dialog lets an addicted character abstain (Wisdom check: fail is a
+  relapse) and face the Withdrawal Save (fail: withdrawal for the authored game
+  time). When withdrawal ends, so does the addiction.
 
 ### Additional mechanics
 
-- **Tolerance**: auto-stacks on a passed addiction save.
-- **Overdose**: d100 roll per consumption with a marker AE.
+- **Tolerance**: rises with every dose, weakens the high, fades at Long Rests,
+  and shows on the character as a "Tolerance to X (n)" marker.
+- **Overdose**: once tolerance to a drug is at its cap, each dose rolls d100
+  against the drug's chance; a hit applies the drug's Overdose effect and
+  announces it in chat. On for the six performance enhancers (10%, Poisoned
+  and Incapacitated for 1 minute).
 - **Poisoned coupling**: three modes (`linked-cascade`, `linked-isolated`,
   `independent`) controlling how the Poisoned condition interacts with addiction.
-- **Voluntary abstain**: long-rest dialog button to voluntarily skip a substance.
+- **Withdrawal Choices**: at a Long Rest an addicted character picks, per
+  drug, to abstain or take a dose.
 - **Withdrawal vignette**: per-owner CSS overlay with per-substance colors
   authored on the withdrawal AE template.
 - **Simulate-dose**: 3-dot menu dry-run on substance items.
@@ -94,9 +117,8 @@ npm run pack        # _source/*.json → packs/*.leveldb
 npm run unpack      # packs/*.leveldb → _source/*.json
 ```
 
-A Quench-based integration test suite registers automatically when the
-[Quench](https://foundryvtt.com/packages/quench) module is active in the
-test world.
+Behavior that needs Foundry is checked in a live world; each test run's
+report lives under `reports/`.
 
 CI runs lint, validate, unit tests, and pack on every push and pull request
 (see [.github/workflows/ci.yml](.github/workflows/ci.yml)).

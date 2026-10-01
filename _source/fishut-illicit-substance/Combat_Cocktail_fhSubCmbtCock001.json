@@ -134,6 +134,14 @@
           "fhAECmbtCockWit1"
         ]
       },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Too much Combat Cocktail overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "effectIds": [
+          "fhAECmbtCockOvd1"
+        ]
+      },
       "schemaVersion": 7
     }
   },
@@ -211,6 +219,31 @@
         }
       },
       "_key": "!items.effects!fhSubCmbtCock001.fhAECmbtCockWit1"
+    },
+    {
+      "_id": "fhAECmbtCockOvd1",
+      "name": "Combat Cocktail Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned",
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 60,
+        "units": "seconds"
+      },
+      "description": "<p>Too much Combat Cocktail overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubCmbtCock001.fhAECmbtCockOvd1"
     }
   ],
   "ownership": {

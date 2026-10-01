@@ -1,6 +1,6 @@
 # Simulate Dose
 
-Authoring a substance is iterative: you tweak DCs, swap paraphernalia gates, refine overdose chances, and you want to know what happens *without* applying state to a real PC. The **Simulate dose…** entry on the substance item sheet's 3-dot menu runs the activity end-to-end on an ephemeral throwaway actor, captures the chat output, and cleans up.
+Authoring a substance is iterative: you tweak DCs, refine the high, the withdrawal or the overdose, and you want to see what a dose does *without* touching a real character. The **Simulate dose…** entry on the substance item sheet's 3-dot menu runs one dose on a throwaway actor, captures the chat output, and cleans up.
 
 ## Where it lives
 
@@ -10,23 +10,24 @@ The entry is **substance-only**; paraphernalia items don't get it.
 
 ## The dialog
 
-The dialog exposes three knobs:
+The dialog has two settings:
 
-- **Constitution modifier override**: defaults to +0; lets you simulate Con +3, Con −1, etc. without authoring a full character.
-- **Current addiction state**: `none`, `addicted`, or `withdrawing`. Affects how the dose interacts with the addiction loop.
-- **Paraphernalia ready**: toggle list of the substance's required paraphernalia. Toggle on/off to test gate behavior and bypass paths.
+- **Constitution modifier**: defaults to +0; lets you simulate Con +3, Con -1, and so on without authoring a full character.
+- **Current addiction state**: `none`, `addicted`, or `withdrawing`. `addicted` gives the test actor the substance's Addiction effect first; `withdrawing` adds its withdrawal effects too, halfway through their duration.
 
 Click **Simulate** to run.
 
 ## What runs
 
-Simulate creates an ephemeral actor named `__fishut-test-<uuid>__<original-name>` and:
+Simulate creates a throwaway actor named `__fishut-test-<uuid>__<original-name>`, copies the substance onto it (with the copy's effect lists pointing at its own effects, so the drug's authored withdrawal and overdose effects are the ones used), sets up the addiction state, and runs the same dose pipeline a real use runs (see *Mechanics*, "One dose"):
 
-1. Equips the configured paraphernalia (ready or not).
-2. Sets up the addiction state.
-3. Adds the substance and runs `activity.use()` end-to-end.
-4. The full pipeline fires: gate → save → AEs → tolerance → overdose.
-5. Chat output is captured and rendered as a summary in the dialog.
+1. Relapse check (a dose in withdrawal ends the withdrawal).
+2. Addiction save, with any paraphernalia bypass on the actor (the test actor has none).
+3. The high, scaled by tolerance.
+4. Tolerance +1.
+5. Overdose check.
+
+It does not run the paraphernalia gate: the test actor carries no gear, and Simulate calls the pipeline directly instead of using the item. The result window shows the captured chat lines and the effects the actor ended with. If a step fails, the window says which one and why, and the rest of the steps still run.
 
 ## Cleanup
 
@@ -34,12 +35,12 @@ The temp actor is deleted on:
 
 - Dialog close (normal exit).
 - Errors during simulation (the actor doesn't survive a thrown exception).
-- World load: a `ready` hook sweeps any orphan `__fishut-test-*` actors. The sweep is GM-arbitrated (`game.users.activeGM === game.user`).
+- World load: a `ready` hook sweeps any orphan `__fishut-test-*` actors. The active GM runs the sweep.
 
 You should never see a `__fishut-test-*` actor in the directory. If you do, reload the world; the next active-GM logon will clear it.
 
 ## Limitations
 
-- Simulate doesn't run a real player roll; saves are rolled with the override Con mod and no luck/inspiration features.
-- Bypass paraphernalia decrement their `usesPerDay` on the temp actor only; the temp actor's deletion takes those decrements with it.
-- Tolerance stacking *during* a single simulation run shows post-pass behavior; tolerance state on the live actor is unaffected.
+- The addiction save opens the normal roll window; closing it rolls the save anyway, as in play.
+- The paraphernalia gate and bypasses aren't exercised; test those on a real (or copied) character.
+- Tolerance starts at 0 on the test actor, so a single run always shows the full-strength high.

@@ -26,13 +26,13 @@ import {
   getWithdrawalDc,
   getWithdrawalEnabled,
   getAddictedSubstanceIds,
-  getAeRole,
+  isInWithdrawalFrom,
   getActorTolerance,
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { abstainBranch } from "../data/abstain-branch.js";
-import { d20Config } from "../data/roll-config.js";
+import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { applyToleranceDecay } from "./tolerance-decay.js";
 import { applyWithdrawalEffect } from "./addiction.js";
 import { openAbstainDialog } from "../ui/abstain-dialog.js";
@@ -69,14 +69,22 @@ export async function runPhase2(actor) {
   for (const substanceId of Object.keys(getActorTolerance(actor))) {
     if (addicted.includes(substanceId)) continue;
     const item = actor.items?.get?.(substanceId);
-    if (item) await applyToleranceDecay(actor, item);
+    if (!item) continue;
+    // One failed fade must not stop the Withdrawal Choices window opening.
+    try {
+      await applyToleranceDecay(actor, item);
+    } catch (err) {
+      logger.error(`Phase 2: tolerance fade failed for ${item.name}`, err);
+    }
   }
 
   const rows = [];
   for (const substanceId of addicted) {
     const item = actor.items?.get?.(substanceId);
     if (!item) {
-      logger.warn(`Phase 2: ${actor.name} is addicted to item ${substanceId}, which is gone; skipping`);
+      logger.warn(
+        `Phase 2: ${actor.name} is addicted to item ${substanceId}, which is gone; skipping`,
+      );
       continue;
     }
     const dc = getWithdrawalDc(item);
@@ -87,7 +95,7 @@ export async function runPhase2(actor) {
       count: Number(getActorToleranceEntry(actor, substanceId)?.count) || 0,
       maxCount: profile?.maxCount ?? 0,
       dosesRemaining: Number(item.system?.quantity) || 0,
-      inWithdrawal: inWithdrawalFrom(actor, substanceId),
+      inWithdrawal: isInWithdrawalFrom(actor, substanceId),
     });
   }
   if (rows.length === 0) return;
@@ -101,10 +109,11 @@ export async function runPhase2(actor) {
     // The rest can advance game time while the window is open, ending a
     // withdrawal and the addiction with it; act on the state as it is now.
     if (!getAddictedSubstanceIds(actor).includes(row.substanceId)) continue;
-    const inWithdrawal = inWithdrawalFrom(actor, row.substanceId);
+    const inWithdrawal = isInWithdrawalFrom(actor, row.substanceId);
     try {
       if (action === "use") await forceUseSubstance(actor, item);
-      else await runAbstainBranch(actor, item, { forced: action === "forced-abstain", inWithdrawal });
+      else
+        await runAbstainBranch(actor, item, { forced: action === "forced-abstain", inWithdrawal });
     } catch (e) {
       logger.warn(`Phase 2 dispatch failed for ${item.name}: ${e?.message}`, e);
     }
@@ -134,7 +143,7 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
   if (!forced && abstain) {
     const dc = Number(abstain.dc);
     const roll = await rollAbstainCheck(actor, abstain.ability ?? "wis", dc);
-    if (!roll) return; // roll window closed: nothing happens this rest
+    if (!roll) return; // no roll function: nothing happens this rest
     willpowerPassed = roll.total >= dc;
     await chat(
       game.i18n.format(
@@ -159,6 +168,15 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
 
   if (!getWithdrawalEnabled(item)) return;
   const withdrawalDc = getWithdrawalDc(item);
+  // No Withdrawal DC authored: nothing to resist, so withdrawal sets in and
+  // recovery stays reachable (spec v0.9.2 D2).
+  if (withdrawalDc === null) {
+    await chat(
+      game.i18n.format("FISHUT.Phase2.WithdrawalSave.NoDc", { actor: actor.name, item: item.name }),
+    );
+    await applyWithdrawalEffect(actor, item);
+    return;
+  }
   if (forced) {
     await chat(
       game.i18n.format("FISHUT.Phase2.ForcedAbstain.Intro", {
@@ -169,7 +187,7 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
     );
   }
   const saveRoll = await rollWithdrawalSave(actor, withdrawalDc);
-  if (!saveRoll) return; // roll window closed
+  if (!saveRoll) return; // no roll function
   const passed = saveRoll.total >= Number(withdrawalDc);
   await chat(
     game.i18n.format(
@@ -180,26 +198,29 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
   if (!passed) await applyWithdrawalEffect(actor, item);
 }
 
+// A closed roll window rolls anyway (rollWithoutSkipping), so closing it
+// can't skip the Wisdom check or the Withdrawal Save.
 async function rollAbstainCheck(actor, ability, dc) {
-  if (typeof actor.rollAbilityCheck !== "function") return null;
+  if (typeof actor.rollAbilityCheck !== "function") {
+    logger.warn("actor has no rollAbilityCheck; skipping the Abstain check");
+    return null;
+  }
   const bonus = Number(actor.getFlag?.(MODULE_ID, "abstaining.check.bonus")) || 0;
-  const roll = await actor.rollAbilityCheck(d20Config(ability, dc, { bonus }));
-  return Array.isArray(roll) ? (roll[0] ?? null) : (roll ?? null);
+  return rollWithoutSkipping(
+    (config, dialog) => actor.rollAbilityCheck(config, dialog),
+    d20Config(ability, dc, { bonus }),
+  );
 }
 
 async function rollWithdrawalSave(actor, dc) {
-  const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
-  if (typeof fn !== "function") return null;
+  if (typeof actor.rollSavingThrow !== "function") {
+    logger.warn("actor has no rollSavingThrow; skipping the Withdrawal Save");
+    return null;
+  }
   const bonus = Number(actor.getFlag?.(MODULE_ID, "withdrawal.save.bonus")) || 0;
-  const roll = await fn.call(actor, d20Config("con", dc, { bonus }));
-  return Array.isArray(roll) ? (roll[0] ?? null) : (roll ?? null);
-}
-
-// Effects, not the record: relapse and recovery both key off the withdrawal
-// effects, so a stale record can't pin a row at "hold".
-function inWithdrawalFrom(actor, substanceId) {
-  return actor.effects.some(
-    (e) => getAeRole(e) === "withdrawal" && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId,
+  return rollWithoutSkipping(
+    (config, dialog) => actor.rollSavingThrow(config, dialog),
+    d20Config("con", dc, { bonus }),
   );
 }
 

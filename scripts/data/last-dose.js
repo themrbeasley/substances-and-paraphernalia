@@ -9,9 +9,12 @@
  * @returns {boolean} true when a delete was rewritten
  */
 export function keepLastDose(updates, itemId) {
-  const index = updates?.delete?.indexOf(itemId) ?? -1;
-  if (index === -1) return false;
-  updates.delete.splice(index, 1);
+  if (!updates?.delete?.includes(itemId)) return false;
+  // dnd5e queues one delete per consumption row that empties the item. Splice
+  // in place: dnd5e keeps using this same array after the hook.
+  for (let i = updates.delete.length - 1; i >= 0; i--) {
+    if (updates.delete[i] === itemId) updates.delete.splice(i, 1);
+  }
   const change = { "system.quantity": 0, "system.uses.spent": 0 };
   const queued = updates.item.find((u) => u._id === itemId);
   if (queued) Object.assign(queued, change);

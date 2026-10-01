@@ -22,3 +22,23 @@ export function d20Config(ability, dc, { advantage = false, bonus = 0 } = {}) {
   }
   return config;
 }
+
+/**
+ * Roll a dnd5e 5.x save or check without letting a closed roll window skip it
+ * (spec v0.9.2 D1). dnd5e resolves a closed window to an empty array; the roll
+ * then happens again with no window, same config. Each attempt gets its own
+ * copy, because dnd5e edits the config it is given.
+ *
+ * @param {(config: object, dialog?: object) => Promise<unknown>} roll
+ * @param {object} config  from d20Config
+ * @returns {Promise<object|null>} the first Roll, or null
+ */
+export async function rollWithoutSkipping(roll, config) {
+  const first = firstRoll(await roll(structuredClone(config)));
+  if (first) return first;
+  return firstRoll(await roll(structuredClone(config), { configure: false }));
+}
+
+function firstRoll(result) {
+  return (Array.isArray(result) ? result[0] : result) ?? null;
+}

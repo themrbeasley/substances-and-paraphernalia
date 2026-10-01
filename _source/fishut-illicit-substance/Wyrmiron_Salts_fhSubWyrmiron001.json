@@ -134,6 +134,14 @@
           "fhAEWyrmironWit1"
         ]
       },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Too much Wyrmiron Salts overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "effectIds": [
+          "fhAEWyrmironOvd1"
+        ]
+      },
       "schemaVersion": 7
     }
   },
@@ -217,6 +225,31 @@
         }
       },
       "_key": "!items.effects!fhSubWyrmiron001.fhAEWyrmironWit1"
+    },
+    {
+      "_id": "fhAEWyrmironOvd1",
+      "name": "Wyrmiron Salts Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned",
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 60,
+        "units": "seconds"
+      },
+      "description": "<p>Too much Wyrmiron Salts overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubWyrmiron001.fhAEWyrmironOvd1"
     }
   ],
   "ownership": {

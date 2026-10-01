@@ -218,27 +218,6 @@
         <textarea data-fishut-flag="overdose.description" rows="3" {{#unless isEditable}}disabled{{/unless}}>{{substance.overdose.description}}</textarea>
       </div>
 
-      <div class="form-group">
-        <label>{{labels.overdoseToleranceInteractionLabel}}</label>
-        <select data-fishut-flag="overdose.toleranceInteraction" {{#unless isEditable}}disabled{{/unless}}>
-          {{#each substance.overdose.toleranceInteractionOptions}}
-            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-          {{/each}}
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>{{labels.overdoseToleranceInteractionMagnitude}}</label>
-        <input type="number" data-fishut-flag="overdose.toleranceInteractionMagnitude"
-               value="{{substance.overdose.toleranceInteractionMagnitude}}"
-               min="0" step="1"
-               {{#unless isEditable}}disabled{{/unless}} />
-      </div>
-
-      <div class="form-group">
-        <span class="fishut-hint">{{labels.overdoseToleranceInteractionHint}}</span>
-      </div>
-
       <fieldset>
         <legend>
           <span>{{labels.overdoseEffect}}</span>
@@ -311,6 +290,7 @@
       <fieldset>
         <legend>
           <span>{{labels.toleranceEffect}}</span>
+          <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.toleranceEffectTooltip}}"></i>
           <button type="button" class="unbutton control-button"
                   data-fishut-action="create-tolerance-ae"
                   data-tooltip="{{labels.toleranceEffectCreateTooltip}}"

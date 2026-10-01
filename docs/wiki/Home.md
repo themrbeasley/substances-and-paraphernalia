@@ -6,13 +6,13 @@ Welcome to the GM Guide for the **Substances and Paraphernalia** Foundry VTT mod
 
 ## Pages
 
-- [[Mechanics]]: the consumption gate, addiction loop, withdrawal (including the long-rest Abstain dialog), tolerance, and overdose.
+- [[Mechanics]]: the consumption gate, addiction loop, withdrawal and recovery (including the Long Rest Withdrawal Choices dialog), tolerance, and overdose.
 - [[Authoring]]: Details-tab fields, AE name contracts, modifier flag blocks, the overdose flag.
 - [[Save Bypass Tiers]]: `auto-pass` > `advantage` > `+N`, with worked examples.
 - [[Poisoned Coupling]]: `linked-cascade`, `linked-isolated`, `independent`.
 - [[Paraphernalia Subtype Manager]]: adding custom subtypes that authors can pick from.
 - [[Simulate Dose]]: using the 3-dot menu entry on substance items to dry-run a dose.
-- [[Macros]]: Remove Addiction, Remove Tolerance, Remove Overdose, Remove Withdrawal.
+- [[Macros]]: Remove Addiction, Remove Altered, Remove Overdose, Remove Tolerance, Remove Withdrawal, and Toggle Paraphernalia Enforcement.
 
 ## Issues and feedback
 

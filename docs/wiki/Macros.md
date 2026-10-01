@@ -7,8 +7,8 @@ The module ships five GM macros for clearing module-applied AEs from selected ac
 | **Remove Addiction** | `aeRole: "addiction"`, or an unflagged effect named with "addict" | `/addict/i` |
 | **Remove Tolerance** | `aeRole: "tolerance"` effects plus the actor's tolerance record | `/tolerance/i` |
 | **Remove Altered** | `aeRole: "altered"`, or an unflagged effect named with "altered" | `/altered/i` |
-| **Remove Overdose** | (no source-substance flag; overdose markers don't carry one) | `/overdose/i` |
-| **Remove Withdrawal** | `flags[MODULE_ID].sourceSubstanceId` on AE with `withdrawal` substring | `/withdraw/i` |
+| **Remove Overdose** | `aeRole: "overdose"`, or an unflagged effect named with "overdose" | `/overdose/i` |
+| **Remove Withdrawal** | `aeRole: "withdrawal"`, or an unflagged effect named with "withdraw", plus leftover withdrawal records with no effect | `/withdraw/i` |
 
 ## How they work
 
@@ -17,7 +17,9 @@ Each macro:
 1. Reads the GM-selected actor (or warns if none).
 2. Scans the actor's AEs for matches via the primary flag, falling back to the regex name match.
 3. Renders a dialog listing each match with a checkbox.
-4. On confirm, deletes the checked AEs.
+4. On confirm, deletes the checked AEs (with nothing ticked, it says so and stops).
+
+Names in the dialog are shown as plain text, so a renamed effect can't inject markup into the GM's window.
 
 The flag-based match is the primary path because it's robust against name renames; the regex fallback exists for AEs that were applied before the source-flag wiring landed (or for hand-applied AEs that match the naming contract).
 

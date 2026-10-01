@@ -134,6 +134,14 @@
           "fhAERflxInjctWit"
         ]
       },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Too much Reflex Injector overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "effectIds": [
+          "fhAERflxInjctOvd"
+        ]
+      },
       "schemaVersion": 7
     }
   },
@@ -230,6 +238,31 @@
         }
       },
       "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctWit"
+    },
+    {
+      "_id": "fhAERflxInjctOvd",
+      "name": "Reflex Injector Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned",
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 60,
+        "units": "seconds"
+      },
+      "description": "<p>Too much Reflex Injector overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctOvd"
     }
   ],
   "ownership": {

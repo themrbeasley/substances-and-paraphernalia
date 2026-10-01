@@ -37,8 +37,13 @@ function makeValidSubstance(flagOverrides = {}) {
   // (addiction, withdrawal) are spread so partial overrides work cleanly.
   const mergedFlags = { ...defaultFlags };
   for (const [key, value] of Object.entries(flagOverrides)) {
-    if (value !== null && typeof value === "object" && !Array.isArray(value) &&
-        defaultFlags[key] !== null && typeof defaultFlags[key] === "object") {
+    if (
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      defaultFlags[key] !== null &&
+      typeof defaultFlags[key] === "object"
+    ) {
       mergedFlags[key] = { ...defaultFlags[key], ...value };
     } else {
       mergedFlags[key] = value;
@@ -149,21 +154,30 @@ describe("checkSubstance: v0.8.1 baseline (regression)", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].schemaVersion = 3;
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /schemaVersion must be 7/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /schemaVersion must be 7/.test(e)),
+      true,
+    );
   });
 
   it("errors when addictionEffectIds points at nothing", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].addiction.addictionEffectIds = ["missing"];
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /not found in effects/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /not found in effects/.test(e)),
+      true,
+    );
   });
 
   it("errors when addiction AE name does not contain 'addict'", () => {
     const file = baseSubstance();
     file.data.effects[0].name = "Tweaky Vibes";
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /must contain "addict"/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /must contain "addict"/.test(e)),
+      true,
+    );
   });
 });
 
@@ -196,35 +210,50 @@ describe("checkSubstance: overdose flag (v0.4)", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].overdose = { enabled: true, description: "x" };
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /chancePercent must be an integer 1\.\.100/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /chancePercent must be an integer 1\.\.100/.test(e)),
+      true,
+    );
   });
 
   it("errors when chancePercent is out of 1..100", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].overdose = { enabled: true, chancePercent: 0, description: "x" };
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /chancePercent must be an integer 1\.\.100/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /chancePercent must be an integer 1\.\.100/.test(e)),
+      true,
+    );
   });
 
   it("errors when chancePercent is 101", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].overdose = { enabled: true, chancePercent: 101, description: "x" };
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /chancePercent must be an integer 1\.\.100/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /chancePercent must be an integer 1\.\.100/.test(e)),
+      true,
+    );
   });
 
   it("errors when description is empty while enabled", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].overdose = { enabled: true, chancePercent: 5, description: "   " };
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /description must be a non-empty string/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /description must be a non-empty string/.test(e)),
+      true,
+    );
   });
 
   it("errors when overdose flag is not an object", () => {
     const file = baseSubstance();
     file.data.flags[SCOPE].overdose = "yes please";
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /overdose flag must be an object/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /overdose flag must be an object/.test(e)),
+      true,
+    );
   });
 });
 
@@ -256,7 +285,10 @@ describe("checkSubstance: withdrawal.effectId (v0.4)", () => {
     const file = baseSubstance();
     withWithdrawalAe(file, { _id: "wd1", name: "Crash Phase", system: { changes: [] }, flags: {} });
     const { errors } = checkSubstance(file);
-    assert.equal(errors.some((e) => /withdrawal AE name .+ must contain "withdraw"/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /withdrawal AE name .+ must contain "withdraw"/.test(e)),
+      true,
+    );
   });
 
   it("accepts a properly-named withdrawal AE with no content-guidance violations", () => {
@@ -265,9 +297,7 @@ describe("checkSubstance: withdrawal.effectId (v0.4)", () => {
       _id: "wd1",
       name: "Withdrawing from Test",
       system: {
-        changes: [
-          { key: "system.attributes.exhaustion", type: "add", value: "1", priority: 20 },
-        ],
+        changes: [{ key: "system.attributes.exhaustion", type: "add", value: "1", priority: 20 }],
       },
       flags: { [SCOPE]: { aeRole: "withdrawal" } },
     });
@@ -336,7 +366,9 @@ describe("checkSubstance: withdrawal v0.8.1 shape", () => {
           },
         },
         system: { type: { value: "poison", subtype: "ingested" } },
-        effects: [{ _id: "a1", name: "Foo Addiction", flags: { [SCOPE]: { aeRole: "addiction" } } }],
+        effects: [
+          { _id: "a1", name: "Foo Addiction", flags: { [SCOPE]: { aeRole: "addiction" } } },
+        ],
       },
     };
     const result = checkSubstance(file);
@@ -454,21 +486,30 @@ describe("checkParaphernalia: v0.8.1 baseline (regression)", () => {
     const file = baseParaphernalia();
     file.data.flags[SCOPE].subtype = "Pipe With Spaces";
     const { errors } = checkParaphernalia(file);
-    assert.equal(errors.some((e) => /subtype must be a kebab-case string/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /subtype must be a kebab-case string/.test(e)),
+      true,
+    );
   });
 
   it("errors when legacy addictionSaveBypass flag is present", () => {
     const file = baseParaphernalia();
     file.data.flags[SCOPE].addictionSaveBypass = { type: "auto-pass" };
     const { errors } = checkParaphernalia(file);
-    assert.equal(errors.some((e) => /legacy item-level "addictionSaveBypass"/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /legacy item-level "addictionSaveBypass"/.test(e)),
+      true,
+    );
   });
 
   it("errors when schemaVersion is wrong", () => {
     const file = baseParaphernalia();
     file.data.flags[SCOPE].schemaVersion = 3;
     const { errors } = checkParaphernalia(file);
-    assert.equal(errors.some((e) => /schemaVersion must be 7/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /schemaVersion must be 7/.test(e)),
+      true,
+    );
   });
 });
 
@@ -528,7 +569,9 @@ describe("checkParaphernalia: +N bypass (v0.4)", () => {
     const file = withBypassAe(baseParaphernalia(), { type: "+N" });
     const { errors } = checkParaphernalia(file);
     assert.equal(
-      errors.some((e) => /modifier\.type "\+N" requires a non-zero numeric modifier\.bonus/.test(e)),
+      errors.some((e) =>
+        /modifier\.type "\+N" requires a non-zero numeric modifier\.bonus/.test(e),
+      ),
       true,
     );
   });
@@ -554,7 +597,10 @@ describe("checkParaphernalia: +N bypass (v0.4)", () => {
   it("still errors on the v0.3-removed legacy types via type-enum check", () => {
     const file = withBypassAe(baseParaphernalia(), { type: "auto-pass-yes-please" });
     const { errors } = checkParaphernalia(file);
-    assert.equal(errors.some((e) => /modifier\.type must be one of/.test(e)), true);
+    assert.equal(
+      errors.some((e) => /modifier\.type must be one of/.test(e)),
+      true,
+    );
   });
 
   it("accepts an auto-pass AE (regression: existing v0.3 type)", () => {
@@ -592,7 +638,9 @@ describe("checkParaphernalia: daily-recovery contract (regression)", () => {
     });
     const { errors } = checkParaphernalia(file);
     assert.equal(
-      errors.some((e) => /system\.uses\.recovery: \[\{ period: "day", type: "recoverAll" \}\]/.test(e)),
+      errors.some((e) =>
+        /system\.uses\.recovery: \[\{ period: "day", type: "recoverAll" \}\]/.test(e),
+      ),
       true,
     );
   });
@@ -675,24 +723,35 @@ describe("checkSubstance: V14 effect shape (v0.9)", () => {
     const file = baseSubstance();
     withWithdrawalAe(file, withdrawalAe({ changes: [] }));
     const { errors } = checkSubstance(file);
-    assert.ok(errors.some((e) => /legacy top-level "changes"/.test(e)), errors.join("\n"));
+    assert.ok(
+      errors.some((e) => /legacy top-level "changes"/.test(e)),
+      errors.join("\n"),
+    );
   });
 
   it("errors on a numeric change mode", () => {
     const file = baseSubstance();
     withWithdrawalAe(
       file,
-      withdrawalAe({ system: { changes: [{ key: "system.attributes.exhaustion", mode: 2, value: "1" }] } }),
+      withdrawalAe({
+        system: { changes: [{ key: "system.attributes.exhaustion", mode: 2, value: "1" }] },
+      }),
     );
     const { errors } = checkSubstance(file);
-    assert.ok(errors.some((e) => /string "type"/.test(e)), errors.join("\n"));
+    assert.ok(
+      errors.some((e) => /string "type"/.test(e)),
+      errors.join("\n"),
+    );
   });
 
   it("errors on a legacy duration.seconds", () => {
     const file = baseSubstance();
     withWithdrawalAe(file, withdrawalAe({ system: { changes: [] }, duration: { seconds: 600 } }));
     const { errors } = checkSubstance(file);
-    assert.ok(errors.some((e) => /legacy duration\.seconds/.test(e)), errors.join("\n"));
+    assert.ok(
+      errors.some((e) => /legacy duration\.seconds/.test(e)),
+      errors.join("\n"),
+    );
   });
 
   it("accepts a V14 duration and typed change rows", () => {
@@ -713,7 +772,9 @@ describe("checkDocumentIds", () => {
   const file = (data) => ({ relPath: "_source/x/test.json", data });
 
   it("accepts 16-character ids, top-level and embedded", () => {
-    const r = checkDocumentIds(file({ _id: "fhParaOracleT001", effects: [{ _id: "fhAEOracleTByp01" }] }));
+    const r = checkDocumentIds(
+      file({ _id: "fhParaOracleT001", effects: [{ _id: "fhAEOracleTByp01" }] }),
+    );
     assert.deepEqual(r.errors, []);
   });
 
@@ -724,7 +785,9 @@ describe("checkDocumentIds", () => {
   });
 
   it("rejects a bad embedded effect id", () => {
-    const r = checkDocumentIds(file({ _id: "fhParaOracleT001", effects: [{ _id: "fhAEOracleTByp" }] }));
+    const r = checkDocumentIds(
+      file({ _id: "fhParaOracleT001", effects: [{ _id: "fhAEOracleTByp" }] }),
+    );
     assert.equal(r.errors.length, 1);
     assert.match(r.errors[0], /effects\[0\]/);
   });
@@ -752,4 +815,35 @@ describe("checkSubstance: the high on an activity", () => {
     const r = checkSubstance(withAltered([]));
     assert.ok(!r.warnings.some((w) => /lists the Altered effect/.test(w)));
   });
+
+  it("stays quiet when the activity lists only a non-Altered effect", () => {
+    const r = checkSubstance(withAltered([{ _id: "ae-withdraw-001" }]));
+    assert.ok(!r.warnings.some((w) => /lists the Altered effect/.test(w)));
+  });
+
+  it("names the activity by id when its name is empty", () => {
+    const f = withAltered([{ _id: "ae-altered-001" }]);
+    f.data.system.activities.act1.name = "";
+    const r = checkSubstance(f);
+    assert.ok(r.warnings.some((w) => /activity "act1" lists the Altered effect/.test(w)));
+  });
+});
+
+describe("checkSubstance: blank DCs (v0.9.2)", () => {
+  for (const blank of [null, ""]) {
+    it(`errors on a ${JSON.stringify(blank)} Withdrawal DC`, () => {
+      const file = baseSubstance();
+      file.data.flags[SCOPE].withdrawal.dc = blank;
+      assert.ok(checkSubstance(file).errors.some((e) => /withdrawal\.dc is required/.test(e)));
+    });
+    it(`errors on a ${JSON.stringify(blank)} Abstain DC`, () => {
+      const file = baseSubstance();
+      file.data.flags[SCOPE].withdrawal.abstain.dc = blank;
+      assert.ok(
+        checkSubstance(file).errors.some((e) =>
+          /withdrawal\.abstain\.dc must be a finite number/.test(e),
+        ),
+      );
+    });
+  }
 });

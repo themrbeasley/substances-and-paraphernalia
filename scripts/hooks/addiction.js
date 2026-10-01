@@ -5,6 +5,7 @@ import {
   getAddictionEnabled,
   getAddictedSubstanceIds,
   getAeRole,
+  hasAeRole,
   getWithdrawalEffectIds,
   getWithdrawalDuration,
   getToleranceEffectIds,
@@ -23,7 +24,7 @@ import { attenuateChangeRows } from "../data/tolerance.js";
 import { isPriorHigh, isStrayHigh } from "../data/prior-high.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
-import { d20Config } from "../data/roll-config.js";
+import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { rollOverdoseAndApply } from "./overdose.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
@@ -32,13 +33,10 @@ const DEFAULT_SAVE_ABILITY = "con";
 const POISONED_STATUS = "poisoned";
 
 export function registerAddictionHooks() {
-  // B.1: Save-on-use (post-activity).
-  // dnd5e 4.x exposes `dnd5e.postUseActivity`. Signature confirmed in live
-  // world; if it differs we fall back to wrapping `Activity#use` directly
-  // (see comment in onPostUseActivity).
+  // Every substance use runs the dose pipeline.
   Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
 
-  // B.3: Poisoned-coupling guard for linked-isolated mode.
+  // Poisoned-coupling guard for linked-isolated mode.
   // External poisoned-clear cascades into our addiction AE's deletion under
   // Foundry's default "linked-cascade" semantics; this hook re-asserts the
   // addiction AE's persistence in linked-isolated mode by canceling the delete
@@ -56,6 +54,7 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
+  // Each step catches its own errors; this catches anything outside them.
   try {
     await runDosePipeline(actor, item);
   } catch (err) {
@@ -71,20 +70,36 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @returns {Promise<Array<{step: string, message: string}>>} the steps that failed
  */
 export async function runDosePipeline(actor, item) {
-  await cancelWithdrawalOnRelapse(actor, item);
+  // The dose is already spent, so each step catches its own error: one failure
+  // must not cancel the rest of the dose (spec v0.9.2 D11).
+  const failures = [];
+  const step = async (label, fn) => {
+    try {
+      await fn();
+    } catch (err) {
+      logger.error(`dose step "${label}" failed for ${item.name}`, err);
+      failures.push({ step: label, message: err?.message ?? String(err) });
+    }
+  };
+  await step("relapse check", () => cancelWithdrawalOnRelapse(actor, item));
   if (getAddictionEnabled(item) && typeof getAddiction(item)?.save?.dc === "number") {
-    await rollSaveAndApply(actor, item);
+    await step("addiction save", () => rollSaveAndApply(actor, item));
   }
-  await applyAlteredEffectGated(actor, item);
-  await incrementActorToleranceCount(actor, item);
-  await rollOverdoseAndApply(actor, item);
+  await step("high", () => applyAlteredEffectGated(actor, item));
+  await step("tolerance", () => incrementActorToleranceCount(actor, item));
+  await step("overdose", () => rollOverdoseAndApply(actor, item));
+  return failures;
 }
 
 async function cancelWithdrawalOnRelapse(actor, item) {
   const ids = actor.effects
-    .filter((e) => getAeRole(e) === "withdrawal" && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id)
+    .filter(
+      (e) =>
+        hasAeRole(e, "withdrawal") && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
+    )
     .map((e) => e.id);
   if (ids.length === 0) return;
   // withdrawal-cleanup.js reads fishutRelapse: clear the record, keep the addiction.
@@ -125,13 +140,13 @@ export async function rollSaveAndApply(actor, item) {
 }
 
 /**
- * Apply a pre-determined outcome to the actor. This is the test seam: the
- * Quench suite calls it directly with a forced result.
+ * Apply a decided outcome to the actor and post its chat line.
  *
  * @param {Actor}  actor
  * @param {Item}   item
  * @param {Object} outcome
- * @param {boolean} [outcome.alreadyAddicted]
+ * @param {boolean} [outcome.alreadyAddicted] the actor already carries this
+ *   substance's Addiction effect: no save, the addiction continues.
  * @param {import("../data/modifier-pipeline.js").ModifierResolution} [outcome.modifier]
  *   `resolution === "auto-pass"`: save is skipped, chat cites `source.name`.
  *   `resolution === "reroll-on-fail"`: save was rolled twice (second only if first failed); chat cites `source.name`.
@@ -139,6 +154,7 @@ export async function rollSaveAndApply(actor, item) {
  *   `resolution === "+N"`: save was rolled with `+bonus`; chat cites all `sources`.
  * @param {"success"|"fail"} [outcome.saveResult]
  * @param {number}            [outcome.saveTotal]
+ * @returns {Promise<{applied: "maintained"|"bypassed"|"passed"|"addicted"}|undefined>}
  */
 export async function applyOutcome(actor, item, outcome) {
   const addiction = getAddiction(item);
@@ -151,7 +167,7 @@ export async function applyOutcome(actor, item, outcome) {
         item: item.name,
       }),
     );
-    return { applied: "extended" };
+    return { applied: "maintained" };
   }
 
   if (outcome?.modifier?.resolution === "auto-pass") {
@@ -171,9 +187,7 @@ export async function applyOutcome(actor, item, outcome) {
   const bonusValue = isPlusN ? Number(outcome.modifier.bonus) || 0 : 0;
   const bonusSources = isPlusN ? joinSourceNames(outcome.modifier) : "";
   const rerollSource =
-    outcome?.modifier?.resolution === "reroll-on-fail"
-      ? (outcome.modifier.source?.name ?? "")
-      : "";
+    outcome?.modifier?.resolution === "reroll-on-fail" ? (outcome.modifier.source?.name ?? "") : "";
 
   if (outcome?.saveResult === "success") {
     let key = "FISHUT.Addiction.Save.Pass";
@@ -193,9 +207,8 @@ export async function applyOutcome(actor, item, outcome) {
 
   if (outcome?.saveResult === "fail") {
     await applyAddictionEffect(actor, item);
-    // Phase 1 no longer applies Withdrawal AE or sets the actor withdrawal
-    // flag entry. Withdrawal onset is a Phase 2 event; see
-    // scripts/hooks/long-rest-abstain.js (Task 13).
+    // Withdrawal doesn't start here: it starts at a Long Rest
+    // (scripts/hooks/long-rest-abstain.js).
     let key;
     if (rerollSource) key = "FISHUT.Addiction.Save.FailWithReroll";
     else if (advantageSource) key = "FISHUT.Addiction.Save.FailWithAdvantage";
@@ -220,20 +233,20 @@ function joinSourceNames(modifier) {
 }
 
 async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, reroll = false } = {}) {
-  const fn = actor.rollSavingThrow ?? actor.rollAbilitySave;
-  if (typeof fn !== "function") {
+  if (typeof actor.rollSavingThrow !== "function") {
     logger.warn("actor has no rollSavingThrow; skipping save");
     return null;
   }
-  const firstRoll = (result) => (Array.isArray(result) ? (result[0] ?? null) : (result ?? null));
+  // A closed roll window rolls anyway, so closing it can't dodge addiction.
+  const roll = (config, dialog) => actor.rollSavingThrow(config, dialog);
   // reroll-on-fail outranks advantage and +N at resolution time, so it rolls
   // twice with no modifiers.
   if (reroll) {
-    const first = firstRoll(await fn.call(actor, d20Config(ability, dc)));
+    const first = await rollWithoutSkipping(roll, d20Config(ability, dc));
     if (!first || first.total >= dc) return first;
-    return firstRoll(await fn.call(actor, d20Config(ability, dc))) ?? first;
+    return (await rollWithoutSkipping(roll, d20Config(ability, dc))) ?? first;
   }
-  return firstRoll(await fn.call(actor, d20Config(ability, dc, { advantage, bonus })));
+  return rollWithoutSkipping(roll, d20Config(ability, dc, { advantage, bonus }));
 }
 
 /**
@@ -241,7 +254,7 @@ async function rollSave(actor, ability, dc, { advantage = false, bonus = 0, rero
  * `getAddictionEffectIds(item)` is cloned in a single batch so a GM can split
  * a complex addiction across multiple AEs and have all of them appear at once.
  * Adjusts `data.statuses` per the `addictionPoisonedCoupling` setting before
- * creation. Test seam: exported for Quench.
+ * creation.
  *
  * @param {Actor} actor
  * @param {Item}  item
@@ -274,7 +287,9 @@ function buildAddictionPayload(template, item, couplingMode) {
 
 function readCouplingMode() {
   try {
-    return game.settings?.get?.(MODULE_ID, SETTING_KEYS.addictionPoisonedCoupling) ?? COUPLING_DEFAULT;
+    return (
+      game.settings?.get?.(MODULE_ID, SETTING_KEYS.addictionPoisonedCoupling) ?? COUPLING_DEFAULT
+    );
   } catch {
     return COUPLING_DEFAULT;
   }
@@ -379,7 +394,9 @@ export async function incrementActorToleranceCount(actor, item) {
   const prior = getActorToleranceEntry(actor, item.id);
   const priorCount = Number(prior?.count) || 0;
   const nextCount = Math.min(profile.maxCount, priorCount + 1);
-  if (nextCount === priorCount) return;
+  // At the cap the count doesn't move, but the marker may still be missing
+  // (tolerance built up before the marker existed).
+  if (nextCount === priorCount) return refreshToleranceMarkerAe(actor, item, nextCount);
   await setActorToleranceEntry(actor, item.id, {
     count: nextCount,
     lastIncrementedAt: new Date().toISOString(),
@@ -416,7 +433,10 @@ export async function applyAlteredEffectGated(actor, item) {
       origin: item.uuid,
       role: "altered",
     });
-    data.system = { ...(data.system ?? {}), changes: attenuateChangeRows(effectChanges(data), count, curve) };
+    data.system = {
+      ...(data.system ?? {}),
+      changes: attenuateChangeRows(effectChanges(data), count, curve),
+    };
     return data;
   });
   const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
@@ -430,29 +450,44 @@ function findAlteredTemplates(item) {
 }
 
 async function refreshToleranceMarkerAe(actor, item, count) {
-  // Marker AE: updates an existing tolerance AE's count flag, or applies an
-  // authored tolerance AE template if none exists and count > 0.
+  // The marker shows tolerance on the character (spec v0.9.2 D8): the drug's
+  // tolerance template if it ships one, else a plain marker with no Changes
+  // and no duration (no token icon). Its name carries the count.
   const existing = findEffectsByRole(actor, "tolerance").filter(
     (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
   );
+  const name = toleranceMarkerName(item, count);
   for (const eff of existing) {
-    await eff.update({ [`flags.${MODULE_ID}.count`]: count });
+    await eff.update({ name, [`flags.${MODULE_ID}.count`]: count });
   }
-  if (existing.length === 0 && count > 0) {
-    const tplIds = getToleranceEffectIds(item) ?? [];
-    const tpl =
-      tplIds[0] && item.effects?.get?.(tplIds[0])
-        ? item.effects.get(tplIds[0])
-        : null;
-    if (!tpl) return;
-    const data = prepareEffectPayload(tpl.toObject(), {
-      sourceSubstanceId: item.id,
-      origin: item.uuid,
-      role: "tolerance",
-    });
-    data.flags[MODULE_ID].count = count;
-    await actor.createEmbeddedDocuments("ActiveEffect", [data]);
-  }
+  if (existing.length > 0 || count <= 0) return;
+  const tpl = toleranceTemplate(item);
+  const base = tpl ? tpl.toObject() : { img: item.img ?? "icons/svg/aura.svg", description: "" };
+  const data = prepareEffectPayload(
+    { ...base, name, transfer: false },
+    { sourceSubstanceId: item.id, origin: item.uuid, role: "tolerance" },
+  );
+  data.flags[MODULE_ID].count = count;
+  await actor.createEmbeddedDocuments("ActiveEffect", [data]);
+}
+
+function toleranceTemplate(item) {
+  const id = (getToleranceEffectIds(item) ?? [])[0];
+  return id ? (item.effects?.get?.(id) ?? null) : null;
+}
+
+/**
+ * The tolerance marker's name with the current count: "Tolerance to X (2)",
+ * or the drug's own tolerance template name plus " (2)".
+ *
+ * @param {Item} item
+ * @param {number} count
+ * @returns {string}
+ */
+export function toleranceMarkerName(item, count) {
+  const tpl = toleranceTemplate(item);
+  if (tpl) return `${tpl.name} (${count})`;
+  return game.i18n.format("FISHUT.Tolerance.EffectName", { item: item.name, stacks: count });
 }
 
 /**
@@ -473,7 +508,10 @@ export async function applyWithdrawalEffect(actor, item, { elapsedSeconds = 0 } 
   // 0 means permanent to prepareEffectPayload, so never let elapsed time reach it.
   const seconds = total > 0 ? Math.max(1, total - elapsedSeconds) : 0;
   const templates = findWithdrawalTemplates(item);
-  const sources = templates.length > 0 ? templates.map((t) => t.toObject()) : [buildDefaultWithdrawalTemplate(item)];
+  const sources =
+    templates.length > 0
+      ? templates.map((t) => t.toObject())
+      : [buildDefaultWithdrawalTemplate(item)];
   const payloads = sources.map((data) => {
     const payload = prepareEffectPayload(data, {
       sourceSubstanceId: item.id,
@@ -488,7 +526,8 @@ export async function applyWithdrawalEffect(actor, item, { elapsedSeconds = 0 } 
   const now = Date.now();
   await setActorWithdrawalEntry(actor, item.id, {
     appliedAt: new Date(now).toISOString(),
-    endsAt: new Date(now + seconds * 1000).toISOString(),
+    // A permanent withdrawal has no end.
+    endsAt: seconds > 0 ? new Date(now + seconds * 1000).toISOString() : null,
   });
   return created?.[0] ?? null;
 }
@@ -526,7 +565,8 @@ function buildDefaultWithdrawalTemplate(item) {
 function findWithdrawalTemplates(item) {
   const effects = [...(item?.effects ?? [])];
   const ids = getWithdrawalEffectIds(item);
-  if (ids.length > 0) return effects.filter((e) => ids.includes(e.id));
+  const resolved = effects.filter((e) => ids.includes(e.id));
+  if (resolved.length > 0) return resolved;
+  // Stale or missing ids: fall back to the name, like findAddictionTemplates.
   return effects.filter((e) => /withdraw/i.test(e.name ?? ""));
 }
-

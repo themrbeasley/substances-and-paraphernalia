@@ -8,6 +8,7 @@ import {
   findEffectsByRole,
 } from "../data/flag-schema.js";
 import { decayCount } from "../data/tolerance.js";
+import { toleranceMarkerName } from "./addiction.js";
 
 export function registerToleranceDecay() {
   // intentional no-op; long-rest-abstain.js drives decay events directly
@@ -38,7 +39,10 @@ export async function applyToleranceDecay(actor, substance) {
       (e) => e.flags?.[MODULE_ID]?.sourceSubstanceId === substance.id,
     );
     for (const ae of aes) {
-      await ae.update({ [`flags.${MODULE_ID}.count`]: nextCount });
+      await ae.update({
+        name: toleranceMarkerName(substance, nextCount),
+        [`flags.${MODULE_ID}.count`]: nextCount,
+      });
     }
   }
   return nextCount;

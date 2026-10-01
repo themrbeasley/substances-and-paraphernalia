@@ -16,12 +16,8 @@
 // The first render of any unpatched class triggers a re-render so the entry
 // appears immediately for the currently-open sheet.
 
-import { MODULE_ID, FLAGS } from "../config.js";
-import {
-  getAddiction,
-  getWithdrawalDuration,
-  isSubstance,
-} from "../data/flag-schema.js";
+import { MODULE_ID } from "../config.js";
+import { getAddiction, getWithdrawalDuration, isSubstance } from "../data/flag-schema.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import {
   applyAddictionEffect,
@@ -66,9 +62,7 @@ function onRenderApplicationV2(app, _htmlElement) {
 
 function patchSheetClass(cls) {
   if (typeof cls?.prototype?._getHeaderControls !== "function") {
-    logger.warn?.(
-      "simulate-dose: sheet class has no _getHeaderControls; patch skipped",
-    );
+    logger.warn?.("simulate-dose: sheet class has no _getHeaderControls; patch skipped");
     return false;
   }
 
@@ -177,7 +171,8 @@ async function openResultDialog(item, result) {
     ok: result?.ok === true,
     error: result?.error ?? null,
     capturedContent: result?.capturedContent ?? "",
-    hasCapturedContent: typeof result?.capturedContent === "string" && result.capturedContent.length > 0,
+    hasCapturedContent:
+      typeof result?.capturedContent === "string" && result.capturedContent.length > 0,
     finalAEs: result?.finalAEs ?? [],
     hasFinalAEs: Array.isArray(result?.finalAEs) && result.finalAEs.length > 0,
     noChatLabel,
@@ -220,11 +215,7 @@ async function openResultDialog(item, result) {
  *   error?: string,
  * }>}
  */
-export async function runSimulation({
-  substance,
-  conMod = 0,
-  addictionState = "none",
-} = {}) {
+export async function runSimulation({ substance, conMod = 0, addictionState = "none" } = {}) {
   if (!substance || !isSubstance(substance)) {
     return {
       ok: false,
@@ -252,7 +243,7 @@ export async function runSimulation({
       await preSeedAddictionState(testActor, embeddedSubstance, addictionState);
     }
 
-    await runDosePipeline(testActor, embeddedSubstance);
+    const failures = await runDosePipeline(testActor, embeddedSubstance);
 
     // Snapshot final AEs before cleanup so the result dialog has data.
     const finalAEs = [...(testActor.effects ?? [])].map((e) => e.name).filter(Boolean);
@@ -265,9 +256,10 @@ export async function runSimulation({
     }
 
     return {
-      ok: true,
+      ok: failures.length === 0,
       capturedContent: capturedContents.join("\n<hr/>\n"),
       finalAEs,
+      error: failures.map((f) => `${f.step}: ${f.message}`).join("; ") || undefined,
     };
   } catch (err) {
     logger.error("simulate-dose: simulation failed", err);
@@ -314,37 +306,9 @@ async function createTestActor(substance, conMod) {
 async function embedSubstanceClone(actor, sourceItem) {
   const sourceData = sourceItem.toObject();
   delete sourceData._id;
-
-  // Capture original effect ids by name so we can remap id-pointing flags
-  // (`addiction.addictionEffectId`, `withdrawal.effectId`) onto the cloned AEs.
-  const originalIdByName = new Map();
-  for (const ae of sourceItem.effects ?? []) {
-    if (ae.name) originalIdByName.set(ae.name, ae.id ?? ae._id);
-  }
-  for (const ae of sourceData.effects ?? []) {
-    delete ae._id;
-  }
-
+  // Embedded effects keep their ids (Foundry's keepEmbeddedIds default), so
+  // the effect-id lists in the flags point at the clone's own effects.
   const [embedded] = await actor.createEmbeddedDocuments("Item", [sourceData]);
-
-  const remap = new Map();
-  for (const newAe of embedded.effects ?? []) {
-    const originalId = originalIdByName.get(newAe.name ?? "");
-    if (originalId) remap.set(originalId, newAe.id);
-  }
-
-  const updates = {};
-  const oldAddict = sourceItem.flags?.[MODULE_ID]?.[FLAGS.addiction]?.addictionEffectId;
-  if (oldAddict && remap.has(oldAddict)) {
-    updates[`flags.${MODULE_ID}.${FLAGS.addiction}.addictionEffectId`] = remap.get(oldAddict);
-  }
-  const oldWithdraw = sourceItem.flags?.[MODULE_ID]?.[FLAGS.withdrawal]?.effectId;
-  if (oldWithdraw && remap.has(oldWithdraw)) {
-    updates[`flags.${MODULE_ID}.${FLAGS.withdrawal}.effectId`] = remap.get(oldWithdraw);
-  }
-  if (Object.keys(updates).length > 0) {
-    await embedded.update(updates);
-  }
   return embedded;
 }
 
@@ -365,8 +329,8 @@ async function preSeedAddictionState(actor, item, state) {
 export async function sweepOrphanedTestActors() {
   if (typeof game === "undefined" || !game?.actors) return 0;
   if (game.users?.activeGM && game.users.activeGM !== game.user) return 0;
-  const orphans = [...game.actors].filter((a) =>
-    typeof a?.name === "string" && a.name.startsWith(TEST_ACTOR_PREFIX),
+  const orphans = [...game.actors].filter(
+    (a) => typeof a?.name === "string" && a.name.startsWith(TEST_ACTOR_PREFIX),
   );
   let count = 0;
   for (const actor of orphans) {

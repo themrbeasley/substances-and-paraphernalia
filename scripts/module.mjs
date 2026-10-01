@@ -15,6 +15,7 @@ import {
   applyAddictionEffect,
   isAppliedAddictionEffect,
   onPreDeleteActiveEffect,
+  onPreCreateActiveEffect,
 } from "./hooks/addiction.js";
 import { rollOverdoseAndApply } from "./hooks/overdose.js";
 import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
@@ -22,7 +23,6 @@ import { registerLongRestAbstain } from "./hooks/long-rest-abstain.js";
 import { registerToleranceDecay, applyToleranceDecay } from "./hooks/tolerance-decay.js";
 import { registerWithdrawalCleanup } from "./hooks/withdrawal-cleanup.js";
 import { consumeBypassIfAvailable } from "./data/modifier-pipeline.js";
-import { computeAdjustedOverdoseChance } from "./data/overdose-interaction.js";
 import {
   isActive,
   isIntegrationEnabled,
@@ -70,11 +70,11 @@ Hooks.once("ready", async () => {
         applyAddictionEffect,
         isAppliedAddictionEffect,
         onPreDeleteActiveEffect,
+        onPreCreateActiveEffect,
       },
       overdose: { rollOverdoseAndApply },
       saveBypass: { consumeBypassIfAvailable },
       tolerance: { applyToleranceDecay },
-      data: { computeAdjustedOverdoseChance },
       simulateDose: { runSimulation, sweepOrphanedTestActors },
       integrations: {
         isActive,

@@ -5,7 +5,9 @@
  * Walks `_source/fishut-illicit-substance/*.json` and
  * `_source/fishut-illicit-paraphernalia/*.json`, then defers per-file checks
  * to the pure helpers in `validate-content-checks.mjs` so the same invariants
- * can be unit-tested with synthetic JSON.
+ * can be unit-tested with synthetic JSON. Every `_source` pack (macros and
+ * journals too) is also parsed and its document ids checked: 16 letters or
+ * digits (`checkDocumentIds`).
  *
  * Substance contract (v0.8.1):
  *   - flags["substances-and-paraphernalia"].kind === "substance"
@@ -56,7 +58,11 @@ import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { checkSubstance, checkParaphernalia, checkDocumentIds } from "./validate-content-checks.mjs";
+import {
+  checkSubstance,
+  checkParaphernalia,
+  checkDocumentIds,
+} from "./validate-content-checks.mjs";
 import { checkLanguagePhrasing } from "./validate-content-language.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -195,7 +201,8 @@ async function scanTemplatesForPhrasing() {
 await scanLangStringsForPhrasing();
 await scanTemplatesForPhrasing();
 
-const checked = substanceFiles.length + paraphernaliaFiles.length + macroFiles.length + journalFiles.length;
+const checked =
+  substanceFiles.length + paraphernaliaFiles.length + macroFiles.length + journalFiles.length;
 if (warnings.length) {
   console.warn(`content: ${warnings.length} warning(s):`);
   for (const w of warnings) console.warn(`  - ${w}`);
