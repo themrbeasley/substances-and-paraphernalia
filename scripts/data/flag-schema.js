@@ -613,6 +613,21 @@ export function findEffectsByRole(actor, role, { warn } = {}) {
 }
 
 /**
+ * Is the actor in withdrawal from this substance? Effects, not the record:
+ * relapse and recovery both key off the withdrawal effects, so a stale record
+ * can't say yes.
+ *
+ * @param {Actor} actor
+ * @param {string} substanceId
+ * @returns {boolean}
+ */
+export function isInWithdrawalFrom(actor, substanceId) {
+  return [...(actor?.effects ?? [])].some(
+    (e) => hasAeRole(e, "withdrawal") && e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === substanceId,
+  );
+}
+
+/**
  * The substances an actor is addicted to: the distinct `sourceSubstanceId`s of
  * its Addiction effects (spec D1). The withdrawal record means only "in
  * withdrawal" and plays no part here.

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { findEffectsByRole, getAeRole, hasAeRole } from "../../scripts/data/flag-schema.js";
+import { findEffectsByRole, getAeRole, hasAeRole, isInWithdrawalFrom } from "../../scripts/data/flag-schema.js";
 
 const MODULE_ID = "substances-and-paraphernalia";
 
@@ -97,5 +97,19 @@ describe("findEffectsByRole and switched-off effects (v0.9.2 D7)", () => {
     const off = mkEffect({ id: "1", name: "Foo Addiction", role: "addiction" });
     const out = findEffectsByRole({ appliedEffects: [], effects: [off] }, "addiction");
     assert.deepEqual(out.map((e) => e.id), ["1"]);
+  });
+});
+
+describe("isInWithdrawalFrom", () => {
+  const wd = (sid, extra = {}) => ({ name: "Withdrawal from X", flags: { [MODULE_ID]: { aeRole: "withdrawal", sourceSubstanceId: sid } }, ...extra });
+  it("is true when a withdrawal effect for the substance is on the actor", () => {
+    assert.equal(isInWithdrawalFrom({ effects: [wd("x")] }, "x"), true);
+  });
+  it("is false for another substance's withdrawal", () => {
+    assert.equal(isInWithdrawalFrom({ effects: [wd("y")] }, "x"), false);
+  });
+  it("is false with no effects", () => {
+    assert.equal(isInWithdrawalFrom({ effects: [] }, "x"), false);
+    assert.equal(isInWithdrawalFrom(null, "x"), false);
   });
 });

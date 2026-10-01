@@ -26,7 +26,7 @@ import {
   getWithdrawalDc,
   getWithdrawalEnabled,
   getAddictedSubstanceIds,
-  getAeRole,
+  isInWithdrawalFrom,
   getActorTolerance,
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
@@ -93,7 +93,7 @@ export async function runPhase2(actor) {
       count: Number(getActorToleranceEntry(actor, substanceId)?.count) || 0,
       maxCount: profile?.maxCount ?? 0,
       dosesRemaining: Number(item.system?.quantity) || 0,
-      inWithdrawal: inWithdrawalFrom(actor, substanceId),
+      inWithdrawal: isInWithdrawalFrom(actor, substanceId),
     });
   }
   if (rows.length === 0) return;
@@ -107,7 +107,7 @@ export async function runPhase2(actor) {
     // The rest can advance game time while the window is open, ending a
     // withdrawal and the addiction with it; act on the state as it is now.
     if (!getAddictedSubstanceIds(actor).includes(row.substanceId)) continue;
-    const inWithdrawal = inWithdrawalFrom(actor, row.substanceId);
+    const inWithdrawal = isInWithdrawalFrom(actor, row.substanceId);
     try {
       if (action === "use") await forceUseSubstance(actor, item);
       else await runAbstainBranch(actor, item, { forced: action === "forced-abstain", inWithdrawal });
@@ -216,14 +216,6 @@ async function rollWithdrawalSave(actor, dc) {
   return rollWithoutSkipping(
     (config, dialog) => actor.rollSavingThrow(config, dialog),
     d20Config("con", dc, { bonus }),
-  );
-}
-
-// Effects, not the record: relapse and recovery both key off the withdrawal
-// effects, so a stale record can't pin a row at "hold".
-function inWithdrawalFrom(actor, substanceId) {
-  return actor.effects.some(
-    (e) => getAeRole(e) === "withdrawal" && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId,
   );
 }
 

@@ -16,8 +16,8 @@ const bypassOnce = new Set();
 /**
  * Register an activity id so the next `preUseActivity` for that id
  * skips the paraphernalia gate. Used by `long-rest-abstain.js` to drive
- * a forced consumption when a Wis save fails, and by the gate's own
- * "Use anyway" dialog branch (already in-tree).
+ * the relapse dose when the Abstain check fails, and by the gate's own
+ * "Use anyway" dialog branch.
  *
  * @param {string} activityId
  */
@@ -29,9 +29,10 @@ export function registerForcedUseBypass(activityId) {
 
 /**
  * Clear a previously-registered forced-use bypass for an activity id.
- * Used by external callers (e.g. `long-rest-abstain.js`) to roll back
- * the bypass if their `activity.use()` call throws before the next
- * `preUseActivity` consumes it (symmetric with `registerForcedUseBypass`).
+ * `long-rest-abstain.js` calls it in a `finally` after its `activity.use()`:
+ * the gate consumes the bypass only when it reaches the paraphernalia check,
+ * and a throw, the 0-dose block or `enforceParaphernalia` being off all stop
+ * before that, which would leave the bypass for a later manual use.
  *
  * @param {string} activityId
  */

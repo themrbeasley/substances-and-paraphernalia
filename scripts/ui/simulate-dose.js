@@ -16,7 +16,7 @@
 // The first render of any unpatched class triggers a re-render so the entry
 // appears immediately for the currently-open sheet.
 
-import { MODULE_ID, FLAGS } from "../config.js";
+import { MODULE_ID } from "../config.js";
 import {
   getAddiction,
   getWithdrawalDuration,
@@ -35,6 +35,13 @@ const RESULT_TEMPLATE = `modules/${MODULE_ID}/templates/simulate-dose-result.hbs
 const TEST_ACTOR_PREFIX = "__fishut-test-";
 const ACTION_ID = "fishutSimulateDose";
 const PATCHED_CONSTRUCTORS = new WeakSet();
+// Substance flag paths that hold effect ids.
+const EFFECT_ID_LISTS = [
+  "addiction.addictionEffectIds",
+  "withdrawal.effectIds",
+  "tolerance.effectIds",
+  "overdose.effectIds",
+];
 
 export function registerSimulateDose() {
   Hooks.on("renderApplicationV2", onRenderApplicationV2);
@@ -316,8 +323,8 @@ async function embedSubstanceClone(actor, sourceItem) {
   const sourceData = sourceItem.toObject();
   delete sourceData._id;
 
-  // Capture original effect ids by name so we can remap id-pointing flags
-  // (`addiction.addictionEffectId`, `withdrawal.effectId`) onto the cloned AEs.
+  // Capture original effect ids by name so the id lists in the flags can be
+  // pointed at the cloned AEs (EFFECT_ID_LISTS below).
   const originalIdByName = new Map();
   for (const ae of sourceItem.effects ?? []) {
     if (ae.name) originalIdByName.set(ae.name, ae.id ?? ae._id);
@@ -334,14 +341,15 @@ async function embedSubstanceClone(actor, sourceItem) {
     if (originalId) remap.set(originalId, newAe.id);
   }
 
+  // The clone's effects get new ids, so every id list in the flags would
+  // point at the original item's effects (simulated withdrawal then fell back
+  // to the generic template).
+  const flags = sourceItem.flags?.[MODULE_ID] ?? {};
   const updates = {};
-  const oldAddict = sourceItem.flags?.[MODULE_ID]?.[FLAGS.addiction]?.addictionEffectId;
-  if (oldAddict && remap.has(oldAddict)) {
-    updates[`flags.${MODULE_ID}.${FLAGS.addiction}.addictionEffectId`] = remap.get(oldAddict);
-  }
-  const oldWithdraw = sourceItem.flags?.[MODULE_ID]?.[FLAGS.withdrawal]?.effectId;
-  if (oldWithdraw && remap.has(oldWithdraw)) {
-    updates[`flags.${MODULE_ID}.${FLAGS.withdrawal}.effectId`] = remap.get(oldWithdraw);
+  for (const path of EFFECT_ID_LISTS) {
+    const ids = foundry.utils.getProperty(flags, path);
+    if (!Array.isArray(ids) || ids.length === 0) continue;
+    updates[`flags.${MODULE_ID}.${path}`] = ids.map((id) => remap.get(id) ?? id);
   }
   if (Object.keys(updates).length > 0) {
     await embedded.update(updates);

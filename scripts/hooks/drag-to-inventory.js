@@ -26,6 +26,7 @@ import {
   getToleranceEffectIds,
   getWithdrawalDuration,
   getAddictedSubstanceIds,
+  isInWithdrawalFrom,
   getActorWithdrawalEntry,
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
@@ -222,6 +223,19 @@ export async function applyDragOutcome(actor, item, choice) {
       }
       // Only the addicted go through withdrawal (spec D1, D3).
       if (!getAddictedSubstanceIds(actor).includes(item.id)) await applyAddictionEffect(actor, item);
+      if (!getAddictedSubstanceIds(actor).includes(item.id)) {
+        // No Addiction effect to apply: withdrawal alone would never end.
+        ui.notifications?.warn(
+          game.i18n.format("FISHUT.DragInventory.NoAddictionEffect", { actor: actor.name, item: item.name }),
+        );
+        return { applied: "noop" };
+      }
+      if (isInWithdrawalFrom(actor, item.id)) {
+        await chat(
+          game.i18n.format("FISHUT.DragInventory.AlreadyWithdrawing", { actor: actor.name, item: item.name }),
+        );
+        return { applied: "noop" };
+      }
       await applyWithdrawalEffect(actor, item);
       await chat(
         game.i18n.format("FISHUT.DragInventory.Applied.Withdrawing", {

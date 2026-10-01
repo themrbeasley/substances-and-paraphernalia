@@ -134,13 +134,13 @@ export async function rollSaveAndApply(actor, item) {
 }
 
 /**
- * Apply a pre-determined outcome to the actor. This is the test seam: the
- * Quench suite calls it directly with a forced result.
+ * Apply a decided outcome to the actor and post its chat line.
  *
  * @param {Actor}  actor
  * @param {Item}   item
  * @param {Object} outcome
- * @param {boolean} [outcome.alreadyAddicted]
+ * @param {boolean} [outcome.alreadyAddicted] the actor already carries this
+ *   substance's Addiction effect: no save, the addiction continues.
  * @param {import("../data/modifier-pipeline.js").ModifierResolution} [outcome.modifier]
  *   `resolution === "auto-pass"`: save is skipped, chat cites `source.name`.
  *   `resolution === "reroll-on-fail"`: save was rolled twice (second only if first failed); chat cites `source.name`.
@@ -148,6 +148,7 @@ export async function rollSaveAndApply(actor, item) {
  *   `resolution === "+N"`: save was rolled with `+bonus`; chat cites all `sources`.
  * @param {"success"|"fail"} [outcome.saveResult]
  * @param {number}            [outcome.saveTotal]
+ * @returns {Promise<{applied: "maintained"|"bypassed"|"passed"|"addicted"}|undefined>}
  */
 export async function applyOutcome(actor, item, outcome) {
   const addiction = getAddiction(item);
@@ -160,7 +161,7 @@ export async function applyOutcome(actor, item, outcome) {
         item: item.name,
       }),
     );
-    return { applied: "extended" };
+    return { applied: "maintained" };
   }
 
   if (outcome?.modifier?.resolution === "auto-pass") {
@@ -202,9 +203,8 @@ export async function applyOutcome(actor, item, outcome) {
 
   if (outcome?.saveResult === "fail") {
     await applyAddictionEffect(actor, item);
-    // Phase 1 no longer applies Withdrawal AE or sets the actor withdrawal
-    // flag entry. Withdrawal onset is a Phase 2 event; see
-    // scripts/hooks/long-rest-abstain.js (Task 13).
+    // Withdrawal doesn't start here: it starts at a Long Rest
+    // (scripts/hooks/long-rest-abstain.js).
     let key;
     if (rerollSource) key = "FISHUT.Addiction.Save.FailWithReroll";
     else if (advantageSource) key = "FISHUT.Addiction.Save.FailWithAdvantage";
@@ -497,7 +497,8 @@ export async function applyWithdrawalEffect(actor, item, { elapsedSeconds = 0 } 
   const now = Date.now();
   await setActorWithdrawalEntry(actor, item.id, {
     appliedAt: new Date(now).toISOString(),
-    endsAt: new Date(now + seconds * 1000).toISOString(),
+    // A permanent withdrawal has no end.
+    endsAt: seconds > 0 ? new Date(now + seconds * 1000).toISOString() : null,
   });
   return created?.[0] ?? null;
 }
@@ -535,7 +536,9 @@ function buildDefaultWithdrawalTemplate(item) {
 function findWithdrawalTemplates(item) {
   const effects = [...(item?.effects ?? [])];
   const ids = getWithdrawalEffectIds(item);
-  if (ids.length > 0) return effects.filter((e) => ids.includes(e.id));
+  const resolved = effects.filter((e) => ids.includes(e.id));
+  if (resolved.length > 0) return resolved;
+  // Stale or missing ids: fall back to the name, like findAddictionTemplates.
   return effects.filter((e) => /withdraw/i.test(e.name ?? ""));
 }
 
