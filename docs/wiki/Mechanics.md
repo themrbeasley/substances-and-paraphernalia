@@ -73,7 +73,7 @@ Tolerance shows on the character as a marker effect: the substance's tolerance t
 
 ## Overdose
 
-Overdose is off unless the substance enables it. After each dose, **points** = count × rate. If the points reach the tier's overdose threshold (plus any `flags.substances-and-paraphernalia.overdose.thresholdModifier` on the actor), the module rolls d100; at or under `overdose.chancePercent` (plus any `overdose.chanceModifier` flag on the actor, clamped to 0 to 100), the overdose effect is applied, carrying the authored description. AE name **must contain** `overdose`. The threshold equals the tier's max count times its rate, so the roll only happens once tolerance is at its cap.
+Overdose is off unless the substance enables it. After each dose, **points** = count × rate. If the points reach the tier's overdose threshold (plus any `flags.substances-and-paraphernalia.overdose.thresholdModifier` on the actor), the module rolls d100; at or under `overdose.chancePercent` (plus any `overdose.chanceModifier` flag on the actor, clamped to 0 to 100), the overdose effect is applied and chat announces it with the authored description. AE name **must contain** `overdose`. The threshold equals the tier's max count times its rate, so the roll only happens once tolerance is at its cap.
 
 The six performance enhancers (Giantsbreath Tonic, Wyrmiron Salts, Black Lift, Ironhour Caps, Combat Cocktail, Reflex Injector) ship with overdose on: 10% per dose at the cap, Poisoned and Incapacitated for 1 minute.
 

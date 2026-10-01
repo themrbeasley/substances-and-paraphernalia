@@ -34,17 +34,23 @@ export async function rollOverdoseAndApply(actor, item, rng = defaultD100) {
   const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
   const points = currentPoints(count, profile.rate);
 
-  const thresholdModifier = Number(
-    actor?.getFlag?.(MODULE_ID, "overdose.thresholdModifier"),
-  ) || 0;
+  const thresholdModifier = Number(actor?.getFlag?.(MODULE_ID, "overdose.thresholdModifier")) || 0;
   if (!shouldRollOverdose(points, profile.threshold, thresholdModifier)) return null;
 
-  const chanceModifier = Number(
-    actor?.getFlag?.(MODULE_ID, "overdose.chanceModifier"),
-  ) || 0;
+  const chanceModifier = Number(actor?.getFlag?.(MODULE_ID, "overdose.chanceModifier")) || 0;
   if (!rollOverdoseChance(rng, overdose.chancePercent, chanceModifier)) return null;
 
-  return applyOverdoseEffect(actor, item, overdose);
+  const applied = await applyOverdoseEffect(actor, item, overdose);
+  // The Details tab promises the description on a chat card when it triggers.
+  await ChatMessage.create({
+    content: game.i18n.format("FISHUT.Overdose.Triggered", {
+      actor: actor.name,
+      item: item.name,
+      description: overdose.description ?? "",
+    }),
+    whisper: [],
+  });
+  return applied;
 }
 
 function defaultD100() {
@@ -108,4 +114,3 @@ function resolveOverdoseTemplates(item, block) {
   }
   return resolved;
 }
-

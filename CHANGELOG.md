@@ -19,6 +19,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - **One failing step cancelled the rest of a dose** (the high, tolerance and overdose). Each step now runs on its own. A failed Long Rest tolerance fade no longer stops the Withdrawal Choices window.
 - **The Remove macros showed effect names as HTML,** so a renamed effect could inject markup into the GM's window. Names are now plain text.
 - A custom drug with two self-consuming activity rows still vanished at 0 doses.
+- **An overdose posted no chat line,** though the Details tab promised its description on a chat card. Chat now announces it.
 
 ### Changed
 - **Tolerance shows on the character** as a "Tolerance to Coalshade Powder (2)" effect with no game effect and no token icon; it updates with every dose and Long Rest and goes away at 0.
