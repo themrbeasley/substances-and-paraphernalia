@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { findEffectsByRole, getAeRole } from "../../scripts/data/flag-schema.js";
+import { findEffectsByRole, getAeRole, hasAeRole } from "../../scripts/data/flag-schema.js";
 
 const MODULE_ID = "substances-and-paraphernalia";
 
@@ -76,5 +76,26 @@ describe("findEffectsByRole", () => {
     const actor = mkActor([mkEffect({ id: "1", name: "x", role: "addiction" })]);
     const out = findEffectsByRole(actor, "made-up-role");
     assert.deepEqual(out, []);
+  });
+});
+
+describe("hasAeRole", () => {
+  it("trusts the role tag", () => {
+    assert.equal(hasAeRole(mkEffect({ id: "1", name: "x", role: "addiction" }), "addiction"), true);
+  });
+  it("falls back to the name when untagged", () => {
+    assert.equal(hasAeRole(mkEffect({ id: "1", name: "Foo Addiction" }), "addiction"), true);
+    assert.equal(hasAeRole(mkEffect({ id: "1", name: "Bless" }), "addiction"), false);
+  });
+  it("never falls back to the name when tagged with another role", () => {
+    assert.equal(hasAeRole(mkEffect({ id: "1", name: "Addiction marker", role: "tolerance" }), "addiction"), false);
+  });
+});
+
+describe("findEffectsByRole and switched-off effects (v0.9.2 D7)", () => {
+  it("counts an effect that is switched off (in effects, not appliedEffects)", () => {
+    const off = mkEffect({ id: "1", name: "Foo Addiction", role: "addiction" });
+    const out = findEffectsByRole({ appliedEffects: [], effects: [off] }, "addiction");
+    assert.deepEqual(out.map((e) => e.id), ["1"]);
   });
 });

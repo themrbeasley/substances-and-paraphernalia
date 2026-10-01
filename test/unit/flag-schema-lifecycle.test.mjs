@@ -133,7 +133,7 @@ const SCOPE = "substances-and-paraphernalia";
 test("getAddictedSubstanceIds lists each addicted substance once", () => {
   const fx = (role, sid) => ({ name: "x", flags: { [SCOPE]: { aeRole: role, sourceSubstanceId: sid } } });
   const actor = {
-    appliedEffects: [fx("addiction", "a"), fx("addiction", "a"), fx("addiction", "b"), fx("withdrawal", "c"), fx("addiction", undefined)],
+    effects: [fx("addiction", "a"), fx("addiction", "a"), fx("addiction", "b"), fx("withdrawal", "c"), fx("addiction", undefined)],
   };
   assert.deepEqual(getAddictedSubstanceIds(actor), ["a", "b"]);
 });
@@ -202,4 +202,9 @@ test("getToleranceDecay uses the default for a blank fade but keeps an explicit 
   assert.equal(getToleranceDecay(withDecay("")), 1);
   assert.equal(getToleranceDecay(withDecay(0)), 0);
   assert.equal(getToleranceDecay(withDecay(2)), 2);
+});
+
+test("getAddictedSubstanceIds counts a switched-off Addiction effect (v0.9.2 D7)", () => {
+  const off = { name: "Foo Addiction", disabled: true, flags: { [SCOPE]: { aeRole: "addiction", sourceSubstanceId: "foo" } } };
+  assert.deepEqual(getAddictedSubstanceIds({ appliedEffects: [], effects: [off] }), ["foo"]);
 });

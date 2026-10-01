@@ -103,7 +103,7 @@ Bypass-granting paraphernalia must satisfy the gate's `appliesTo` for the substa
 
 ### Long-rest handling runs on the resting client
 
-The `dnd5e.preRestCompleted` handler in `scripts/hooks/long-rest-abstain.js` runs on the client that performs the rest: dnd5e calls that hook locally, on exactly one client (the player's for their own rest or an accepted group rest request, the GM's for a GM-run rest), and that client owns the actor. The `deleteActiveEffect` cleanup in `scripts/hooks/withdrawal-cleanup.js` fires on every client, so it early-returns unless `game.users.activeGM === game.user`. Don't add a GM check to the rest hook: player rests would never reach the Withdrawal Choices.
+The `dnd5e.preRestCompleted` handler in `scripts/hooks/long-rest-abstain.js` runs on the client that performs the rest: dnd5e calls that hook locally, on exactly one client (the player's for their own rest or an accepted group rest request, the GM's for a GM-run rest), and that client owns the actor. The `deleteActiveEffect` cleanup in `scripts/hooks/withdrawal-cleanup.js` fires on every client, so it early-returns on every client but the active GM's; with no GM online every client tries (only owners can write), so a player can still recover. Its recover / relapse / wait decision is the pure `scripts/data/recovery.js` `recoveryAction`. Don't add a GM check to the rest hook: player rests would never reach the Withdrawal Choices.
 
 ### Optional-integration detection is presence-only
 

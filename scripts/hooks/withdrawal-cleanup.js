@@ -7,12 +7,15 @@
  *
  * Deletes come from House Automation's "Delete expired effects" switch
  * (expiry), the Remove Withdrawal macro, a GM by hand, or a relapse.
- * Listens on `deleteActiveEffect` `(effect, options, userId)`. GM-arbitrated.
+ * Listens on `deleteActiveEffect` `(effect, options, userId)`. The active GM
+ * runs it; with no GM online every client tries (only owners can write), so
+ * a player can still recover.
  */
 
 import { MODULE_ID } from "../config.js";
 import { logger } from "../logger.js";
-import { clearActorWithdrawalEntry, getAeRole } from "../data/flag-schema.js";
+import { clearActorWithdrawalEntry, hasAeRole } from "../data/flag-schema.js";
+import { recoveryAction } from "../data/recovery.js";
 
 // Several withdrawal effects of one substance deleted in one batch are all gone
 // from actor.effects before the first hook runs, so every handler would pass the
@@ -25,25 +28,31 @@ export function registerWithdrawalCleanup() {
 }
 
 async function onDeleteActiveEffect(effect, options, _userId) {
-  if (getAeRole(effect) !== "withdrawal") return;
+  if (!hasAeRole(effect, "withdrawal")) return;
   const substanceId = effect.flags?.[MODULE_ID]?.sourceSubstanceId;
   const actor = effect.parent;
   if (!substanceId || actor?.documentName !== "Actor") return;
-  // GM-arbiter: only the active GM writes, so clients don't double-write.
+  // The active GM writes, so clients don't double-write. With no GM online,
+  // every client tries; only owners can write.
   if (game.users?.activeGM && game.users.activeGM !== game.user) return;
   // actor.effects, not appliedEffects: an expired effect can still be present.
   const mine = (role) =>
-    actor.effects.filter((e) => getAeRole(e) === role && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId);
+    actor.effects.filter((e) => hasAeRole(e, role) && e.flags?.[MODULE_ID]?.sourceSubstanceId === substanceId);
   // A substance can clone several withdrawal templates; act when the last goes.
-  if (mine("withdrawal").length > 0) return;
-  const key = `${actor.id}:${substanceId}`;
+  const addictionIds = mine("addiction").map((e) => e.id);
+  const action = recoveryAction({
+    withdrawalsLeft: mine("withdrawal").length,
+    relapse: Boolean(options?.fishutRelapse),
+    addicted: addictionIds.length > 0,
+  });
+  if (action === "wait") return;
+  // uuid, not id: unlinked tokens of one base actor share its id.
+  const key = `${actor.uuid}:${substanceId}`;
   if (inFlight.has(key)) return;
   inFlight.add(key);
   try {
     await clearActorWithdrawalEntry(actor, substanceId);
-    if (options?.fishutRelapse) return;
-    const addictionIds = mine("addiction").map((e) => e.id);
-    if (addictionIds.length === 0) return;
+    if (action === "clear") return;
     await actor.deleteEmbeddedDocuments("ActiveEffect", addictionIds, { fishutIntentional: true });
     await ChatMessage.create({
       content: game.i18n.format("FISHUT.Withdrawal.Recovered", {

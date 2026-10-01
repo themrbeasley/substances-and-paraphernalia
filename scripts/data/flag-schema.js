@@ -567,10 +567,26 @@ export function getAeRole(effect) {
 }
 
 /**
+ * Is `effect` an AE of `role`? The `aeRole` tag decides; an untagged effect
+ * (hand-authored) falls back to its name. A tag for another role never falls
+ * back. Recovery and every role lookup share this one test.
+ *
+ * @param {ActiveEffect|{name?: string, flags?: object}} effect
+ * @param {"addiction"|"withdrawal"|"altered"|"tolerance"|"overdose"|"bypass"} role
+ * @returns {boolean}
+ */
+export function hasAeRole(effect, role) {
+  const flagRole = getAeRole(effect);
+  if (flagRole) return flagRole === role;
+  return AE_ROLE_SUBSTRINGS[role]?.test(effect?.name ?? "") ?? false;
+}
+
+/**
  * Locale-independent AE lookup. Returns every AE on the actor whose
  * `aeRole` flag matches `role`, plus any AEs whose flag is absent but
  * whose name matches the substring fallback. Each fallback match emits
- * a warn so hand-authored AEs are observable.
+ * a warn so hand-authored AEs are observable. Reads `actor.effects`, so a
+ * switched-off effect still counts (a paused Addiction is still an addiction).
  *
  * @param {Actor} actor
  * @param {"addiction"|"withdrawal"|"altered"|"tolerance"|"overdose"|"bypass"} role
@@ -578,28 +594,20 @@ export function getAeRole(effect) {
  * @returns {ActiveEffect[]}
  */
 export function findEffectsByRole(actor, role, { warn } = {}) {
-  const re = AE_ROLE_SUBSTRINGS[role];
-  if (!re) return [];
-  const effects = actor?.appliedEffects ?? actor?.effects ?? [];
+  if (!AE_ROLE_SUBSTRINGS[role]) return [];
   const warnFn = warn ?? ((msg, ctx) => logger.warn(msg, ctx));
   const matches = [];
-  for (const effect of effects) {
-    const flagRole = getAeRole(effect);
-    if (flagRole === role) {
-      matches.push(effect);
-      continue;
-    }
-    if (flagRole) continue; // wrong role explicitly; never fall back
-    const name = effect?.name ?? "";
-    if (re.test(name)) {
+  for (const effect of actor?.effects ?? []) {
+    if (!hasAeRole(effect, role)) continue;
+    if (!getAeRole(effect)) {
       warnFn("aeRole flag missing on AE matched by substring fallback", {
         actorId: actor?.id ?? null,
         effectId: effect?.id ?? effect?._id ?? null,
-        effectName: name,
+        effectName: effect?.name ?? "",
         role,
       });
-      matches.push(effect);
     }
+    matches.push(effect);
   }
   return matches;
 }
