@@ -134,6 +134,14 @@
           "fhAEGntBreathWit"
         ]
       },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "effectIds": [
+          "fhAEGntBreathOvd"
+        ]
+      },
       "schemaVersion": 7
     }
   },
@@ -217,6 +225,31 @@
         }
       },
       "_key": "!items.effects!fhSubGntBreath01.fhAEGntBreathWit"
+    },
+    {
+      "_id": "fhAEGntBreathOvd",
+      "name": "Giantsbreath Tonic Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned",
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 60,
+        "units": "seconds"
+      },
+      "description": "<p>Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubGntBreath01.fhAEGntBreathOvd"
     }
   ],
   "ownership": {

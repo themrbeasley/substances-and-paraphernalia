@@ -134,6 +134,14 @@
           "fhAEIronHourWit1"
         ]
       },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Ironhour Caps overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "effectIds": [
+          "fhAEIronHourOvd1"
+        ]
+      },
       "schemaVersion": 7
     }
   },
@@ -211,6 +219,31 @@
         }
       },
       "_key": "!items.effects!fhSubIronHour001.fhAEIronHourWit1"
+    },
+    {
+      "_id": "fhAEIronHourOvd1",
+      "name": "Ironhour Caps Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "poisoned",
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 60,
+        "units": "seconds"
+      },
+      "description": "<p>Ironhour Caps overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubIronHour001.fhAEIronHourOvd1"
     }
   ],
   "ownership": {
