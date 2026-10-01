@@ -14,19 +14,21 @@ If no paraphernalia matches the substance's administration, the user sees a *Mis
 
 A substance at 0 doses can't be used at all. The module blocks it before the paraphernalia check, with no override.
 
-The world setting **Enforce paraphernalia requirements** (default on) is the master switch. With it off, gating is bypassed but addiction automation continues to fire.
+The world setting **Enforce paraphernalia requirements** (default on) switches the paraphernalia check. With it off, only that check is skipped: the 0-dose block and the addiction automation still run.
 
 ## One dose (`postUseActivity`)
 
 Every use of a substance runs one pipeline, in this order (`runDosePipeline` in `scripts/hooks/addiction.js`):
 
 1. **Relapse check.** If the character is in withdrawal from this substance, the withdrawal effects are deleted and chat says so. The addiction stays.
-2. **Addiction save.** Skipped when the character already carries this substance's Addiction effect. Otherwise a paraphernalia bypass is spent if one applies (see *Save Bypass Tiers*), then the save rolls against `addiction.save.dc` (Con by default). On a fail, every template in `addiction.addictionEffectIds` is cloned onto the actor with `aeRole: "addiction"` and `sourceSubstanceId`.
-3. **The high.** Every Altered effect the substance ships is applied (Stellar Mist has two), its numeric Change values scaled by the attenuation curve at the current tolerance count. An earlier copy of the same high is replaced, so highs never stack. The module applies the high itself, so don't list Altered effects on the substance's activity. If you do, the module stops Midi-QoL and the chat card from applying a second copy, but the activity shows an apply button that does nothing.
+2. **Addiction save.** Skipped when the character already carries this substance's Addiction effect. Otherwise a paraphernalia bypass is spent if one applies (see *Save Bypass Tiers*), then the save rolls against `addiction.save.dc` (Con by default). Closing the roll window doesn't skip the save: the module rolls it without the window. On a fail, every template in `addiction.addictionEffectIds` is cloned onto the actor with `aeRole: "addiction"` and `sourceSubstanceId`.
+3. **The high.** Every Altered effect the substance ships is applied (Stellar Mist has two), its numeric `add` and `subtract` Change values scaled by the attenuation curve at the current tolerance count. An earlier copy of the same high is replaced, so highs never stack (a high without the `aeRole` tag is recognised by its name, `altered`). The module applies the high itself, so don't list Altered effects on the substance's activity. If you do, the module stops Midi-QoL and the chat card from applying a second copy, but the activity shows an apply button that does nothing.
 4. **Tolerance +1**, up to the substance's max count.
 5. **Overdose check** (below).
 
-A character is **addicted** to a substance exactly when they carry its Addiction effect. Using the substance again while addicted doesn't roll again and doesn't add a second Addiction effect.
+Each step runs on its own: if one fails (an error from another module, say), the rest of the dose still happens and the console logs the failed step.
+
+A character is **addicted** to a substance exactly when they carry its Addiction effect, even one a GM has switched off. Using the substance again while addicted doesn't roll again and doesn't add a second Addiction effect.
 
 ## Long Rest (`dnd5e.preRestCompleted`)
 
@@ -38,6 +40,8 @@ A Long Rest opens the **Withdrawal Choices** dialog on the client that performs 
 | Abstain, in withdrawal | Wisdom check only. Fail: the character takes a dose, which ends the withdrawal (the addiction stays). Pass: tolerance decays and the withdrawal carries on. |
 | No doses left, not in withdrawal | Ticked and locked. No Wisdom check: tolerance decays and the Constitution save rolls. |
 | No doses left, in withdrawal | Ticked and locked. Tolerance decays and the withdrawal carries on. |
+
+Closing a roll window doesn't skip the roll: the module rolls it without the window. A blank **Abstain DC** means there is no Wisdom check (abstaining goes straight to the Constitution save); a blank **Withdrawal DC** means there is no save, so withdrawal starts.
 
 A substance with no doses stays in the inventory at 0 instead of being deleted, so it keeps its row. It can't be used at 0; dropping more of the same substance from the compendium refills it.
 
@@ -63,15 +67,17 @@ The substance's **Withdrawal DC** sets its tier, and the tier sets the tolerance
 | Points per count (rate) | 1 | 2 | 3 | 5 | 8 | 13 |
 | Overdose threshold (points) | 8 | 12 | 15 | 20 | 24 | 26 |
 
-The count weakens the high: numeric `add` Change values on the Altered effects are multiplied by the attenuation curve and rounded down toward zero when whole (override and upgrade rows are never scaled), `[1, 0.5, 0.25, 0.125, 0]` by default (100% at count 0, 50% at 1, and so on; counts past the end use the last value). A substance can author its own curve in `tolerance.attenuationCurve`. Non-numeric values (a Token Magic preset name, a `true` override) are never scaled.
+The count weakens the high: numeric `add` and `subtract` Change values on the Altered effects are multiplied by the attenuation curve and rounded down toward zero when whole (override and upgrade rows are never scaled), `[1, 0.5, 0.25, 0.125, 0]` by default (100% at count 0, 50% at 1, and so on; counts past the end use the last value). A substance can author its own curve in `tolerance.attenuationCurve`. Non-numeric values (a Token Magic preset name, a `true` override) are never scaled.
 
-If a substance ships a tolerance template (`tolerance.effectIds`), the module applies it as a marker and keeps its `count` flag current. None of the shipped substances do, so players see tolerance only in the Long Rest dialog. The Remove Tolerance macro resets the count.
+Tolerance shows on the character as a marker effect: the substance's tolerance template if it ships one (`tolerance.effectIds`), otherwise a plain effect named like "Tolerance to Coalshade Powder (2)". The plain marker has no Changes and no duration, so it changes nothing in play and shows no token icon. Its name follows the count on every dose and Long Rest fade, and it goes away when tolerance fades to 0. The Remove Tolerance macro resets the count.
 
 ## Overdose
 
-Overdose is off unless the substance enables it. After each dose, **points** = count × rate. If the points reach the tier's overdose threshold (plus any `flags.substances-and-paraphernalia.overdose.thresholdModifier` on the actor), the module rolls d100; at or under `overdose.chancePercent` (plus any `overdose.chanceModifier`, clamped to 0 to 100), the overdose effect is applied, carrying the authored description. AE name **must contain** `overdose`.
+Overdose is off unless the substance enables it. After each dose, **points** = count × rate. If the points reach the tier's overdose threshold (plus any `flags.substances-and-paraphernalia.overdose.thresholdModifier` on the actor), the module rolls d100; at or under `overdose.chancePercent` (plus any `overdose.chanceModifier` flag on the actor, clamped to 0 to 100), the overdose effect is applied, carrying the authored description. AE name **must contain** `overdose`. The threshold equals the tier's max count times its rate, so the roll only happens once tolerance is at its cap.
 
-Author it via the overdose fieldset on the Details tab: enable it, set the percent, write a description.
+The six performance enhancers (Giantsbreath Tonic, Wyrmiron Salts, Black Lift, Ironhour Caps, Combat Cocktail, Reflex Injector) ship with overdose on: 10% per dose at the cap, Poisoned and Incapacitated for 1 minute.
+
+Author it via the overdose fieldset on the Details tab: enable it, set the percent, write a description, and pick the Overdose effect.
 
 ## DC Scaling Across Tiers
 

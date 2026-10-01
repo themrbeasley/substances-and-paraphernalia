@@ -21,14 +21,23 @@ flags["substances-and-paraphernalia"] = {
     duration: { value: 3, unit: "days" },     // minutes | hours | days | weeks | months
     effectIds: ["<ae._id>"]                   // withdrawal AE templates on this item
   },
+  tolerance: {                                // optional; defaults shown
+    enabled: true,
+    decay: 1,                                 // count lost at each Long Rest without a dose
+    attenuationCurve: [1, 0.5, 0.25, 0.125, 0],
+    effectIds: ["<ae._id>"]                   // optional tolerance marker template
+  },
   overdose: {                                 // optional
     enabled: true,
-    chancePercent: 5,
-    description: "<description shown on the overdose effect>"
+    chancePercent: 10,
+    description: "<description shown on the overdose effect>",
+    effectIds: ["<ae._id>"]                   // overdose AE templates on this item
   },
   schemaVersion: 7
 };
 ```
+
+A blank DC means "no roll", never DC 0: a blank Abstain DC skips the Wisdom check, and a blank Withdrawal DC means there is no save, so withdrawal starts. A blank tolerance decay uses the default (1). `npm run validate` rejects blank DCs in shipped content.
 
 `system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury`; that's the administration channel the gate and bypass logic key on. (The legacy per-substance `requiredSubtypes` callout was removed in v0.5; gating now keys on this admin type matched against a paraphernalia-side `appliesTo` admin list.)
 
@@ -74,11 +83,11 @@ The module prefers the `flags.substances-and-paraphernalia.aeRole` flag (see *AE
 
 | AE role | Required substring | Notes |
 |---|---|---|
-| Addiction | `addict` | Pointed-to by `addiction.addictionEffectId`. |
-| Benefit (altered) | (no contract) | Convention: `Altered by {Substance}`. |
-| Withdrawal | `withdraw` | Pointed-to by `withdrawalEffectId`. Validator warns if it imposes disadvantage on attacks/checks (duplicates *poisoned*). |
-| Tolerance | `tolerance` | Optional marker template on the substance (`tolerance.effectIds`); the module keeps its `count` flag current. Tolerance itself is a count on the actor (see Mechanics). |
-| Overdose marker | `overdose` | Applied when the d100 roll hits. |
+| Addiction | `addict` | Pointed-to by `addiction.addictionEffectIds`. |
+| Benefit (altered) | `altered` | Convention: `Altered by {Substance}`. An untagged effect named this way is treated as the high. |
+| Withdrawal | `withdraw` | Pointed-to by `withdrawal.effectIds`. Validator warns if it imposes disadvantage on attacks/checks (duplicates *poisoned*). |
+| Tolerance | `tolerance` | Optional marker template on the substance (`tolerance.effectIds`); without one the module shows a plain "Tolerance to X (n)" marker. Tolerance itself is a count on the actor (see Mechanics). |
+| Overdose | `overdose` | Pointed-to by `overdose.effectIds`; applied when the overdose roll hits. |
 | Bypass (paraphernalia) | (no contract) | Lives on the paraphernalia as a `transfer: true` AE with the `bypass` modifier flag block. |
 
 ## AE Conventions: the `aeRole` flag
@@ -90,8 +99,8 @@ Every module-created Active Effect carries a flag at
 |--------------|--------------------------------------------------|
 | `addiction`  | The persistent addiction AE on an addicted actor |
 | `withdrawal` | The withdrawal AE, applied on a failed Constitution Withdrawal Save at a Long Rest; when it ends, so does the addiction |
-| `altered`    | The benefit AE applied during the substance's altered state |
-| `tolerance`  | Optional tolerance marker; the count lives on the actor |
+| `altered`    | The benefit AEs (the high) applied by each dose  |
+| `tolerance`  | Tolerance marker (the drug's template or a plain one); the count lives on the actor |
 | `overdose`   | Overdose marker AE                               |
 | `bypass`     | Paraphernalia bypass AE                          |
 
@@ -187,12 +196,14 @@ warnings before committing.
 
 ## Details tab
 
-Open any substance item; the dnd5e Details tab now shows:
+Open any substance item; the dnd5e Details tab shows a **Substance Properties** section:
 
-- **Kind / Category / Setting** selectors.
-- **Required subtypes** picker (built-ins + custom subtypes from the Manage Subtypes menu).
-- **Addiction** block: ability, DC, withdrawal modifier, addiction-AE picker.
-- **Withdrawal AE picker** + content-guidance hint (don't duplicate poisoned; escalate instead).
-- **Overdose fieldset**: enabled toggle, chance percent (1-100), description.
+- **Category** selector.
+- **Addiction**: enabled toggle, save ability, save DC (with the tier hint), and the Addiction effect picker.
+- **Withdrawal**: enabled toggle, Withdrawal DC, Abstain ability and DC, duration (value and unit), and the withdrawal effect picker.
+- **Overdose**: enabled toggle, chance percent (1 to 100), description, and the Overdose effect picker.
+- **Tolerance**: enabled toggle, decay per Long Rest, and the optional tolerance effect picker.
 
-For paraphernalia items, the Details tab shows the **Subtype** select (built-ins + custom). Bypass authoring lives on the Active Effects tab: add a `transfer: true` AE and write the modifier flag block.
+Each effect picker can create a blank template with the right name and role. The administration type is the dnd5e Poison subtype on the item's own Details fields.
+
+For paraphernalia items, the Details tab shows **Paraphernalia Properties**: the **Subtype** select (built-ins + custom), the administration types it applies to (`appliesTo` checkboxes), and the **Save bypass** section (type, bonus, uses per day, and a button that adds the bypass effect).

@@ -7,6 +7,26 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.9.2] (2026-09-30)
+
+### Fixed
+- **Closing a roll window skipped the roll.** A player who closed the addiction save window never got addicted, and closing either Long Rest window skipped that step. The module now makes the roll without the window.
+- **A blank DC read as DC 0.** A blank Abstain DC meant never relapsing, a blank Withdrawal DC meant never withdrawing (so never recovering), and a blank tolerance decay meant tolerance never faded. Now a blank Abstain DC skips the Wisdom check, a blank Withdrawal DC means withdrawal starts with no save, and a blank decay uses the default. The content checker rejects blank DCs.
+- **Simulate Dose used a generic withdrawal effect** instead of the drug's own.
+- **A hand-made drug's untagged high stacked** at full strength. Highs are now also recognised by name.
+- **A switched-off Addiction effect counted as no addiction,** so the next dose could add a second one.
+- **Dragging "Withdrawing" onto a character already in withdrawal doubled it.** It now does nothing (chat says so), and a drug with no Addiction effect can no longer leave withdrawal without an addiction.
+- **One failing step cancelled the rest of a dose** (the high, tolerance and overdose). Each step now runs on its own. A failed Long Rest tolerance fade no longer stops the Withdrawal Choices window.
+- **The Remove macros showed effect names as HTML,** so a renamed effect could inject markup into the GM's window. Names are now plain text.
+- A custom drug with two self-consuming activity rows still vanished at 0 doses.
+
+### Changed
+- **Tolerance shows on the character** as a "Tolerance to Coalshade Powder (2)" effect with no game effect and no token icon; it updates with every dose and Long Rest and goes away at 0.
+- **Overdose is on for the six performance enhancers** (Giantsbreath Tonic, Wyrmiron Salts, Black Lift, Ironhour Caps, Combat Cocktail, Reflex Injector): once tolerance is at its cap, 10% per dose of Poisoned and Incapacitated for 1 minute.
+
+### Removed
+- The overdose **Tolerance Interaction** setting on the Details tab. It never did anything; overdose has used the tolerance threshold since v0.8.1. `module.api.data` goes with it.
+
 ## [0.9.1] (2026-09-30)
 
 ### Fixed
@@ -35,7 +55,7 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - `validate-content` rejects ids that aren't 16 letters or digits, and warns when a substance's activity lists its Altered effect.
 
 ### Upgrading
-Drugs already in a world's Items directory or on characters still list their high on the activity. The module now stops Midi-QoL, DAE and the chat card from applying that second copy, so re-importing is optional; re-import from the compendium if you want the activity itself cleaned up.
+Drugs already in a world's Items directory or on characters still list their high on the activity. The module now stops Midi-QoL, DAE and the chat card from applying that second copy. Re-importing from the compendium is optional; do it only to clean up the activity's effect list.
 
 ## [0.9.0] (2026-09-30)
 
