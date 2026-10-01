@@ -388,7 +388,9 @@ export async function incrementActorToleranceCount(actor, item) {
   const prior = getActorToleranceEntry(actor, item.id);
   const priorCount = Number(prior?.count) || 0;
   const nextCount = Math.min(profile.maxCount, priorCount + 1);
-  if (nextCount === priorCount) return;
+  // At the cap the count doesn't move, but the marker may still be missing
+  // (tolerance built up before the marker existed).
+  if (nextCount === priorCount) return refreshToleranceMarkerAe(actor, item, nextCount);
   await setActorToleranceEntry(actor, item.id, {
     count: nextCount,
     lastIncrementedAt: new Date().toISOString(),
@@ -439,29 +441,44 @@ function findAlteredTemplates(item) {
 }
 
 async function refreshToleranceMarkerAe(actor, item, count) {
-  // Marker AE: updates an existing tolerance AE's count flag, or applies an
-  // authored tolerance AE template if none exists and count > 0.
+  // The marker shows tolerance on the character (spec v0.9.2 D8): the drug's
+  // tolerance template if it ships one, else a plain marker with no Changes
+  // and no duration (no token icon). Its name carries the count.
   const existing = findEffectsByRole(actor, "tolerance").filter(
     (e) => e.flags?.[MODULE_ID]?.[FLAGS.sourceSubstanceId] === item.id,
   );
+  const name = toleranceMarkerName(item, count);
   for (const eff of existing) {
-    await eff.update({ [`flags.${MODULE_ID}.count`]: count });
+    await eff.update({ name, [`flags.${MODULE_ID}.count`]: count });
   }
-  if (existing.length === 0 && count > 0) {
-    const tplIds = getToleranceEffectIds(item) ?? [];
-    const tpl =
-      tplIds[0] && item.effects?.get?.(tplIds[0])
-        ? item.effects.get(tplIds[0])
-        : null;
-    if (!tpl) return;
-    const data = prepareEffectPayload(tpl.toObject(), {
-      sourceSubstanceId: item.id,
-      origin: item.uuid,
-      role: "tolerance",
-    });
-    data.flags[MODULE_ID].count = count;
-    await actor.createEmbeddedDocuments("ActiveEffect", [data]);
-  }
+  if (existing.length > 0 || count <= 0) return;
+  const tpl = toleranceTemplate(item);
+  const base = tpl ? tpl.toObject() : { img: item.img ?? "icons/svg/aura.svg", description: "" };
+  const data = prepareEffectPayload(
+    { ...base, name, transfer: false },
+    { sourceSubstanceId: item.id, origin: item.uuid, role: "tolerance" },
+  );
+  data.flags[MODULE_ID].count = count;
+  await actor.createEmbeddedDocuments("ActiveEffect", [data]);
+}
+
+function toleranceTemplate(item) {
+  const id = (getToleranceEffectIds(item) ?? [])[0];
+  return id ? (item.effects?.get?.(id) ?? null) : null;
+}
+
+/**
+ * The tolerance marker's name with the current count: "Tolerance to X (2)",
+ * or the drug's own tolerance template name plus " (2)".
+ *
+ * @param {Item} item
+ * @param {number} count
+ * @returns {string}
+ */
+export function toleranceMarkerName(item, count) {
+  const tpl = toleranceTemplate(item);
+  if (tpl) return `${tpl.name} (${count})`;
+  return game.i18n.format("FISHUT.Tolerance.EffectName", { item: item.name, stacks: count });
 }
 
 /**
