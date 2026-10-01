@@ -113,6 +113,7 @@
   "FISHUT.RemoveAddiction.Title": "Remove Addiction",
   "FISHUT.RemoveAddiction.NoActor": "Select a token first.",
   "FISHUT.RemoveAddiction.NoCandidates": "{actor} has no addiction effects to remove.",
+  "FISHUT.RemoveAddiction.NothingTicked": "Nothing was ticked, so nothing was removed.",
   "FISHUT.RemoveAddiction.Confirm": "Remove",
   "FISHUT.RemoveAddiction.Cancel": "Cancel",
   "FISHUT.RemoveAddiction.PreviewIntro": "<p>Choose addiction effects to remove from <strong>{actor}</strong>.</p>",
