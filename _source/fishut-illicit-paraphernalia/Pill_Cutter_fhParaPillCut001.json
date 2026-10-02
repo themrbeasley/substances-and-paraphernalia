@@ -6,7 +6,7 @@
   "folder": "fhParaModern0001",
   "system": {
     "description": {
-      "value": "<p>A spring-loaded steel splitter with a hinged blade and a magnifying lid. Halving a dose before swallowing puts a smaller chemical wave through the bloodstream: slower onset, lower cliff, marginally less hook on the way down.</p><p><strong>Half dose.</strong> Provides a +1 bonus to Constitution saving throws against addiction from ingested substances split with this tool.</p>"
+      "value": "<p>A spring-loaded steel splitter with a hinged blade and a magnifying lid. Halving a dose before swallowing puts a smaller chemical wave through the bloodstream: slower onset, lower cliff, marginally less hook on the way down.</p><p><strong>Half dose.</strong> Provides a +1 bonus to saving throws against addiction from ingested substances split with this tool.</p>"
     },
     "type": {
       "value": "trinket"
@@ -40,7 +40,7 @@
       "transfer": true,
       "disabled": false,
       "duration": {},
-      "description": "<p>Grants a +1 bonus to Constitution saving throws against addiction to ingested substances split with the cutter.</p>",
+      "description": "<p>Grants a +1 bonus to saving throws against addiction to ingested substances split with the cutter.</p>",
       "system": {
         "changes": []
       },

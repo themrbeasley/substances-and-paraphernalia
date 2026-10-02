@@ -6,7 +6,7 @@
   "folder": "fhParaModern0001",
   "system": {
     "description": {
-      "value": "<p>A pack of fifty thin, gummed papers. One is consumed per smoked dose; the gate checks remaining count but does not itself decrement (track burn at the table).</p>"
+      "value": "<p>A pack of fifty thin, gummed papers. One is used up for each dose you smoke with them.</p>"
     },
     "type": {
       "value": "trinket"

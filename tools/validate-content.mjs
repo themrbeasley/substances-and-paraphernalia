@@ -41,6 +41,10 @@
  *   - any modifier-bearing AE: when kind="bypass" type="+N" requires non-zero
  *     numeric bonus; kind="tolerance" is removed (Count+Points model)
  *
+ * Gear coverage (spec D11): every substance's administration has gear from the
+ * same setting whose appliesTo includes it and that needs no attunement
+ * (`checkGearCoverage`, run across both packs).
+ *
  * Paraphernalia contract (v0.8.1):
  *   - flags["substances-and-paraphernalia"].kind === "paraphernalia"
  *   - flags[…].schemaVersion === 7
@@ -68,6 +72,7 @@ import {
   checkSubstance,
   checkParaphernalia,
   checkDocumentIds,
+  checkGearCoverage,
 } from "./validate-content-checks.mjs";
 import { checkLanguagePhrasing } from "./validate-content-language.mjs";
 
@@ -140,6 +145,12 @@ for (const file of paraphernaliaFiles) {
   errors.push(...result.errors);
   warnings.push(...result.warnings);
 }
+errors.push(
+  ...checkGearCoverage(
+    substanceFiles.filter((f) => !f.parseError).map((f) => f.data),
+    paraphernaliaFiles.filter((f) => !f.parseError).map((f) => f.data),
+  ),
+);
 for (const file of [...macroFiles, ...journalFiles]) {
   if (file.parseError) errors.push(`${file.relPath}: invalid JSON: ${file.parseError}`);
 }
