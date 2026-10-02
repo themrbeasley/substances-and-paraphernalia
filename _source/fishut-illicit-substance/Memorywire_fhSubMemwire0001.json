@@ -6,7 +6,7 @@
   "folder": "fhSubSciFi000001",
   "system": {
     "description": {
-      "value": "<p>A single-shot polymer thread, injected at the base of the skull, that overlays raw sense-data from compromised neural archives onto the user's perception. Slicers use it to read systems like books; the comedown is paranoid and fragmentary.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have advantage on Intelligence (Investigation) checks made to discern hidden patterns, encoded data, or surveillance feeds.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Constitution saving throw. On a failed save, you gain the Addicted condition from Memorywire (see below).</p><p><strong><em>Addicted from Memorywire.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (you tend to narrate other people's intentions before they do).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 11 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 15 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to injury substances, such as a Neural Shunt or an Athlete's Logbook.</em></p>"
+      "value": "<p>A single-shot polymer thread, injected at the base of the skull, that overlays raw sense-data from compromised neural archives onto the user's perception. Slicers use it to read hidden patterns, encoded data and surveillance feeds like books; the comedown is paranoid and fragmentary.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have advantage on Intelligence (Investigation) checks.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Wisdom saving throw. On a failed save, you gain the Addicted condition from Memorywire (see below).</p><p><strong><em>Addicted from Memorywire.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (you tend to narrate other people's intentions before they do).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, you go into withdrawal for 6 days, or half that if you succeed on a DC 14 Constitution saving throw. If you have no doses left, skip the Wisdom check. While in withdrawal you have disadvantage on Wisdom and Intelligence saving throws, and in combat you take 1d4 psychic damage at the start of each of your turns. Abstaining then takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><strong><em>Overdose.</em></strong> If you take a dose while still under its effects, or once your tolerance is at its limit, there is a 10% chance you overdose: you take 2d6 psychic damage and have the Incapacitated condition for 1 round.</p><p><strong><em>Dosing others.</em></strong> As an action, you can jab the needle into a creature within 5 feet with a melee attack roll using Dexterity. On a hit, the creature is dosed.</p><p><em>Requires ready paraphernalia that applies to injury substances, such as a Jet Injector or a Neural Shunt.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -101,6 +101,98 @@
           "name": ""
         },
         "name": ""
+      },
+      "fhActMemwire0002": {
+        "type": "attack",
+        "_id": "fhActMemwire0002",
+        "sort": 100000,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "inst",
+          "value": "",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEMemwire01Dos"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "ft",
+          "value": "5",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "type": "creature",
+            "count": "1",
+            "choice": false
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "name": "Jab with the needle",
+        "attack": {
+          "ability": "dex",
+          "bonus": "",
+          "flat": false,
+          "critical": {
+            "threshold": null
+          },
+          "type": {
+            "value": "melee",
+            "classification": "weapon"
+          }
+        },
+        "damage": {
+          "includeBase": false,
+          "parts": []
+        },
+        "otherActivityId": "none"
       }
     }
   },
@@ -112,8 +204,8 @@
       "addiction": {
         "enabled": true,
         "save": {
-          "ability": "con",
-          "dc": 13
+          "ability": "wis",
+          "dc": 14
         },
         "addictionEffectIds": [
           "fhAEMemwire01Adc"
@@ -121,18 +213,30 @@
       },
       "withdrawal": {
         "enabled": true,
-        "dc": 15,
+        "dc": 14,
         "abstain": {
           "ability": "wis",
-          "dc": 11
+          "dc": 12
         },
         "duration": {
-          "value": 3,
+          "value": 6,
           "unit": "days"
         },
         "effectIds": [
           "fhAEMemwire01Wit"
         ]
+      },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Too much Memorywire: 2d6 psychic damage and Incapacitated for 1 round.",
+        "effectIds": [
+          "fhAEMemwire01Ovd"
+        ],
+        "damage": {
+          "formula": "2d6",
+          "type": "psychic"
+        }
       },
       "schemaVersion": 7
     }
@@ -148,9 +252,15 @@
         "value": 600,
         "units": "seconds"
       },
-      "description": "<p>Advantage on Intelligence (Investigation) checks for hidden patterns, encoded data, or surveillance feeds.</p>",
+      "description": "<p>Advantage on Intelligence (Investigation) checks.</p>",
       "system": {
         "changes": [
+          {
+            "key": "system.skills.inv.roll.mode",
+            "value": "1",
+            "priority": 20,
+            "type": "add"
+          },
           {
             "key": "macro.tokenMagic",
             "value": "fishut-tmfx-scifi-mind-altering",
@@ -178,7 +288,14 @@
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Charisma checks.</p>",
       "system": {
-        "changes": []
+        "changes": [
+          {
+            "key": "system.abilities.cha.check.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          }
+        ]
       },
       "flags": {
         "substances-and-paraphernalia": {
@@ -194,9 +311,27 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "description": "<p>Disadvantage on Wisdom and Intelligence saving throws, and in combat 1d4 psychic damage at the start of each of your turns.</p>",
       "system": {
         "changes": [
+          {
+            "key": "system.abilities.wis.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.int.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "flags.midi-qol.OverTime",
+            "value": "turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal",
+            "priority": 20,
+            "type": "custom"
+          },
           {
             "key": "flags.substances-and-paraphernalia.vignetteColor",
             "value": "#1f5d99",
@@ -211,6 +346,49 @@
         }
       },
       "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Wit"
+    },
+    {
+      "_id": "fhAEMemwire01Ovd",
+      "name": "Memorywire Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 1,
+        "units": "rounds"
+      },
+      "description": "<p>Too much Memorywire: 2d6 psychic damage and Incapacitated for 1 round.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Ovd"
+    },
+    {
+      "_id": "fhAEMemwire01Dos",
+      "name": "Dosed with Memorywire",
+      "img": "icons/svg/item-bag.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "",
+      "statuses": [],
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "dose"
+        }
+      },
+      "_key": "!items.effects!fhSubMemwire0001.fhAEMemwire01Dos"
     }
   ],
   "ownership": {

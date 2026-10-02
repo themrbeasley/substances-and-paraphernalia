@@ -7,6 +7,8 @@ import {
   firstSelfDoseActivity,
   spendsDrug,
   drugUuidFrom,
+  doseTurn,
+  doseLands,
   findOwnCopy,
   emptyCopyData,
 } from "../../scripts/data/dose-marker.js";
@@ -123,5 +125,40 @@ describe("emptyCopyData", () => {
     assert.deepEqual(copy.effects, [{ _id: "fhAEVoltBeansDos" }]);
     assert.equal(copy.system.quantity, 0);
     assert.equal(copy.system.uses.spent, 0);
+  });
+});
+
+describe("doseTurn", () => {
+  const combat = { id: "cbt1", started: true, round: 2, turn: 3 };
+  it("a started combat gives its id, round and turn", () => {
+    assert.equal(doseTurn(combat, 500), "cbt1.2.3");
+  });
+  it("a new turn gives a different value", () => {
+    assert.notEqual(doseTurn({ ...combat, turn: 4 }, 500), doseTurn(combat, 500));
+    assert.notEqual(doseTurn({ ...combat, round: 3, turn: 0 }, 500), doseTurn(combat, 500));
+  });
+  it("no combat, or one not started, gives the world time", () => {
+    assert.equal(doseTurn(null, 500), "time.500");
+    assert.equal(doseTurn(undefined, 500), "time.500");
+    assert.equal(doseTurn({ ...combat, started: false }, 500), "time.500");
+  });
+});
+
+describe("doseLands", () => {
+  it("lands with no previous dose", () => {
+    assert.equal(doseLands(undefined, "t1", false), true);
+    assert.equal(doseLands(undefined, "t1", true), true);
+  });
+  it("two direct doses in the same turn both land", () => {
+    assert.equal(doseLands({ turn: "t1", tick: false }, "t1", false), true);
+  });
+  it("a cloud tick after a dose in the same turn doesn't land", () => {
+    assert.equal(doseLands({ turn: "t1", tick: false }, "t1", true), false);
+  });
+  it("a direct dose after a cloud tick in the same turn doesn't land", () => {
+    assert.equal(doseLands({ turn: "t1", tick: true }, "t1", false), false);
+  });
+  it("a different turn lands", () => {
+    assert.equal(doseLands({ turn: "t1", tick: true }, "t2", true), true);
   });
 });

@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A pale silver tincture distilled from leaves harvested only on cloudless nights. Bards swear by it; sober courts forbid it. The taste is faintly metallic and the aftertaste hums in the back of the throat.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you speak in unintended cadences and have advantage on Charisma (Persuasion) checks made to convince listeners of small or beautiful things.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 12 Constitution saving throw. On a failed save, you gain the Addicted condition from Moonleaf Tincture (see below).</p><p><strong><em>Addicted from Moonleaf Tincture.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Intelligence saving throws (your thoughts wander toward verses you can't quite finish).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 10 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 10 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as a Tincture Dropper.</em></p>"
+      "value": "<p>A pale silver tincture distilled from leaves harvested only on cloudless nights. Bards swear by it; sober courts forbid it. The taste is faintly metallic and the aftertaste hums in the back of the throat. Users speak in unintended cadences and swear the small, beautiful things are easier to say.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have advantage on Charisma (Persuasion) checks.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 13 Wisdom saving throw. On a failed save, you gain the Addicted condition from Moonleaf Tincture (see below).</p><p><strong><em>Addicted from Moonleaf Tincture.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Intelligence saving throws (your thoughts wander toward verses you can't quite finish).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, you go into withdrawal for 5 days, or half that if you succeed on a DC 13 Constitution saving throw. If you have no doses left, skip the Wisdom check. While in withdrawal you have disadvantage on Wisdom and Intelligence saving throws, and in combat you take 1d4 psychic damage at the start of each of your turns. Abstaining then takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><strong><em>Overdose.</em></strong> If you take a dose while still under its effects, or once your tolerance is at its limit, there is a 10% chance you overdose: you take 2d6 psychic damage and have the Incapacitated condition for 1 round.</p><p><strong><em>Dosing others.</em></strong> As an action, you can slip a dose into food or drink within 5 feet. A creature that consumes it is dosed.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as an Apothecary's Vial or the Tongue of the Oracle.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -101,6 +101,87 @@
           "name": ""
         },
         "name": ""
+      },
+      "fhActMoonleaf002": {
+        "type": "utility",
+        "_id": "fhActMoonleaf002",
+        "sort": 100000,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "inst",
+          "value": "",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEMoonleafDos1"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "ft",
+          "value": "5",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "type": "creature",
+            "count": "1",
+            "choice": false
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
+        "name": "Slip into food or drink"
       }
     }
   },
@@ -112,8 +193,8 @@
       "addiction": {
         "enabled": true,
         "save": {
-          "ability": "con",
-          "dc": 12
+          "ability": "wis",
+          "dc": 13
         },
         "addictionEffectIds": [
           "fhAEMoonleafAdc1"
@@ -121,18 +202,30 @@
       },
       "withdrawal": {
         "enabled": true,
-        "dc": 10,
+        "dc": 13,
         "abstain": {
           "ability": "wis",
-          "dc": 10
+          "dc": 12
         },
         "duration": {
-          "value": 3,
+          "value": 5,
           "unit": "days"
         },
         "effectIds": [
           "fhAEMoonleafWit1"
         ]
+      },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 10,
+        "description": "Too much Moonleaf Tincture: 2d6 psychic damage and Incapacitated for 1 round.",
+        "effectIds": [
+          "fhAEMoonleafOvd1"
+        ],
+        "damage": {
+          "formula": "2d6",
+          "type": "psychic"
+        }
       },
       "schemaVersion": 7
     }
@@ -148,9 +241,15 @@
         "value": 3600,
         "units": "seconds"
       },
-      "description": "<p>Advantage on Charisma (Persuasion) checks for small or beautiful things.</p>",
+      "description": "<p>Advantage on Charisma (Persuasion) checks.</p>",
       "system": {
         "changes": [
+          {
+            "key": "system.skills.per.roll.mode",
+            "value": "1",
+            "priority": 20,
+            "type": "add"
+          },
           {
             "key": "macro.tokenMagic",
             "value": "fishut-tmfx-fantasy-mind-altering",
@@ -178,7 +277,14 @@
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Intelligence saving throws.</p>",
       "system": {
-        "changes": []
+        "changes": [
+          {
+            "key": "system.abilities.int.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          }
+        ]
       },
       "flags": {
         "substances-and-paraphernalia": {
@@ -194,9 +300,27 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "description": "<p>Disadvantage on Wisdom and Intelligence saving throws, and in combat 1d4 psychic damage at the start of each of your turns.</p>",
       "system": {
         "changes": [
+          {
+            "key": "system.abilities.wis.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.int.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "flags.midi-qol.OverTime",
+            "value": "turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal",
+            "priority": 20,
+            "type": "custom"
+          },
           {
             "key": "flags.substances-and-paraphernalia.vignetteColor",
             "value": "#3a5e84",
@@ -211,6 +335,49 @@
         }
       },
       "_key": "!items.effects!fhSubMoonleaf001.fhAEMoonleafWit1"
+    },
+    {
+      "_id": "fhAEMoonleafOvd1",
+      "name": "Moonleaf Tincture Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": [
+        "incapacitated"
+      ],
+      "duration": {
+        "value": 1,
+        "units": "rounds"
+      },
+      "description": "<p>Too much Moonleaf Tincture: 2d6 psychic damage and Incapacitated for 1 round.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubMoonleaf001.fhAEMoonleafOvd1"
+    },
+    {
+      "_id": "fhAEMoonleafDos1",
+      "name": "Dosed with Moonleaf Tincture",
+      "img": "icons/svg/item-bag.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "",
+      "statuses": [],
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "dose"
+        }
+      },
+      "_key": "!items.effects!fhSubMoonleaf001.fhAEMoonleafDos1"
     }
   ],
   "ownership": {
