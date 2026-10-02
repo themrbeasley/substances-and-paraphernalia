@@ -13,7 +13,7 @@ import { runDosePipeline } from "./addiction.js";
 import { logger } from "../logger.js";
 
 /** `${creature uuid}|${drug uuid}` → { turn, tick } of that drug's last dose on that creature. */
-// ponytail: per-client map, so a burst marker made on one client and a tick on another aren't deduped; move it to an actor flag if the live test shows that.
+// ponytail: per-client map, so a dose made on one client and a cloud tick on another aren't deduped; move it to an actor flag if the live test shows that.
 const lastDose = new Map();
 
 export function registerDoseOthers() {
