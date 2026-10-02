@@ -1,4 +1,5 @@
 import { MODULE_ID } from "../config.js";
+import { isSubstance } from "./flag-schema.js";
 
 /**
  * The dose marker (spec v0.10.0 D1): an effect on a drug, role "dose", that a
@@ -49,7 +50,7 @@ export function findOwnCopy(items, source) {
   const list = [...(items ?? [])];
   return (
     list.find((i) => i.id === source.id) ??
-    list.find((i) => i.name === source.name && i.flags?.[MODULE_ID]?.kind === "substance") ??
+    list.find((i) => i.name === source.name && isSubstance(i)) ??
     null
   );
 }

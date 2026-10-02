@@ -82,9 +82,11 @@ describe("drugUuidFrom", () => {
 });
 
 describe("findOwnCopy", () => {
-  const sameId = { id: "fhSubVoltBeans01", name: "Voltbeans", flags: { [SCOPE]: { kind: "substance" } } };
-  const sameName = { id: "worldCopy0000001", name: "Voltbeans", flags: { [SCOPE]: { kind: "substance" } } };
-  const sword = { id: "sword00000000001", name: "Voltbeans", flags: {} };
+  // Items answer flag reads through getFlag, as Foundry's do (flag-schema.js).
+  const kindStub = (kind) => (_scope, key) => (key === "kind" ? kind : undefined);
+  const sameId = { id: "fhSubVoltBeans01", name: "Voltbeans", getFlag: kindStub("substance") };
+  const sameName = { id: "worldCopy0000001", name: "Voltbeans", getFlag: kindStub("substance") };
+  const sword = { id: "sword00000000001", name: "Voltbeans", getFlag: kindStub(undefined) };
   const source = { id: "fhSubVoltBeans01", name: "Voltbeans" };
   it("prefers the same id, then a drug with the same name", () => {
     assert.equal(findOwnCopy([sameName, sameId], source), sameId);
