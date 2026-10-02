@@ -6,6 +6,7 @@ import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
 import { keepLastDose } from "../data/last-dose.js";
+import { doseMarkerIds, dosesOthers, spendsDrug } from "../data/dose-marker.js";
 
 // preUseActivity is synchronous, so the override flow cancels the current
 // attempt and re-triggers activity.use() after the dialog resolves. The
@@ -61,12 +62,16 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
   if (!item || !actor) return true;
   if (!isSubstance(item)) return true;
 
-  // An empty drug stays at 0 doses (keepLastDose); it can't be used, and
-  // there's no "Use anyway".
-  if ((Number(item.system?.quantity) || 0) < 1) {
+  const markers = doseMarkerIds(item.effects);
+  // An empty drug can't be spent (keepLastDose keeps it at 0), and there's no
+  // "Use anyway". A cloud tick spends nothing, so it keeps working after the
+  // last bomb (spec D9).
+  if (spendsDrug(activity) && (Number(item.system?.quantity) || 0) < 1) {
     ui.notifications.warn(game.i18n.format("FISHUT.Gating.NoDoses", { item: item.name }));
     return false;
   }
+  // Gear is for taking a drug yourself; dosing someone else needs none.
+  if (dosesOthers(activity, markers)) return true;
 
   if (!game.settings.get(MODULE_ID, "enforceParaphernalia")) return true;
 
