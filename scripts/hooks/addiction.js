@@ -24,7 +24,7 @@ import { attenuateChangeRows } from "../data/tolerance.js";
 import { isPriorHigh, isStrayHigh } from "../data/prior-high.js";
 import { doseMarkerIds, dosesOthers } from "../data/dose-marker.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
-import { durationToSeconds } from "../data/withdrawal-duration.js";
+import { withdrawalSeconds } from "../data/withdrawal-duration.js";
 import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { rollOverdoseAndApply } from "./overdose.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
@@ -502,12 +502,17 @@ export function toleranceMarkerName(item, count) {
  *
  * @param {Actor} actor
  * @param {Item}  item
- * @param {{elapsedSeconds?: number}} [opts]  Simulate Dose starts mid-withdrawal.
+ * @param {{elapsedSeconds?: number, halved?: boolean}} [opts]  `elapsedSeconds`:
+ *   Simulate Dose starts mid-withdrawal. `halved`: the Constitution save passed,
+ *   so withdrawal lasts half the authored length (permanent stays permanent).
  * @returns {Promise<ActiveEffect|null>} the first applied effect
  */
-export async function applyWithdrawalEffect(actor, item, { elapsedSeconds = 0 } = {}) {
-  const duration = getWithdrawalDuration(item);
-  const total = duration ? durationToSeconds(duration.value, duration.unit) : 0;
+export async function applyWithdrawalEffect(
+  actor,
+  item,
+  { elapsedSeconds = 0, halved = false } = {},
+) {
+  const total = withdrawalSeconds(getWithdrawalDuration(item), { halved });
   // 0 means permanent to prepareEffectPayload, so never let elapsed time reach it.
   const seconds = total > 0 ? Math.max(1, total - elapsedSeconds) : 0;
   const templates = findWithdrawalTemplates(item);
