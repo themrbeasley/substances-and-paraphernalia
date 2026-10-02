@@ -68,7 +68,8 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
 /**
  * One dose, in order (spec D10): a dose during withdrawal cancels it (D7);
  * the addiction save; the high, scaled by current tolerance; tolerance +1
- * (every dose, D9); the overdose check against the new total. The only
+ * (every dose, D9); the overdose check against the new total, or because the
+ * dose came while the drug's high was still on (D6). The only
  * post-use listener for substances. Simulate Dose runs it too.
  *
  * @param {Actor} actor
@@ -91,9 +92,14 @@ export async function runDosePipeline(actor, item) {
   if (getAddictionEnabled(item) && typeof getAddiction(item)?.save?.dc === "number") {
     await step("addiction save", () => rollSaveAndApply(actor, item));
   }
+  // Taking a drug while its high is still on you risks an overdose (spec D6).
+  // `active` is false for a switched-off effect; `duration.expired` marks one that has run out.
+  const stillHigh = actor.effects.some(
+    (e) => isPriorHigh(e, item) && e.active && !e.duration?.expired,
+  );
   await step("high", () => applyAlteredEffectGated(actor, item));
   await step("tolerance", () => incrementActorToleranceCount(actor, item));
-  await step("overdose", () => rollOverdoseAndApply(actor, item));
+  await step("overdose", () => rollOverdoseAndApply(actor, item, undefined, { stillHigh }));
   return failures;
 }
 
