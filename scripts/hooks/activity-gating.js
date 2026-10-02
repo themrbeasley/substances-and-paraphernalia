@@ -1,7 +1,7 @@
 import { MODULE_ID, labelKey } from "../config.js";
 import { getAppliesTo, isParaphernalia, isSubstance } from "../data/flag-schema.js";
 import { inspectParaphernaliaItem } from "../data/references.js";
-import { actorSatisfiesAdmin } from "../data/admin-match.js";
+import { actorSatisfiesAdmin, pickGearToSpend } from "../data/admin-match.js";
 import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
@@ -116,9 +116,33 @@ function buildOwnedParaphernalia(actor) {
       id: item.id,
       appliesTo: getAppliesTo(item),
       usable: inspectParaphernaliaItem(item).ready,
+      consumable: item.type === "consumable",
     });
   }
   return owned;
+}
+
+/**
+ * After a dose the user takes, use up one piece of single-use gear (spec D8):
+ * nothing when ready reusable gear covers the administration, else one use (or
+ * one item) of the ready consumable with the lowest id. "Use anyway" finds
+ * nothing ready, so nothing is spent.
+ *
+ * @param {Actor} actor
+ * @param {Item}  item  the drug that was dosed
+ * @returns {Promise<void>}
+ */
+export async function spendConsumableGear(actor, item) {
+  if (!game.settings.get(MODULE_ID, "enforceParaphernalia")) return;
+  const id = pickGearToSpend(buildOwnedParaphernalia(actor), item?.system?.type?.subtype);
+  const gear = id ? actor.items.get(id) : null;
+  if (!gear) return;
+  const max = Number(gear.system?.uses?.max) || 0;
+  if (max > 0) {
+    await gear.update({ "system.uses.spent": (Number(gear.system.uses.spent) || 0) + 1 });
+  } else {
+    await gear.update({ "system.quantity": Math.max(0, (Number(gear.system.quantity) || 0) - 1) });
+  }
 }
 
 async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig, admin) {

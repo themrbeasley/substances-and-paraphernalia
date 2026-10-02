@@ -27,6 +27,7 @@ import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { withdrawalSeconds } from "../data/withdrawal-duration.js";
 import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { rollOverdoseAndApply } from "./overdose.js";
+import { spendConsumableGear } from "./activity-gating.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
 
@@ -59,6 +60,8 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   if (dosesOthers(activity, doseMarkerIds(item.effects))) return;
   // Each step catches its own errors; this catches anything outside them.
   try {
+    // A gear-update failure must not skip the addiction save and the rest of the dose.
+    await spendConsumableGear(actor, item).catch((err) => logger.error("spending gear failed", err));
     await runDosePipeline(actor, item);
   } catch (err) {
     logger.error("dose flow failed", err);
