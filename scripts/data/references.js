@@ -82,4 +82,3 @@ export function inspectSubtypeOnActor(actor, subtype) {
 export function actorHasSubtype(actor, subtype) {
   return inspectSubtypeOnActor(actor, subtype).some((i) => i.ready);
 }
-

@@ -60,7 +60,9 @@ describe("prepareEffectPayload", () => {
   });
 
   it("clears a stale expired flag when keeping the template's duration", () => {
-    const stale = template({ duration: { value: 600, units: "seconds", expiry: "turnStart", expired: true } });
+    const stale = template({
+      duration: { value: 600, units: "seconds", expiry: "turnStart", expired: true },
+    });
     const data = prepareEffectPayload(stale, OPTS);
     assert.equal(data.duration.expired, false);
     assert.equal(data.duration.value, 600);

@@ -31,9 +31,7 @@
       "kind": "paraphernalia",
       "setting": "modern",
       "subtype": "rolling-papers",
-      "appliesTo": [
-        "inhaled"
-      ],
+      "appliesTo": ["inhaled"],
       "schemaVersion": 7
     }
   },

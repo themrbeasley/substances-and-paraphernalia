@@ -947,7 +947,12 @@ describe("checkSubstance: withdrawal effects can't remove themselves (v0.10.0)",
 
   it("errors on an OverTime row with a save and no keep-alive", () => {
     const file = withWithdrawalChanges([
-      { key: "flags.midi-qol.OverTime", type: "override", value: "turn=start,saveDC=13", priority: 20 },
+      {
+        key: "flags.midi-qol.OverTime",
+        type: "override",
+        value: "turn=start,saveDC=13",
+        priority: 20,
+      },
     ]);
     const { errors } = checkSubstance(file);
     assert.equal(errors.length, 1);

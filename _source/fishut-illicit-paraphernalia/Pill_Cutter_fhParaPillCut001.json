@@ -26,9 +26,7 @@
       "kind": "paraphernalia",
       "setting": "modern",
       "subtype": "pill-cutter",
-      "appliesTo": [
-        "ingested"
-      ],
+      "appliesTo": ["ingested"],
       "schemaVersion": 7
     }
   },
@@ -51,9 +49,7 @@
             "kind": "bypass",
             "type": "+N",
             "bonus": 1,
-            "appliesTo": [
-              "ingested"
-            ]
+            "appliesTo": ["ingested"]
           }
         }
       },

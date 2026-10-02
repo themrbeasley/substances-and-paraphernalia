@@ -1,9 +1,4 @@
-import {
-  getAeRole,
-  getAppliesTo,
-  getModifier,
-  isParaphernalia,
-} from "./flag-schema.js";
+import { getAeRole, getAppliesTo, getModifier, isParaphernalia } from "./flag-schema.js";
 import { pickBypassResolution } from "./modifier-resolution.js";
 
 /**
@@ -81,11 +76,7 @@ export async function consumeBypassIfAvailable(actor, substance) {
     if (block.usesPerDay !== undefined) {
       const uses = sourceItem?.system?.uses;
       hasUsesConfig =
-        !!uses &&
-        uses.max !== undefined &&
-        uses.max !== null &&
-        uses.max !== "" &&
-        uses.max !== 0;
+        !!uses && uses.max !== undefined && uses.max !== null && uses.max !== "" && uses.max !== 0;
       if (hasUsesConfig) {
         usesRemaining = typeof uses.value === "number" ? uses.value : Number(uses.value);
       }

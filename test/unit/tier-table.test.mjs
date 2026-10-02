@@ -54,13 +54,13 @@ test("snapDcToTier maps each ladder DC to its own tier", () => {
 });
 
 test("snapDcToTier snaps to nearest tier mid-ladder", () => {
-  assert.equal(snapDcToTier(7), 1);   // closer to 5
-  assert.equal(snapDcToTier(8), 2);   // |8-5|=3, |8-10|=2
-  assert.equal(snapDcToTier(12), 2);  // closer to 10
-  assert.equal(snapDcToTier(13), 3);  // |13-10|=3, |13-15|=2
-  assert.equal(snapDcToTier(17), 3);  // closer to 15
-  assert.equal(snapDcToTier(22), 4);  // closer to 20
-  assert.equal(snapDcToTier(28), 6);  // closer to 30
+  assert.equal(snapDcToTier(7), 1); // closer to 5
+  assert.equal(snapDcToTier(8), 2); // |8-5|=3, |8-10|=2
+  assert.equal(snapDcToTier(12), 2); // closer to 10
+  assert.equal(snapDcToTier(13), 3); // |13-10|=3, |13-15|=2
+  assert.equal(snapDcToTier(17), 3); // closer to 15
+  assert.equal(snapDcToTier(22), 4); // closer to 20
+  assert.equal(snapDcToTier(28), 6); // closer to 30
 });
 
 test("tierProfile returns full profile for each tier", () => {

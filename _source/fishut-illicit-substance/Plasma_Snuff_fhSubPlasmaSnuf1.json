@@ -178,9 +178,7 @@
         },
         "name": "Blow into a face",
         "save": {
-          "ability": [
-            "con"
-          ],
+          "ability": ["con"],
           "dc": {
             "calculation": "",
             "formula": "13"
@@ -204,9 +202,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectIds": [
-          "fhAEPlasSnufAdc1"
-        ]
+        "addictionEffectIds": ["fhAEPlasSnufAdc1"]
       },
       "withdrawal": {
         "enabled": true,
@@ -219,17 +215,13 @@
           "value": 2,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEPlasSnufWit1"
-        ]
+        "effectIds": ["fhAEPlasSnufWit1"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 15,
         "description": "Too much Plasma Snuff: 2d6 poison damage and Poisoned for 1 minute.",
-        "effectIds": [
-          "fhAEPlasSnufOvd1"
-        ],
+        "effectIds": ["fhAEPlasSnufOvd1"],
         "damage": {
           "formula": "2d6",
           "type": "poison"
@@ -285,9 +277,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom saving throws.</p>",
       "system": {
@@ -356,9 +346,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {
         "value": 60,
         "units": "seconds"

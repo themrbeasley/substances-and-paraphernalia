@@ -2,13 +2,13 @@
 
 The module ships five GM macros for clearing module-applied AEs from selected actors. Each follows the same pattern: flag-based primary match, regex name fallback.
 
-| Macro | Primary match | Regex fallback |
-|---|---|---|
-| **Remove Addiction** | `aeRole: "addiction"`, or an unflagged effect named with "addict" | `/addict/i` |
-| **Remove Tolerance** | `aeRole: "tolerance"` effects plus the actor's tolerance record | `/tolerance/i` |
-| **Remove Altered** | `aeRole: "altered"`, or an unflagged effect named with "altered" | `/altered/i` |
-| **Remove Overdose** | `aeRole: "overdose"`, or an unflagged effect named with "overdose" | `/overdose/i` |
-| **Remove Withdrawal** | `aeRole: "withdrawal"`, or an unflagged effect named with "withdraw", plus leftover withdrawal records with no effect | `/withdraw/i` |
+| Macro                 | Primary match                                                                                                         | Regex fallback |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **Remove Addiction**  | `aeRole: "addiction"`, or an unflagged effect named with "addict"                                                     | `/addict/i`    |
+| **Remove Tolerance**  | `aeRole: "tolerance"` effects plus the actor's tolerance record                                                       | `/tolerance/i` |
+| **Remove Altered**    | `aeRole: "altered"`, or an unflagged effect named with "altered"                                                      | `/altered/i`   |
+| **Remove Overdose**   | `aeRole: "overdose"`, or an unflagged effect named with "overdose"                                                    | `/overdose/i`  |
+| **Remove Withdrawal** | `aeRole: "withdrawal"`, or an unflagged effect named with "withdraw", plus leftover withdrawal records with no effect | `/withdraw/i`  |
 
 ## How they work
 

@@ -196,9 +196,7 @@
           "ability": "wis",
           "dc": 13
         },
-        "addictionEffectIds": [
-          "fhAEMoonleafAdc1"
-        ]
+        "addictionEffectIds": ["fhAEMoonleafAdc1"]
       },
       "withdrawal": {
         "enabled": true,
@@ -211,17 +209,13 @@
           "value": 5,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEMoonleafWit1"
-        ]
+        "effectIds": ["fhAEMoonleafWit1"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Moonleaf Tincture: 2d6 psychic damage and Incapacitated for 1 round.",
-        "effectIds": [
-          "fhAEMoonleafOvd1"
-        ],
+        "effectIds": ["fhAEMoonleafOvd1"],
         "damage": {
           "formula": "2d6",
           "type": "psychic"
@@ -271,9 +265,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Intelligence saving throws.</p>",
       "system": {
@@ -342,9 +334,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "incapacitated"
-      ],
+      "statuses": ["incapacitated"],
       "duration": {
         "value": 1,
         "units": "rounds"

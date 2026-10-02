@@ -207,9 +207,7 @@
           "ability": "con",
           "dc": 15
         },
-        "addictionEffectIds": [
-          "fhAERflxInjctAdc"
-        ]
+        "addictionEffectIds": ["fhAERflxInjctAdc"]
       },
       "withdrawal": {
         "enabled": true,
@@ -222,17 +220,13 @@
           "value": 4,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAERflxInjctWit"
-        ]
+        "effectIds": ["fhAERflxInjctWit"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Reflex Injector: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
-        "effectIds": [
-          "fhAERflxInjctOvd"
-        ],
+        "effectIds": ["fhAERflxInjctOvd"],
         "damage": {
           "formula": "2d8",
           "type": "poison"
@@ -294,9 +288,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on saving throws against being Frightened. Walking speed reduced by 5 ft.</p>",
       "system": {
@@ -377,10 +369,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned",
-        "incapacitated"
-      ],
+      "statuses": ["poisoned", "incapacitated"],
       "duration": {
         "value": 60,
         "units": "seconds"

@@ -8,16 +8,29 @@
  */
 
 const CONDITIONS = [
-  "blinded", "charmed", "deafened", "exhaustion", "frightened",
-  "grappled", "incapacitated", "invisible", "paralyzed", "petrified",
-  "poisoned", "prone", "restrained", "stunned", "unconscious",
+  "blinded",
+  "charmed",
+  "deafened",
+  "exhaustion",
+  "frightened",
+  "grappled",
+  "incapacitated",
+  "invisible",
+  "paralyzed",
+  "petrified",
+  "poisoned",
+  "prone",
+  "restrained",
+  "stunned",
+  "unconscious",
 ];
 
 const RULES = [
   {
     id: "once-per-day",
     pattern: /once per day/i,
-    message: 'use "regains all expended uses at dawn" or "you can\'t use this again until you finish a Long Rest"',
+    message:
+      'use "regains all expended uses at dawn" or "you can\'t use this again until you finish a Long Rest"',
   },
   {
     id: "become-condition",

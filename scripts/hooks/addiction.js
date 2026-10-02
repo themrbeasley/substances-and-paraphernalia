@@ -61,7 +61,9 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   // Each step catches its own errors; this catches anything outside them.
   try {
     // A gear-update failure must not skip the addiction save and the rest of the dose.
-    await spendConsumableGear(actor, item).catch((err) => logger.error("spending gear failed", err));
+    await spendConsumableGear(actor, item).catch((err) =>
+      logger.error("spending gear failed", err),
+    );
     await runDosePipeline(actor, item);
   } catch (err) {
     logger.error("dose flow failed", err);

@@ -1,7 +1,12 @@
 // test/unit/tolerance.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { currentPoints, applyAttenuation, decayCount, attenuateChangeRows } from "../../scripts/data/tolerance.js";
+import {
+  currentPoints,
+  applyAttenuation,
+  decayCount,
+  attenuateChangeRows,
+} from "../../scripts/data/tolerance.js";
 
 test("currentPoints returns count * rate", () => {
   assert.equal(currentPoints(0, 3), 0);
@@ -81,7 +86,9 @@ test("attenuateChangeRows scales native number values (V14-migrated world items)
 });
 
 test("attenuateChangeRows passes non-numeric values through untouched (Token Magic preset names)", () => {
-  const rows = [{ key: "macro.tokenMagic", type: "custom", value: "fishut-tmfx-fantasy-stimulant" }];
+  const rows = [
+    { key: "macro.tokenMagic", type: "custom", value: "fishut-tmfx-fantasy-stimulant" },
+  ];
   assert.deepEqual(attenuateChangeRows(rows, 1, CURVE), rows);
 });
 
@@ -104,7 +111,11 @@ test("attenuateChangeRows leaves non-numeric values untouched at any tolerance (
   for (const count of [0, 1]) {
     for (const value of [true, false, null, [], "", "  "]) {
       const rows = [{ key: "system.attributes.movement.hover", type: "override", value }];
-      assert.deepEqual(attenuateChangeRows(rows, count, CURVE)[0].value, value, `count ${count}, value ${JSON.stringify(value)}`);
+      assert.deepEqual(
+        attenuateChangeRows(rows, count, CURVE)[0].value,
+        value,
+        `count ${count}, value ${JSON.stringify(value)}`,
+      );
     }
   }
 });

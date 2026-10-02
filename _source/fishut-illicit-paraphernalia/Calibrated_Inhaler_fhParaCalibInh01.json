@@ -26,9 +26,7 @@
       "kind": "paraphernalia",
       "setting": "modern",
       "subtype": "inhaler",
-      "appliesTo": [
-        "inhaled"
-      ],
+      "appliesTo": ["inhaled"],
       "schemaVersion": 7
     }
   },
@@ -51,9 +49,7 @@
             "kind": "bypass",
             "type": "+N",
             "bonus": 2,
-            "appliesTo": [
-              "inhaled"
-            ]
+            "appliesTo": ["inhaled"]
           }
         }
       },

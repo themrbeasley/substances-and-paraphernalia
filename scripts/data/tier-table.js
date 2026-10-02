@@ -46,5 +46,11 @@ export function snapDcToTier(dc) {
 export function tierProfile(tier) {
   const t = Math.max(1, Math.min(6, Math.trunc(Number(tier) || 1)));
   const i = t - 1;
-  return { tier: t, dc: LADDER[i], rate: RATES[i], threshold: THRESHOLDS[i], maxCount: MAX_COUNTS[i] };
+  return {
+    tier: t,
+    dc: LADDER[i],
+    rate: RATES[i],
+    threshold: THRESHOLDS[i],
+    maxCount: MAX_COUNTS[i],
+  };
 }

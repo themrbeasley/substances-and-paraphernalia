@@ -35,18 +35,36 @@ test("a dose taken while still high opens the roll by itself", () => {
 
 test("rollOverdoseChance returns true when roll <= effective chance", () => {
   // chancePercent 5, no modifier; roll 5 → hit
-  assert.equal(rollOverdoseChance(() => 5, 5, 0), true);
-  assert.equal(rollOverdoseChance(() => 1, 5, 0), true);
-  assert.equal(rollOverdoseChance(() => 6, 5, 0), false);
+  assert.equal(
+    rollOverdoseChance(() => 5, 5, 0),
+    true,
+  );
+  assert.equal(
+    rollOverdoseChance(() => 1, 5, 0),
+    true,
+  );
+  assert.equal(
+    rollOverdoseChance(() => 6, 5, 0),
+    false,
+  );
 });
 
 test("rollOverdoseChance applies chanceModifier (clamped 0..100)", () => {
   // chance 95 + modifier 10 → effective 100
-  assert.equal(rollOverdoseChance(() => 100, 95, 10), true);
+  assert.equal(
+    rollOverdoseChance(() => 100, 95, 10),
+    true,
+  );
   // chance 5 - modifier 10 → effective 0; no roll <= 0
-  assert.equal(rollOverdoseChance(() => 1, 5, -10), false);
+  assert.equal(
+    rollOverdoseChance(() => 1, 5, -10),
+    false,
+  );
 });
 
 test("rollOverdoseChance returns false when chance is 0", () => {
-  assert.equal(rollOverdoseChance(() => 1, 0, 0), false);
+  assert.equal(
+    rollOverdoseChance(() => 1, 0, 0),
+    false,
+  );
 });

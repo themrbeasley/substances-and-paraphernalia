@@ -196,9 +196,7 @@
           "ability": "con",
           "dc": 15
         },
-        "addictionEffectIds": [
-          "fhAEBlackLiftAdc"
-        ]
+        "addictionEffectIds": ["fhAEBlackLiftAdc"]
       },
       "withdrawal": {
         "enabled": true,
@@ -211,17 +209,13 @@
           "value": 4,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEBlackLiftWit"
-        ]
+        "effectIds": ["fhAEBlackLiftWit"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Black Lift: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
-        "effectIds": [
-          "fhAEBlackLiftOvd"
-        ],
+        "effectIds": ["fhAEBlackLiftOvd"],
         "damage": {
           "formula": "2d8",
           "type": "poison"
@@ -283,9 +277,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Constitution saving throws. Walking speed reduced by 5 ft.</p>",
       "system": {
@@ -366,10 +358,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned",
-        "incapacitated"
-      ],
+      "statuses": ["poisoned", "incapacitated"],
       "duration": {
         "value": 60,
         "units": "seconds"

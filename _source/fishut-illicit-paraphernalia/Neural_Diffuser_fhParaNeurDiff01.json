@@ -26,10 +26,7 @@
       "kind": "paraphernalia",
       "setting": "sciFi",
       "subtype": "inhaler",
-      "appliesTo": [
-        "inhaled",
-        "contact"
-      ],
+      "appliesTo": ["inhaled", "contact"],
       "schemaVersion": 7
     }
   },
