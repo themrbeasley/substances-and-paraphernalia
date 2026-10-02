@@ -31,9 +31,24 @@ describe("dose marker", () => {
     assert.equal(dosesOthers({}, ["fhAEVoltBeansDos"]), false);
   });
 
+  it("an activity that places a dosing cloud doses others, with no marker", () => {
+    const bomb = { _id: "fhActStellMist03", effects: [], regionBehavior: { enabled: true } };
+    assert.equal(dosesOthers(bomb, ["fhAEStellMistDos"]), true);
+  });
+
+  it("an activity with neither a marker nor a cloud doses its user", () => {
+    const plain = { _id: "fhActStellarMist", effects: [], regionBehavior: { enabled: false } };
+    assert.equal(dosesOthers(plain, ["fhAEStellMistDos"]), false);
+  });
+
   it("the relapse uses the first activity that doses the user", () => {
     assert.equal(firstSelfDoseActivity([spike, selfUse], ["fhAEVoltBeansDos"]), selfUse);
     assert.equal(firstSelfDoseActivity([spike], ["fhAEVoltBeansDos"]), null);
+  });
+
+  it("the relapse never picks the gas bomb", () => {
+    const bomb = { _id: "fhActStellMist03", effects: [], regionBehavior: { enabled: true } };
+    assert.equal(firstSelfDoseActivity([bomb, selfUse], ["fhAEVoltBeansDos"]), selfUse);
   });
 });
 

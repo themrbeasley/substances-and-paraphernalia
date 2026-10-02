@@ -16,8 +16,13 @@ export function doseMarkerIds(effects) {
     .map((e) => e._id ?? e.id);
 }
 
-/** An activity that lists a dose marker doses its targets, not its user. */
+/**
+ * An activity that lists a dose marker, or places a cloud (a Midi region
+ * behavior, like the gas bomb) whose own activity doses whoever is in it,
+ * doses others, not its user.
+ */
 export function dosesOthers(activity, markerIds) {
+  if (activity?.regionBehavior?.enabled === true) return true;
   return [...(activity?.effects ?? [])].some((ref) => markerIds.includes(ref?._id));
 }
 

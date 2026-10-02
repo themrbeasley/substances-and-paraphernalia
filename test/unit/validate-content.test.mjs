@@ -1120,6 +1120,30 @@ describe("checkSubstance: dose marker and dose-others activities (v0.10.0)", () 
   it("does not ask a save activity for otherActivityId", () => {
     assert.deepEqual(checkSubstance(withMarker({ others: { type: "save" } })).errors, []);
   });
+
+  // The gas bomb only places the cloud; the cloud's own activity lists the marker.
+  const bomb = {
+    _id: "act3",
+    name: "Throw as a gas bomb",
+    type: "utility",
+    target: { affects: { type: "creature" } },
+    effects: [],
+    regionBehavior: { enabled: true },
+  };
+
+  it("accepts a gas bomb that lists no marker beside the cloud's activity", () => {
+    const file = withMarker();
+    file.data.system.activities.act3 = bomb;
+    assert.deepEqual(checkSubstance(file).errors, []);
+  });
+
+  it("counts the gas bomb as dosing others for the relapse rule", () => {
+    const file = withMarker();
+    file.data.system.activities.act1 = { ...bomb, _id: "act1" };
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /needs an activity that doses the user, for the Long Rest relapse/);
+  });
 });
 
 describe("checkGearCoverage", () => {

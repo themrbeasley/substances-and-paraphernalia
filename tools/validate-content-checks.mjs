@@ -10,6 +10,7 @@
  */
 
 import { DAMAGE_TYPES, overdoseDamage } from "../scripts/data/overdose-damage.js";
+import { dosesOthers } from "../scripts/data/dose-marker.js";
 
 export const FLAG_SCOPE = "substances-and-paraphernalia";
 export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]);
@@ -174,6 +175,7 @@ function findEffect(data, id) {
  *   - dose marker (aeRole "dose"): no statuses, no changes, transfer false, no
  *     sourceSubstanceId; activities listing it target others (attacks set
  *     otherActivityId "none") and at least one activity still doses the user
+ *     (one that places a dosing cloud, like the gas bomb, doses others)
  *
  * @param {{relPath: string, data: object}} file
  * @returns {{errors: string[], warnings: string[]}}
@@ -437,9 +439,8 @@ export function checkSubstance(file) {
     }
   }
   const activities = Object.values(data?.system?.activities ?? {});
-  const others = activities.filter((a) =>
-    (a?.effects ?? []).some((r) => markerIds.includes(r?._id)),
-  );
+  // The same test the runtime uses: a gas bomb that only places the cloud doses others too.
+  const others = activities.filter((a) => dosesOthers(a, markerIds));
   for (const a of others) {
     const label = a.name || a._id;
     if (a.target?.affects?.type === "self") {

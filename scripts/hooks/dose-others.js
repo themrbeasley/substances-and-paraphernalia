@@ -35,8 +35,8 @@ export function onPreCreateDoseMarker(effect, _data, _options, _userId) {
   if (effect.flags?.[MODULE_ID]?.aeRole !== DOSE_ROLE) return undefined;
   const activityUuid = effect.flags?.dae?.activity;
   const uuid = drugUuidFrom({ activityUuid, origin: effect.origin });
-  // Only a cloud tick (an activity that spends nothing) is limited (spec D2): the entry tick
-  // Foundry fires when Midi adds the cloud's behavior lands in the same turn as the burst.
+  // Only a cloud tick (an activity that spends nothing) is limited (spec D2): the cloud doses
+  // a creature at most once per turn, and a tick and a direct dose don't both land in one turn.
   const activityId =
     typeof activityUuid === "string" ? activityUuid.split(".Activity.")[1] : undefined;
   const drug = fromUuidSync(uuid, { strict: false });
