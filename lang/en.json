@@ -230,7 +230,7 @@
   "FISHUT.DetailsTab.Field.WithdrawalDurationUnit.months": "Months",
   "FISHUT.DetailsTab.Field.ToleranceDecay": "Tolerance Decay (per Abstain)",
   "FISHUT.DetailsTab.Withdrawal.Header": "Withdrawal",
-  "FISHUT.DetailsTab.Withdrawal.Enabled": "Track withdrawal on save fail",
+  "FISHUT.DetailsTab.Withdrawal.Enabled": "Withdrawal when abstaining",
   "FISHUT.Details.Preview.AppliesTo": "Required for: {admins}",
   "FISHUT.Details.TierPreview": "Tier preview: {label} (Rate {rate}, Threshold {threshold}, MaxCount {maxCount})",
   "FISHUT.Details.Addiction.Legend": "Addictive",
