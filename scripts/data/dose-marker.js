@@ -45,6 +45,11 @@ export function drugUuidFrom({ activityUuid, origin } = {}) {
   return null;
 }
 
+/** The turn a dose lands in (spec D2, once per turn): combat round and turn, else world time. */
+export function doseTurn(combat, worldTime) {
+  return combat?.started ? `${combat.id}.${combat.round}.${combat.turn}` : `time.${worldTime}`;
+}
+
 /** The dosed creature's own copy: same id, else a drug with the same name. */
 export function findOwnCopy(items, source) {
   const list = [...(items ?? [])];

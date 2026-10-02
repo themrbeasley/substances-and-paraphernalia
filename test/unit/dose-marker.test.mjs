@@ -7,6 +7,7 @@ import {
   firstSelfDoseActivity,
   spendsDrug,
   drugUuidFrom,
+  doseTurn,
   findOwnCopy,
   emptyCopyData,
 } from "../../scripts/data/dose-marker.js";
@@ -123,5 +124,21 @@ describe("emptyCopyData", () => {
     assert.deepEqual(copy.effects, [{ _id: "fhAEVoltBeansDos" }]);
     assert.equal(copy.system.quantity, 0);
     assert.equal(copy.system.uses.spent, 0);
+  });
+});
+
+describe("doseTurn", () => {
+  const combat = { id: "cbt1", started: true, round: 2, turn: 3 };
+  it("a started combat gives its id, round and turn", () => {
+    assert.equal(doseTurn(combat, 500), "cbt1.2.3");
+  });
+  it("a new turn gives a different value", () => {
+    assert.notEqual(doseTurn({ ...combat, turn: 4 }, 500), doseTurn(combat, 500));
+    assert.notEqual(doseTurn({ ...combat, round: 3, turn: 0 }, 500), doseTurn(combat, 500));
+  });
+  it("no combat, or one not started, gives the world time", () => {
+    assert.equal(doseTurn(null, 500), "time.500");
+    assert.equal(doseTurn(undefined, 500), "time.500");
+    assert.equal(doseTurn({ ...combat, started: false }, 500), "time.500");
   });
 });
