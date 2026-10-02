@@ -308,6 +308,23 @@ export function checkSubstance(file) {
         `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks, which duplicates poisoned. Escalate instead (exhaustion, disadv on saves, speed reduction, stat penalty).`,
       );
     }
+    // v0.10.0 (D4): deleting the last withdrawal effect ends the addiction,
+    // so nothing on the effect may delete it early.
+    for (const c of Array.isArray(withdrawalAe.system?.changes) ? withdrawalAe.system.changes : []) {
+      if (c?.key !== "flags.midi-qol.OverTime") continue;
+      for (const problem of overTimeProblems(c.value)) {
+        err(`withdrawal AE "${withdrawalAe.name}" OverTime row: ${problem}`);
+      }
+    }
+    const dae = withdrawalAe.flags?.dae;
+    if (Array.isArray(dae?.specialDuration) && dae.specialDuration.length > 0) {
+      err(`withdrawal AE "${withdrawalAe.name}": DAE special durations end withdrawal early`);
+    }
+    if (dae?.stackable === "none" || dae?.stackable === "noneName") {
+      err(
+        `withdrawal AE "${withdrawalAe.name}": DAE stacking "${dae.stackable}" can delete the effect, which ends withdrawal early`,
+      );
+    }
   }
 
   // v0.4: overdose.effectIds resolution + name-contract.
@@ -525,6 +542,32 @@ function resolveEffectIdList(plural, singular) {
   }
   if (typeof singular === "string" && singular.length > 0) return [singular];
   return [];
+}
+
+/**
+ * Problems with a Midi OverTime value on a withdrawal effect: anything that
+ * could delete the effect early, which ends the addiction (spec D4).
+ */
+export function overTimeProblems(value) {
+  const parts = Object.fromEntries(
+    String(value ?? "")
+      .split(",")
+      .map((s) => s.split("=").map((x) => x.trim()))
+      .filter(([k]) => k),
+  );
+  const problems = [];
+  if (parts.saveDC !== undefined || parts.saveAbility !== undefined) {
+    const count = parts.saveCount ?? parts.failCount;
+    if (!count || count.endsWith("-")) {
+      problems.push(
+        "a save with no saveCount/failCount keep-alive (or one ending in -) removes withdrawal on a success",
+      );
+    }
+  }
+  for (const key of ["removeCondition", "actionSave", "itemName"]) {
+    if (key in parts) problems.push(`${key} can end withdrawal early or dose again`);
+  }
+  return problems;
 }
 
 /**
