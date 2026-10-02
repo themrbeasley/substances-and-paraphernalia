@@ -142,16 +142,30 @@ describe("emptyCopyData", () => {
       ownership: { default: 3 },
       _stats: { coreVersion: "14" },
       effects: [{ _id: "fhAEVoltBeansDos" }],
-      system: {},
+      system: { container: "thrower0backpack" },
     };
     const copy = emptyCopyData(src);
     assert.equal(copy.sort, undefined);
     assert.equal(copy.ownership, undefined);
     assert.equal(copy._stats, undefined);
+    assert.equal(copy.system.container, null);
+    assert.equal(src.system.container, "thrower0backpack");
     assert.equal(copy._id, "fhSubVoltBeans01");
     assert.deepEqual(copy.effects, [{ _id: "fhAEVoltBeansDos" }]);
     assert.equal(copy.system.quantity, 0);
     assert.equal(copy.system.uses.spent, 0);
+  });
+  it("keeps the compendium source, so a later drop of the same drug stacks onto it", () => {
+    const compendiumSource =
+      "Compendium.substances-and-paraphernalia.substances.Item.fhSubVoltBeans01";
+    const src = {
+      _id: "fhSubVoltBeans01",
+      _stats: { compendiumSource, coreVersion: "14", createdTime: 5 },
+      system: {},
+    };
+    const copy = emptyCopyData(src);
+    assert.deepEqual(copy._stats, { compendiumSource });
+    assert.deepEqual(src._stats, { compendiumSource, coreVersion: "14", createdTime: 5 });
   });
 });
 
