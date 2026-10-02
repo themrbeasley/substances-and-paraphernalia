@@ -50,6 +50,11 @@ export function doseTurn(combat, worldTime) {
   return combat?.started ? `${combat.id}.${combat.round}.${combat.turn}` : `time.${worldTime}`;
 }
 
+/** Whether a dose lands (spec D2): a cloud tick and another dose of the same drug don't both land on a creature in one turn. */
+export function doseLands(previous, turn, tick) {
+  return !(previous?.turn === turn && (tick || previous.tick));
+}
+
 /** The dosed creature's own copy: same id, else a drug with the same name. */
 export function findOwnCopy(items, source) {
   const list = [...(items ?? [])];

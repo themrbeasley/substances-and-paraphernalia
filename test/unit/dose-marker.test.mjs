@@ -8,6 +8,7 @@ import {
   spendsDrug,
   drugUuidFrom,
   doseTurn,
+  doseLands,
   findOwnCopy,
   emptyCopyData,
 } from "../../scripts/data/dose-marker.js";
@@ -140,5 +141,24 @@ describe("doseTurn", () => {
     assert.equal(doseTurn(null, 500), "time.500");
     assert.equal(doseTurn(undefined, 500), "time.500");
     assert.equal(doseTurn({ ...combat, started: false }, 500), "time.500");
+  });
+});
+
+describe("doseLands", () => {
+  it("lands with no previous dose", () => {
+    assert.equal(doseLands(undefined, "t1", false), true);
+    assert.equal(doseLands(undefined, "t1", true), true);
+  });
+  it("two direct doses in the same turn both land", () => {
+    assert.equal(doseLands({ turn: "t1", tick: false }, "t1", false), true);
+  });
+  it("a cloud tick after a dose in the same turn doesn't land", () => {
+    assert.equal(doseLands({ turn: "t1", tick: false }, "t1", true), false);
+  });
+  it("a direct dose after a cloud tick in the same turn doesn't land", () => {
+    assert.equal(doseLands({ turn: "t1", tick: true }, "t1", false), false);
+  });
+  it("a different turn lands", () => {
+    assert.equal(doseLands({ turn: "t1", tick: true }, "t2", true), true);
   });
 });
