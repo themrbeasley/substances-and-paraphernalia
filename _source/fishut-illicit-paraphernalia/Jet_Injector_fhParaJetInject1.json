@@ -1,33 +1,33 @@
 {
-  "_id": "fhParaTinctDrop1",
-  "name": "Tincture Dropper",
+  "_id": "fhParaJetInject1",
+  "name": "Jet Injector",
   "type": "equipment",
   "img": "icons/svg/item-bag.svg",
-  "folder": "fhParaModern0001",
+  "folder": "fhParaSciFi00001",
   "system": {
     "description": {
-      "value": "<p>A graduated glass dropper. Lets you measure a dose under the tongue without contaminating the rest of the bottle.</p>"
+      "value": "<p>A palm-sized needle-free injector. Press it to skin and pull the trigger; the dose goes in under pressure.</p>"
     },
     "type": {
       "value": "trinket"
     },
     "rarity": "common",
     "weight": {
-      "value": 0.05,
+      "value": 0.2,
       "units": "lb"
     },
     "price": {
-      "value": 1,
+      "value": 50,
       "denomination": "gp"
     }
   },
   "flags": {
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
-      "setting": "modern",
-      "subtype": "tincture-dropper",
+      "setting": "sciFi",
+      "subtype": "syringe",
       "appliesTo": [
-        "ingested"
+        "injury"
       ],
       "schemaVersion": 7
     }
@@ -36,5 +36,5 @@
   "ownership": {
     "default": 0
   },
-  "_key": "!items!fhParaTinctDrop1"
+  "_key": "!items!fhParaJetInject1"
 }

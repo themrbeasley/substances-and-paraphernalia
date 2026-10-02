@@ -52,6 +52,37 @@ export function checkDocumentIds(file) {
   return { errors, warnings: [] };
 }
 
+/**
+ * Every drug can be taken with gear from its own setting that needs no
+ * attunement (spec D11). Takes the parsed documents of both packs.
+ *
+ * @param {object[]} substances
+ * @param {object[]} paraphernalia
+ * @returns {string[]} errors
+ */
+export function checkGearCoverage(substances, paraphernalia) {
+  const errors = [];
+  for (const s of substances) {
+    const f = s?.flags?.[FLAG_SCOPE];
+    if (f?.kind !== "substance") continue;
+    const admin = s?.system?.type?.subtype;
+    const covered = paraphernalia.some((p) => {
+      const pf = p?.flags?.[FLAG_SCOPE];
+      return (
+        pf?.setting === f.setting &&
+        (pf.appliesTo ?? []).includes(admin) &&
+        p?.system?.attunement !== "required"
+      );
+    });
+    if (!covered) {
+      errors.push(
+        `${s.name}: no ${f.setting} gear without attunement applies to ${admin} substances`,
+      );
+    }
+  }
+  return errors;
+}
+
 const ROLE_PATTERNS = {
   addiction: /addict/i,
   withdrawal: /withdraw/i,

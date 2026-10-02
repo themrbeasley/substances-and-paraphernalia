@@ -4,6 +4,7 @@ import {
   checkSubstance,
   checkParaphernalia,
   checkDocumentIds,
+  checkGearCoverage,
   overTimeProblems,
 } from "../../tools/validate-content-checks.mjs";
 
@@ -1113,5 +1114,46 @@ describe("checkSubstance: dose marker and dose-others activities (v0.10.0)", () 
 
   it("does not ask a save activity for otherActivityId", () => {
     assert.deepEqual(checkSubstance(withMarker({ others: { type: "save" } })).errors, []);
+  });
+});
+
+describe("checkGearCoverage", () => {
+  const drug = (setting, admin, name = "Test Drug") => ({
+    name,
+    system: { type: { subtype: admin } },
+    flags: { [SCOPE]: { kind: "substance", setting } },
+  });
+  const gear = (setting, appliesTo, attunement = "") => ({
+    name: "Test Gear",
+    system: { attunement },
+    flags: { [SCOPE]: { kind: "paraphernalia", setting, appliesTo } },
+  });
+
+  it("errors when the only gear for a drug's administration needs attunement", () => {
+    const errors = checkGearCoverage(
+      [drug("fantasy", "ingested", "Elixir")],
+      [gear("fantasy", ["ingested"], "required")],
+    );
+    assert.deepEqual(errors, [
+      "Elixir: no fantasy gear without attunement applies to ingested substances",
+    ]);
+  });
+
+  it("passes once a non-attuned gear from the same setting covers the administration", () => {
+    const errors = checkGearCoverage(
+      [drug("fantasy", "ingested")],
+      [gear("fantasy", ["ingested"], "required"), gear("fantasy", ["ingested"])],
+    );
+    assert.deepEqual(errors, []);
+  });
+
+  it("does not count gear from another setting", () => {
+    const errors = checkGearCoverage([drug("fantasy", "ingested")], [gear("sciFi", ["ingested"])]);
+    assert.equal(errors.length, 1);
+  });
+
+  it("does not count gear for a different administration", () => {
+    const errors = checkGearCoverage([drug("modern", "injury")], [gear("modern", ["inhaled"])]);
+    assert.equal(errors.length, 1);
   });
 });

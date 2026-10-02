@@ -6,7 +6,7 @@
   "folder": "fhParaFantasy001",
   "system": {
     "description": {
-      "value": "<p>A small silvered vial set with a hinged dropper carved from agate. Tradition holds that a drop placed under the tongue lets a poisoner's hand falter, but only once. The body, briefly, gets to ask whether it really wants to be poisoned.</p><p><em>Functions only with substances designed to be drawn through this dropper before swallowing.</em></p><p><strong>Attunement.</strong> Requires attunement.</p><p><strong>Second Sip.</strong> While attuned, once per day, when you would fail a Constitution saving throw against addiction to an ingested substance, you may take a single drop from this vial and re-roll the save; you must use the new roll. Uses recover at the end of a long rest.</p>"
+      "value": "<p>A small silvered vial set with a hinged dropper carved from agate. Tradition holds that a drop placed under the tongue lets a poisoner's hand falter, but only once. The body, briefly, gets to ask whether it really wants to be poisoned.</p><p><strong>Attunement.</strong> Requires attunement.</p><p><strong>Second Sip.</strong> While attuned, when you would fail a saving throw against addiction to an ingested substance, you may take a single drop from this vial and re-roll the save; you must use the new roll. The vial has one use and regains it daily.</p>"
     },
     "type": {
       "value": "trinket"
@@ -53,7 +53,7 @@
       "transfer": true,
       "disabled": false,
       "duration": {},
-      "description": "<p>Grants a single daily reroll on a failed Constitution saving throw against addiction to ingested substances taken through this dropper. Uses recover at the end of a long rest, tracked on the vial's native uses pool.</p>",
+      "description": "<p>Grants a single daily reroll on a failed saving throw against addiction to ingested substances taken through this dropper. It regains its uses daily, tracked on the vial's native uses pool.</p>",
       "system": {
         "changes": []
       },
