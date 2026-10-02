@@ -317,6 +317,8 @@ function buildLabels() {
     overdoseHeader: L("FISHUT.DetailsTab.Overdose.Header"),
     overdoseEnabled: L("FISHUT.DetailsTab.Overdose.Enabled"),
     overdoseChancePercent: L("FISHUT.DetailsTab.Overdose.ChancePercent"),
+    overdoseDamage: L("FISHUT.DetailsTab.Overdose.Damage"),
+    overdoseDamageType: L("FISHUT.DetailsTab.Overdose.DamageType"),
     overdoseDescription: L("FISHUT.DetailsTab.Overdose.Description"),
     overdoseTooltip: L("FISHUT.DetailsTab.Overdose.Tooltip"),
     overdoseEffect: L("FISHUT.DetailsTab.Field.OverdoseEffect.Label"),
@@ -522,9 +524,18 @@ function buildOverdoseContext(item) {
     /overdose/i.test(e.name ?? ""),
   );
 
+  const damage = { formula: block.damage?.formula ?? "", type: block.damage?.type ?? "" };
+  const damageTypes = Object.entries(CONFIG.DND5E?.damageTypes ?? {}).map(([id, t]) => ({
+    id,
+    label: game.i18n.localize(t.label),
+    selected: id === damage.type,
+  }));
+
   return {
     enabled,
     chancePercent,
+    damage,
+    damageTypes,
     description,
     fieldsDisabled: !enabled,
     availableEffects,
@@ -877,6 +888,12 @@ export async function persistField(item, field, rawValue, target) {
       // typing "0" or "200" doesn't write an out-of-range value.
       const clamped = n === null ? null : Math.max(1, Math.min(100, n));
       return persistOverdoseField(item, "chancePercent", clamped);
+    }
+    case "overdose.damage.formula":
+    case "overdose.damage.type": {
+      const sub = field.split(".").pop();
+      const damage = { ...(getOverdose(item)?.damage ?? {}), [sub]: rawValue ?? "" };
+      return persistOverdoseField(item, "damage", damage);
     }
     case "overdose.description":
       return persistOverdoseField(item, "description", rawValue ?? "");

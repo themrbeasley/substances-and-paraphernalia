@@ -211,6 +211,22 @@
       </div>
 
       <div class="form-group">
+        <label>{{labels.overdoseDamage}}</label>
+        <div class="form-fields">
+          <input type="text" data-fishut-flag="overdose.damage.formula"
+                 value="{{substance.overdose.damage.formula}}" placeholder="2d6"
+                 {{#unless isEditable}}disabled{{/unless}} />
+          <label>{{labels.overdoseDamageType}}</label>
+          <select data-fishut-flag="overdose.damage.type" {{#unless isEditable}}disabled{{/unless}}>
+            <option value=""></option>
+            {{#each substance.overdose.damageTypes}}
+              <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
         <label>
           {{labels.overdoseDescription}}
           <i class="fa-solid fa-circle-info fishut-field-info" data-tooltip="{{labels.overdoseTooltip}}"></i>

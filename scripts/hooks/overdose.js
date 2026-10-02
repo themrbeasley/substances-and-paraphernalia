@@ -9,6 +9,8 @@ import { shouldRollOverdose, rollOverdoseChance } from "../data/overdose-gate.js
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { currentPoints } from "../data/tolerance.js";
 import { prepareEffectPayload } from "../data/effect-data.js";
+import { overdoseDamage } from "../data/overdose-damage.js";
+import { logger } from "../logger.js";
 
 /**
  * Overdose runs as the last step of the dose pipeline (runDosePipeline in
@@ -52,16 +54,45 @@ export async function rollOverdoseAndApply(
   if (!rollOverdoseChance(rng, overdose.chancePercent, chanceModifier)) return null;
 
   const applied = await applyOverdoseEffect(actor, item, overdose);
+  const damage = await dealOverdoseDamage(actor, overdose);
   // The Details tab promises the description on a chat card when it triggers.
   await ChatMessage.create({
     content: game.i18n.format("FISHUT.Overdose.Triggered", {
       actor: actor.name,
       item: item.name,
       description: overdose.description ?? "",
+      damage,
     }),
     whisper: [],
   });
   return applied;
+}
+
+/**
+ * Roll and apply the overdose's damage (spec D3) through dnd5e, so resistance,
+ * immunity and concentration saves count. Returns the chat suffix, or "" when the
+ * drug deals none. A broken formula (checked by overdoseDamage) or a failed roll
+ * deals no damage and never blocks the overdose itself.
+ *
+ * @param {Actor} actor
+ * @param {object} overdose  the item's overdose flag block
+ * @returns {Promise<string>}
+ */
+async function dealOverdoseDamage(actor, overdose) {
+  const dmg = overdoseDamage(overdose, Object.keys(CONFIG.DND5E?.damageTypes ?? {}));
+  if (!dmg) return "";
+  try {
+    const roll = await new Roll(dmg.formula).evaluate();
+    await actor.applyDamage([{ value: roll.total, type: dmg.type }]);
+    const label = game.i18n.localize(CONFIG.DND5E.damageTypes[dmg.type]?.label ?? dmg.type);
+    return game.i18n.format("FISHUT.Overdose.Damage", {
+      total: roll.total,
+      type: label.toLowerCase(),
+    });
+  } catch (err) {
+    logger.error(`overdose damage "${dmg.formula}" failed for ${actor.name}`, err);
+    return "";
+  }
 }
 
 function defaultD100() {

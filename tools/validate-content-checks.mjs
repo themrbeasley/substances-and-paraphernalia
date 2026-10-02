@@ -9,6 +9,8 @@
  * accumulate across files and decide on exit code.
  */
 
+import { DAMAGE_TYPES, overdoseDamage } from "../scripts/data/overdose-damage.js";
+
 export const FLAG_SCOPE = "substances-and-paraphernalia";
 export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]);
 export const MODIFIER_TYPES = new Set(["auto-pass", "reroll-on-fail", "advantage", "+N"]);
@@ -132,7 +134,8 @@ function findEffect(data, id) {
  *     withdrawal.duration.{value,unit} are all required
  *   - addiction.addictionEffectIds points to AEs whose names contain /addict/i
  *   - overdose: when enabled, chancePercent must be an integer 1..100 and
- *     description must be a non-empty string
+ *     description must be a non-empty string; a non-blank damage.formula must
+ *     be plain dice with a known damage.type
  *   - withdrawal.effectIds (if set): AE names must contain /withdraw/i; warns
  *     on disadvantage-on-attack/check or statuses:["poisoned"]
  *   - any modifier-bearing AE with kind="bypass" type="+N" requires non-zero
@@ -284,6 +287,13 @@ export function checkSubstance(file) {
       }
       if (typeof ov.description !== "string" || ov.description.trim() === "") {
         err(`overdose.description must be a non-empty string when enabled`);
+      }
+      // Spec D3: a blank formula is fine (no damage); anything else must be plain dice.
+      const formula = String(ov.damage?.formula ?? "").trim();
+      if (formula && !overdoseDamage(ov, DAMAGE_TYPES)) {
+        err(
+          `overdose.damage must be plain dice (2d6, 1d6 + 2) with a known damage type (got "${formula}", type "${ov.damage?.type ?? ""}")`,
+        );
       }
     }
   }
