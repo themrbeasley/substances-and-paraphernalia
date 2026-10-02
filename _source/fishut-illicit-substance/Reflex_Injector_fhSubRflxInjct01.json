@@ -6,7 +6,7 @@
   "folder": "fhSubSciFi000001",
   "system": {
     "description": {
-      "value": "<p>A spring-loaded combat injector preloaded with synthetic adrenocortical accelerant. Strapped to the thigh, deployed under fire. Brand-name stocks are mil-spec; the gray-market versions occasionally crystallize.</p><p><strong><em>Desired effects on use.</em></strong> For 1 minute you have a +2 bonus to Dexterity (initiative is rolled with this bonus if used as a reaction at the start of combat) and your walking speed increases by 10 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Reflex Injector (see below).</p><p><strong><em>Addicted from Reflex Injector.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on saving throws against being frightened, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 13 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 25 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to injury substances, such as a Neural Shunt or an Athlete's Logbook.</em></p>"
+      "value": "<p>A spring-loaded combat injector preloaded with synthetic adrenocortical accelerant. Strapped to the thigh, deployed under fire. Brand-name stocks are mil-spec; the gray-market versions occasionally crystallize.</p><p><strong><em>Desired effects on use.</em></strong> Using the injector takes a bonus action. For 1 minute you gain a +2 bonus to Dexterity checks and Dexterity saving throws, and your walking speed increases by 10 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Reflex Injector (see below).</p><p><strong><em>Addicted from Reflex Injector.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on saving throws against being Frightened, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 13 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, you go into withdrawal for 4 days, or half that if you succeed on a DC 18 Constitution saving throw. If you have no doses left, skip the Wisdom check. While in withdrawal all your speeds are reduced by 10 feet, you have disadvantage on Strength and Constitution saving throws, and in combat you take 1d4 poison damage at the start of each of your turns. Abstaining then takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><strong><em>Overdose.</em></strong> If you take a dose while still under its effects, or once your tolerance is at its limit, there is a 10% chance you overdose: you take 2d8 poison damage and have the Poisoned and Incapacitated conditions for 1 minute.</p><p><strong><em>Dosing others.</em></strong> As an action, you can jab a creature within 5 feet with the needle, making a melee attack. On a hit, the creature is dosed.</p><p><em>Requires ready paraphernalia that applies to injury substances, such as a Jet Injector or a Neural Shunt.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -101,6 +101,98 @@
           "name": ""
         },
         "name": ""
+      },
+      "fhActRflxInjct02": {
+        "type": "attack",
+        "_id": "fhActRflxInjct02",
+        "sort": 100000,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "inst",
+          "value": "",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAERflxInjctDos"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "ft",
+          "value": "5",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "type": "creature",
+            "count": "1",
+            "choice": false
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "attack": {
+          "ability": "dex",
+          "bonus": "",
+          "flat": false,
+          "critical": {
+            "threshold": null
+          },
+          "type": {
+            "value": "melee",
+            "classification": "weapon"
+          }
+        },
+        "damage": {
+          "includeBase": false,
+          "parts": []
+        },
+        "name": "Jab with the needle",
+        "otherActivityId": "none"
       }
     }
   },
@@ -121,13 +213,13 @@
       },
       "withdrawal": {
         "enabled": true,
-        "dc": 25,
+        "dc": 18,
         "abstain": {
           "ability": "wis",
           "dc": 13
         },
         "duration": {
-          "value": 3,
+          "value": 4,
           "unit": "days"
         },
         "effectIds": [
@@ -137,10 +229,14 @@
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
-        "description": "Too much Reflex Injector overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "description": "Too much Reflex Injector: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
         "effectIds": [
           "fhAERflxInjctOvd"
-        ]
+        ],
+        "damage": {
+          "formula": "2d8",
+          "type": "poison"
+        }
       },
       "schemaVersion": 7
     }
@@ -156,7 +252,7 @@
         "value": 60,
         "units": "seconds"
       },
-      "description": "<p>+2 to Dexterity. Walking speed +10 ft.</p>",
+      "description": "<p>+2 to Dexterity checks and saving throws. Walking speed +10 ft.</p>",
       "system": {
         "changes": [
           {
@@ -166,8 +262,14 @@
             "type": "add"
           },
           {
+            "key": "system.abilities.dex.bonuses.save",
+            "value": "+2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
             "key": "system.attributes.movement.walk",
-            "value": "+10",
+            "value": "10",
             "priority": 20,
             "type": "add"
           },
@@ -196,9 +298,15 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on saves vs. frightened. Walking speed &minus;5 ft.</p>",
+      "description": "<p>Poisoned. Disadvantage on saving throws against being Frightened. Walking speed reduced by 5 ft.</p>",
       "system": {
         "changes": [
+          {
+            "key": "flags.midi-qol.disadvantage.save.all",
+            "value": "riderStatuses.frightened",
+            "priority": 20,
+            "type": "override"
+          },
           {
             "key": "system.attributes.movement.walk",
             "value": "-5",
@@ -221,7 +329,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "description": "<p>While in withdrawal: all speeds reduced by 10 feet, disadvantage on Strength and Constitution saving throws, and in combat 1d4 poison damage at the start of each of your turns.</p>",
       "system": {
         "changes": [
           {
@@ -229,6 +337,30 @@
             "value": "#2da566",
             "priority": 20,
             "type": "override"
+          },
+          {
+            "key": "system.attributes.movement.bonus",
+            "value": "-10",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.str.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.con.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "flags.midi-qol.OverTime",
+            "value": "turn=start,damageRoll=1d4,damageType=poison,label=Withdrawal",
+            "priority": 20,
+            "type": "custom"
           }
         ]
       },
@@ -253,7 +385,7 @@
         "value": 60,
         "units": "seconds"
       },
-      "description": "<p>Too much Reflex Injector overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "description": "<p>Too much Reflex Injector: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.</p>",
       "system": {
         "changes": []
       },
@@ -263,6 +395,25 @@
         }
       },
       "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctOvd"
+    },
+    {
+      "_id": "fhAERflxInjctDos",
+      "name": "Dosed with Reflex Injector",
+      "img": "icons/svg/item-bag.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "",
+      "statuses": [],
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "dose"
+        }
+      },
+      "_key": "!items.effects!fhSubRflxInjct01.fhAERflxInjctDos"
     }
   ],
   "ownership": {
