@@ -350,7 +350,7 @@ export function checkSubstance(file) {
     }
     if (aeViolatesContentGuidance(withdrawalAe)) {
       warn(
-        `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks, which duplicates poisoned. Escalate instead (exhaustion, disadv on saves, speed reduction, stat penalty).`,
+        `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks, which duplicates poisoned. Escalate instead (penalties to checks and saves, disadvantage on saves, speed reduction, damage each turn in combat).`,
       );
     }
     // v0.10.0 (D4): deleting the last withdrawal effect ends the addiction,
