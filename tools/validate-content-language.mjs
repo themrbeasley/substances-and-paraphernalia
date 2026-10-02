@@ -1,11 +1,10 @@
 /**
- * 2024 D&D 5e language compliance: pure phrasing invariants. Returns
- * warn-level findings (never errors) per Item 11 v0.8 portion: ship the
- * invariant as a non-blocking signal so authors can clean up their content
- * before v0.9 / Item 12 flips it to error-blocking.
+ * 2024 D&D 5e language compliance: pure phrasing invariants. Every rule
+ * blocks a release (`isBlockingRule`) except `lowercase-condition`, which stays
+ * a warning: "poisoned" and "frightened" are also everyday words.
  *
  * Each finding carries { ruleId, match, sourcePath, message } so the caller
- * can format the warning consistently.
+ * can format it consistently and route it to errors or warnings.
  */
 
 const CONDITIONS = [
@@ -66,7 +65,7 @@ const RULES = [
 ];
 
 /**
- * Scan `text` and return warn-level findings.
+ * Scan `text` and return findings.
  *
  * @param {string} text
  * @param {{sourcePath?: string, mode?: "text-content-only" | "any"}} [opts]
@@ -88,6 +87,13 @@ export function checkLanguagePhrasing(text, opts = {}) {
     });
   }
   return findings;
+}
+
+/** Rules that only warn; every other rule blocks a release. */
+export const WARN_ONLY_RULES = new Set(["lowercase-condition"]);
+
+export function isBlockingRule(ruleId) {
+  return !WARN_ONLY_RULES.has(ruleId);
 }
 
 export const _LANGUAGE_RULES = RULES;

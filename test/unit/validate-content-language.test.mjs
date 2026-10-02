@@ -1,8 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { checkLanguagePhrasing } from "../../tools/validate-content-language.mjs";
+import { checkLanguagePhrasing, isBlockingRule } from "../../tools/validate-content-language.mjs";
 
-describe("checkLanguagePhrasing: warn-level findings only", () => {
+describe("checkLanguagePhrasing", () => {
   it("returns empty array for compliant 2024 phrasing", () => {
     const compliant = [
       "The creature must make a Constitution saving throw against the substance.",
@@ -76,5 +76,13 @@ describe("checkLanguagePhrasing: warn-level findings only", () => {
       sourcePath: "lang/en.json:FISHUT.Foo",
     });
     assert.equal(findings[0].sourcePath, "lang/en.json:FISHUT.Foo");
+  });
+});
+
+describe("isBlockingRule", () => {
+  it("blocks every rule except lowercase-condition", () => {
+    assert.equal(isBlockingRule("rest-not-capitalized"), true);
+    assert.equal(isBlockingRule("once-per-day"), true);
+    assert.equal(isBlockingRule("lowercase-condition"), false);
   });
 });
