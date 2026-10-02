@@ -68,15 +68,16 @@ Whatever puts the marker on a creature (Midi-QoL after a failed save, a hit or a
 - An activity that spends nothing (consumption targets empty) isn't blocked at 0 doses. Stellar Mist's "Breathe the cloud" uses this so the cloud keeps working after the last bomb.
 - Keep at least one activity that doses the user: the Long Rest relapse uses the first one. The validator errors when every activity doses others.
 
-**The gas bomb** is item data on top of that. The bomb only places the cloud; the cloud does all the dosing.
+**The gas bomb** is item data on top of that. The bomb rolls the burst's saving throws itself; the cloud repeats them only at turn start.
 
-- "Throw as a gas bomb" is a **utility** activity: range 30 feet, a 20-foot sphere, 1 minute, one use, and no save and no effects (it doesn't list the marker). It carries Midi's region behavior: `regionBehavior` with `enabled: true`, `oncePerTurn: true` and two rules, on `entry` and on `turnStart`, that use the activity whose Midi `identifier` is `cloud-breath`.
+- "Throw as a gas bomb" is a **save** activity like "Blow into a face": Constitution, DC 15, the dose marker with `onSave: false`, range 30 feet, a 20-foot sphere, 1 minute and one use. It also carries Midi's region behavior: `regionBehavior` with `enabled: true`, `oncePerTurn: true` and one rule, on `turnStart`, that uses the activity whose Midi `identifier` is `cloud-breath`.
 - "Breathe the cloud" is a save activity (Constitution, the dose marker, no consumption) with `midiProperties: { identifier: "cloud-breath", automationOnly: true, confirmTargets: "never" }`.
-- Why the bomb has no save: when Midi attaches the behavior, Foundry fires the entry rule for every creature already inside. A bomb with its own save would make each of them save twice.
+- Why the cloud has no `entry` rule: when Midi attaches the behavior, Foundry fires entry for every creature already inside at the same moment, and Midi-QoL 14.0.12 then sends all those saving throws to one creature. Its region behavior has only `entry`, `exit`, `turnStart` and `turnEnd` triggers, so it can't tell those creatures from one that walks in later. The bomb's own save covers the burst, and a creature that walks in saves when its turn starts there. (An entry rule on top of the bomb's save would also make everyone inside save twice.)
 - An activity with an enabled region behavior counts as dosing others, like one that lists the marker: it needs no gear and never doses its user.
 
-Two settings keep the thrower out of their own cloud and the ticks quiet:
+Three settings keep the thrower out of their own cloud and the ticks quiet:
 
+- On the bomb activity, `target.affects.special: "-self"`, so Midi leaves the thrower out of the burst's targets.
 - On the bomb activity, `regionBehavior.excludeSource: true`, so the cloud skips the thrower's tokens. Without it, the cloud doses the thrower.
 - On "Breathe the cloud", `midiProperties.confirmTargets: "never"`, so a tick never pops up a target confirmation.
 

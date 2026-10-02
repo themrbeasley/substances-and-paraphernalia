@@ -7,7 +7,7 @@ This page covers the mechanical systems the module layers on top of dnd5e: the *
 Each substance carries a dnd5e Poison administration type at `system.type.subtype` (one of `contact` / `ingested` / `inhaled` / `injury`). When the substance is used, the gate checks that the actor possesses a _ready_ paraphernalia whose `appliesTo` admin list contains that administration. Readiness:
 
 - **Equipment**: must be equipped.
-- **Consumable**: must have `quantity > 0` and, when it has a use pool (Rolling Papers), uses left.
+- **Consumable**: must have `quantity > 0` and, when it has a use pool (Rolling Papers), a use left in the current pack or another pack in the stack.
 - **Attunement-required**: must be attuned on the actor's copy.
 
 If no paraphernalia matches the substance's administration, the user sees a _Missing paraphernalia_ dialog with a **Use anyway** override. The dialog is visible to all users (player or GM); the override is intentional.
@@ -17,7 +17,7 @@ Two rules decide which activities the gate looks at:
 - **The gear check is for doses you take yourself.** An activity that doses someone else (see _Dosing someone else_) needs no gear. Spiking a drink doesn't need a pipe.
 - **The empty-drug block is for activities that spend the drug.** A substance at 0 doses can't be used by any activity that spends it. The module blocks it before the paraphernalia check, with no override. An activity that spends nothing (the gas cloud's ticks) isn't blocked, so a cloud keeps working after the last bomb is thrown. The drug stays in the inventory at 0 doses instead of being deleted.
 
-**Single-use gear gets used up.** After a dose you take yourself passes the gear check, the module spends one use (or one item) of a ready consumable gear item, but only when no ready reusable gear applies to that administration. Smoking Triple-Burn with Rolling Papers uses one paper; with a Calibrated Inhaler ready too, no paper is spent. If several consumables are ready, the one with the lowest id goes first. Nothing is spent when the check is switched off or when you clicked **Use anyway** (nothing was ready). A dose taken at a Long Rest spends gear the same way.
+**Single-use gear gets used up.** After a dose you take yourself passes the gear check, the module spends one use (or one item) of a ready consumable gear item, but only when no ready reusable gear applies to that administration. Smoking Triple-Burn with Rolling Papers uses one paper; with a Calibrated Inhaler ready too, no paper is spent. If several consumables are ready, the one with the lowest id goes first. When a pack runs out and another is in the stack, the next pack opens, as in dnd5e; a new pack dropped onto a used-up one is ready. Nothing is spent when the check is switched off or when you clicked **Use anyway** (nothing was ready). A dose taken at a Long Rest spends gear the same way.
 
 The world setting **Enforce paraphernalia requirements** (default on) switches the paraphernalia check. With it off, only that check (and the gear spending that rides on it) is skipped: the 0-dose block and the addiction automation still run.
 
@@ -63,9 +63,10 @@ How it works:
 
 ### Gas bomb (Stellar Mist)
 
-Throw a Stellar Mist bomb (range 30 feet) and it places a 20-foot cloud for 1 minute. Every creature inside when the cloud appears, any creature that enters it and any creature that starts its turn in it makes a DC 15 Constitution saving throw or is dosed. The cloud can dose a creature at most once per turn, and it never doses the thrower.
+Throw a Stellar Mist bomb (range 30 feet) and it bursts into a 20-foot cloud for 1 minute. Every creature in the burst except the thrower makes a DC 15 Constitution saving throw or is dosed. A creature that starts its turn in the cloud makes the saving throw again. The cloud can dose a creature at most once per turn, and it never doses the thrower.
 
-- It's item data plus Midi-QoL's region behavior. The "Throw as a gas bomb" activity only places the cloud; it has no saving throw of its own. A second activity, "Breathe the cloud", does the dosing. It spends nothing and is marked automation-only, so it doesn't show on the sheet as a second thing to click. Midi runs it for every creature inside when the cloud appears, on entry and at turn start.
+- It's item data plus Midi-QoL's region behavior. The "Throw as a gas bomb" activity rolls the burst's saving throws itself and leaves the thrower out. It also places the cloud, which runs a second activity, "Breathe the cloud", for each creature that starts its turn inside. That activity spends nothing and is marked automation-only, so it doesn't show on the sheet as a second thing to click.
+- Walking into the cloud doesn't trigger a saving throw; starting a turn there does. When the cloud appears, Midi treats everyone already inside as walking in at the same moment and sends all those saving throws to one creature, and it can't tell those creatures from one that walks in later. So the bomb's own saving throw covers the burst, and the cloud only rolls at turn start.
 - Midi removes the region when the timer effect on the thrower is deleted. House Automation deletes expired effects, so the cloud clears after 1 minute.
 - The thrower isn't dosed, and the ticks keep working after the last bomb is spent (the empty-drug block only stops activities that spend the drug).
 - Once per turn: Midi's own check only works in combat and can't record it for player tokens, so the module keeps its own. A creature takes at most one dose from the cloud per turn (outside combat, until game time moves on), and a dose from the cloud and a direct dose of the same drug don't both land in one turn. When a dose is dropped this way, the GM gets a whispered chat line saying so.

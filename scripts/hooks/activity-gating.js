@@ -1,7 +1,7 @@
 import { MODULE_ID, labelKey } from "../config.js";
 import { getAppliesTo, isParaphernalia, isSubstance } from "../data/flag-schema.js";
 import { inspectParaphernaliaItem } from "../data/references.js";
-import { actorSatisfiesAdmin, pickGearToSpend } from "../data/admin-match.js";
+import { actorSatisfiesAdmin, nextGearUses, pickGearToSpend } from "../data/admin-match.js";
 import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
@@ -139,7 +139,9 @@ export async function spendConsumableGear(actor, item) {
   if (!gear) return;
   const max = Number(gear.system?.uses?.max) || 0;
   if (max > 0) {
-    await gear.update({ "system.uses.spent": (Number(gear.system.uses.spent) || 0) + 1 });
+    const uses = { spent: gear.system.uses.spent, max, quantity: gear.system.quantity };
+    const { spent, quantity } = nextGearUses(uses);
+    await gear.update({ "system.uses.spent": spent, "system.quantity": quantity });
   } else {
     await gear.update({ "system.quantity": Math.max(0, (Number(gear.system.quantity) || 0) - 1) });
   }
