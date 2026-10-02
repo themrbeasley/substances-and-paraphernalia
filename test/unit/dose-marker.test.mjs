@@ -5,6 +5,7 @@ import {
   doseMarkerIds,
   dosesOthers,
   firstSelfDoseActivity,
+  spendsDrug,
 } from "../../scripts/data/dose-marker.js";
 
 const SCOPE = "substances-and-paraphernalia";
@@ -28,5 +29,18 @@ describe("dose marker", () => {
   it("the relapse uses the first activity that doses the user", () => {
     assert.equal(firstSelfDoseActivity([spike, selfUse], ["fhAEVoltBeansDos"]), selfUse);
     assert.equal(firstSelfDoseActivity([spike], ["fhAEVoltBeansDos"]), null);
+  });
+});
+
+describe("spendsDrug", () => {
+  it("a use that spends this item's uses spends the drug", () => {
+    assert.equal(spendsDrug({ consumption: { targets: [{ type: "itemUses", target: "" }] } }), true);
+  });
+  it("a cloud tick spends nothing", () => {
+    assert.equal(spendsDrug({ consumption: { targets: [] } }), false);
+    assert.equal(spendsDrug({}), false);
+  });
+  it("spending another item's uses doesn't spend the drug", () => {
+    assert.equal(spendsDrug({ consumption: { targets: [{ type: "itemUses", target: "abc" }] } }), false);
   });
 });

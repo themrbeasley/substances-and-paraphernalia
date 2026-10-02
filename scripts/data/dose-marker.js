@@ -24,3 +24,10 @@ export function dosesOthers(activity, markerIds) {
 export function firstSelfDoseActivity(activities, markerIds) {
   return [...(activities ?? [])].find((a) => !dosesOthers(a, markerIds)) ?? null;
 }
+
+/** Does this activity spend the drug itself (its own uses)? Cloud ticks don't. */
+export function spendsDrug(activity) {
+  return [...(activity?.consumption?.targets ?? [])].some(
+    (t) => t?.type === "itemUses" && !t?.target,
+  );
+}
