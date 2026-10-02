@@ -19,11 +19,7 @@ import { MODULE_ID } from "../config.js";
 import {
   isSubstance,
   getAddiction,
-  getAddictionEffectIds,
-  getWithdrawalEffectIds,
   getOverdose,
-  getOverdoseEffectIds,
-  getToleranceEffectIds,
   getWithdrawalDuration,
   getAddictedSubstanceIds,
   isInWithdrawalFrom,
@@ -31,6 +27,7 @@ import {
   getActorToleranceEntry,
 } from "../data/flag-schema.js";
 import { prepareEffectPayload } from "../data/effect-data.js";
+import { findAlteredTemplates } from "../data/prior-high.js";
 import {
   applyAddictionEffect,
   applyWithdrawalEffect,
@@ -304,23 +301,8 @@ function humanizeDuration(duration) {
 }
 
 async function applyBenefitEffects(actor, item) {
-  const reservedIds = new Set([
-    ...getAddictionEffectIds(item),
-    ...getWithdrawalEffectIds(item),
-    ...getOverdoseEffectIds(item),
-    ...getToleranceEffectIds(item),
-  ]);
-  const effects = item?.effects ? [...item.effects] : [];
-  const benefits = effects.filter((e) => {
-    const id = e.id ?? e._id;
-    if (id && reservedIds.has(id)) return false;
-    const name = e.name ?? "";
-    if (/addict/i.test(name)) return false;
-    if (/withdraw/i.test(name)) return false;
-    if (/overdose/i.test(name)) return false;
-    if (/tolerance/i.test(name)) return false;
-    return true;
-  });
+  // The same highs a dose applies, never the dose marker (which would dose the actor).
+  const benefits = findAlteredTemplates(item);
   if (benefits.length === 0) return [];
 
   const payloads = benefits.map((effect) =>

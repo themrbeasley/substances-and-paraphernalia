@@ -21,7 +21,7 @@ import {
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
 import { attenuateChangeRows } from "../data/tolerance.js";
-import { isPriorHigh, isStrayHigh } from "../data/prior-high.js";
+import { isPriorHigh, isStrayHigh, findAlteredTemplates } from "../data/prior-high.js";
 import { doseMarkerIds, dosesOthers } from "../data/dose-marker.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { withdrawalSeconds } from "../data/withdrawal-duration.js";
@@ -460,12 +460,6 @@ export async function applyAlteredEffectGated(actor, item) {
   });
   const created = await actor.createEmbeddedDocuments("ActiveEffect", payloads);
   return created?.[0] ?? null;
-}
-
-function findAlteredTemplates(item) {
-  const list = [...(item?.effects ?? [])];
-  const byRole = list.filter((e) => e.flags?.[MODULE_ID]?.aeRole === "altered");
-  return byRole.length > 0 ? byRole : list.filter((e) => /altered/i.test(e.name ?? ""));
 }
 
 async function refreshToleranceMarkerAe(actor, item, count) {
