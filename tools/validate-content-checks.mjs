@@ -9,6 +9,9 @@
  * accumulate across files and decide on exit code.
  */
 
+import { DAMAGE_TYPES, overdoseDamage } from "../scripts/data/overdose-damage.js";
+import { dosesOthers } from "../scripts/data/dose-marker.js";
+
 export const FLAG_SCOPE = "substances-and-paraphernalia";
 export const ADMIN_VALUES = new Set(["contact", "ingested", "inhaled", "injury"]);
 export const MODIFIER_TYPES = new Set(["auto-pass", "reroll-on-fail", "advantage", "+N"]);
@@ -50,12 +53,44 @@ export function checkDocumentIds(file) {
   return { errors, warnings: [] };
 }
 
+/**
+ * Every drug can be taken with gear from its own setting that needs no
+ * attunement (spec D11). Takes the parsed documents of both packs.
+ *
+ * @param {object[]} substances
+ * @param {object[]} paraphernalia
+ * @returns {string[]} errors
+ */
+export function checkGearCoverage(substances, paraphernalia) {
+  const errors = [];
+  for (const s of substances) {
+    const f = s?.flags?.[FLAG_SCOPE];
+    if (f?.kind !== "substance") continue;
+    const admin = s?.system?.type?.subtype;
+    const covered = paraphernalia.some((p) => {
+      const pf = p?.flags?.[FLAG_SCOPE];
+      return (
+        pf?.setting === f.setting &&
+        (pf.appliesTo ?? []).includes(admin) &&
+        p?.system?.attunement !== "required"
+      );
+    });
+    if (!covered) {
+      errors.push(
+        `${s.name}: no ${f.setting} gear without attunement applies to ${admin} substances`,
+      );
+    }
+  }
+  return errors;
+}
+
 const ROLE_PATTERNS = {
   addiction: /addict/i,
   withdrawal: /withdraw/i,
   altered: /altered/i,
   tolerance: /tolerance/i,
   overdose: /overdose/i,
+  dose: /\bdosed?\b/i,
   bypass: /bypass/i,
 };
 
@@ -131,11 +166,16 @@ function findEffect(data, id) {
  *     withdrawal.duration.{value,unit} are all required
  *   - addiction.addictionEffectIds points to AEs whose names contain /addict/i
  *   - overdose: when enabled, chancePercent must be an integer 1..100 and
- *     description must be a non-empty string
+ *     description must be a non-empty string; a non-blank damage.formula must
+ *     be plain dice with a known damage.type
  *   - withdrawal.effectIds (if set): AE names must contain /withdraw/i; warns
  *     on disadvantage-on-attack/check or statuses:["poisoned"]
  *   - any modifier-bearing AE with kind="bypass" type="+N" requires non-zero
  *     numeric bonus
+ *   - dose marker (aeRole "dose"): no statuses, no changes, transfer false, no
+ *     sourceSubstanceId; activities listing it target others (attacks set
+ *     otherActivityId "none") and at least one activity still doses the user
+ *     (one that places a dosing cloud, like the gas bomb, doses others)
  *
  * @param {{relPath: string, data: object}} file
  * @returns {{errors: string[], warnings: string[]}}
@@ -281,6 +321,13 @@ export function checkSubstance(file) {
       if (typeof ov.description !== "string" || ov.description.trim() === "") {
         err(`overdose.description must be a non-empty string when enabled`);
       }
+      // Spec D3: a blank formula is fine (no damage); anything else must be plain dice.
+      const formula = String(ov.damage?.formula ?? "").trim();
+      if (formula && !overdoseDamage(ov, DAMAGE_TYPES)) {
+        err(
+          `overdose.damage must be plain dice (2d6, 1d6 + 2) with a known damage type (got "${formula}", type "${ov.damage?.type ?? ""}")`,
+        );
+      }
     }
   }
 
@@ -305,7 +352,27 @@ export function checkSubstance(file) {
     }
     if (aeViolatesContentGuidance(withdrawalAe)) {
       warn(
-        `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks, which duplicates poisoned. Escalate instead (exhaustion, disadv on saves, speed reduction, stat penalty).`,
+        `withdrawal AE "${withdrawalAe.name}" imposes disadvantage on attacks/checks, which duplicates poisoned. Escalate instead (penalties to checks and saves, disadvantage on saves, speed reduction, damage each turn in combat).`,
+      );
+    }
+    // v0.10.0 (D4): deleting the last withdrawal effect ends the addiction,
+    // so nothing on the effect may delete it early.
+    for (const c of Array.isArray(withdrawalAe.system?.changes)
+      ? withdrawalAe.system.changes
+      : []) {
+      // Midi treats every key starting with this string as an OverTime row.
+      if (!String(c?.key ?? "").startsWith("flags.midi-qol.OverTime")) continue;
+      for (const problem of overTimeProblems(c.value)) {
+        err(`withdrawal AE "${withdrawalAe.name}" OverTime row: ${problem}`);
+      }
+    }
+    const dae = withdrawalAe.flags?.dae;
+    if (Array.isArray(dae?.specialDuration) && dae.specialDuration.length > 0) {
+      err(`withdrawal AE "${withdrawalAe.name}": DAE special durations end withdrawal early`);
+    }
+    if (dae?.stackable === "none" || dae?.stackable === "noneName") {
+      err(
+        `withdrawal AE "${withdrawalAe.name}": DAE stacking "${dae.stackable}" can delete the effect, which ends withdrawal early`,
       );
     }
   }
@@ -356,6 +423,39 @@ export function checkSubstance(file) {
         );
       }
     }
+  }
+
+  // v0.10.0 (D1): the dose marker is a bare flag. A listener turns a landed
+  // marker into a dose on that creature, so it must carry nothing else, and an
+  // activity that lists it must hit others, not the user.
+  const markers = effectsOf(data).filter((e) => e?.flags?.[FLAG_SCOPE]?.aeRole === "dose");
+  const markerIds = markers.map((m) => m._id);
+  for (const m of markers) {
+    if ((m.statuses ?? []).length) err(`dose marker "${m.name}" must have no statuses`);
+    if ((m.system?.changes ?? []).length) err(`dose marker "${m.name}" must have no changes`);
+    if (m.transfer !== false) err(`dose marker "${m.name}" must have transfer: false`);
+    if (m.flags?.[FLAG_SCOPE]?.sourceSubstanceId) {
+      err(`dose marker "${m.name}" must not carry sourceSubstanceId`);
+    }
+  }
+  const activities = Object.values(data?.system?.activities ?? {});
+  // The same test the runtime uses: a gas bomb that only places the cloud doses others too.
+  const others = activities.filter((a) => dosesOthers(a, markerIds));
+  for (const a of others) {
+    const label = a.name || a._id;
+    if (a.target?.affects?.type === "self") {
+      err(`activity "${label}" doses others but targets self`);
+    }
+    // Midi pairs an attack whose otherActivityId is unset with the item's sole
+    // other activity (the drug's "Use"), so a hit would run the self-dose too.
+    if (a.type === "attack" && a.otherActivityId !== "none") {
+      err(
+        `activity "${label}" doses others by attack and must set otherActivityId: "none" (Midi would pair it with the self-dose)`,
+      );
+    }
+  }
+  if (activities.length > 0 && others.length === activities.length) {
+    err(`needs an activity that doses the user, for the Long Rest relapse`);
   }
 
   return { errors, warnings };
@@ -525,6 +625,32 @@ function resolveEffectIdList(plural, singular) {
   }
   if (typeof singular === "string" && singular.length > 0) return [singular];
   return [];
+}
+
+/**
+ * Problems with a Midi OverTime value on a withdrawal effect: anything that
+ * could delete the effect early, which ends the addiction (spec D4).
+ */
+export function overTimeProblems(value) {
+  const parts = Object.fromEntries(
+    String(value ?? "")
+      .split(",")
+      .map((s) => s.split("=").map((x) => x.trim()))
+      .filter(([k]) => k),
+  );
+  const problems = [];
+  if (parts.saveDC !== undefined || parts.saveAbility !== undefined) {
+    const count = parts.saveCount ?? parts.failCount;
+    if (!count || count.endsWith("-")) {
+      problems.push(
+        "a save with no saveCount/failCount keep-alive (or one ending in -) removes withdrawal on a success",
+      );
+    }
+  }
+  for (const key of ["removeCondition", "actionSave", "itemName"]) {
+    if (key in parts) problems.push(`${key} can end withdrawal early or dose again`);
+  }
+  return problems;
 }
 
 /**

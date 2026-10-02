@@ -4,6 +4,8 @@ import {
   checkSubstance,
   checkParaphernalia,
   checkDocumentIds,
+  checkGearCoverage,
+  overTimeProblems,
 } from "../../tools/validate-content-checks.mjs";
 
 const SCOPE = "substances-and-paraphernalia";
@@ -254,6 +256,51 @@ describe("checkSubstance: overdose flag (v0.4)", () => {
       errors.some((e) => /overdose flag must be an object/.test(e)),
       true,
     );
+  });
+
+  it("accepts overdose damage that is plain dice with a known type", () => {
+    const file = baseSubstance();
+    file.data.flags[SCOPE].overdose = {
+      enabled: true,
+      chancePercent: 10,
+      description: "x",
+      damage: { formula: "2d8", type: "poison" },
+    };
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
+  });
+
+  it("errors when overdose damage is malformed or has an unknown type", () => {
+    for (const damage of [
+      { formula: "2d", type: "poison" },
+      { formula: "2d6", type: "pain" },
+    ]) {
+      const file = baseSubstance();
+      file.data.flags[SCOPE].overdose = {
+        enabled: true,
+        chancePercent: 10,
+        description: "x",
+        damage,
+      };
+      const { errors } = checkSubstance(file);
+      assert.equal(
+        errors.some((e) => /overdose\.damage must be plain dice/.test(e)),
+        true,
+        JSON.stringify(damage),
+      );
+    }
+  });
+
+  it("accepts a blank overdose damage formula as no damage", () => {
+    const file = baseSubstance();
+    file.data.flags[SCOPE].overdose = {
+      enabled: true,
+      chancePercent: 10,
+      description: "x",
+      damage: { formula: "", type: "" },
+    };
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
   });
 });
 
@@ -846,4 +893,296 @@ describe("checkSubstance: blank DCs (v0.9.2)", () => {
       );
     });
   }
+});
+
+describe("overTimeProblems", () => {
+  it("damage only is fine", () => {
+    assert.deepEqual(
+      overTimeProblems("turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal"),
+      [],
+    );
+  });
+  it("a save with a keep-alive count is fine", () => {
+    assert.deepEqual(
+      overTimeProblems(
+        "turn=start,saveAbility=con,saveDC=13,saveCount=9999,damageRoll=1d4,damageType=psychic",
+      ),
+      [],
+    );
+  });
+  it("a save with no count, or a count ending in -, ends withdrawal early", () => {
+    assert.equal(overTimeProblems("turn=start,saveAbility=con,saveDC=13").length, 1);
+    assert.equal(overTimeProblems("turn=start,saveDC=13,saveCount=3-").length, 1);
+  });
+  it("removeCondition, actionSave and itemName are refused", () => {
+    assert.equal(
+      overTimeProblems("turn=start,damageRoll=1d4,removeCondition=true,actionSave=roll,itemName=X")
+        .length,
+      3,
+    );
+  });
+});
+
+describe("checkSubstance: withdrawal effects can't remove themselves (v0.10.0)", () => {
+  function withWithdrawalChanges(changes, extra = {}) {
+    const file = makeValidSubstance();
+    const ae = file.data.effects.find((e) => e._id === "ae-withdraw-001");
+    ae.system.changes = changes;
+    Object.assign(ae.flags, extra.flags);
+    return file;
+  }
+
+  it("accepts a damage-only OverTime row", () => {
+    const file = withWithdrawalChanges([
+      {
+        key: "flags.midi-qol.OverTime",
+        type: "override",
+        value: "turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal",
+        priority: 20,
+      },
+    ]);
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
+  });
+
+  it("errors on an OverTime row with a save and no keep-alive", () => {
+    const file = withWithdrawalChanges([
+      {
+        key: "flags.midi-qol.OverTime",
+        type: "override",
+        value: "turn=start,saveDC=13",
+        priority: 20,
+      },
+    ]);
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /OverTime/);
+    assert.match(errors[0], /saveCount/);
+  });
+
+  it("errors on a suffixed OverTime key, which Midi also runs as OverTime", () => {
+    const file = withWithdrawalChanges([
+      {
+        key: "flags.midi-qol.OverTime.withdrawal",
+        type: "override",
+        value: "turn=start,saveDC=13",
+        priority: 20,
+      },
+    ]);
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /saveCount/);
+  });
+
+  it("errors on a DAE special duration", () => {
+    const file = withWithdrawalChanges([], {
+      flags: { dae: { specialDuration: ["isDamaged"] } },
+    });
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /special duration/);
+  });
+
+  it("errors on a DAE stacking policy of none or noneName", () => {
+    for (const stackable of ["none", "noneName"]) {
+      const file = withWithdrawalChanges([], { flags: { dae: { stackable } } });
+      const { errors } = checkSubstance(file);
+      assert.equal(errors.length, 1, stackable);
+      assert.match(errors[0], /stack/);
+    }
+  });
+
+  it("accepts an empty special duration list and a stacking policy that allows copies", () => {
+    const file = withWithdrawalChanges([], {
+      flags: { dae: { specialDuration: [], stackable: "multi" } },
+    });
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
+  });
+});
+
+describe("checkSubstance: dose marker and dose-others activities (v0.10.0)", () => {
+  const marker = (extra = {}) => ({
+    _id: "ae-dose-001",
+    name: "Dosed with Test Substance",
+    transfer: false,
+    statuses: [],
+    system: { changes: [] },
+    flags: { [SCOPE]: { aeRole: "dose" } },
+    ...extra,
+  });
+
+  // The drug's own "Use" plus a dose-others activity that lists the marker.
+  function withMarker({ markerExtra, others = {} } = {}) {
+    const file = makeValidSubstance();
+    file.data.effects.push(marker(markerExtra));
+    file.data.system.activities = {
+      act1: { _id: "act1", name: "Use", type: "utility", effects: [] },
+      act2: {
+        _id: "act2",
+        name: "Dose another",
+        type: "save",
+        target: { affects: { type: "creature" } },
+        effects: [{ _id: "ae-dose-001" }],
+        ...others,
+      },
+    };
+    return file;
+  }
+
+  it("accepts a clean marker and a dose-others activity", () => {
+    assert.deepEqual(checkSubstance(withMarker()).errors, []);
+  });
+
+  it("errors on a marker with a status", () => {
+    const { errors } = checkSubstance(withMarker({ markerExtra: { statuses: ["poisoned"] } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /dose marker "Dosed with Test Substance" must have no statuses/);
+  });
+
+  it("errors on a marker with a change row", () => {
+    const row = { key: "system.attributes.ac.bonus", type: "add", value: "1", priority: 20 };
+    const { errors } = checkSubstance(withMarker({ markerExtra: { system: { changes: [row] } } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /must have no changes/);
+  });
+
+  it("errors on a transferred marker", () => {
+    const { errors } = checkSubstance(withMarker({ markerExtra: { transfer: true } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /must have transfer: false/);
+  });
+
+  it("errors on a marker that carries sourceSubstanceId", () => {
+    const flags = { [SCOPE]: { aeRole: "dose", sourceSubstanceId: "abc" } };
+    const { errors } = checkSubstance(withMarker({ markerExtra: { flags } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /must not carry sourceSubstanceId/);
+  });
+
+  it("errors on an activity that lists the marker but targets self", () => {
+    const { errors } = checkSubstance(
+      withMarker({ others: { target: { affects: { type: "self" } } } }),
+    );
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /activity "Dose another" doses others but targets self/);
+  });
+
+  it("errors when every activity lists the marker", () => {
+    const file = withMarker();
+    file.data.system.activities.act1.effects = [{ _id: "ae-dose-001" }];
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /needs an activity that doses the user, for the Long Rest relapse/);
+  });
+
+  it("errors on a dose-named effect with no aeRole", () => {
+    const file = makeValidSubstance();
+    file.data.effects.push({
+      _id: "ae-dose-001",
+      name: "Dosed with Voltbeans",
+      system: { changes: [] },
+    });
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /matches role "dose" by name but aeRole flag is missing/);
+  });
+
+  it("keeps an Overdose effect an overdose, not a dose", () => {
+    const file = makeValidSubstance();
+    file.data.effects.push({
+      _id: "ae-over-001",
+      name: "Black Lift Overdose",
+      system: { changes: [] },
+    });
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /matches role "overdose" by name/);
+  });
+
+  it("errors on an attack that doses others without otherActivityId none", () => {
+    for (const other of [undefined, null, "", "someOtherId"]) {
+      const file = withMarker({ others: { type: "attack", otherActivityId: other } });
+      const { errors } = checkSubstance(file);
+      assert.equal(errors.length, 1, String(other));
+      assert.match(
+        errors[0],
+        /activity "Dose another" doses others by attack and must set otherActivityId: "none" \(Midi would pair it with the self-dose\)/,
+      );
+    }
+  });
+
+  it("accepts an attack that doses others with otherActivityId none", () => {
+    const file = withMarker({ others: { type: "attack", otherActivityId: "none" } });
+    assert.deepEqual(checkSubstance(file).errors, []);
+  });
+
+  it("does not ask a save activity for otherActivityId", () => {
+    assert.deepEqual(checkSubstance(withMarker({ others: { type: "save" } })).errors, []);
+  });
+
+  // A bomb that only places the cloud (no marker) still doses others; the cloud's own activity lists the marker.
+  const bomb = {
+    _id: "act3",
+    name: "Throw as a gas bomb",
+    type: "utility",
+    target: { affects: { type: "creature" } },
+    effects: [],
+    regionBehavior: { enabled: true },
+  };
+
+  it("accepts a gas bomb that lists no marker beside the cloud's activity", () => {
+    const file = withMarker();
+    file.data.system.activities.act3 = bomb;
+    assert.deepEqual(checkSubstance(file).errors, []);
+  });
+
+  it("counts the gas bomb as dosing others for the relapse rule", () => {
+    const file = withMarker();
+    file.data.system.activities.act1 = { ...bomb, _id: "act1" };
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /needs an activity that doses the user, for the Long Rest relapse/);
+  });
+});
+
+describe("checkGearCoverage", () => {
+  const drug = (setting, admin, name = "Test Drug") => ({
+    name,
+    system: { type: { subtype: admin } },
+    flags: { [SCOPE]: { kind: "substance", setting } },
+  });
+  const gear = (setting, appliesTo, attunement = "") => ({
+    name: "Test Gear",
+    system: { attunement },
+    flags: { [SCOPE]: { kind: "paraphernalia", setting, appliesTo } },
+  });
+
+  it("errors when the only gear for a drug's administration needs attunement", () => {
+    const errors = checkGearCoverage(
+      [drug("fantasy", "ingested", "Elixir")],
+      [gear("fantasy", ["ingested"], "required")],
+    );
+    assert.deepEqual(errors, [
+      "Elixir: no fantasy gear without attunement applies to ingested substances",
+    ]);
+  });
+
+  it("passes once a non-attuned gear from the same setting covers the administration", () => {
+    const errors = checkGearCoverage(
+      [drug("fantasy", "ingested")],
+      [gear("fantasy", ["ingested"], "required"), gear("fantasy", ["ingested"])],
+    );
+    assert.deepEqual(errors, []);
+  });
+
+  it("does not count gear from another setting", () => {
+    const errors = checkGearCoverage([drug("fantasy", "ingested")], [gear("sciFi", ["ingested"])]);
+    assert.equal(errors.length, 1);
+  });
+
+  it("does not count gear for a different administration", () => {
+    const errors = checkGearCoverage([drug("modern", "injury")], [gear("modern", ["inhaled"])]);
+    assert.equal(errors.length, 1);
+  });
 });

@@ -1,32 +1,32 @@
 {
-  "_id": "fhParaLogbook001",
-  "name": "Athlete's Logbook",
+  "_id": "fhParaApothVial1",
+  "name": "Apothecary's Vial",
   "type": "equipment",
   "img": "icons/svg/item-bag.svg",
-  "folder": "fhParaModern0001",
+  "folder": "fhParaFantasy001",
   "system": {
     "description": {
-      "value": "<p>A weathered training journal. Pages of dosing schedules, weight cuts, and recovery notes. The discipline of using a stack safely is recorded here.</p>"
+      "value": "<p>A stoppered glass vial etched with measuring rings. A careful hand pours one draught and no more.</p>"
     },
     "type": {
       "value": "trinket"
     },
     "rarity": "common",
     "weight": {
-      "value": 0.5,
+      "value": 0.1,
       "units": "lb"
     },
     "price": {
-      "value": 1,
+      "value": 5,
       "denomination": "gp"
     }
   },
   "flags": {
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
-      "setting": "modern",
-      "subtype": "athletes-logbook",
-      "appliesTo": ["ingested", "injury"],
+      "setting": "fantasy",
+      "subtype": "vial",
+      "appliesTo": ["ingested"],
       "schemaVersion": 7
     }
   },
@@ -34,5 +34,5 @@
   "ownership": {
     "default": 0
   },
-  "_key": "!items!fhParaLogbook001"
+  "_key": "!items!fhParaApothVial1"
 }

@@ -1,4 +1,5 @@
 import { isParaphernalia, getSubtype } from "./flag-schema.js";
+import { gearHasUse } from "./admin-match.js";
 
 /**
  * @typedef {Object} ParaphernaliaInspection
@@ -13,8 +14,10 @@ import { isParaphernalia, getSubtype } from "./flag-schema.js";
  *
  * Readiness rules (gate, not just inventory presence):
  *  - Equipment paraphernalia must have `system.equipped === true`.
- *  - Consumable paraphernalia must have `system.quantity > 0`. dnd5e
- *    consumables have no equipped slot; quantity is the analogue.
+ *  - Consumable paraphernalia must have `system.quantity > 0` and, when it has
+ *    a use pool (`system.uses.max > 0`), a use left in the current pack or
+ *    another pack in the stack. dnd5e consumables have no equipped slot;
+ *    quantity is the analogue.
  *  - Attunement-required paraphernalia (`system.attunement === "required"`)
  *    must have `system.attuned === true` on the actor's copy.
  *
@@ -28,6 +31,12 @@ export function inspectParaphernaliaItem(item) {
   if (item.type === "consumable") {
     const qty = sys.quantity;
     if (typeof qty === "number" && qty <= 0) {
+      return { item, ready: false, reason: "missing" };
+    }
+    // Single-use gear with a use pool (Rolling Papers) is empty once the last
+    // pack in the stack is spent; `max` is a string in compendium data.
+    const max = Number(sys.uses?.max) || 0;
+    if (max > 0 && !gearHasUse({ spent: sys.uses?.spent, max, quantity: qty })) {
       return { item, ready: false, reason: "missing" };
     }
   } else if (item.type === "equipment" && sys.equipped !== true) {
@@ -75,4 +84,3 @@ export function inspectSubtypeOnActor(actor, subtype) {
 export function actorHasSubtype(actor, subtype) {
   return inspectSubtypeOnActor(actor, subtype).some((i) => i.ready);
 }
-

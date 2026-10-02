@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws made to resist being grappled, shoved, or restrained.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 20 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as a Tincture Dropper.</em></p>"
+      "value": "<p>A thick, ochre tonic distilled from giant-thistle root and a measured drop of frost-giant marrow. The flask hums faintly when uncorked and the first swallow tastes of cold iron. Brewed by alchemists who insist the recipe is heirloom; competitors insist it is luck. Drinkers boast that nobody can grab, shove, or pin them.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you have a +2 bonus to Strength (Athletics) checks and advantage on Strength saving throws.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Giantsbreath Tonic (see below).</p><p><strong><em>Addicted from Giantsbreath Tonic.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Sleight of Hand) checks (your hands feel oversized and clumsy).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, you go into withdrawal for 3 days, or half that if you succeed on a DC 15 Constitution saving throw. If you have no doses left, skip the Wisdom check. While in withdrawal all your speeds are reduced by 10 feet, you have disadvantage on Strength and Constitution saving throws, and in combat you take 1d4 poison damage at the start of each of your turns. Abstaining then takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><strong><em>Overdose.</em></strong> If you take a dose while still under its effects, or once your tolerance is at its limit, there is a 10% chance you overdose: you take 2d8 poison damage and have the Poisoned and Incapacitated conditions for 1 minute.</p><p><strong><em>Dosing others.</em></strong> As an action, you can slip a dose into food or drink within 5 feet. A creature that consumes it is dosed.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as an Apothecary's Vial or the Tongue of the Oracle.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -100,7 +100,88 @@
           "formula": "",
           "name": ""
         },
-        "name": ""
+        "name": "Use"
+      },
+      "fhActGntBreath02": {
+        "type": "utility",
+        "_id": "fhActGntBreath02",
+        "sort": 100000,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "inst",
+          "value": "",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEGntBreathDos"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "ft",
+          "value": "5",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "type": "creature",
+            "count": "1",
+            "choice": false
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
+        "name": "Slip into food or drink"
       }
     }
   },
@@ -115,13 +196,11 @@
           "ability": "con",
           "dc": 14
         },
-        "addictionEffectIds": [
-          "fhAEGntBreathAdc"
-        ]
+        "addictionEffectIds": ["fhAEGntBreathAdc"]
       },
       "withdrawal": {
         "enabled": true,
-        "dc": 20,
+        "dc": 15,
         "abstain": {
           "ability": "wis",
           "dc": 12
@@ -130,17 +209,17 @@
           "value": 3,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEGntBreathWit"
-        ]
+        "effectIds": ["fhAEGntBreathWit"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
-        "description": "Too much Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.",
-        "effectIds": [
-          "fhAEGntBreathOvd"
-        ]
+        "description": "Too much Giantsbreath Tonic: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
+        "effectIds": ["fhAEGntBreathOvd"],
+        "damage": {
+          "formula": "2d8",
+          "type": "poison"
+        }
       },
       "schemaVersion": 7
     }
@@ -156,12 +235,18 @@
         "value": 600,
         "units": "seconds"
       },
-      "description": "<p>+2 to Strength (Athletics) checks. Advantage on Strength saves vs. grapple/shove/restrain.</p>",
+      "description": "<p>+2 to Strength (Athletics) checks. Advantage on Strength saving throws.</p>",
       "system": {
         "changes": [
           {
             "key": "system.skills.ath.bonuses.check",
             "value": "+2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.str.save.roll.mode",
+            "value": "1",
             "priority": 20,
             "type": "add"
           },
@@ -186,13 +271,18 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Dexterity (Sleight of Hand) checks.</p>",
       "system": {
-        "changes": []
+        "changes": [
+          {
+            "key": "system.skills.slt.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          }
+        ]
       },
       "flags": {
         "substances-and-paraphernalia": {
@@ -208,7 +298,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "description": "<p>While in withdrawal: all speeds reduced by 10 feet, disadvantage on Strength and Constitution saving throws, and in combat 1d4 poison damage at the start of each of your turns.</p>",
       "system": {
         "changes": [
           {
@@ -216,6 +306,30 @@
             "value": "#5e3b1f",
             "priority": 20,
             "type": "override"
+          },
+          {
+            "key": "system.attributes.movement.bonus",
+            "value": "-10",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.str.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.con.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "flags.midi-qol.OverTime",
+            "value": "turn=start,damageRoll=1d4,damageType=poison,label=Withdrawal",
+            "priority": 20,
+            "type": "custom"
           }
         ]
       },
@@ -232,15 +346,12 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned",
-        "incapacitated"
-      ],
+      "statuses": ["poisoned", "incapacitated"],
       "duration": {
         "value": 60,
         "units": "seconds"
       },
-      "description": "<p>Too much Giantsbreath Tonic overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "description": "<p>Too much Giantsbreath Tonic: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.</p>",
       "system": {
         "changes": []
       },
@@ -250,6 +361,25 @@
         }
       },
       "_key": "!items.effects!fhSubGntBreath01.fhAEGntBreathOvd"
+    },
+    {
+      "_id": "fhAEGntBreathDos",
+      "name": "Dosed with Giantsbreath Tonic",
+      "img": "icons/svg/item-bag.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "",
+      "statuses": [],
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "dose"
+        }
+      },
+      "_key": "!items.effects!fhSubGntBreath01.fhAEGntBreathDos"
     }
   ],
   "ownership": {

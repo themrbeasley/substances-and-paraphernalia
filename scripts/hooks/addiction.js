@@ -21,11 +21,13 @@ import {
 import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
 import { attenuateChangeRows } from "../data/tolerance.js";
-import { isPriorHigh, isStrayHigh } from "../data/prior-high.js";
+import { isPriorHigh, isStrayHigh, findAlteredTemplates } from "../data/prior-high.js";
+import { doseMarkerIds, dosesOthers } from "../data/dose-marker.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
-import { durationToSeconds } from "../data/withdrawal-duration.js";
+import { withdrawalSeconds } from "../data/withdrawal-duration.js";
 import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { rollOverdoseAndApply } from "./overdose.js";
+import { spendConsumableGear } from "./activity-gating.js";
 import { SETTING_KEYS, COUPLING_DEFAULT } from "../settings.js";
 import { logger } from "../logger.js";
 
@@ -54,8 +56,14 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
+  // A dose-others activity doses its targets (scripts/hooks/dose-others.js), not its user.
+  if (dosesOthers(activity, doseMarkerIds(item.effects))) return;
   // Each step catches its own errors; this catches anything outside them.
   try {
+    // A gear-update failure must not skip the addiction save and the rest of the dose.
+    await spendConsumableGear(actor, item).catch((err) =>
+      logger.error("spending gear failed", err),
+    );
     await runDosePipeline(actor, item);
   } catch (err) {
     logger.error("dose flow failed", err);
@@ -65,14 +73,17 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
 /**
  * One dose, in order (spec D10): a dose during withdrawal cancels it (D7);
  * the addiction save; the high, scaled by current tolerance; tolerance +1
- * (every dose, D9); the overdose check against the new total. The only
+ * (every dose, D9); the overdose check against the new total, or because the
+ * dose came while the drug's high was still on (D6). The only
  * post-use listener for substances. Simulate Dose runs it too.
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @param {{forced?: boolean}} [opts]  `forced`: someone else dosed this creature
+ *   (spec D1), so the addiction save skips the creature's own gear bonus.
  * @returns {Promise<Array<{step: string, message: string}>>} the steps that failed
  */
-export async function runDosePipeline(actor, item) {
+export async function runDosePipeline(actor, item, { forced = false } = {}) {
   // The dose is already spent, so each step catches its own error: one failure
   // must not cancel the rest of the dose (spec v0.9.2 D11).
   const failures = [];
@@ -86,11 +97,16 @@ export async function runDosePipeline(actor, item) {
   };
   await step("relapse check", () => cancelWithdrawalOnRelapse(actor, item));
   if (getAddictionEnabled(item) && typeof getAddiction(item)?.save?.dc === "number") {
-    await step("addiction save", () => rollSaveAndApply(actor, item));
+    await step("addiction save", () => rollSaveAndApply(actor, item, { forced }));
   }
+  // Taking a drug while its high is still on you risks an overdose (spec D6).
+  // `active` is false for a switched-off effect; `duration.expired` marks one that has run out.
+  const stillHigh = actor.effects.some(
+    (e) => isPriorHigh(e, item) && e.active && !e.duration?.expired,
+  );
   await step("high", () => applyAlteredEffectGated(actor, item));
   await step("tolerance", () => incrementActorToleranceCount(actor, item));
-  await step("overdose", () => rollOverdoseAndApply(actor, item));
+  await step("overdose", () => rollOverdoseAndApply(actor, item, undefined, { stillHigh }));
   return failures;
 }
 
@@ -113,8 +129,10 @@ async function cancelWithdrawalOnRelapse(actor, item) {
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @param {{forced?: boolean}} [opts]  `forced`: the dose was forced on the actor
+ *   by someone else, so the actor's own bypass gear doesn't apply.
  */
-export async function rollSaveAndApply(actor, item) {
+export async function rollSaveAndApply(actor, item, { forced = false } = {}) {
   const addiction = getAddiction(item);
   if (!addiction) return;
 
@@ -123,7 +141,8 @@ export async function rollSaveAndApply(actor, item) {
     return applyOutcome(actor, item, { alreadyAddicted: true });
   }
 
-  const modifier = await consumeBypassIfAvailable(actor, item);
+  // A forced dose doesn't go through the dosed creature's own kit (spec D1).
+  const modifier = forced ? { resolution: null } : await consumeBypassIfAvailable(actor, item);
   if (modifier.resolution === "auto-pass") {
     return applyOutcome(actor, item, { modifier });
   }
@@ -443,12 +462,6 @@ export async function applyAlteredEffectGated(actor, item) {
   return created?.[0] ?? null;
 }
 
-function findAlteredTemplates(item) {
-  const list = [...(item?.effects ?? [])];
-  const byRole = list.filter((e) => e.flags?.[MODULE_ID]?.aeRole === "altered");
-  return byRole.length > 0 ? byRole : list.filter((e) => /altered/i.test(e.name ?? ""));
-}
-
 async function refreshToleranceMarkerAe(actor, item, count) {
   // The marker shows tolerance on the character (spec v0.9.2 D8): the drug's
   // tolerance template if it ships one, else a plain marker with no Changes
@@ -499,12 +512,17 @@ export function toleranceMarkerName(item, count) {
  *
  * @param {Actor} actor
  * @param {Item}  item
- * @param {{elapsedSeconds?: number}} [opts]  Simulate Dose starts mid-withdrawal.
+ * @param {{elapsedSeconds?: number, halved?: boolean}} [opts]  `elapsedSeconds`:
+ *   Simulate Dose starts mid-withdrawal. `halved`: the Constitution save passed,
+ *   so withdrawal lasts half the authored length (permanent stays permanent).
  * @returns {Promise<ActiveEffect|null>} the first applied effect
  */
-export async function applyWithdrawalEffect(actor, item, { elapsedSeconds = 0 } = {}) {
-  const duration = getWithdrawalDuration(item);
-  const total = duration ? durationToSeconds(duration.value, duration.unit) : 0;
+export async function applyWithdrawalEffect(
+  actor,
+  item,
+  { elapsedSeconds = 0, halved = false } = {},
+) {
+  const total = withdrawalSeconds(getWithdrawalDuration(item), { halved });
   // 0 means permanent to prepareEffectPayload, so never let elapsed time reach it.
   const seconds = total > 0 ? Math.max(1, total - elapsedSeconds) : 0;
   const templates = findWithdrawalTemplates(item);

@@ -9,6 +9,8 @@ import { shouldRollOverdose, rollOverdoseChance } from "../data/overdose-gate.js
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { currentPoints } from "../data/tolerance.js";
 import { prepareEffectPayload } from "../data/effect-data.js";
+import { overdoseDamage } from "../data/overdose-damage.js";
+import { logger } from "../logger.js";
 
 /**
  * Overdose runs as the last step of the dose pipeline (runDosePipeline in
@@ -22,35 +24,77 @@ import { prepareEffectPayload } from "../data/effect-data.js";
  * @param {Actor} actor
  * @param {Item}  item
  * @param {() => number} [rng]   d100; defaults to Math.random-based 1..100.
+ * @param {{ stillHigh?: boolean }} [opts] stillHigh: the dose came while this drug's
+ *   high was still on the creature (spec D6); opens the roll even with no Withdrawal DC.
  * @returns {Promise<ActiveEffect|null>}
  */
-export async function rollOverdoseAndApply(actor, item, rng = defaultD100) {
+export async function rollOverdoseAndApply(
+  actor,
+  item,
+  rng = defaultD100,
+  { stillHigh = false } = {},
+) {
   const overdose = getOverdose(item);
   if (!overdose?.enabled) return null;
 
+  // At the tolerance limit (tier table), or still under this drug's high (spec D6).
+  let points = 0;
+  let threshold = Infinity;
   const dc = getWithdrawalDc(item);
-  if (!Number.isFinite(dc)) return null;
-  const profile = tierProfile(snapDcToTier(dc));
-  const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
-  const points = currentPoints(count, profile.rate);
-
+  if (Number.isFinite(dc)) {
+    const profile = tierProfile(snapDcToTier(dc));
+    const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
+    points = currentPoints(count, profile.rate);
+    threshold = profile.threshold;
+  }
   const thresholdModifier = Number(actor?.getFlag?.(MODULE_ID, "overdose.thresholdModifier")) || 0;
-  if (!shouldRollOverdose(points, profile.threshold, thresholdModifier)) return null;
+  if (!shouldRollOverdose(points, threshold, thresholdModifier, stillHigh)) return null;
 
   const chanceModifier = Number(actor?.getFlag?.(MODULE_ID, "overdose.chanceModifier")) || 0;
   if (!rollOverdoseChance(rng, overdose.chancePercent, chanceModifier)) return null;
 
   const applied = await applyOverdoseEffect(actor, item, overdose);
+  const damage = await dealOverdoseDamage(actor, overdose);
   // The Details tab promises the description on a chat card when it triggers.
   await ChatMessage.create({
     content: game.i18n.format("FISHUT.Overdose.Triggered", {
       actor: actor.name,
       item: item.name,
       description: overdose.description ?? "",
+      damage,
     }),
     whisper: [],
   });
   return applied;
+}
+
+/**
+ * Roll and apply the overdose's damage (spec D3) through dnd5e, so resistance,
+ * immunity and concentration saves count. Returns the chat suffix, or "" when the
+ * drug deals none. A broken formula (checked by overdoseDamage) or a failed roll
+ * deals no damage and never blocks the overdose itself.
+ *
+ * @param {Actor} actor
+ * @param {object} overdose  the item's overdose flag block
+ * @returns {Promise<string>}
+ */
+async function dealOverdoseDamage(actor, overdose) {
+  const dmg = overdoseDamage(overdose, Object.keys(CONFIG.DND5E?.damageTypes ?? {}));
+  if (!dmg) return "";
+  try {
+    const roll = await new Roll(dmg.formula).evaluate();
+    // A formula like "1d4 - 5" can roll below 0, which dnd5e would apply as healing.
+    const total = Math.max(0, roll.total);
+    await actor.applyDamage([{ value: total, type: dmg.type }]);
+    const label = game.i18n.localize(CONFIG.DND5E.damageTypes[dmg.type]?.label ?? dmg.type);
+    return game.i18n.format("FISHUT.Overdose.Damage", {
+      total,
+      type: label.toLowerCase(),
+    });
+  } catch (err) {
+    logger.error(`overdose damage "${dmg.formula}" failed for ${actor.name}`, err);
+    return "";
+  }
 }
 
 function defaultD100() {

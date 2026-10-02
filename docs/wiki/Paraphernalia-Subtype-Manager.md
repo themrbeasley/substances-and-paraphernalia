@@ -4,7 +4,7 @@ Authors pick paraphernalia subtypes from a list when filling in the Details tab.
 
 ## Opening the manager
 
-*Game Settings → Module Settings → Manage Paraphernalia Subtypes* (`registerMenu` entry).
+_Game Settings → Module Settings → Manage Paraphernalia Subtypes_ (`registerMenu` entry).
 
 ## What the form does
 

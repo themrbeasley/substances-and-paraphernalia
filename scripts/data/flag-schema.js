@@ -196,8 +196,8 @@ export const getWithdrawal = (item) => item?.getFlag?.(MODULE_ID, FLAGS.withdraw
 export const setWithdrawal = (item, value) => item.setFlag(MODULE_ID, FLAGS.withdrawal, value);
 
 /**
- * Whether withdrawal AE application + actor-flag bookkeeping runs on save fail.
- * Undefined defaults to true.
+ * Whether withdrawal AE application + actor-flag bookkeeping runs when the
+ * character abstains at a Long Rest. Undefined defaults to true.
  * @param {Item} item @returns {boolean}
  */
 export const getWithdrawalEnabled = (item) => getWithdrawal(item)?.enabled !== false;
@@ -243,6 +243,9 @@ export const setWithdrawalEffectId = (item, value) =>
  * @property {boolean} enabled
  * @property {number}  chancePercent  Integer 1–100; per-consumption d100 chance.
  * @property {string}  description    Free-text shown in the chat card on hit.
+ * @property {{ formula?: string, type?: string }} [damage]
+ *   Damage dealt on a hit (spec D3): plain dice ("2d8", "1d6 + 2", "5") and a dnd5e
+ *   damage type id. A blank formula means no damage.
  * @property {string[]} [effectIds]
  *   v0.4 canonical: ids of overdose marker AE templates on the same item; ALL
  *   are cloned onto the actor when overdose fires. If empty, a minimal marker

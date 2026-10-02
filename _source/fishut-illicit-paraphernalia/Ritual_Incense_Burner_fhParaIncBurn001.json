@@ -6,7 +6,7 @@
   "folder": "fhParaFantasy001",
   "system": {
     "description": {
-      "value": "<p>A small brass censer chased with grounding sigils. When a ritual user smolders a powdered substance over its coals (rather than snorting it raw), the smoke is read through the lungs slowly, and the body has time to brace.</p><p><strong>Slow burn.</strong> Provides a +1 bonus to Constitution saving throws against addiction from inhaled substances administered through this burner.</p>"
+      "value": "<p>A small brass censer chased with grounding sigils. When a ritual user smolders a powdered substance over its coals (rather than snorting it raw), the smoke is read through the lungs slowly, and the body has time to brace.</p><p><strong>Slow burn.</strong> Provides a +1 bonus to saving throws against addiction from inhaled substances administered through this burner.</p>"
     },
     "type": {
       "value": "trinket"
@@ -26,9 +26,7 @@
       "kind": "paraphernalia",
       "setting": "fantasy",
       "subtype": "incense-burner",
-      "appliesTo": [
-        "inhaled"
-      ],
+      "appliesTo": ["inhaled"],
       "schemaVersion": 7
     }
   },
@@ -40,7 +38,7 @@
       "transfer": true,
       "disabled": false,
       "duration": {},
-      "description": "<p>Grants a +1 bonus to Constitution saving throws against addiction to inhaled substances burned in the censer.</p>",
+      "description": "<p>Grants a +1 bonus to saving throws against addiction to inhaled substances burned in the censer.</p>",
       "system": {
         "changes": []
       },
@@ -51,9 +49,7 @@
             "kind": "bypass",
             "type": "+N",
             "bonus": 1,
-            "appliesTo": [
-              "inhaled"
-            ]
+            "appliesTo": ["inhaled"]
           }
         }
       },

@@ -1,23 +1,23 @@
 {
-  "_id": "fhParaNeurDiff01",
-  "name": "Neural Diffuser",
+  "_id": "fhParaJetInject1",
+  "name": "Jet Injector",
   "type": "equipment",
   "img": "icons/svg/item-bag.svg",
   "folder": "fhParaSciFi00001",
   "system": {
     "description": {
-      "value": "<p>A pocket-sized atomizer that disperses programmable mist through cortical implant ports. Inhalation is bypassed; uptake is direct.</p>"
+      "value": "<p>A palm-sized needle-free injector. Press it to skin and pull the trigger; the dose goes in under pressure.</p>"
     },
     "type": {
       "value": "trinket"
     },
-    "rarity": "uncommon",
+    "rarity": "common",
     "weight": {
-      "value": 0.25,
+      "value": 0.2,
       "units": "lb"
     },
     "price": {
-      "value": 250,
+      "value": 50,
       "denomination": "gp"
     }
   },
@@ -25,8 +25,8 @@
     "substances-and-paraphernalia": {
       "kind": "paraphernalia",
       "setting": "sciFi",
-      "subtype": "inhaler",
-      "appliesTo": ["inhaled", "contact"],
+      "subtype": "syringe",
+      "appliesTo": ["injury"],
       "schemaVersion": 7
     }
   },
@@ -34,5 +34,5 @@
   "ownership": {
     "default": 0
   },
-  "_key": "!items!fhParaNeurDiff01"
+  "_key": "!items!fhParaJetInject1"
 }

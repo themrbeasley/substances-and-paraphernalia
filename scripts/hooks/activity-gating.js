@@ -1,11 +1,12 @@
 import { MODULE_ID, labelKey } from "../config.js";
 import { getAppliesTo, isParaphernalia, isSubstance } from "../data/flag-schema.js";
 import { inspectParaphernaliaItem } from "../data/references.js";
-import { actorSatisfiesAdmin } from "../data/admin-match.js";
+import { actorSatisfiesAdmin, nextGearUses, pickGearToSpend } from "../data/admin-match.js";
 import { isActive } from "../integrations/index.js";
 import { itemDaeRequiringEffects } from "../integrations/dae.js";
 import { logger } from "../logger.js";
 import { keepLastDose } from "../data/last-dose.js";
+import { doseMarkerIds, dosesOthers, spendsDrug } from "../data/dose-marker.js";
 
 // preUseActivity is synchronous, so the override flow cancels the current
 // attempt and re-triggers activity.use() after the dialog resolves. The
@@ -61,12 +62,16 @@ function onPreUseActivity(activity, usageConfig, dialogConfig, messageConfig) {
   if (!item || !actor) return true;
   if (!isSubstance(item)) return true;
 
-  // An empty drug stays at 0 doses (keepLastDose); it can't be used, and
-  // there's no "Use anyway".
-  if ((Number(item.system?.quantity) || 0) < 1) {
+  const markers = doseMarkerIds(item.effects);
+  // An empty drug can't be spent (keepLastDose keeps it at 0), and there's no
+  // "Use anyway". A cloud tick spends nothing, so it keeps working after the
+  // last bomb (spec D9).
+  if (spendsDrug(activity) && (Number(item.system?.quantity) || 0) < 1) {
     ui.notifications.warn(game.i18n.format("FISHUT.Gating.NoDoses", { item: item.name }));
     return false;
   }
+  // Gear is for taking a drug yourself; dosing someone else needs none.
+  if (dosesOthers(activity, markers)) return true;
 
   if (!game.settings.get(MODULE_ID, "enforceParaphernalia")) return true;
 
@@ -111,9 +116,35 @@ function buildOwnedParaphernalia(actor) {
       id: item.id,
       appliesTo: getAppliesTo(item),
       usable: inspectParaphernaliaItem(item).ready,
+      consumable: item.type === "consumable",
     });
   }
   return owned;
+}
+
+/**
+ * After a dose the user takes, use up one piece of single-use gear (spec D8):
+ * nothing when ready reusable gear covers the administration, else one use (or
+ * one item) of the ready consumable with the lowest id. "Use anyway" finds
+ * nothing ready, so nothing is spent.
+ *
+ * @param {Actor} actor
+ * @param {Item}  item  the drug that was dosed
+ * @returns {Promise<void>}
+ */
+export async function spendConsumableGear(actor, item) {
+  if (!game.settings.get(MODULE_ID, "enforceParaphernalia")) return;
+  const id = pickGearToSpend(buildOwnedParaphernalia(actor), item?.system?.type?.subtype);
+  const gear = id ? actor.items.get(id) : null;
+  if (!gear) return;
+  const max = Number(gear.system?.uses?.max) || 0;
+  if (max > 0) {
+    const uses = { spent: gear.system.uses.spent, max, quantity: gear.system.quantity };
+    const { spent, quantity } = nextGearUses(uses);
+    await gear.update({ "system.uses.spent": spent, "system.quantity": quantity });
+  } else {
+    await gear.update({ "system.quantity": Math.max(0, (Number(gear.system.quantity) || 0) - 1) });
+  }
 }
 
 async function promptBlocked(activity, usageConfig, dialogConfig, messageConfig, admin) {

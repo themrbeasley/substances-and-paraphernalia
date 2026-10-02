@@ -36,7 +36,10 @@ test("isLiveWithdrawalEffect counts an active withdrawal effect", () => {
 });
 
 test("isLiveWithdrawalEffect ignores a V14-expired withdrawal effect that is not disabled", () => {
-  assert.equal(isLiveWithdrawalEffect({ name: "Withdrawal from Voltbeans", disabled: false, active: false }), false);
+  assert.equal(
+    isLiveWithdrawalEffect({ name: "Withdrawal from Voltbeans", disabled: false, active: false }),
+    false,
+  );
 });
 
 test("isLiveWithdrawalEffect ignores effects not named for withdrawal", () => {

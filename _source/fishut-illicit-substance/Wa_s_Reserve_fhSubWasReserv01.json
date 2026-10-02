@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>A blend of dragon-scaled herbs and powdered tongue-coal, prepared by Shen Feng Wa's surviving apprentices. Burns clean only in the bowl of the Dubious Pipe; in any other vessel it produces foul black smoke and nothing else.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have a +2 bonus to Wisdom (Insight) checks and your passive Perception increases by 2.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wa's Reserve (see below).</p><p><strong><em>Addicted from Wa's Reserve.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (the smoke leaves a black residue on the tongue).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 11 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 15 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to inhaled substances, such as Shen Feng Wa's Dubious Pipe.</em></p>"
+      "value": "<p>A blend of dragon-scaled herbs and powdered tongue-coal, prepared by Shen Feng Wa's surviving apprentices. They swear it burns cleanest in the bowl of the Dubious Pipe; in any other vessel the smoke runs foul and black.</p><p><strong><em>Desired effects on use.</em></strong> For 1 hour you have a +2 bonus to Wisdom (Insight) checks and your passive Wisdom (Perception) increases by 2.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wa's Reserve (see below).</p><p><strong><em>Addicted from Wa's Reserve.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Charisma checks (the smoke leaves a black residue on the tongue).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, you go into withdrawal for 2 days, or half that if you succeed on a DC 14 Constitution saving throw. If you have no doses left, skip the Wisdom check. While in withdrawal you take a -2 penalty to all ability checks and saving throws and have disadvantage on initiative rolls. Abstaining then takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><strong><em>Overdose.</em></strong> If you take a dose while still under its effects, or once your tolerance is at its limit, there is a 15% chance you overdose: you take 2d6 poison damage and have the Poisoned condition for 1 minute.</p><p><strong><em>Dosing others.</em></strong> As an action, you can blow a dose into the face of a creature within 5 feet. If the creature fails a DC 14 Constitution saving throw, it is dosed.</p><p><em>Requires ready paraphernalia that applies to inhaled substances, such as a Snuff Horn or Shen Feng Wa's Dubious Pipe.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -100,7 +100,94 @@
           "formula": "",
           "name": ""
         },
-        "name": ""
+        "name": "Use"
+      },
+      "fhActWasReserv02": {
+        "type": "save",
+        "_id": "fhActWasReserv02",
+        "sort": 100000,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "inst",
+          "value": "",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEWasReservDos",
+            "onSave": false
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "ft",
+          "value": "5",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "type": "creature",
+            "count": "1",
+            "choice": false
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "name": "Blow into a face",
+        "save": {
+          "ability": ["con"],
+          "dc": {
+            "calculation": "",
+            "formula": "14"
+          }
+        },
+        "damage": {
+          "onSave": "none",
+          "parts": []
+        }
       }
     }
   },
@@ -115,24 +202,30 @@
           "ability": "con",
           "dc": 14
         },
-        "addictionEffectIds": [
-          "fhAEWasReservAdc"
-        ]
+        "addictionEffectIds": ["fhAEWasReservAdc"]
       },
       "withdrawal": {
         "enabled": true,
-        "dc": 15,
+        "dc": 14,
         "abstain": {
           "ability": "wis",
-          "dc": 11
+          "dc": 12
         },
         "duration": {
-          "value": 3,
+          "value": 2,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEWasReservWit"
-        ]
+        "effectIds": ["fhAEWasReservWit"]
+      },
+      "overdose": {
+        "enabled": true,
+        "chancePercent": 15,
+        "description": "Too much Wa's Reserve: 2d6 poison damage and Poisoned for 1 minute.",
+        "effectIds": ["fhAEWasReservOvd"],
+        "damage": {
+          "formula": "2d6",
+          "type": "poison"
+        }
       },
       "schemaVersion": 7
     }
@@ -148,7 +241,7 @@
         "value": 3600,
         "units": "seconds"
       },
-      "description": "<p>+2 to Wisdom (Insight) checks. Passive Perception +2.</p>",
+      "description": "<p>+2 to Wisdom (Insight) checks. +2 to passive Wisdom (Perception).</p>",
       "system": {
         "changes": [
           {
@@ -158,7 +251,7 @@
             "type": "add"
           },
           {
-            "key": "system.skills.prc.passive",
+            "key": "system.skills.prc.bonuses.passive",
             "value": "+2",
             "priority": 20,
             "type": "add"
@@ -184,13 +277,18 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Charisma checks.</p>",
       "system": {
-        "changes": []
+        "changes": [
+          {
+            "key": "system.abilities.cha.check.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          }
+        ]
       },
       "flags": {
         "substances-and-paraphernalia": {
@@ -206,9 +304,27 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "description": "<p>-2 to all ability checks and saving throws, and disadvantage on initiative rolls, until the withdrawal ends.</p>",
       "system": {
         "changes": [
+          {
+            "key": "system.bonuses.abilities.check",
+            "value": "-2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.bonuses.abilities.save",
+            "value": "-2",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.attributes.init.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
           {
             "key": "flags.substances-and-paraphernalia.vignetteColor",
             "value": "#a87522",
@@ -223,6 +339,47 @@
         }
       },
       "_key": "!items.effects!fhSubWasReserv01.fhAEWasReservWit"
+    },
+    {
+      "_id": "fhAEWasReservOvd",
+      "name": "Wa's Reserve Overdose",
+      "img": "icons/svg/skull.svg",
+      "transfer": false,
+      "disabled": false,
+      "statuses": ["poisoned"],
+      "duration": {
+        "value": 60,
+        "units": "seconds"
+      },
+      "description": "<p>Too much Wa's Reserve: 2d6 poison damage and Poisoned for 1 minute.</p>",
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "overdose"
+        }
+      },
+      "_key": "!items.effects!fhSubWasReserv01.fhAEWasReservOvd"
+    },
+    {
+      "_id": "fhAEWasReservDos",
+      "name": "Dosed with Wa's Reserve",
+      "img": "icons/svg/item-bag.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "",
+      "statuses": [],
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "dose"
+        }
+      },
+      "_key": "!items.effects!fhSubWasReserv01.fhAEWasReservDos"
     }
   ],
   "ownership": {

@@ -87,7 +87,10 @@ if (!Array.isArray(manifest.packs) || manifest.packs.length === 0) {
     if (!pack.path?.startsWith("packs/")) {
       err(`pack "${pack.name}" path must begin with "packs/".`);
     }
-    if (pack.ownership?.ASSISTANT && !["OBSERVER", "OWNER", "LIMITED", "NONE"].includes(pack.ownership.ASSISTANT)) {
+    if (
+      pack.ownership?.ASSISTANT &&
+      !["OBSERVER", "OWNER", "LIMITED", "NONE"].includes(pack.ownership.ASSISTANT)
+    ) {
       err(`pack "${pack.name}" has unrecognized ASSISTANT ownership: ${pack.ownership.ASSISTANT}`);
     }
   }

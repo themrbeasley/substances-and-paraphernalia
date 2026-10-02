@@ -1,7 +1,12 @@
 // test/unit/tolerance.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { currentPoints, applyAttenuation, decayCount, attenuateChangeRows } from "../../scripts/data/tolerance.js";
+import {
+  currentPoints,
+  applyAttenuation,
+  decayCount,
+  attenuateChangeRows,
+} from "../../scripts/data/tolerance.js";
 
 test("currentPoints returns count * rate", () => {
   assert.equal(currentPoints(0, 3), 0);
@@ -81,7 +86,9 @@ test("attenuateChangeRows scales native number values (V14-migrated world items)
 });
 
 test("attenuateChangeRows passes non-numeric values through untouched (Token Magic preset names)", () => {
-  const rows = [{ key: "macro.tokenMagic", type: "custom", value: "fishut-tmfx-fantasy-stimulant" }];
+  const rows = [
+    { key: "macro.tokenMagic", type: "custom", value: "fishut-tmfx-fantasy-stimulant" },
+  ];
   assert.deepEqual(attenuateChangeRows(rows, 1, CURVE), rows);
 });
 
@@ -104,7 +111,11 @@ test("attenuateChangeRows leaves non-numeric values untouched at any tolerance (
   for (const count of [0, 1]) {
     for (const value of [true, false, null, [], "", "  "]) {
       const rows = [{ key: "system.attributes.movement.hover", type: "override", value }];
-      assert.deepEqual(attenuateChangeRows(rows, count, CURVE)[0].value, value, `count ${count}, value ${JSON.stringify(value)}`);
+      assert.deepEqual(
+        attenuateChangeRows(rows, count, CURVE)[0].value,
+        value,
+        `count ${count}, value ${JSON.stringify(value)}`,
+      );
     }
   }
 });
@@ -129,4 +140,20 @@ test("attenuateChangeRows leaves override and upgrade rows unscaled", () => {
     { key: "system.attributes.movement.fly", type: "upgrade", value: "30" },
   ];
   assert.deepEqual(attenuateChangeRows(rows, 1, CURVE), rows);
+});
+
+test("roll-mode rows: advantage and disadvantage hold while the curve is above 0", () => {
+  const curve = [1.0, 0.5, 0.25, 0.125, 0];
+  const adv = { key: "system.attributes.init.roll.mode", type: "add", value: "1" };
+  const dis = { key: "system.skills.prc.roll.mode", type: "add", value: "-1" };
+  assert.equal(attenuateChangeRows([adv], 1, curve)[0].value, "1");
+  assert.equal(attenuateChangeRows([dis], 3, curve)[0].value, "-1");
+});
+
+test("roll-mode rows: they go when tolerance takes the high to nothing", () => {
+  const curve = [1.0, 0.5, 0.25, 0.125, 0];
+  const adv = { key: "system.attributes.init.roll.mode", type: "add", value: "1" };
+  const dis = { key: "system.skills.prc.roll.mode", type: "add", value: "-1" };
+  assert.equal(attenuateChangeRows([adv], 4, curve)[0].value, "0");
+  assert.equal(attenuateChangeRows([dis], 9, curve)[0].value, "0");
 });

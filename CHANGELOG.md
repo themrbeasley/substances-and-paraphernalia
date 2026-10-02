@@ -7,9 +7,50 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.10.0] (2026-10-02)
+
+The release candidate for v1.0. After two or three real sessions with no surprises, v1.0 follows with no code changes. The module is hosted on GitHub only and will never go on the Foundry package registry.
+
+### Added
+
+- **Dose someone else.** Every drug has an activity that doses the creature you target instead of you: slip it into food or drink (ingested drugs; the GM decides whether the target eats or drinks it), blow it into a face (inhaled; the target makes a Constitution saving throw), jab with the needle (injury) or slap on a patch (contact), both melee attacks, or Combat Cocktail's "Fire a dart" (a ranged attack). Whoever is dosed gets the whole dose: the high, the addiction save, tolerance and the overdose check. You aren't dosed, and the dosed creature's own save-bypass gear doesn't apply. It works with Midi-QoL, DAE or dnd5e's Apply button, and a creature that doesn't carry the drug gets an empty copy so the Long Rest still tracks it. A creature you don't own is dosed on the GM's screen, which also rolls its addiction save.
+- **Gas bomb.** Stellar Mist can be thrown ("Throw as a gas bomb") to burst into a 20-foot cloud that lasts 1 minute. Every creature in the burst except the thrower makes a DC 15 Constitution saving throw or is dosed, and a creature that starts its turn in the cloud makes the saving throw again. The cloud can dose a creature at most once per turn, and it never doses the thrower.
+- **Overdose damage.** An overdose can also deal damage. Set a dice formula and a damage type in the Details tab's Overdose section; blank means no damage. Resistance and immunity count, and chat shows the damage. Every drug uses it: 2d6 poison for stimulants, 2d6 psychic for mind-altering drugs, 2d8 poison for performance enhancers.
+- **Withdrawal bites in combat.** In combat, withdrawal from a mind-altering drug deals 1d4 psychic damage and withdrawal from a performance enhancer 1d4 poison at the start of each of the character's turns. Nothing ticks outside combat.
+- **A content warning.** The README and the in-game guide page now open with one. The README installs from the GitHub manifest.
+- **A release guard.** `npm run check:release` (and the first step of the release workflow) fails when `CHANGELOG.md` has no section for the version or `ROADMAP.md` doesn't mention it.
+
+### Changed
+
+- **Abstaining always leads to withdrawal; the Constitution save decides how long.** Before, passing the save meant no withdrawal and an addiction with no way out. Now a pass is withdrawal for half the drug's length and a fail is the full length. Either way, when withdrawal ends, so does the addiction. Chat shows the length, such as "Thorin grits through Moonleaf Tincture withdrawal (Save 18 ≥ 13): 60 hours."
+- **Overdose also happens when you dose while the drug's high is still on you,** not only at the tolerance limit. Overdose is now on for all 18 drugs: 15% for stimulants, 10% for the others.
+- **Advantage from a high lasts until tolerance empties it.** Triple-Burn's advantage on initiative holds on the second and third dose. Numeric bonuses still shrink (+2, then +1, then 0).
+- **The gear check is for doses you take yourself, and the empty-drug block is for activities that spend the drug.** Spiking a drink needs no gear, and a cloud keeps working after the last bomb.
+- **Every high and every addiction penalty is automated.** Each drug's text says exactly what the effects do. Wording that can't be automated ("for small or beautiful things", "sight-based") moved into the flavor paragraph. Advantage on saves against being Frightened (Embergrass's high) and disadvantage on them (Reflex Injector's addiction) apply to a save against something that applies Frightened, such as a Midi-QoL save activity, not to a plain save from the sheet.
+- **Mind-altering drugs roll Wisdom** for the addiction save, as the Details tab hint always said. Stimulants and performance enhancers roll Constitution.
+- **New DCs and lengths.** Addiction DCs sit at 12 to 15. The Withdrawal DC also sets how fast tolerance builds (12 caps at 6 doses, 13 to 15 at 5, 18 at 4). Withdrawal lasts 1 to 2 days for stimulants, 4 to 7 for mind-altering drugs and 3 to 4 for performance enhancers, and a passed save halves it.
+- **Withdrawal has its own penalties by category.** Stimulants: -2 to ability checks and saving throws and disadvantage on initiative. Mind-altering: disadvantage on Wisdom and Intelligence saving throws. Performance enhancers: all speeds -10 feet and disadvantage on Strength and Constitution saving throws. No withdrawal gives Exhaustion; an effect can't add a level cleanly.
+- **A few highs changed to fit tolerance and the rules.** Wyrmiron Salts gives +2 AC (was +1), Black Lift +2 to melee weapon attacks (was +1) and Combat Cocktail +2 to weapon attack and damage rolls (was +1d4; dice never shrink). Spaceport Stim-Patch no longer says it ignores exhaustion (an effect can't) and instead keeps you wide awake: advantage on Constitution checks and +2 to Constitution saving throws. Ironhour Caps' carrying capacity became +2 to Constitution saving throws.
+- **Gear.** New: Apothecary's Vial (Fantasy, ingested, 5 gp) and Jet Injector (Sci-Fi, injury, 50 gp), because the Fantasy drinks and Sci-Fi injectables had only expensive attuned gear. Tincture Dropper is now reusable. The six bypass items say "saving throws against addiction" instead of "Constitution saving throws". Each drug's footer names gear from its own setting, and Whisperdust's flavor is a powder stirred into a drink.
+- **The guide page** says "Withdrawal Choices" instead of "Abstain dialog", and its bypass order includes reroll-on-fail.
+- **The content wording checker also scans the shipped text** (drug and gear descriptions, effect descriptions, the guide page), and every rule blocks a release except `lowercase-condition`, which stays a warning.
+
+### Fixed
+
+- **Seven descriptions disagreed with what the drug does.** Wa's Reserve's passive Perception bonus did nothing (wrong effect key). Reflex Injector said "reaction" (it's a bonus action) and "+2 to Dexterity" (it's checks). Combat Cocktail's +1d4 was never automated. Black Lift's "Strength-based" attacks are melee weapon attacks. Stellar Mist still said "if DAE is active" and carried a DAE-only flag. The Dubious Pipe said it works only with substances designed for it (the data never limited it), and the per-day uses text said uses return on a Long Rest (they return daily).
+- **Single-use gear was never used up.** Smoking with Rolling Papers now uses one paper, unless reusable gear is ready for that way of taking the drug. When a pack runs out and another is in the stack, the next pack opens, as in dnd5e, so a new pack dropped onto a used-up one is ready.
+- **Thirteen wording slips** the checker found are fixed.
+
+### Upgrading
+
+Drugs and gear already in a world or on characters keep their old effects, text and activities until they're re-imported from the compendium. Re-import them to get the new content. Replace a drug on a character only when the character isn't addicted to it, in withdrawal from it, or carrying tolerance for it: removing the old copy loses all three, and the new rules apply to old copies anyway. The new rules (abstaining always leading to withdrawal, overdose while still high, advantage under tolerance, single-use gear getting used up, the gear and empty-drug checks) apply to every copy right away.
+
+In Midi-QoL, use one of its other apply modes for effects. The "apply and leave the button" mode keeps dnd5e's Apply button on the chat card, and clicking it doses the targets a second time.
+
 ## [0.9.2] (2026-09-30)
 
 ### Fixed
+
 - **Closing a roll window skipped the roll.** A player who closed the addiction save window never got addicted, and closing either Long Rest window skipped that step. The module now makes the roll without the window.
 - **A blank DC read as DC 0.** A blank Abstain DC meant never relapsing, a blank Withdrawal DC meant never withdrawing (so never recovering), and a blank tolerance decay meant tolerance never faded. Now a blank Abstain DC skips the Wisdom check, a blank Withdrawal DC means withdrawal starts with no save, and a blank decay uses the default. The content checker rejects blank DCs.
 - **Simulate Dose used a generic withdrawal effect** instead of the drug's own.
@@ -22,18 +63,22 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 - **An overdose posted no chat line,** though the Details tab promised its description on a chat card. Chat now announces it.
 
 ### Changed
+
 - **Tolerance shows on the character** as a "Tolerance to Coalshade Powder (2)" effect with no game effect and no token icon; it updates with every dose and Long Rest and goes away at 0.
 - **Overdose is on for the six performance enhancers** (Giantsbreath Tonic, Wyrmiron Salts, Black Lift, Ironhour Caps, Combat Cocktail, Reflex Injector): once tolerance is at its cap, 10% per dose of Poisoned and Incapacitated for 1 minute.
 
 ### Removed
+
 - The overdose **Tolerance Interaction** setting on the Details tab. It never did anything; overdose has used the tolerance threshold since v0.8.1. `module.api.data` goes with it.
 
 ### Upgrading
+
 Copies of the six performance enhancers already in a world or on characters don't overdose until they're re-imported from the compendium (or overdose is switched on in their Details tab). Tolerance built up before 0.9.2 shows its marker from the next dose.
 
 ## [0.9.1] (2026-09-30)
 
 ### Fixed
+
 - **Withdrawal never started in normal play.** The Long Rest looked for addicted characters in the withdrawal record, which only fills once withdrawal has begun. It now lists every substance whose Addiction effect the character carries.
 - **Repeat doses stacked Addiction effects.** A character who is already addicted no longer rolls again.
 - **Using the last dose deleted the drug,** so the Long Rest couldn't offer the forced abstain. The drug now stays at 0 doses; it can't be used at 0, and dropping more from the compendium refills it.
@@ -48,6 +93,7 @@ Copies of the six performance enhancers already in a world or on characters don'
 - **A scaled high showed fractional bonuses** (AC +0.5). Whole-number bonuses now round toward zero, and override and upgrade rows are never scaled.
 
 ### Changed
+
 - **Finishing withdrawal ends the addiction.** When withdrawal runs out (or the GM or the Remove Withdrawal macro removes it), the Addiction effect goes too. Taking a dose during withdrawal ends the withdrawal but not the addiction.
 - **Quitting follows the designed order:** the Wisdom check comes first, and failing it means giving in and taking a dose; passing it leads to the Constitution save against withdrawal. In withdrawal, abstaining takes only the Wisdom check. All 18 substance descriptions say so.
 - **Tolerance rises on every dose,** not only on a passed save.
@@ -55,20 +101,24 @@ Copies of the six performance enhancers already in a world or on characters don'
 - **Tolerance fades at each Long Rest** for substances the character isn't addicted to.
 
 ### Added
+
 - The Long Rest dialog tags rows that are in withdrawal.
 - `validate-content` rejects ids that aren't 16 letters or digits, and warns when a substance's activity lists its Altered effect.
 
 ### Upgrading
+
 Drugs already in a world's Items directory or on characters still list their high on the activity. The module now stops Midi-QoL, DAE and the chat card from applying that second copy. Re-importing from the compendium is optional; do it only to clean up the activity's effect list.
 
 ## [0.9.0] (2026-09-30)
 
 ### Changed
+
 - **Foundry V14 only.** `compatibility` is now minimum 14, verified 14.368; dnd5e minimum 5.3.0, verified 5.3.3. V13 is no longer supported (the module never shipped there).
 - **Active Effects use the V14 data shape.** Change rows live at `system.changes` with string `type`s (`"custom"`, `"add"`, `"override"`, …) instead of numeric `mode`s; durations are `duration.value` + `duration.units`. All compendium effects are converted. Every effect the module applies to an actor goes through one helper, `prepareEffectPayload` in `scripts/data/effect-data.js`.
 - **A zero or missing withdrawal duration makes withdrawal permanent**, as on V13. V14 treats a 0 duration as already expired, so the helper turns it into "no duration" instead.
 
 ### Fixed
+
 - **Withdrawal never wore off on V14.** The withdrawal effect was created without a V14 duration, so it was permanent.
 - **Tolerance stopped weakening repeat doses on V14.** The scaled "Altered by" values were discarded in favor of the template's.
 - **"Permanent" effects kept their timers on V14** (drag-to-inventory benefit effects, and any authored addiction or withdrawal template with a duration).
@@ -76,49 +126,61 @@ Drugs already in a world's Items directory or on characters still list their hig
 - **Drag-to-inventory addiction effects now carry `aeRole: "addiction"`**, per the v0.7 contract.
 
 ### Removed
+
 - **Times Up.** It has no V14 build. The `recommends` entry, the "missing module" notice and the dead "Wire into Times Up" world setting are gone. On V14, Foundry only marks an expired effect as expired and leaves it on the character. The House Automation module's "Delete expired effects" switch (on by default) deletes it instead, which triggers the withdrawal cleanup.
 
 ### Added
+
 - **Guards against V13-era shapes.** `validate-content` errors on legacy effect shapes; ESLint rejects V14-removed globals, `CONST.ACTIVE_EFFECT_MODES`, `.changes` outside `system`, and legacy duration fields.
 
 ## [0.8.8] (2026-05-18)
 
 ### Fixed
+
 - **Lowercase "long rest" in the Phase 2 dialog intro.** `FISHUT.Phase2.Dialog.Intro` referenced the rest as lowercase prose; the project's language convention is to capitalize 5e mechanic names (`Long Rest`). The warn-only language validator caught the drift in `tools/validate-content-language.mjs`.
 
 ### Removed
+
 - **Dead `FISHUT.Details.Preview.Withdrawal` localization key.** The string was authored for a withdrawal-rest preview span that was never rendered after the duration/unit model pivot; no code referenced it.
 
 ### Changed
+
 - **Wiki + CLAUDE.md withdrawal docs rewritten for the duration/unit model.** `docs/wiki/Mechanics.md`, `docs/wiki/Authoring.md`, and `CLAUDE.md` still described the obsolete `withdrawalMod` rest-counting formula and the long-since-removed `scripts/data/withdrawal.js` / `computeRestsRemaining` helper. They now describe the shipped pipeline: Phase 1 applies the addiction AE only; Phase 2 (`dnd5e.preRestCompleted`) opens the Abstain dialog, rolls Wis Abstain Check → Con Withdrawal Save, and applies a Withdrawal AE whose duration is `durationToSeconds(value, unit)`. Times-Up owns expiry; `scripts/hooks/withdrawal-cleanup.js` clears the actor flag on `deleteActiveEffect`. Actor flag shape updated from `{ restsRemaining, appliedAt }` to `{ appliedAt, endsAt }`. Stale test reference `withdrawal-formula.test.mjs` → `withdrawal-duration.test.mjs`.
 
 ## [0.8.7] (2026-05-18)
 
 ### Fixed
-- **View-mode field lock leak across the whole Details tab.** Owners who flipped the dnd5e item sheet to view mode (pencil icon off) could still edit every Substances-and-Paraphernalia control: Illicit Substance toggle, Save Ability, Addictiveness DC, Withdrawal Mod, sub-feature checkboxes, dropdowns. The v0.8.3 and v0.8.5 attempts both gated on `app.isEditable !== false`, but dnd5e's `isEditable` only reflects *ownership* (Foundry's document-level permission). The view/edit pencil drives a *separate* signal, `app._mode` (PLAY=1 / EDIT=2), which dnd5e's own `_disableFields` reads at `_onRender` time, but only on dnd5e's own fields. Our injection runs after dnd5e finishes, so we have to repeat the resolution ourselves. The new pure helper `resolveSheetEditable({ isEditable, mode })` in `scripts/data/sheet-mode.js` returns true only when both signals agree, and `lockInjectedFields(wrapper)` mirrors dnd5e's `_disableFields` selector (INPUT, SELECT, TEXTAREA, BUTTON, DND5E-CHECKBOX, COLOR-PICKER, DOCUMENT-TAGS, FILE-PICKER, HUE-SLIDER, MULTI-SELECT, PROSE-MIRROR, RANGE-PICKER, STRING-TAGS) and applies the same lock to every control we inject.
+
+- **View-mode field lock leak across the whole Details tab.** Owners who flipped the dnd5e item sheet to view mode (pencil icon off) could still edit every Substances-and-Paraphernalia control: Illicit Substance toggle, Save Ability, Addictiveness DC, Withdrawal Mod, sub-feature checkboxes, dropdowns. The v0.8.3 and v0.8.5 attempts both gated on `app.isEditable !== false`, but dnd5e's `isEditable` only reflects _ownership_ (Foundry's document-level permission). The view/edit pencil drives a _separate_ signal, `app._mode` (PLAY=1 / EDIT=2), which dnd5e's own `_disableFields` reads at `_onRender` time, but only on dnd5e's own fields. Our injection runs after dnd5e finishes, so we have to repeat the resolution ourselves. The new pure helper `resolveSheetEditable({ isEditable, mode })` in `scripts/data/sheet-mode.js` returns true only when both signals agree, and `lockInjectedFields(wrapper)` mirrors dnd5e's `_disableFields` selector (INPUT, SELECT, TEXTAREA, BUTTON, DND5E-CHECKBOX, COLOR-PICKER, DOCUMENT-TAGS, FILE-PICKER, HUE-SLIDER, MULTI-SELECT, PROSE-MIRROR, RANGE-PICKER, STRING-TAGS) and applies the same lock to every control we inject.
 
 ### Added
+
 - **New regression guard:** `test/unit/sheet-mode.test.mjs` locks in the truth table for `resolveSheetEditable` and verifies the `SHEET_MODE_PLAY`/`SHEET_MODE_EDIT` constants still match dnd5e's `ItemSheet5e.MODES` values. If dnd5e renumbers them in a future release, this test breaks on purpose so the resolver can be updated before users hit a regression.
 
 ## [0.8.6] (2026-05-18)
 
 ### Fixed
-- **`lang/en.json` failed to load in Foundry**, rendering every `FISHUT.*` label as the literal key string across the entire Details tab. Foundry runs translation files through `foundry.utils.expandObject`, which turns dotted keys into a nested tree. v0.8.3 declared both `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit": "Unit"` and `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit.minutes": "Minutes"` (plus four sibling unit suffixes), so expansion tried to set a child key on top of a leaf string and threw `Cannot use 'in' operator to search for 'minutes' in Unit`. That throw aborted the entire file load, not just the offending key. Renamed the parent to `…WithdrawalDurationUnit.Label` and updated the single JS reference. The v0.8.3 lang-keys regression test verified keys *exist* but not that they can be structurally parsed; this release also adds a Foundry-equivalent prefix-collision check.
+
+- **`lang/en.json` failed to load in Foundry**, rendering every `FISHUT.*` label as the literal key string across the entire Details tab. Foundry runs translation files through `foundry.utils.expandObject`, which turns dotted keys into a nested tree. v0.8.3 declared both `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit": "Unit"` and `"FISHUT.DetailsTab.Field.WithdrawalDurationUnit.minutes": "Minutes"` (plus four sibling unit suffixes), so expansion tried to set a child key on top of a leaf string and threw `Cannot use 'in' operator to search for 'minutes' in Unit`. That throw aborted the entire file load, not just the offending key. Renamed the parent to `…WithdrawalDurationUnit.Label` and updated the single JS reference. The v0.8.3 lang-keys regression test verified keys _exist_ but not that they can be structurally parsed; this release also adds a Foundry-equivalent prefix-collision check.
 
 ### Added
+
 - **New regression guard:** `test/unit/details-tab-lang-keys.test.mjs` now asserts that no key in `lang/en.json` is a strict dotted-prefix of another key. Catches the v0.8.3 → v0.8.5 failure class at CI time without requiring Foundry to be in the Node test runtime.
 
 ## [0.8.5] (2026-05-18)
 
 ### Fixed
+
 - **View-mode field lock leak on the kind toggle.** The master Substance/Paraphernalia checkbox (`<dnd5e-checkbox>` web component) honored `setAttribute("disabled", "")` visually but still fired `change` events when clicked, allowing the kind flag to be flipped from a view-mode sheet. Mirrors the JS-side `isEditable` guard added to `wireDetails` in v0.8.3; same class of leak, different element.
 
 ### Added
+
 - **One-shot i18n diagnostic on the Details tab.** If `game.i18n.localize("FISHUT.*")` returns the key verbatim (Foundry's behavior when no translation is loaded), log a single `logger.warn` per session pointing at the world install. Helps triage stale-install / world-translation-override reports without blaming the source.
 
 ## [0.8.0] (2026-05-13)
 
 ### Added
+
 - DC-tier scaling design statement on the Mechanics wiki, including a recommended DC range table per character tier. (Item 13)
 - Save DC hint string beneath the Details-tab Save DC field. (Item 13)
 - GM Guide journal pointer paragraph referencing the Mechanics wiki's DC-scaling section. (Item 13)
@@ -131,12 +193,14 @@ Drugs already in a world's Items directory or on characters still list their hig
 - "Language Conventions" section in the Authoring wiki with the anti-pattern → recommended-phrasing table and the prose-vs-data-field rule. (Item 11)
 
 ### Changed
+
 - Substance subsystem fields on the Details tab (Addiction, Withdrawal, Overdose, Tolerance) now **collapse** when their parent enable toggle is off instead of greying out. Wraps the dependent inputs in `[data-fishut-collapse="<name>"]` divs that toggle `.fishut-hidden` synchronously on checkbox change, which is clearer than disabled-but-visible inputs that read as "broken." (Item 4)
 - `lang/en.json` strings rewritten to satisfy the new language invariant (Long Rest capitalization, "saving throw" spelled out, capitalized condition names). (Item 11)
 
 ## [0.7.0] (2026-05-12)
 
 ### Added
+
 - `aeRole` flag on every module-created Active Effect (`addiction`, `withdrawal`, `altered`, `tolerance`, `overdose`, `bypass`). Substring matching against the AE name remains as a warn-logged fallback for hand-authored AEs.
 - `findEffectsByRole(actor, role)` helper exposed at `module.api.flagSchema.findEffectsByRole`.
 - Content invariant in `validate-content.mjs`: every AE whose name matches a role substring must carry the matching `aeRole` flag.
@@ -153,6 +217,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 - `module.api.abstain.processAbstainFailure` exposed for Quench coverage of the forced-use failure branch.
 
 ### Changed
+
 - Bumped `flags.schemaVersion` 2 → 3 (additive; sheet-level read-with-default handles in-place migration).
 - Modifier pipeline, all five Remove-X macros, and all internal AE scanners read `aeRole` first, fall back to substring.
 - **Voluntary Abstain failure path:** a failed Wisdom save now triggers automatic consumption of the substance through its real activity (paraphernalia gate bypassed once), running the full post-use chain (Constitution save → addiction AE → tolerance stack → overdose roll). When the substance is missing or exhausted from inventory, the failure soft-fails to the standard -1 tick. **Breaking behavior** for any GM relying on the previous no-penalty failure branch.
@@ -160,12 +225,14 @@ Drugs already in a world's Items directory or on characters still list their hig
 - Chat strings reworded to willpower/craving language (`Pass`, `FailGiveIn`, `FailNoSubstance`).
 
 ### Deferred
+
 - Shipped-content rewrite to apply Wisdom-saves convention to every mind-altering substance (deferred to v0.9 / Item 12).
 - DC tuning for the abstain Wis save (consider escalating DC with consumption count), held until post-v0.7 playtest per spec §3.5.
 
 ## [0.6.0] (2026-05-11)
 
 ### Added
+
 - **`reroll-on-fail` save-bypass tier.** New `modifier.type` enum entry. When a
   bypass-granting AE with `type: "reroll-on-fail"` wins resolution, the
   addiction save is rolled once; if the roll fails the DC, a second save is
@@ -177,6 +244,7 @@ Drugs already in a world's Items directory or on characters still list their hig
   once-per-day reroll-on-fail vial; canonical example of the new tier.
 
 ### Breaking
+
 - **Dead `addictionSaveBypassTypes` enum removed from `scripts/data/schema.json`.**
   A v0.2-era array kept alongside the canonical `modifier.types`; nothing
   read it post-v0.3. Removed alongside its dead localization key
@@ -185,6 +253,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 ## [0.5.2] (2026-05-11)
 
 ### Fixed
+
 - **GM Guide macro list incomplete.** Added "Toggle Paraphernalia Enforcement"
   to the in-world journal's macro reference (missing since v0.4 wiki migration).
 - **Duplicate "Remove Withdrawal" macro in compendium.** The `_source/` directory
@@ -192,6 +261,7 @@ Drugs already in a world's Items directory or on characters still list their hig
   stale LevelDB data from a prior pack build; a fresh `npm run pack` resolves it.
 
 ### Changed
+
 - **README rewritten for v0.5.x.** The README described v0.2 exclusively:
   wrong dependency info, removed 3-dot authoring form, obsolete flag shapes,
   and zero coverage of v0.3+ features. Rewritten to reflect current reality
@@ -205,6 +275,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 ## [0.5.1] (2026-05-10)
 
 ### Breaking
+
 - **`dae`, `midi-qol`, and `tokenmagic` are now `relationships.requires`.**
   Foundry refuses to activate the module on a world without all three. The
   `daeIntegration` and `midiqolIntegration` world settings have been
@@ -214,6 +285,7 @@ Drugs already in a world's Items directory or on characters still list their hig
   required-modules dialog on next load: install/activate the prereqs.
 
 ### Fixed
+
 - **TMFX preset palette now actually registers under TMFX 0.7.6.3+.**
   Three preset bugs that silently no-op'd against the maintained TMFX
   fork (Feu-Secret/Tokenmagic):
@@ -225,8 +297,8 @@ Drugs already in a world's Items directory or on characters still list their hig
   - `fishut-tmfx-scifi-mind-altering` (`ray`) used `intensity` /
     `amplitude` / `blend` / `divergence`: the actual `ray` filter
     takes `divisor` / `alpha`.
-  Unknown filter types and unknown params are silently ignored by TMFX
-  at construction time, which is exactly why this slipped past v0.5.0.
+    Unknown filter types and unknown params are silently ignored by TMFX
+    at construction time, which is exactly why this slipped past v0.5.0.
 - **Preset registration is now truly idempotent.** `addPreset` is
   first-write-wins on `{name, library}` collision (returns false and
   keeps the original), so once a world had loaded any version of v0.5
@@ -240,6 +312,7 @@ Drugs already in a world's Items directory or on characters still list their hig
   warn-log if it's still missing then.
 
 ### Added
+
 - `Remove Altered` macro in the `fishut-illicit-macros` compendium. It
   fills the gap left by v0.4: the four other lifecycle removers
   (Addiction, Withdrawal, Tolerance, Overdose) all shipped, but the
@@ -262,6 +335,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 ## [0.5.0] (2026-05-09)
 
 ### Breaking
+
 - **Per-substance `requiredSubtypes` removed; admin-type paraphernalia gating
   introduced.** Paraphernalia gating no longer keys on a substance-authored
   list of subtype ids. The gate now keys off the dnd5e Poison administration
@@ -273,6 +347,7 @@ Drugs already in a world's Items directory or on characters still list their hig
   shipped compendium.
 
 ### Added
+
 - **TokenMagic FX integration via DAE `macro.tokenMagic` Change rows.**
   `Altered by *` benefit AEs carry a `macro.tokenMagic` Change (mode 0
   CUSTOM); DAE forwards the preset name to TMFX on apply/remove. Nine preset
@@ -292,6 +367,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 - **Integration license audit** at `docs/INTEGRATION-LICENSES.md`.
 
 ### Removed
+
 - **JB2A integration dropped.** CC-BY-NC-SA-4.0 vs. distribution model
   incompatibility; no signed clearance from JB2A authors. Users who own JB2A
   can drive Sequencer effects via a world-local macro UUID in the
@@ -300,6 +376,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 ## [0.4.0] (2026-05-08)
 
 ### Added
+
 - **`+N` save-bypass type** added to the modifier pipeline (completes Theme
   3). `bonus` field on the modifier block; all eligible `+N` AEs sum their
   bonus values.
@@ -327,6 +404,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 ## [0.3.0] (2026-05-07)
 
 ### Breaking
+
 - **`addictionSaveBypass` removed from paraphernalia flag blocks.** Save
   bypass is now an AE-flag mechanism: any AE on the actor whose
   `flags["substances-and-paraphernalia"].modifier` block carries
@@ -346,6 +424,7 @@ Drugs already in a world's Items directory or on characters still list their hig
   deleted. Authoring lives on the dnd5e item-sheet **Details** tab.
 
 ### Added
+
 - Native dnd5e Details-tab authoring section for substances and
   paraphernalia, replacing the 3-dot form. ApplicationV2 / dnd5e 5.2.5.
 - AE-flag modifier pipeline (`scripts/data/modifier-pipeline.js`) with
@@ -367,6 +446,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 - Public API surface adds `api.modifierPipeline` and `api.modifierFlag`.
 
 ### Changed
+
 - `consumeBypassIfAvailable(actor, substance)` returns
   `{ resolution, source }` (was `{ bypassed, paraphernalia, type }`).
 - `module.json` `compatibility.verified` pinned to dnd5e 5.2.5.
@@ -374,6 +454,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 ## [0.2.0] (2026-05-05)
 
 ### Breaking
+
 - **`schemaVersion` bumped to 2.** Substance and paraphernalia flag blocks
   carry new fields (`administration`, `addiction`, `addictionSaveBypass`).
   No automatic migration is provided; re-import substances and
@@ -387,10 +468,11 @@ Drugs already in a world's Items directory or on characters still list their hig
   `module.api.schema`, that reference is now `undefined`.
 
 ### Added
+
 - Substance flag `administration` (`inhaled` / `ingested` / `injected` /
   `sublingual` / `topical`).
 - Substance flag `addiction = { save: { ability, dc }, withdrawalMod,
-  addictionEffectId }`.
+addictionEffectId }`.
 - Paraphernalia flag `addictionSaveBypass = { type, appliesTo, usesPerDay }`
   for items that grant a saved-bypass against addiction (e.g. legendary
   attuned pipes).
@@ -416,6 +498,7 @@ Drugs already in a world's Items directory or on characters still list their hig
 - GitHub Actions CI workflow (`lint + validate + test:unit + pack`).
 
 ### Changed
+
 - Substance descriptions standardized to a six-section canonical format
   (flavor → desired effects → save against addiction → addicted-from →
   withdrawal modifier + formula → requires footer).
@@ -427,6 +510,7 @@ Drugs already in a world's Items directory or on characters still list their hig
   `Save Bypass & Administration` sections.
 
 ### Removed
+
 - `requiresDae(item)` item-level accessor (replaced by per-AE
   `aeRequiresDae(effect)` in `scripts/integrations/dae.js`).
 
@@ -435,4 +519,4 @@ Drugs already in a world's Items directory or on characters still list their hig
 - Module skeleton, paraphernalia gate hook, AND-of-OR requirement
   evaluator, slug+UUID resolver, DialogV2 override flow, integration
   detection, four world/client settings, `Toggle Paraphernalia
-  Enforcement` macro, single-page GM Guide.
+Enforcement` macro, single-page GM Guide.

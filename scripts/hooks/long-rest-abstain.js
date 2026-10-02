@@ -15,8 +15,9 @@
  *
  * `abstainBranch` (scripts/data/abstain-branch.js) picks relapse (take a
  * dose), hold (already in withdrawal; stay the course) or the Constitution
- * Withdrawal Save, whose failure starts withdrawal. Finishing withdrawal ends
- * the addiction; see withdrawal-cleanup.js.
+ * Withdrawal Save. Withdrawal always starts; the save sets its length (a pass
+ * halves it, a fail takes the full length). Finishing withdrawal ends the
+ * addiction; see withdrawal-cleanup.js.
  */
 
 import { MODULE_ID } from "../config.js";
@@ -24,6 +25,7 @@ import { logger } from "../logger.js";
 import {
   getAbstain,
   getWithdrawalDc,
+  getWithdrawalDuration,
   getWithdrawalEnabled,
   getAddictedSubstanceIds,
   isInWithdrawalFrom,
@@ -32,6 +34,8 @@ import {
 } from "../data/flag-schema.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { abstainBranch } from "../data/abstain-branch.js";
+import { withdrawalSeconds, describeLength } from "../data/withdrawal-duration.js";
+import { doseMarkerIds, firstSelfDoseActivity } from "../data/dose-marker.js";
 import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { applyToleranceDecay } from "./tolerance-decay.js";
 import { applyWithdrawalEffect } from "./addiction.js";
@@ -121,7 +125,10 @@ export async function runPhase2(actor) {
 }
 
 export async function forceUseSubstance(actor, item) {
-  const activity = item.system?.activities?.contents?.[0] ?? null;
+  const activity = firstSelfDoseActivity(
+    item.system?.activities?.contents ?? [],
+    doseMarkerIds(item.effects),
+  );
   if (!activity) {
     logger.warn(`forceUseSubstance: no activity on ${item.name}`);
     return;
@@ -168,11 +175,15 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
 
   if (!getWithdrawalEnabled(item)) return;
   const withdrawalDc = getWithdrawalDc(item);
-  // No Withdrawal DC authored: nothing to resist, so withdrawal sets in and
-  // recovery stays reachable (spec v0.9.2 D2).
+  // No Withdrawal DC authored: nothing to resist, so withdrawal sets in at full
+  // length and recovery stays reachable (spec v0.9.2 D2, v0.10.0 D5).
   if (withdrawalDc === null) {
     await chat(
-      game.i18n.format("FISHUT.Phase2.WithdrawalSave.NoDc", { actor: actor.name, item: item.name }),
+      game.i18n.format("FISHUT.Phase2.WithdrawalSave.NoDc", {
+        actor: actor.name,
+        item: item.name,
+        length: lengthText(withdrawalSeconds(getWithdrawalDuration(item))),
+      }),
     );
     await applyWithdrawalEffect(actor, item);
     return;
@@ -188,14 +199,27 @@ export async function runAbstainBranch(actor, item, { forced, inWithdrawal = fal
   }
   const saveRoll = await rollWithdrawalSave(actor, withdrawalDc);
   if (!saveRoll) return; // no roll function
+  // Abstaining always leads to withdrawal; the save decides how long (spec D5).
   const passed = saveRoll.total >= Number(withdrawalDc);
+  const seconds = withdrawalSeconds(getWithdrawalDuration(item), { halved: passed });
   await chat(
     game.i18n.format(
       passed ? "FISHUT.Phase2.WithdrawalSave.Pass" : "FISHUT.Phase2.WithdrawalSave.Fail",
-      { actor: actor.name, item: item.name, total: saveRoll.total, dc: withdrawalDc },
+      {
+        actor: actor.name,
+        item: item.name,
+        total: saveRoll.total,
+        dc: withdrawalDc,
+        length: lengthText(seconds),
+      },
     ),
   );
-  if (!passed) await applyWithdrawalEffect(actor, item);
+  await applyWithdrawalEffect(actor, item, { halved: passed });
+}
+
+function lengthText(seconds) {
+  const { key, n } = describeLength(seconds);
+  return game.i18n.format(`FISHUT.Length.${key.charAt(0).toUpperCase()}${key.slice(1)}`, { n });
 }
 
 // A closed roll window rolls anyway (rollWithoutSkipping), so closing it

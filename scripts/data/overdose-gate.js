@@ -11,9 +11,12 @@
  * @param {number} points              Current Tolerance Points (Count × Rate).
  * @param {number} threshold           Tier-derived base threshold.
  * @param {number} thresholdModifier   Sum of `actor.flags.S&P.overdose.thresholdModifier`.
+ * @param {boolean} [stillHigh]        The creature took this dose while the drug's
+ *   high was still on it (spec D6): opens the roll by itself, whatever the tolerance.
  * @returns {boolean}
  */
-export function shouldRollOverdose(points, threshold, thresholdModifier) {
+export function shouldRollOverdose(points, threshold, thresholdModifier, stillHigh = false) {
+  if (stillHigh === true) return true;
   const p = Number(points);
   const t = Number(threshold);
   const m = Number(thresholdModifier);
