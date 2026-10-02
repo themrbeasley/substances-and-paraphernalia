@@ -63,7 +63,8 @@
     { "id": "altered", "labelKey": "FISHUT.AERole.Altered" },
     { "id": "tolerance", "labelKey": "FISHUT.AERole.Tolerance" },
     { "id": "overdose", "labelKey": "FISHUT.AERole.Overdose" },
-    { "id": "bypass", "labelKey": "FISHUT.AERole.Bypass" }
+    { "id": "bypass", "labelKey": "FISHUT.AERole.Bypass" },
+    { "id": "dose", "labelKey": "FISHUT.AERole.Dose" }
   ],
   "worldSettings": [
     {

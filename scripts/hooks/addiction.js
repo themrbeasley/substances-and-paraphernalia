@@ -22,6 +22,7 @@ import { consumeBypassIfAvailable } from "../data/modifier-pipeline.js";
 import { snapDcToTier, tierProfile, DEFAULT_ATTENUATION_CURVE } from "../data/tier-table.js";
 import { attenuateChangeRows } from "../data/tolerance.js";
 import { isPriorHigh, isStrayHigh } from "../data/prior-high.js";
+import { doseMarkerIds, dosesOthers } from "../data/dose-marker.js";
 import { prepareEffectPayload, effectChanges } from "../data/effect-data.js";
 import { durationToSeconds } from "../data/withdrawal-duration.js";
 import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
@@ -54,6 +55,8 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
   const actor = activity?.actor;
   if (!item || !actor) return;
   if (!isSubstance(item)) return;
+  // A dose-others activity doses its targets (scripts/hooks/dose-others.js), not its user.
+  if (dosesOthers(activity, doseMarkerIds(item.effects))) return;
   // Each step catches its own errors; this catches anything outside them.
   try {
     await runDosePipeline(actor, item);

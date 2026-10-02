@@ -32,6 +32,7 @@ import {
 } from "../data/flag-schema.js";
 import { snapDcToTier, tierProfile } from "../data/tier-table.js";
 import { abstainBranch } from "../data/abstain-branch.js";
+import { doseMarkerIds, firstSelfDoseActivity } from "../data/dose-marker.js";
 import { d20Config, rollWithoutSkipping } from "../data/roll-config.js";
 import { applyToleranceDecay } from "./tolerance-decay.js";
 import { applyWithdrawalEffect } from "./addiction.js";
@@ -121,7 +122,10 @@ export async function runPhase2(actor) {
 }
 
 export async function forceUseSubstance(actor, item) {
-  const activity = item.system?.activities?.contents?.[0] ?? null;
+  const activity = firstSelfDoseActivity(
+    item.system?.activities?.contents ?? [],
+    doseMarkerIds(item.effects),
+  );
   if (!activity) {
     logger.warn(`forceUseSubstance: no activity on ${item.name}`);
     return;
