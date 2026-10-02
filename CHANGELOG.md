@@ -7,6 +7,42 @@ reaches v1.0. Pre-1.0 minor bumps may carry breaking schema changes.
 
 ## [Unreleased]
 
+## [0.10.0] (2026-10-02)
+
+The release candidate for v1.0. After two or three real sessions with no surprises, v1.0 follows with no code changes. The module is hosted on GitHub only and will never go on the Foundry package registry.
+
+### Added
+- **Dose someone else.** Every drug has an activity that doses the creature you target instead of you: slip it into food or drink (ingested drugs; the GM decides whether the target eats or drinks it), blow it into a face (inhaled; the target makes a Constitution saving throw), jab with the needle (injury) or slap on a patch (contact), both melee attacks, or Combat Cocktail's "Fire a dart" (a ranged attack). Whoever is dosed gets the whole dose: the high, the addiction save, tolerance and the overdose check. You aren't dosed, and the dosed creature's own save-bypass gear doesn't apply. It works with Midi-QoL, DAE or dnd5e's Apply button, and a creature that doesn't carry the drug gets an empty copy so the Long Rest still tracks it. A creature you don't own is dosed on the GM's screen, which also rolls its addiction save.
+- **Gas bomb.** Stellar Mist can be thrown ("Throw as a gas bomb") into a 20-foot cloud that lasts 1 minute. Everyone inside makes a DC 15 Constitution saving throw or is dosed, and saves again when they enter the cloud or start a turn there, once per turn.
+- **Overdose damage.** An overdose can also deal damage. Set a dice formula and a damage type in the Details tab's Overdose section; blank means no damage. Resistance and immunity count, and chat shows the damage. Every drug uses it: 2d6 poison for stimulants, 2d6 psychic for mind-altering drugs, 2d8 poison for performance enhancers.
+- **Withdrawal bites in combat.** In combat, withdrawal from a mind-altering drug deals 1d4 psychic damage and withdrawal from a performance enhancer 1d4 poison at the start of each of the character's turns. Nothing ticks outside combat.
+- **A content warning.** The README and the in-game guide page now open with one. The README installs from the GitHub manifest.
+- **A release guard.** `npm run check:release` (and the first step of the release workflow) fails when `CHANGELOG.md` has no section for the version or `ROADMAP.md` doesn't mention it.
+
+### Changed
+- **Abstaining always leads to withdrawal; the Constitution save decides how long.** Before, passing the save meant no withdrawal and an addiction with no way out. Now a pass is withdrawal for half the drug's length and a fail is the full length. Either way, when withdrawal ends, so does the addiction. Chat shows the length, such as "Thorin grits through Moonleaf Tincture withdrawal (Save 18 ≥ 13): 60 hours."
+- **Overdose also happens when you dose while the drug's high is still on you,** not only at the tolerance limit. Overdose is now on for all 18 drugs: 15% for stimulants, 10% for the others.
+- **Advantage from a high lasts until tolerance empties it.** Triple-Burn's advantage on initiative holds on the second and third dose. Numeric bonuses still shrink (+2, then +1, then 0).
+- **The gear check is for doses you take yourself, and the empty-drug block is for activities that spend the drug.** Spiking a drink needs no gear, and a cloud keeps working after the last bomb.
+- **Every high and every addiction penalty is automated.** Each drug's text says exactly what the effects do. Wording that can't be automated ("for small or beautiful things", "sight-based") moved into the flavor paragraph. Advantage on saves against being Frightened (Embergrass's high) and disadvantage on them (Reflex Injector's addiction) apply to a save against something that applies Frightened, such as a Midi-QoL save activity, not to a plain save from the sheet.
+- **Mind-altering drugs roll Wisdom** for the addiction save, as the Details tab hint always said. Stimulants and performance enhancers roll Constitution.
+- **New DCs and lengths.** Addiction DCs sit at 12 to 15. The Withdrawal DC also sets how fast tolerance builds (12 caps at 6 doses, 13 to 15 at 5, 18 at 4). Withdrawal lasts 1 to 2 days for stimulants, 4 to 7 for mind-altering drugs and 3 to 4 for performance enhancers, and a passed save halves it.
+- **Withdrawal has its own penalties by category.** Stimulants: -2 to ability checks and saving throws and disadvantage on initiative. Mind-altering: disadvantage on Wisdom and Intelligence saving throws. Performance enhancers: all speeds -10 feet and disadvantage on Strength and Constitution saving throws. No withdrawal gives Exhaustion; an effect can't add a level cleanly.
+- **A few highs changed to fit tolerance and the rules.** Wyrmiron Salts gives +2 AC (was +1), Black Lift +2 to melee weapon attacks (was +1) and Combat Cocktail +2 to weapon attack and damage rolls (was +1d4; dice never shrink). Spaceport Stim-Patch no longer says it ignores exhaustion (an effect can't) and instead keeps you wide awake: advantage on Constitution checks and +2 to Constitution saving throws. Ironhour Caps' carrying capacity became +2 to Constitution saving throws.
+- **Gear.** New: Apothecary's Vial (Fantasy, ingested, 5 gp) and Jet Injector (Sci-Fi, injury, 50 gp), because the Fantasy drinks and Sci-Fi injectables had only expensive attuned gear. Tincture Dropper is now reusable. The six bypass items say "saving throws against addiction" instead of "Constitution saving throws". Each drug's footer names gear from its own setting, and Whisperdust's flavor is a powder stirred into a drink.
+- **The guide page** says "Withdrawal Choices" instead of "Abstain dialog", and its bypass order includes reroll-on-fail.
+- **The content wording checker also scans the shipped text** (drug and gear descriptions, effect descriptions, the guide page), and every rule blocks a release except `lowercase-condition`, which stays a warning.
+
+### Fixed
+- **Seven descriptions disagreed with what the drug does.** Wa's Reserve's passive Perception bonus did nothing (wrong effect key). Reflex Injector said "reaction" (it's a bonus action) and "+2 to Dexterity" (it's checks). Combat Cocktail's +1d4 was never automated. Black Lift's "Strength-based" attacks are melee weapon attacks. Stellar Mist still said "if DAE is active" and carried a DAE-only flag. The Dubious Pipe said it works only with substances designed for it (the data never limited it), and the per-day uses text said uses return on a Long Rest (they return daily).
+- **Single-use gear was never used up.** Smoking with Rolling Papers now uses one paper, unless reusable gear is ready for that way of taking the drug.
+- **Thirteen wording slips** the checker found are fixed.
+
+### Upgrading
+Drugs and gear already in a world or on characters keep their old effects, text and activities until they're re-imported from the compendium. Re-import them to get the new content. The new rules (abstaining always leading to withdrawal, overdose while still high, advantage under tolerance, single-use gear getting used up, the gear and empty-drug checks) apply to every copy right away.
+
+In Midi-QoL, use one of its other apply modes for effects. The "apply and leave the button" mode keeps dnd5e's Apply button on the chat card, and clicking it doses the targets a second time.
+
 ## [0.9.2] (2026-09-30)
 
 ### Fixed

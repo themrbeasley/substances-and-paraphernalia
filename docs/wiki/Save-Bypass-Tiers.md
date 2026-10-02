@@ -68,6 +68,10 @@ flags["substances-and-paraphernalia"].modifier = {
 
 The reroll fires once per consumption attempt. The use is consumed when the bypass wins resolution, *before* either die is rolled, so the second die does not double-decrement.
 
+## Bypass gear is for your own use
+
+Bypass gear models careful use with your own kit. When someone else doses a character (see *Dosing someone else* on the Mechanics page), the dosed character's own bypass gear doesn't apply to the addiction save, and none of it is spent.
+
 ## Bypass paraphernalia must satisfy the gate
 
 A bypass-granting paraphernalia is **not a free aura**. Its top-level `appliesTo` admin list (added in v0.5) must include the substance's administration so the same paraphernalia is the one satisfying the gate. A reroll-on-fail vial only fires its bypass when the substance is `ingested`.
