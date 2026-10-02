@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { actorSatisfiesAdmin, pickGearToSpend } from "../../scripts/data/admin-match.js";
+import {
+  actorSatisfiesAdmin,
+  gearHasUse,
+  nextGearUses,
+  pickGearToSpend,
+} from "../../scripts/data/admin-match.js";
 import { inspectParaphernaliaItem } from "../../scripts/data/references.js";
 
 test("returns false when no paraphernalia owned", () => {
@@ -86,4 +91,25 @@ test("a consumable with uses is ready until they are spent (max may be a string)
     inspectParaphernaliaItem({ type: "consumable", system: { quantity: 0 } }).ready,
     false,
   );
+});
+
+test("a used-up pack restocked with another is ready (dnd5e stacks the drop)", () => {
+  const gear = { type: "consumable", system: { quantity: 2, uses: { max: "50", spent: 50 } } };
+  assert.equal(inspectParaphernaliaItem(gear).ready, true);
+  assert.equal(gearHasUse({ spent: 50, max: "50", quantity: 2 }), true);
+  assert.equal(gearHasUse({ spent: 49, max: "50", quantity: 1 }), true);
+  assert.equal(gearHasUse({ spent: 50, max: "50", quantity: 1 }), false);
+});
+
+test("nextGearUses spends one use the way dnd5e rolls over to the next pack", () => {
+  // A fresh pack.
+  assert.deepEqual(nextGearUses({ spent: 0, max: "50", quantity: 1 }), { spent: 1, quantity: 1 });
+  // The last use of a pack with more packs opens the next one.
+  assert.deepEqual(nextGearUses({ spent: 49, max: "50", quantity: 2 }), { spent: 0, quantity: 1 });
+  // A used-up pack restocked: the empty pack goes, the new one loses a use.
+  assert.deepEqual(nextGearUses({ spent: 50, max: "50", quantity: 2 }), { spent: 1, quantity: 1 });
+  // The last use of the last pack stays at max and is no longer ready.
+  const last = nextGearUses({ spent: 49, max: "50", quantity: 1 });
+  assert.deepEqual(last, { spent: 50, quantity: 1 });
+  assert.equal(gearHasUse({ ...last, max: "50" }), false);
 });

@@ -7,7 +7,7 @@ This page covers the mechanical systems the module layers on top of dnd5e: the *
 Each substance carries a dnd5e Poison administration type at `system.type.subtype` (one of `contact` / `ingested` / `inhaled` / `injury`). When the substance is used, the gate checks that the actor possesses a _ready_ paraphernalia whose `appliesTo` admin list contains that administration. Readiness:
 
 - **Equipment**: must be equipped.
-- **Consumable**: must have `quantity > 0` and, when it has a use pool (Rolling Papers), uses left.
+- **Consumable**: must have `quantity > 0` and, when it has a use pool (Rolling Papers), a use left in the current pack or another pack in the stack.
 - **Attunement-required**: must be attuned on the actor's copy.
 
 If no paraphernalia matches the substance's administration, the user sees a _Missing paraphernalia_ dialog with a **Use anyway** override. The dialog is visible to all users (player or GM); the override is intentional.
@@ -17,7 +17,7 @@ Two rules decide which activities the gate looks at:
 - **The gear check is for doses you take yourself.** An activity that doses someone else (see _Dosing someone else_) needs no gear. Spiking a drink doesn't need a pipe.
 - **The empty-drug block is for activities that spend the drug.** A substance at 0 doses can't be used by any activity that spends it. The module blocks it before the paraphernalia check, with no override. An activity that spends nothing (the gas cloud's ticks) isn't blocked, so a cloud keeps working after the last bomb is thrown. The drug stays in the inventory at 0 doses instead of being deleted.
 
-**Single-use gear gets used up.** After a dose you take yourself passes the gear check, the module spends one use (or one item) of a ready consumable gear item, but only when no ready reusable gear applies to that administration. Smoking Triple-Burn with Rolling Papers uses one paper; with a Calibrated Inhaler ready too, no paper is spent. If several consumables are ready, the one with the lowest id goes first. Nothing is spent when the check is switched off or when you clicked **Use anyway** (nothing was ready). A dose taken at a Long Rest spends gear the same way.
+**Single-use gear gets used up.** After a dose you take yourself passes the gear check, the module spends one use (or one item) of a ready consumable gear item, but only when no ready reusable gear applies to that administration. Smoking Triple-Burn with Rolling Papers uses one paper; with a Calibrated Inhaler ready too, no paper is spent. If several consumables are ready, the one with the lowest id goes first. When a pack runs out and another is in the stack, the next pack opens, as in dnd5e; a new pack dropped onto a used-up one is ready. Nothing is spent when the check is switched off or when you clicked **Use anyway** (nothing was ready). A dose taken at a Long Rest spends gear the same way.
 
 The world setting **Enforce paraphernalia requirements** (default on) switches the paraphernalia check. With it off, only that check (and the gear spending that rides on it) is skipped: the 0-dose block and the addiction automation still run.
 

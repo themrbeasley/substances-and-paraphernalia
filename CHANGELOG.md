@@ -38,7 +38,7 @@ The release candidate for v1.0. After two or three real sessions with no surpris
 ### Fixed
 
 - **Seven descriptions disagreed with what the drug does.** Wa's Reserve's passive Perception bonus did nothing (wrong effect key). Reflex Injector said "reaction" (it's a bonus action) and "+2 to Dexterity" (it's checks). Combat Cocktail's +1d4 was never automated. Black Lift's "Strength-based" attacks are melee weapon attacks. Stellar Mist still said "if DAE is active" and carried a DAE-only flag. The Dubious Pipe said it works only with substances designed for it (the data never limited it), and the per-day uses text said uses return on a Long Rest (they return daily).
-- **Single-use gear was never used up.** Smoking with Rolling Papers now uses one paper, unless reusable gear is ready for that way of taking the drug.
+- **Single-use gear was never used up.** Smoking with Rolling Papers now uses one paper, unless reusable gear is ready for that way of taking the drug. When a pack runs out and another is in the stack, the next pack opens, as in dnd5e, so a new pack dropped onto a used-up one is ready.
 - **Thirteen wording slips** the checker found are fixed.
 
 ### Upgrading
