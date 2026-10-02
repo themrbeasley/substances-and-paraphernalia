@@ -26,6 +26,7 @@
   "FISHUT.AERole.Bypass": "Bypass",
   "FISHUT.AERole.Dose": "Dose marker",
   "FISHUT.Dose.Landed": "{target} is dosed with {item}.",
+  "FISHUT.Dose.Skipped": "{target} has already been dosed with {item} this turn; this dose has no effect.",
 
   "FISHUT.ParaphernaliaSubtype.Pipe": "Pipe",
   "FISHUT.ParaphernaliaSubtype.SnuffHorn": "Snuff Horn",
@@ -258,7 +259,7 @@
   "FISHUT.Details.Overdose.Chance": "Chance (%)",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.Label": "Withdrawal Effect",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.None": "(default)",
-  "FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip": "Don't duplicate Poisoned (disadv on attacks/checks). Escalate: Exhaustion, disadv on saves, speed reduction, stat penalty.",
+  "FISHUT.DetailsTab.Field.WithdrawalEffect.Tooltip": "Don't repeat Poisoned (disadvantage on attack rolls and ability checks). Make withdrawal worse with penalties to checks and saving throws, disadvantage on saving throws, a speed reduction, or damage each turn in combat.",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.CreateTooltip": "Create a new withdrawal effect",
   "FISHUT.DetailsTab.Field.WithdrawalEffect.AeName.Default": "{item} Withdrawal",
   "FISHUT.DetailsTab.Overdose.Header": "Overdose",

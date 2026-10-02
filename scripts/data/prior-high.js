@@ -36,3 +36,17 @@ export function isStrayHigh(effect, actor) {
   if (effect?.flags?.[MODULE_ID]?.sourceSubstanceId) return false;
   return [...(actor?.items ?? [])].some((item) => isPriorHigh(effect, item) && isSubstance(item));
 }
+
+/**
+ * A drug's high templates: the effects tagged aeRole "altered", else (an
+ * untagged hand-made drug) the ones named "altered". The dose pipeline and the
+ * drag dialog both pick highs here, so neither picks up the dose marker.
+ *
+ * @param {{effects?: Iterable<object>}} item
+ * @returns {object[]}
+ */
+export function findAlteredTemplates(item) {
+  const list = [...(item?.effects ?? [])];
+  const byRole = list.filter((e) => e?.flags?.[MODULE_ID]?.aeRole === "altered");
+  return byRole.length > 0 ? byRole : list.filter((e) => /altered/i.test(e?.name ?? ""));
+}

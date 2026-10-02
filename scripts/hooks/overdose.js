@@ -83,10 +83,12 @@ async function dealOverdoseDamage(actor, overdose) {
   if (!dmg) return "";
   try {
     const roll = await new Roll(dmg.formula).evaluate();
-    await actor.applyDamage([{ value: roll.total, type: dmg.type }]);
+    // A formula like "1d4 - 5" can roll below 0, which dnd5e would apply as healing.
+    const total = Math.max(0, roll.total);
+    await actor.applyDamage([{ value: total, type: dmg.type }]);
     const label = game.i18n.localize(CONFIG.DND5E.damageTypes[dmg.type]?.label ?? dmg.type);
     return game.i18n.format("FISHUT.Overdose.Damage", {
-      total: roll.total,
+      total,
       type: label.toLowerCase(),
     });
   } catch (err) {

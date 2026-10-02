@@ -63,12 +63,13 @@ How it works:
 
 ### Gas bomb (Stellar Mist)
 
-Throw a Stellar Mist bomb and it bursts into a 20-foot cloud for 1 minute (range 30 feet). Everyone inside makes a DC 15 Constitution saving throw or is dosed. A creature that enters the cloud or starts its turn there saves again, once per turn.
+Throw a Stellar Mist bomb (range 30 feet) and it places a 20-foot cloud for 1 minute. Every creature inside when the cloud appears, any creature that enters it and any creature that starts its turn in it makes a DC 15 Constitution saving throw or is dosed. The cloud can dose a creature at most once per turn, and it never doses the thrower.
 
-- It's item data plus Midi-QoL's region behavior. The "Throw as a gas bomb" activity places the cloud. A second activity, "Breathe the cloud", spends nothing and is marked automation-only, so it doesn't show on the sheet as a second thing to click. Midi runs it on entry and at turn start.
+- It's item data plus Midi-QoL's region behavior. The "Throw as a gas bomb" activity only places the cloud; it has no saving throw of its own. A second activity, "Breathe the cloud", does the dosing. It spends nothing and is marked automation-only, so it doesn't show on the sheet as a second thing to click. Midi runs it for every creature inside when the cloud appears, on entry and at turn start.
 - Midi removes the region when the timer effect on the thrower is deleted. House Automation deletes expired effects, so the cloud clears after 1 minute.
 - The thrower isn't dosed, and the ticks keep working after the last bomb is spent (the empty-drug block only stops activities that spend the drug).
-- "Once per turn" only works in combat, and for player tokens Midi can't record it, so walking out and back in can trigger again. Two bombs from one character share one timer.
+- Once per turn: Midi's own check only works in combat and can't record it for player tokens, so the module keeps its own. A creature takes at most one dose from the cloud per turn (outside combat, until game time moves on), and a dose from the cloud and a direct dose of the same drug don't both land in one turn. When a dose is dropped this way, the GM gets a whispered chat line saying so.
+- Two bombs from one character share one timer.
 
 ### Midi's apply mode
 

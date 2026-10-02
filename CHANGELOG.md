@@ -14,7 +14,7 @@ The release candidate for v1.0. After two or three real sessions with no surpris
 ### Added
 
 - **Dose someone else.** Every drug has an activity that doses the creature you target instead of you: slip it into food or drink (ingested drugs; the GM decides whether the target eats or drinks it), blow it into a face (inhaled; the target makes a Constitution saving throw), jab with the needle (injury) or slap on a patch (contact), both melee attacks, or Combat Cocktail's "Fire a dart" (a ranged attack). Whoever is dosed gets the whole dose: the high, the addiction save, tolerance and the overdose check. You aren't dosed, and the dosed creature's own save-bypass gear doesn't apply. It works with Midi-QoL, DAE or dnd5e's Apply button, and a creature that doesn't carry the drug gets an empty copy so the Long Rest still tracks it. A creature you don't own is dosed on the GM's screen, which also rolls its addiction save.
-- **Gas bomb.** Stellar Mist can be thrown ("Throw as a gas bomb") into a 20-foot cloud that lasts 1 minute. Everyone inside makes a DC 15 Constitution saving throw or is dosed, and saves again when they enter the cloud or start a turn there, once per turn.
+- **Gas bomb.** Stellar Mist can be thrown ("Throw as a gas bomb") to place a 20-foot cloud that lasts 1 minute. Every creature inside when it appears, any creature that enters it and any creature that starts its turn in it makes a DC 15 Constitution saving throw or is dosed. The cloud can dose a creature at most once per turn, and it never doses the thrower.
 - **Overdose damage.** An overdose can also deal damage. Set a dice formula and a damage type in the Details tab's Overdose section; blank means no damage. Resistance and immunity count, and chat shows the damage. Every drug uses it: 2d6 poison for stimulants, 2d6 psychic for mind-altering drugs, 2d8 poison for performance enhancers.
 - **Withdrawal bites in combat.** In combat, withdrawal from a mind-altering drug deals 1d4 psychic damage and withdrawal from a performance enhancer 1d4 poison at the start of each of the character's turns. Nothing ticks outside combat.
 - **A content warning.** The README and the in-game guide page now open with one. The README installs from the GitHub manifest.
@@ -43,7 +43,7 @@ The release candidate for v1.0. After two or three real sessions with no surpris
 
 ### Upgrading
 
-Drugs and gear already in a world or on characters keep their old effects, text and activities until they're re-imported from the compendium. Re-import them to get the new content. The new rules (abstaining always leading to withdrawal, overdose while still high, advantage under tolerance, single-use gear getting used up, the gear and empty-drug checks) apply to every copy right away.
+Drugs and gear already in a world or on characters keep their old effects, text and activities until they're re-imported from the compendium. Re-import them to get the new content. Replace a drug on a character only when the character isn't addicted to it, in withdrawal from it, or carrying tolerance for it: removing the old copy loses all three, and the new rules apply to old copies anyway. The new rules (abstaining always leading to withdrawal, overdose while still high, advantage under tolerance, single-use gear getting used up, the gear and empty-drug checks) apply to every copy right away.
 
 In Midi-QoL, use one of its other apply modes for effects. The "apply and leave the button" mode keeps dnd5e's Apply button on the chat card, and clicking it doses the targets a second time.
 

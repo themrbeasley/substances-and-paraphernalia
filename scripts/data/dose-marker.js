@@ -16,8 +16,13 @@ export function doseMarkerIds(effects) {
     .map((e) => e._id ?? e.id);
 }
 
-/** An activity that lists a dose marker doses its targets, not its user. */
+/**
+ * An activity that lists a dose marker, or places a cloud (a Midi region
+ * behavior, like the gas bomb) whose own activity doses whoever is in it,
+ * doses others, not its user.
+ */
 export function dosesOthers(activity, markerIds) {
+  if (activity?.regionBehavior?.enabled === true) return true;
   return [...(activity?.effects ?? [])].some((ref) => markerIds.includes(ref?._id));
 }
 
@@ -65,17 +70,24 @@ export function findOwnCopy(items, source) {
   );
 }
 
-/** Create-data for an empty (0-dose) copy of a drug. */
+/**
+ * Create-data for an empty (0-dose) copy of a drug. It keeps the compendium
+ * source, so dnd5e stacks a later drop of the same drug onto it, and sits
+ * loose in the inventory, not in the thrower's container.
+ */
 export function emptyCopyData(sourceData) {
   const data = structuredClone(sourceData);
   data.system = {
     ...(data.system ?? {}),
     quantity: 0,
     uses: { ...(data.system?.uses ?? {}), spent: 0 },
+    container: null,
   };
   delete data.folder;
   delete data.sort;
   delete data.ownership;
+  const compendiumSource = data._stats?.compendiumSource;
   delete data._stats;
+  if (compendiumSource) data._stats = { compendiumSource };
   return data;
 }

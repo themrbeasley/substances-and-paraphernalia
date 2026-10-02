@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { isPriorHigh, isStrayHigh } from "../../scripts/data/prior-high.js";
+import { isPriorHigh, isStrayHigh, findAlteredTemplates } from "../../scripts/data/prior-high.js";
 
 const S = "substances-and-paraphernalia";
 const item = { id: "drug", uuid: "Actor.a1.Item.drug" };
@@ -103,5 +103,28 @@ describe("untagged highs (v0.9.2 D5)", () => {
   it("leaves effects alone on an actor with no items", () => {
     assert.equal(isStrayHigh(high({}, "Actor.a1.Item.drug.ActiveEffect.fx1"), {}), false);
     assert.equal(isStrayHigh(high({}, "Actor.a1.Item.drug.ActiveEffect.fx1"), null), false);
+  });
+});
+
+describe("findAlteredTemplates", () => {
+  const tagged = (aeRole, name) => ({ name, flags: { [S]: { aeRole } } });
+  it("picks only the effects tagged as highs", () => {
+    const highFx = tagged("altered", "Altered by Voltbeans");
+    const marker = tagged("dose", "Dosed with Voltbeans");
+    const addiction = tagged("addiction", "Voltbeans Addiction");
+    assert.deepEqual(findAlteredTemplates({ effects: [marker, highFx, addiction] }), [highFx]);
+  });
+  it("never picks the dose marker, even when nothing is tagged as a high", () => {
+    const marker = tagged("dose", "Dosed with Voltbeans");
+    assert.deepEqual(findAlteredTemplates({ effects: [marker] }), []);
+  });
+  it("falls back to the name when no effect is tagged as a high", () => {
+    const untagged = { name: "Altered by Homebrew" };
+    const other = { name: "Homebrew Addiction" };
+    assert.deepEqual(findAlteredTemplates({ effects: [other, untagged] }), [untagged]);
+  });
+  it("finds nothing on an item with no effects", () => {
+    assert.deepEqual(findAlteredTemplates({}), []);
+    assert.deepEqual(findAlteredTemplates(undefined), []);
   });
 });
