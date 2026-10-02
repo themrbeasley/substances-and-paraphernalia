@@ -33,7 +33,8 @@
  *     disadvantage-on-attack/check or statuses:["poisoned"] (don't duplicate
  *     poisoned)
  *   - a withdrawal AE must not be able to delete itself (deleting the last one
- *     ends the addiction): errors on a flags.midi-qol.OverTime row with a save
+ *     ends the addiction): errors on a flags.midi-qol.OverTime row (any key
+ *     starting with that, as Midi does) with a save
  *     and no saveCount/failCount keep-alive (or a count ending in -), or with
  *     removeCondition, actionSave or itemName; on a non-empty
  *     flags.dae.specialDuration; and on flags.dae.stackable "none" or "noneName"

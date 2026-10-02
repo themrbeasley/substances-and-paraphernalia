@@ -909,6 +909,20 @@ describe("checkSubstance: withdrawal effects can't remove themselves (v0.10.0)",
     assert.match(errors[0], /saveCount/);
   });
 
+  it("errors on a suffixed OverTime key, which Midi also runs as OverTime", () => {
+    const file = withWithdrawalChanges([
+      {
+        key: "flags.midi-qol.OverTime.withdrawal",
+        type: "override",
+        value: "turn=start,saveDC=13",
+        priority: 20,
+      },
+    ]);
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /saveCount/);
+  });
+
   it("errors on a DAE special duration", () => {
     const file = withWithdrawalChanges([], {
       flags: { dae: { specialDuration: ["isDamaged"] } },

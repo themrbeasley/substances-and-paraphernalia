@@ -311,7 +311,8 @@ export function checkSubstance(file) {
     // v0.10.0 (D4): deleting the last withdrawal effect ends the addiction,
     // so nothing on the effect may delete it early.
     for (const c of Array.isArray(withdrawalAe.system?.changes) ? withdrawalAe.system.changes : []) {
-      if (c?.key !== "flags.midi-qol.OverTime") continue;
+      // Midi treats every key starting with this string as an OverTime row.
+      if (!String(c?.key ?? "").startsWith("flags.midi-qol.OverTime")) continue;
       for (const problem of overTimeProblems(c.value)) {
         err(`withdrawal AE "${withdrawalAe.name}" OverTime row: ${problem}`);
       }
