@@ -39,7 +39,7 @@ The release candidate for v1.0. After two or three real sessions with no surpris
 - **Thirteen wording slips** the checker found are fixed.
 
 ### Upgrading
-Drugs and gear already in a world or on characters keep their old effects, text and activities until they're re-imported from the compendium. Re-import them to get the new content. The new rules (abstaining always leading to withdrawal, overdose while still high, advantage under tolerance, the gear and empty-drug checks) apply to every copy right away.
+Drugs and gear already in a world or on characters keep their old effects, text and activities until they're re-imported from the compendium. Re-import them to get the new content. The new rules (abstaining always leading to withdrawal, overdose while still high, advantage under tolerance, single-use gear getting used up, the gear and empty-drug checks) apply to every copy right away.
 
 In Midi-QoL, use one of its other apply modes for effects. The "apply and leave the button" mode keeps dnd5e's Apply button on the chat card, and clicking it doses the targets a second time.
 

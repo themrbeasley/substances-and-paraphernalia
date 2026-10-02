@@ -66,7 +66,12 @@ Whatever puts the marker on a creature (Midi-QoL after a failed save, a hit or a
 - An activity that spends nothing (consumption targets empty) isn't blocked at 0 doses. Stellar Mist's "Breathe the cloud" uses this so the cloud keeps working after the last bomb.
 - Keep at least one activity that doses the user: the Long Rest relapse uses the first one. The validator errors when every activity doses others.
 
-**The gas bomb** is item data on top of that: a "Throw as a gas bomb" save activity (30 feet, 20-foot sphere, 1 minute, Constitution save, the dose marker) with Midi's region behavior (`regionBehavior`: on `entry` and `turnStart`, use the activity whose Midi `identifier` is `cloud-breath`, `oncePerTurn: true`), plus a second save activity with `midiProperties: { identifier: "cloud-breath", automationOnly: true }` and no consumption.
+**The gas bomb** is item data on top of that: a "Throw as a gas bomb" save activity (30 feet, 20-foot sphere, 1 minute, Constitution save, the dose marker) with Midi's region behavior (`regionBehavior`: on `entry` and `turnStart`, use the activity whose Midi `identifier` is `cloud-breath`, `oncePerTurn: true`), plus a second save activity with `midiProperties: { identifier: "cloud-breath", automationOnly: true, confirmTargets: "never" }` and no consumption.
+
+Two settings keep the thrower out of their own cloud and the ticks quiet. Without them, copying this recipe doses the thrower:
+
+- On the bomb activity, `regionBehavior.excludeSource: true` and `target.affects.special: "-self"` (Midi's way to leave the caster out of a template). The `-self` shows as an odd "each -self" target label on the bomb; that is cosmetic.
+- On "Breathe the cloud", `midiProperties.confirmTargets: "never"`, so a tick never pops up a target confirmation.
 
 ## Withdrawal effects that hurt (OverTime rows)
 
@@ -152,7 +157,7 @@ The module prefers the `flags.substances-and-paraphernalia.aeRole` flag (see *AE
 | Withdrawal | `withdraw` | Pointed-to by `withdrawal.effectIds`. Validator warns if it imposes disadvantage on attacks/checks (duplicates *poisoned*), and errors if it could remove itself (see *Withdrawal effects that hurt*). |
 | Tolerance | `tolerance` | Optional marker template on the substance (`tolerance.effectIds`); without one the module shows a plain "Tolerance to X (n)" marker. Tolerance itself is a count on the actor (see Mechanics). |
 | Overdose | `overdose` | Pointed-to by `overdose.effectIds`; applied when the overdose roll hits. |
-| Dose marker | `dose` (as a word) | The empty effect a dose-others activity lists; see *The dose marker and dose-others activities*. |
+| Dose marker | (no name fallback) | Needs `aeRole: "dose"`. The empty effect a dose-others activity lists; see *The dose marker and dose-others activities*. |
 | Bypass (paraphernalia) | (no contract) | Lives on the paraphernalia as a `transfer: true` AE with the `bypass` modifier flag block. |
 
 ## AE Conventions: the `aeRole` flag
@@ -172,10 +177,12 @@ Every module-created Active Effect carries a flag at
 
 **Why:** AE name strings vary by locale and author preference. Reading the
 role from a flag is locale-independent. Substring matching against the AE
-name (`addict`, `withdraw`, `altered`, `tolerance`, `overdose`, `dose`, `bypass`)
+name (`addict`, `withdraw`, `altered`, `tolerance`, `overdose`, `bypass`)
 remains as a **warn-logged fallback** so hand-authored AEs continue to
 work; the console warns each time the fallback fires so a GM can add
-the flag manually when authoring conventions are uncertain.
+the flag manually when authoring conventions are uncertain. The dose marker
+has no name fallback: it needs `aeRole: "dose"`, and the content checker
+enforces that for shipped content.
 
 **For homebrew authors:** when you create an AE outside the module's
 templates (e.g. directly in the AE editor), add the `aeRole` flag. The

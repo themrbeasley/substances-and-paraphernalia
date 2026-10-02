@@ -47,7 +47,7 @@ Every drug has an activity for this. Each spends one dose.
 |---|---|---|
 | ingested | Slip into food or drink | Action, 1 creature within 5 feet, no save. The GM decides whether the target eats or drinks it. |
 | inhaled | Blow into a face | Action, 1 creature within 5 feet, Constitution saving throw against the drug's addiction DC. |
-| injury | Jab with the needle | Action, melee attack (Dexterity), reach 5 feet. Combat Cocktail has "Fire a dart" instead, a ranged attack at 20/60 feet. |
+| injury | Jab with the needle | Action, melee attack (Dexterity), reach 5 feet. Combat Cocktail has "Fire a dart" instead, a ranged attack within 20 feet. |
 | contact | Slap on a patch | Action, melee attack (Dexterity), reach 5 feet. |
 | Stellar Mist only | Throw as a gas bomb | See *Gas bomb* below. |
 

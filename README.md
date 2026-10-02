@@ -63,7 +63,8 @@ Foundry's usual module update check.
   paraphernalia `appliesTo`. "Use anyway" override available to all users.
 - **`dnd5e.postUseActivity` dose pipeline**: a dose during withdrawal ends
   the withdrawal (relapse); the addiction save, with save bypasses from
-  paraphernalia (`auto-pass > advantage > +N`), applies the Addiction AE on a
+  paraphernalia (`auto-pass > reroll-on-fail > advantage > +N`, with +N
+  summed), applies the Addiction AE on a
   fail; the high is applied, scaled by tolerance; tolerance rises; overdose is
   checked. Single-use gear that let the dose through is used up. An activity
   that lists the drug's dose marker effect doses its targets instead (see
@@ -112,7 +113,7 @@ Substances and paraphernalia are authored on the dnd5e item sheet's
 - **[Authoring](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Authoring)**:
   Details-tab fields, flag shapes, AE conventions, worked examples.
 - **[Save Bypass Tiers](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Save-Bypass-Tiers)**:
-  `auto-pass > advantage > +N` pipeline.
+  `auto-pass > reroll-on-fail > advantage > +N` pipeline (+N bonuses are summed).
 - **[Mechanics](https://github.com/themrbeasley/substances-and-paraphernalia/wiki/Mechanics)**:
   full mechanics reference.
 
