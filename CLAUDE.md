@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A FoundryVTT V14 / dnd5e 5.3.x module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; current is v0.9.2 (Foundry V14 only). Clean breaks preferred over migration shims (no shipped users).
+A FoundryVTT V14 / dnd5e 5.3.x module that adds illicit substances + paraphernalia, a `preUseActivity`-time gate that blocks consumption when required gear isn't ready, and a `postUseActivity`-time addiction loop with paraphernalia-granted save bypasses. Pre-1.0; current is v0.10.0, the release candidate (Foundry V14 only; v1.0 is the same code after table play). Hosted on GitHub only, never on the Foundry registry. Clean breaks preferred over migration shims (no shipped users).
 
 ## Common commands
 
@@ -31,7 +31,7 @@ node --test test/unit/withdrawal-duration.test.mjs
 
 Tag-driven. Pushing a `v*` tag fires `.github/workflows/release.yml`, which:
 
-1. Runs lint + validate + unit tests + pack.
+1. Runs the release-docs check (`tools/check-release-docs.mjs`: a `## [X.Y.Z]` CHANGELOG section and an `X.Y.Z` mention in ROADMAP.md), then lint + validate + unit tests + pack.
 2. Runs `tools/prepare-release.mjs` to patch `module.json`: sets `version` from the tag, sets `download` to the per-tag asset URL, leaves `manifest` pointing at `releases/latest/download/module.json`.
 3. Builds `module.zip` and creates a GitHub release with `module.json` + `module.zip` attached.
 
@@ -51,7 +51,7 @@ If a tag/release pair ends up stale (e.g. tag pushed before a PR landed), recove
 
 `scripts/module.mjs` is the entry point. The flow is:
 
-- `init` hook: register settings, register the `preUseActivity` gate, register the addiction hooks (`postUseActivity` + `dnd5e.preRestCompleted`), register the dnd5e Details-tab item-sheet injection.
+- `init` hook: register settings, register the `preUseActivity` gate, register the addiction hooks (`postUseActivity` + `dnd5e.preRestCompleted`), register the dose-marker listener (`registerDoseOthers`), register the dnd5e Details-tab item-sheet injection.
 - `ready` hook: run migrations (currently a no-op, with an empty `MIGRATORS` array), publish `game.modules.get(MODULE_ID).api`, notify GMs of missing optional integrations.
 
 Adding a new hook means adding a `register*` call in `module.mjs` and a corresponding `Hooks.on(...)` inside the new module.
@@ -82,9 +82,19 @@ AE names **must contain** the relevant substring (case-insensitive): addiction A
 
 `scripts/hooks/activity-gating.js` (`preUseActivity`) handles **paraphernalia gating** with a `bypassOnce` set keyed on `activity.id`: when the user clicks "Use anyway" on the blocked dialog, the gate adds the activity ID to the set and re-invokes `activity.use()`. The next `preUseActivity` for that ID consumes the bypass and lets the activity through.
 
-`scripts/hooks/addiction.js` (`postUseActivity`) runs one dose in order (`runDosePipeline`): relapse check, bypass and addiction save, the high scaled by tolerance, tolerance +1, overdose. It is the only post-use listener for substances. It does not know or care whether the gate fired. The gate also blocks a substance at 0 doses, and a `dnd5e.activityConsumption` listener keeps the last dose at 0 instead of letting dnd5e delete the item (`scripts/data/last-dose.js`). A `preCreateActiveEffect` listener cancels any other copy of a drug's high (no `sourceSubstanceId`, origin under one of the actor's drugs; `isStrayHigh` in `scripts/data/prior-high.js`).
+The gate's two checks look at the activity, not just the drug (`onPreUseActivity`). The gear check applies only to an activity that doses the user: one that lists the dose marker (`dosesOthers`) needs no gear, since spiking a drink needs no pipe. The 0-dose block applies only to an activity that spends the drug (`spendsDrug`): a cloud tick spends nothing, so it keeps firing after the last bomb. A `dnd5e.activityConsumption` listener keeps the last dose at 0 instead of letting dnd5e delete the item, which the cloud also needs (`scripts/data/last-dose.js`).
+
+`scripts/hooks/addiction.js` (`postUseActivity`) runs one dose in order (`runDosePipeline`): relapse check, bypass and addiction save, the high scaled by tolerance, tolerance +1, overdose (which also rolls when the dose lands while this drug's high is still on). It is the only post-use listener for substances, and it skips a dose-others activity. It does not know or care whether the gate fired. Before the pipeline, `spendConsumableGear` looks at the gear on its own and uses up one use (or one item) of ready single-use gear when no ready reusable gear covers the administration (`pickGearToSpend` in `scripts/data/admin-match.js`); after "Use anyway" nothing is ready, so nothing is spent. A `preCreateActiveEffect` listener cancels any other copy of a drug's high (no `sourceSubstanceId`, origin under one of the actor's drugs; `isStrayHigh` in `scripts/data/prior-high.js`).
 
 This split means turning `enforceParaphernalia` off disables the gate but leaves addiction automation intact (intentional).
+
+### Dose others: the dose marker
+
+Each drug carries one extra effect, the dose marker (`aeRole: "dose"`, no changes, not transferred; `scripts/data/dose-marker.js`). A dose-others activity lists it as its effect. Whatever puts it on a creature (Midi after a failed save or a hit, a plain targeted use, dnd5e's Apply button) delivers the dose, so the module never needs to know how it landed. A second `preCreateActiveEffect` listener, `onPreCreateDoseMarker` in `scripts/hooks/dose-others.js`, returns `false` at once (Foundry only cancels on an immediate `false`) and starts `doseCreature` without awaiting it. It finds the drug from `flags.dae.activity`, else the effect's origin (`drugUuidFrom`; under concentration Midi sets the origin to the concentration effect).
+
+It runs on the client that creates the marker. DAE creates it on the GM's client for a creature the user doesn't own, so the addiction save rolls on the GM's screen, and with no GM online nothing happens. The dose runs against the creature's own copy of the drug (same id, else same name, else an empty 0-dose copy; `findOwnCopy`, `emptyCopyData`), because tolerance, withdrawal and the Long Rest all key on the creature's own copy. `runDosePipeline(actor, item, { forced: true })` skips the creature's own save-bypass gear.
+
+The user isn't dosed: every other activity on a drug still doses the user, and the Long Rest relapse uses `firstSelfDoseActivity`, not simply the first activity. `module.api.dose.doseCreature` is the public entry.
 
 ### Admin-type gate (no per-substance `requiredSubtypes`)
 
@@ -142,15 +152,27 @@ Note: the addiction AE already carries the `poisoned` status; the withdrawal AE 
 
 ### Withdrawal duration
 
-Withdrawal duration is authored as `withdrawal.duration.value` + `withdrawal.duration.unit` (`minutes | hours | days | weeks | months`, with months = 30 days). `scripts/data/withdrawal-duration.js` `durationToSeconds(value, unit)` is the pure converter (testable without Foundry globals; see `test/unit/withdrawal-duration.test.mjs`). The seconds value rides on the applied AE's V14 duration (`value` + `units: "seconds"`); core marks it expired, House Automation's "Delete expired effects" switch deletes it, and `scripts/hooks/withdrawal-cleanup.js` clears the matching actor flag entry on the resulting `deleteActiveEffect`. We do not ship a rest-decrement counter and withdrawal does not scale against Constitution; Con only gates onset via the Withdrawal Save DC.
+Withdrawal duration is authored as `withdrawal.duration.value` + `withdrawal.duration.unit` (`minutes | hours | days | weeks | months`, with months = 30 days). `scripts/data/withdrawal-duration.js` `durationToSeconds(value, unit)` is the pure converter (testable without Foundry globals; see `test/unit/withdrawal-duration.test.mjs`). The seconds value rides on the applied AE's V14 duration (`value` + `units: "seconds"`); core marks it expired, House Automation's "Delete expired effects" switch deletes it, and `scripts/hooks/withdrawal-cleanup.js` clears the matching actor flag entry on the resulting `deleteActiveEffect`. We do not ship a rest-decrement counter.
+
+Abstaining always leads to withdrawal; the Constitution save only decides how long. `withdrawalSeconds(duration, { halved })` gives the authored length, halved on a passed save, and permanent (0) stays permanent. `runAbstainBranch` passes `halved: passed` to `applyWithdrawalEffect`; a blank Withdrawal DC means full length with no save. Finishing withdrawal ends the addiction, so every character can recover.
+
+### Withdrawal bites in combat: the OverTime keep-alive rule
+
+Combat damage from withdrawal is an authored Midi `flags.midi-qol.OverTime` Change row on the withdrawal AE, damage only (`turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal`). Midi runs it on the GM's client during combat; we ship no tick code. Deleting the last withdrawal effect ends the addiction, so author the effect with no way to remove itself early. `overTimeProblems` in `tools/validate-content-checks.mjs` errors on a row with a save DC and no `saveCount`/`failCount` keep-alive (or a count ending in `-`), on `removeCondition`, `actionSave` and `itemName`. `validate-content` also errors on a DAE special duration, or a DAE stacking policy that deletes the effect (`none`, `noneName`), on a withdrawal AE.
+
+### Tolerance scales numbers, not roll modes
+
+`scripts/data/tolerance.js` `attenuateChangeRows` scales only `add`/`subtract` rows with numeric values (whole numbers round toward zero). dnd5e reads a roll mode only as `add 1` (advantage) or `add -1` (disadvantage), and halving 1 gives 0, so a row whose key ends `.roll.mode` is left alone while the curve is above 0 and zeroed at 0: advantage from a high lasts until tolerance empties it. Midi flag rows are authored as `override`, which is never scaled.
 
 ### V14 Active Effect data lives in one helper
 
 `scripts/data/effect-data.js` is the only place that knows V14's AE data shape. `effectChanges(effect)` reads `system.changes`; `prepareEffectPayload(data, { sourceSubstanceId, origin, role, duration })` turns a template's `toObject()` into a create payload: it drops `_id` and `start` (V14 keeps an incoming start), merges our flags, sets `origin`, and sets duration (`undefined` keep, `null` or `<= 0` permanent with `expiry: null`, positive seconds). Every effect the module applies to an actor goes through it (the Details tab's blank-template buttons create item effects directly). Change rows are written with string `type`s and string values; readers accept native values, because V14's converter `JSON.parse`s legacy strings and V14's effect sheet saves values as native JSON. `validate-content` errors on legacy shapes in `_source/`, and ESLint rejects `.changes` outside `system`, legacy duration fields, `CONST.ACTIVE_EFFECT_MODES` and V14-removed globals. Don't add expiry handling here: deleting expired effects is House Automation's job.
 
+**A change row can't add Exhaustion.** A row that writes an Exhaustion level does nothing (true in every dnd5e since 3.0.0), and DAE's status row wipes every level when it ends. A real level would need new code for little gain, so no effect gives Exhaustion; stimulant withdrawal uses plain penalties.
+
 ### Public API surface
 
-`game.modules.get("substances-and-paraphernalia").api` exposes `schema`, `flagSchema`, `references`, `requirements`, `addiction`, `saveBypass`, `integrations`. When adding a new public capability, expose it here.
+`game.modules.get("substances-and-paraphernalia").api` exposes `schema`, `flagSchema`, `references`, `addiction`, `dose` (`doseCreature`), `overdose`, `saveBypass`, `tolerance`, `simulateDose`, `integrations`. When adding a new public capability, expose it here.
 
 ### Pure-function discipline
 
@@ -164,7 +186,7 @@ All user-facing strings go through `game.i18n.localize(key)` / `format(key, args
 
 ## Memory + roadmap context
 
-- `ROADMAP.md` is the post-v0.2 backlog. **Schema migration framework is explicitly out of scope**: sheet-level rendering with default-on-missing flag reads is the migration path. Don't propose document-level migrators without an explicit ask.
+- `ROADMAP.md` is short: what shipped by version (one line each, pointing at the CHANGELOG), what's next (v1.0 after table play, then the left-out items), and what's out of scope (the Foundry registry, never; a custom Addicted condition; a migration framework). Update it, and the CHANGELOG, at every release; `npm run check:release` fails without them. **Schema migration framework is explicitly out of scope**: sheet-level rendering with default-on-missing flag reads is the migration path. Don't propose document-level migrators without an explicit ask.
 - Authoring lives on the dnd5e item-sheet **Details tab** (`scripts/ui/details-tab.js` + `templates/details-tab/*.hbs`). The legacy 3-dot-menu form was deleted in v0.3; don't reintroduce it.
 - Module compendium pack ownership ships as `PLAYER: OBSERVER, ASSISTANT: OWNER` intentionally. Don't propose downgrading.
 - Gating dialogs and override buttons are visible to all users (no GM-only paths).
