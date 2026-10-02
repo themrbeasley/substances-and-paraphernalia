@@ -4,6 +4,7 @@ import {
   checkSubstance,
   checkParaphernalia,
   checkDocumentIds,
+  overTimeProblems,
 } from "../../tools/validate-content-checks.mjs";
 
 const SCOPE = "substances-and-paraphernalia";
@@ -846,4 +847,105 @@ describe("checkSubstance: blank DCs (v0.9.2)", () => {
       );
     });
   }
+});
+
+describe("overTimeProblems", () => {
+  it("damage only is fine", () => {
+    assert.deepEqual(
+      overTimeProblems("turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal"),
+      [],
+    );
+  });
+  it("a save with a keep-alive count is fine", () => {
+    assert.deepEqual(
+      overTimeProblems(
+        "turn=start,saveAbility=con,saveDC=13,saveCount=9999,damageRoll=1d4,damageType=psychic",
+      ),
+      [],
+    );
+  });
+  it("a save with no count, or a count ending in -, ends withdrawal early", () => {
+    assert.equal(overTimeProblems("turn=start,saveAbility=con,saveDC=13").length, 1);
+    assert.equal(overTimeProblems("turn=start,saveDC=13,saveCount=3-").length, 1);
+  });
+  it("removeCondition, actionSave and itemName are refused", () => {
+    assert.equal(
+      overTimeProblems("turn=start,damageRoll=1d4,removeCondition=true,actionSave=roll,itemName=X")
+        .length,
+      3,
+    );
+  });
+});
+
+describe("checkSubstance: withdrawal effects can't remove themselves (v0.10.0)", () => {
+  function withWithdrawalChanges(changes, extra = {}) {
+    const file = makeValidSubstance();
+    const ae = file.data.effects.find((e) => e._id === "ae-withdraw-001");
+    ae.system.changes = changes;
+    Object.assign(ae.flags, extra.flags);
+    return file;
+  }
+
+  it("accepts a damage-only OverTime row", () => {
+    const file = withWithdrawalChanges([
+      {
+        key: "flags.midi-qol.OverTime",
+        type: "override",
+        value: "turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal",
+        priority: 20,
+      },
+    ]);
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
+  });
+
+  it("errors on an OverTime row with a save and no keep-alive", () => {
+    const file = withWithdrawalChanges([
+      { key: "flags.midi-qol.OverTime", type: "override", value: "turn=start,saveDC=13", priority: 20 },
+    ]);
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /OverTime/);
+    assert.match(errors[0], /saveCount/);
+  });
+
+  it("errors on a suffixed OverTime key, which Midi also runs as OverTime", () => {
+    const file = withWithdrawalChanges([
+      {
+        key: "flags.midi-qol.OverTime.withdrawal",
+        type: "override",
+        value: "turn=start,saveDC=13",
+        priority: 20,
+      },
+    ]);
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /saveCount/);
+  });
+
+  it("errors on a DAE special duration", () => {
+    const file = withWithdrawalChanges([], {
+      flags: { dae: { specialDuration: ["isDamaged"] } },
+    });
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /special duration/);
+  });
+
+  it("errors on a DAE stacking policy of none or noneName", () => {
+    for (const stackable of ["none", "noneName"]) {
+      const file = withWithdrawalChanges([], { flags: { dae: { stackable } } });
+      const { errors } = checkSubstance(file);
+      assert.equal(errors.length, 1, stackable);
+      assert.match(errors[0], /stack/);
+    }
+  });
+
+  it("accepts an empty special duration list and a stacking policy that allows copies", () => {
+    const file = withWithdrawalChanges([], {
+      flags: { dae: { specialDuration: [], stackable: "multi" } },
+    });
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
+  });
 });
