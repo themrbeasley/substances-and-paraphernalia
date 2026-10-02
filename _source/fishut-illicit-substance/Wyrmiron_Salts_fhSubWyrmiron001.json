@@ -6,7 +6,7 @@
   "folder": "fhSubFantasy0001",
   "system": {
     "description": {
-      "value": "<p>Black flakes ground from rust-stained scales shed by elder dragons. Inhaled through a snuff horn, the salts coat the lungs in a brief, glittering ash. Mercenaries pay handsomely; clerics call it desecration.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +1 bonus to AC as your skin hardens with a faint scaly sheen.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wyrmiron Salts (see below).</p><p><strong><em>Addicted from Wyrmiron Salts.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Stealth) checks (your skin makes a faint metallic rasp).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 20 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to inhaled substances, such as a Snuff Horn.</em></p>"
+      "value": "<p>Black flakes ground from rust-stained scales shed by elder dragons. Inhaled through a snuff horn, the salts coat the lungs in a brief, glittering ash. Mercenaries pay handsomely; clerics call it desecration.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +2 bonus to AC as your skin hardens with a faint scaly sheen.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 14 Constitution saving throw. On a failed save, you gain the Addicted condition from Wyrmiron Salts (see below).</p><p><strong><em>Addicted from Wyrmiron Salts.</em></strong> While you have this Addicted condition, you are also Poisoned and have disadvantage on Dexterity (Stealth) checks (your skin makes a faint metallic rasp).</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 12 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, you go into withdrawal for 3 days, or half that if you succeed on a DC 15 Constitution saving throw. If you have no doses left, skip the Wisdom check. While in withdrawal all your speeds are reduced by 10 feet, you have disadvantage on Strength and Constitution saving throws, and in combat you take 1d4 poison damage at the start of each of your turns. Abstaining then takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><strong><em>Overdose.</em></strong> If you take a dose while still under its effects, or once your tolerance is at its limit, there is a 10% chance you overdose: you take 2d8 poison damage and have the Poisoned and Incapacitated conditions for 1 minute.</p><p><strong><em>Dosing others.</em></strong> As an action, you can blow a dose into the face of a creature within 5 feet. The creature makes a DC 14 Constitution saving throw; on a failed save, it is dosed.</p><p><em>Requires ready paraphernalia that applies to inhaled substances, such as a Snuff Horn or a Ritual Incense Burner.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -101,6 +101,95 @@
           "name": ""
         },
         "name": ""
+      },
+      "fhActWyrmiron002": {
+        "type": "save",
+        "_id": "fhActWyrmiron002",
+        "sort": 100000,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "inst",
+          "value": "",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEWyrmironDos1",
+            "onSave": false
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "ft",
+          "value": "5",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "type": "creature",
+            "count": "1",
+            "choice": false
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "save": {
+          "ability": [
+            "con"
+          ],
+          "dc": {
+            "calculation": "",
+            "formula": "14"
+          }
+        },
+        "damage": {
+          "onSave": "none",
+          "parts": []
+        },
+        "name": "Blow into a face"
       }
     }
   },
@@ -121,7 +210,7 @@
       },
       "withdrawal": {
         "enabled": true,
-        "dc": 20,
+        "dc": 15,
         "abstain": {
           "ability": "wis",
           "dc": 12
@@ -137,10 +226,14 @@
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
-        "description": "Too much Wyrmiron Salts overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "description": "Too much Wyrmiron Salts: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
         "effectIds": [
           "fhAEWyrmironOvd1"
-        ]
+        ],
+        "damage": {
+          "formula": "2d8",
+          "type": "poison"
+        }
       },
       "schemaVersion": 7
     }
@@ -156,12 +249,12 @@
         "value": 600,
         "units": "seconds"
       },
-      "description": "<p>+1 bonus to AC as skin hardens with a faint scaly sheen.</p>",
+      "description": "<p>+2 bonus to AC as skin hardens with a faint scaly sheen.</p>",
       "system": {
         "changes": [
           {
             "key": "system.attributes.ac.bonus",
-            "value": "+1",
+            "value": "+2",
             "priority": 20,
             "type": "add"
           },
@@ -192,7 +285,14 @@
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Dexterity (Stealth) checks.</p>",
       "system": {
-        "changes": []
+        "changes": [
+          {
+            "key": "system.skills.ste.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          }
+        ]
       },
       "flags": {
         "substances-and-paraphernalia": {
@@ -208,7 +308,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "description": "<p>While in withdrawal: all speeds reduced by 10 feet, disadvantage on Strength and Constitution saving throws, and in combat 1d4 poison damage at the start of each of your turns.</p>",
       "system": {
         "changes": [
           {
@@ -216,6 +316,30 @@
             "value": "#7a1a1a",
             "priority": 20,
             "type": "override"
+          },
+          {
+            "key": "system.attributes.movement.bonus",
+            "value": "-10",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.str.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.con.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "flags.midi-qol.OverTime",
+            "value": "turn=start,damageRoll=1d4,damageType=poison,label=Withdrawal",
+            "priority": 20,
+            "type": "custom"
           }
         ]
       },
@@ -240,7 +364,7 @@
         "value": 60,
         "units": "seconds"
       },
-      "description": "<p>Too much Wyrmiron Salts overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "description": "<p>Too much Wyrmiron Salts: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.</p>",
       "system": {
         "changes": []
       },
@@ -250,6 +374,25 @@
         }
       },
       "_key": "!items.effects!fhSubWyrmiron001.fhAEWyrmironOvd1"
+    },
+    {
+      "_id": "fhAEWyrmironDos1",
+      "name": "Dosed with Wyrmiron Salts",
+      "img": "icons/svg/item-bag.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "",
+      "statuses": [],
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "dose"
+        }
+      },
+      "_key": "!items.effects!fhSubWyrmiron001.fhAEWyrmironDos1"
     }
   ],
   "ownership": {
