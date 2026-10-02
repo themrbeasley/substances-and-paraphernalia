@@ -22,20 +22,31 @@ import { prepareEffectPayload } from "../data/effect-data.js";
  * @param {Actor} actor
  * @param {Item}  item
  * @param {() => number} [rng]   d100; defaults to Math.random-based 1..100.
+ * @param {{ stillHigh?: boolean }} [opts] stillHigh: the dose came while this drug's
+ *   high was still on the creature (spec D6); opens the roll even with no Withdrawal DC.
  * @returns {Promise<ActiveEffect|null>}
  */
-export async function rollOverdoseAndApply(actor, item, rng = defaultD100) {
+export async function rollOverdoseAndApply(
+  actor,
+  item,
+  rng = defaultD100,
+  { stillHigh = false } = {},
+) {
   const overdose = getOverdose(item);
   if (!overdose?.enabled) return null;
 
+  // At the tolerance limit (tier table), or still under this drug's high (spec D6).
+  let points = 0;
+  let threshold = Infinity;
   const dc = getWithdrawalDc(item);
-  if (!Number.isFinite(dc)) return null;
-  const profile = tierProfile(snapDcToTier(dc));
-  const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
-  const points = currentPoints(count, profile.rate);
-
+  if (Number.isFinite(dc)) {
+    const profile = tierProfile(snapDcToTier(dc));
+    const count = Number(getActorToleranceEntry(actor, item.id)?.count) || 0;
+    points = currentPoints(count, profile.rate);
+    threshold = profile.threshold;
+  }
   const thresholdModifier = Number(actor?.getFlag?.(MODULE_ID, "overdose.thresholdModifier")) || 0;
-  if (!shouldRollOverdose(points, profile.threshold, thresholdModifier)) return null;
+  if (!shouldRollOverdose(points, threshold, thresholdModifier, stillHigh)) return null;
 
   const chanceModifier = Number(actor?.getFlag?.(MODULE_ID, "overdose.chanceModifier")) || 0;
   if (!rollOverdoseChance(rng, overdose.chancePercent, chanceModifier)) return null;

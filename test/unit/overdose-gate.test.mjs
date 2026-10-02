@@ -26,6 +26,13 @@ test("shouldRollOverdose tolerates a negative threshold modifier", () => {
   assert.equal(shouldRollOverdose(9, 15, -5), false);
 });
 
+test("a dose taken while still high opens the roll by itself", () => {
+  assert.equal(shouldRollOverdose(0, 15, 0, true), true);
+  assert.equal(shouldRollOverdose(0, Infinity, 0, true), true);
+  assert.equal(shouldRollOverdose(0, 15, 0, false), false);
+  assert.equal(shouldRollOverdose(0, 15, 0), false);
+});
+
 test("rollOverdoseChance returns true when roll <= effective chance", () => {
   // chancePercent 5, no modifier; roll 5 → hit
   assert.equal(rollOverdoseChance(() => 5, 5, 0), true);
