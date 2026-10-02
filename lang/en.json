@@ -271,7 +271,7 @@
   "FISHUT.DetailsTab.Overdose.Tooltip": "Shown on the chat card when overdose triggers. Describe the immediate effect; mechanics live on the marker AE.",
   "FISHUT.DetailsTab.Field.OverdoseEffect.Label": "Overdose Effect",
   "FISHUT.DetailsTab.Field.OverdoseEffect.None": "(default marker)",
-  "FISHUT.DetailsTab.Field.OverdoseEffect.Tooltip": "Active Effect cloned onto the actor when overdose triggers. Author its Changes on the Effects tab to model the consequences (e.g. Exhaustion, hp loss, status conditions).",
+  "FISHUT.DetailsTab.Field.OverdoseEffect.Tooltip": "Active Effect cloned onto the actor when overdose triggers. Author its Changes on the Effects tab to model the consequences (e.g. hp loss, status conditions such as Poisoned or Incapacitated).",
   "FISHUT.DetailsTab.Field.OverdoseEffect.CreateTooltip": "Create a new overdose effect",
   "FISHUT.DetailsTab.Field.OverdoseEffect.AeName.Default": "{item} Overdose",
   "FISHUT.DetailsTab.Tolerance.Header": "Tolerance",
