@@ -37,3 +37,33 @@ export function durationToSeconds(value, unit) {
   if (!factor) return 0;
   return Math.trunc(n * factor);
 }
+
+/**
+ * Seconds of withdrawal (spec v0.10.0 D5): the authored length, halved when
+ * the Constitution save passed. 0 means permanent and stays permanent.
+ *
+ * @param {{value: number, unit: string}|null} duration
+ * @param {{halved?: boolean}} [opts]
+ * @returns {number}
+ */
+export function withdrawalSeconds(duration, { halved = false } = {}) {
+  const total = duration ? durationToSeconds(duration.value, duration.unit) : 0;
+  if (total <= 0) return 0;
+  return halved ? Math.max(1, Math.trunc(total / 2)) : total;
+}
+
+/**
+ * How chat says a length: whole days, else hours; 0 is permanent.
+ *
+ * @param {number} seconds
+ * @returns {{key: "day"|"days"|"hour"|"hours"|"permanent", n: number}}
+ */
+export function describeLength(seconds) {
+  if (!(seconds > 0)) return { key: "permanent", n: 0 };
+  if (seconds % 86400 === 0) {
+    const n = seconds / 86400;
+    return { key: n === 1 ? "day" : "days", n };
+  }
+  const n = Math.max(1, Math.round(seconds / 3600));
+  return { key: n === 1 ? "hour" : "hours", n };
+}

@@ -196,8 +196,8 @@ export const getWithdrawal = (item) => item?.getFlag?.(MODULE_ID, FLAGS.withdraw
 export const setWithdrawal = (item, value) => item.setFlag(MODULE_ID, FLAGS.withdrawal, value);
 
 /**
- * Whether withdrawal AE application + actor-flag bookkeeping runs on save fail.
- * Undefined defaults to true.
+ * Whether withdrawal AE application + actor-flag bookkeeping runs when the
+ * character abstains at a Long Rest. Undefined defaults to true.
  * @param {Item} item @returns {boolean}
  */
 export const getWithdrawalEnabled = (item) => getWithdrawal(item)?.enabled !== false;
