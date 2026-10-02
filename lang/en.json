@@ -26,6 +26,7 @@
   "FISHUT.AERole.Bypass": "Bypass",
   "FISHUT.AERole.Dose": "Dose marker",
   "FISHUT.Dose.Landed": "{target} is dosed with {item}.",
+  "FISHUT.Dose.Skipped": "{target} has already been dosed with {item} this turn; this dose has no effect.",
 
   "FISHUT.ParaphernaliaSubtype.Pipe": "Pipe",
   "FISHUT.ParaphernaliaSubtype.SnuffHorn": "Snuff Horn",

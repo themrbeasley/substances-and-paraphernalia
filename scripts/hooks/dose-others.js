@@ -39,14 +39,20 @@ export function onPreCreateDoseMarker(effect, _data, _options, _userId) {
   // Foundry fires when Midi adds the cloud's behavior lands in the same turn as the burst.
   const activityId =
     typeof activityUuid === "string" ? activityUuid.split(".Activity.")[1] : undefined;
-  const activity = activityId
-    ? fromUuidSync(uuid, { strict: false })?.system?.activities?.get(activityId)
-    : undefined;
+  const drug = fromUuidSync(uuid, { strict: false });
+  const activity = activityId ? drug?.system?.activities?.get(activityId) : undefined;
   const tick = activity ? !spendsDrug(activity) : false;
   const key = `${actor.uuid}|${uuid}`;
   const turn = doseTurn(game.combat, game.time.worldTime);
   if (!doseLands(lastDose.get(key), turn, tick)) {
-    logger.log(`${actor.name} already took ${uuid} this turn with a cloud tick; skipping`);
+    // Tell the GM why nothing happened. Not awaited: the cancel must stay synchronous.
+    ChatMessage.create({
+      content: game.i18n.format("FISHUT.Dose.Skipped", {
+        target: actor.name,
+        item: drug?.name ?? uuid,
+      }),
+      whisper: ChatMessage.getWhisperRecipients("GM").map((u) => u.id),
+    }).catch((err) => logger.error("dose skipped message failed", err));
     return false;
   }
   lastDose.set(key, { turn, tick });
