@@ -77,9 +77,11 @@ async function onPostUseActivity(activity, _usageConfig, _results) {
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @param {{forced?: boolean}} [opts]  `forced`: someone else dosed this creature
+ *   (spec D1), so the addiction save skips the creature's own gear bonus.
  * @returns {Promise<Array<{step: string, message: string}>>} the steps that failed
  */
-export async function runDosePipeline(actor, item) {
+export async function runDosePipeline(actor, item, { forced = false } = {}) {
   // The dose is already spent, so each step catches its own error: one failure
   // must not cancel the rest of the dose (spec v0.9.2 D11).
   const failures = [];
@@ -93,7 +95,7 @@ export async function runDosePipeline(actor, item) {
   };
   await step("relapse check", () => cancelWithdrawalOnRelapse(actor, item));
   if (getAddictionEnabled(item) && typeof getAddiction(item)?.save?.dc === "number") {
-    await step("addiction save", () => rollSaveAndApply(actor, item));
+    await step("addiction save", () => rollSaveAndApply(actor, item, { forced }));
   }
   // Taking a drug while its high is still on you risks an overdose (spec D6).
   // `active` is false for a switched-off effect; `duration.expired` marks one that has run out.
@@ -125,8 +127,10 @@ async function cancelWithdrawalOnRelapse(actor, item) {
  *
  * @param {Actor} actor
  * @param {Item}  item
+ * @param {{forced?: boolean}} [opts]  `forced`: the dose was forced on the actor
+ *   by someone else, so the actor's own bypass gear doesn't apply.
  */
-export async function rollSaveAndApply(actor, item) {
+export async function rollSaveAndApply(actor, item, { forced = false } = {}) {
   const addiction = getAddiction(item);
   if (!addiction) return;
 
@@ -135,7 +139,8 @@ export async function rollSaveAndApply(actor, item) {
     return applyOutcome(actor, item, { alreadyAddicted: true });
   }
 
-  const modifier = await consumeBypassIfAvailable(actor, item);
+  // A forced dose doesn't go through the dosed creature's own kit (spec D1).
+  const modifier = forced ? { resolution: null } : await consumeBypassIfAvailable(actor, item);
   if (modifier.resolution === "auto-pass") {
     return applyOutcome(actor, item, { modifier });
   }
