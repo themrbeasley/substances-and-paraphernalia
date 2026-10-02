@@ -37,6 +37,8 @@ Tag-driven. Pushing a `v*` tag fires `.github/workflows/release.yml`, which:
 
 The in-repo `module.json` keeps both `manifest` and `download` pointed at `releases/latest/download/*`; the release workflow rewrites `download` per tag so `module.json` always installs the version that owns it. **Don't commit a version-specific `download` URL**: the workflow handles it.
 
+Before tagging, update CHANGELOG.md and ROADMAP.md for the version and run `npm run check:release`; the release workflow runs it too and stops without them.
+
 CI (`.github/workflows/ci.yml`) runs lint + validate + unit tests + pack on every push and PR. No release on CI.
 
 The GitHub Wiki tab is published by hand at each release, not by CI (there is no wiki token). After the tag, clone `themrbeasley/substances-and-paraphernalia.wiki.git` (add `-c core.longpaths=true` on Windows), replace its pages with `docs/wiki/*.md` so pages removed from the repo leave the wiki too, commit, and push after the user confirms. Publish only at a release, so the wiki matches the installed version.
