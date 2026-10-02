@@ -130,3 +130,19 @@ test("attenuateChangeRows leaves override and upgrade rows unscaled", () => {
   ];
   assert.deepEqual(attenuateChangeRows(rows, 1, CURVE), rows);
 });
+
+test("roll-mode rows: advantage and disadvantage hold while the curve is above 0", () => {
+  const curve = [1.0, 0.5, 0.25, 0.125, 0];
+  const adv = { key: "system.attributes.init.roll.mode", type: "add", value: "1" };
+  const dis = { key: "system.skills.prc.roll.mode", type: "add", value: "-1" };
+  assert.equal(attenuateChangeRows([adv], 1, curve)[0].value, "1");
+  assert.equal(attenuateChangeRows([dis], 3, curve)[0].value, "-1");
+});
+
+test("roll-mode rows: they go when tolerance takes the high to nothing", () => {
+  const curve = [1.0, 0.5, 0.25, 0.125, 0];
+  const adv = { key: "system.attributes.init.roll.mode", type: "add", value: "1" };
+  const dis = { key: "system.skills.prc.roll.mode", type: "add", value: "-1" };
+  assert.equal(attenuateChangeRows([adv], 4, curve)[0].value, "0");
+  assert.equal(attenuateChangeRows([dis], 9, curve)[0].value, "0");
+});

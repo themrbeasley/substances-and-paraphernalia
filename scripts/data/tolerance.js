@@ -61,6 +61,11 @@ const SCALED_TYPES = new Set(["add", "subtract"]);
  */
 export function attenuateChangeRows(rows, count, curve) {
   return (rows ?? []).map((row) => {
+    // dnd5e only reads 1 or -1 on a roll mode; halving gives 0, so advantage
+    // holds until the curve reaches 0 (spec D7).
+    if (typeof row.key === "string" && row.key.endsWith(".roll.mode")) {
+      return applyAttenuation(1, count, curve) > 0 ? { ...row } : { ...row, value: "0" };
+    }
     if (!SCALED_TYPES.has(row.type)) return { ...row };
     const n = numericValue(row.value);
     if (n === null) return { ...row };
