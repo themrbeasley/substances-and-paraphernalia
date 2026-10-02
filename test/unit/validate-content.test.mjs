@@ -1121,7 +1121,7 @@ describe("checkSubstance: dose marker and dose-others activities (v0.10.0)", () 
     assert.deepEqual(checkSubstance(withMarker({ others: { type: "save" } })).errors, []);
   });
 
-  // The gas bomb only places the cloud; the cloud's own activity lists the marker.
+  // A bomb that only places the cloud (no marker) still doses others; the cloud's own activity lists the marker.
   const bomb = {
     _id: "act3",
     name: "Throw as a gas bomb",
