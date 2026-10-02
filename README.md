@@ -18,11 +18,11 @@ addiction loop with paraphernalia-granted bypasses.
 
 ## Requirements
 
-| Module | Role | Required? |
-|--------|------|-----------|
-| [Dynamic Active Effects (DAE)](https://foundryvtt.com/packages/dae) | Powers AE Changes that use DAE-only change types (e.g. `macro.tokenMagic`) | **Yes** |
-| [Midi-QoL](https://foundryvtt.com/packages/midi-qol) | Intercepts the addiction save dialog and drives the save workflow | **Yes** |
-| [Token Magic FX](https://foundryvtt.com/packages/tokenmagic) | Visual overlays on substance benefit AEs (`Altered by *`) | **Yes** |
+| Module                                                              | Role                                                                       | Required? |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------- |
+| [Dynamic Active Effects (DAE)](https://foundryvtt.com/packages/dae) | Powers AE Changes that use DAE-only change types (e.g. `macro.tokenMagic`) | **Yes**   |
+| [Midi-QoL](https://foundryvtt.com/packages/midi-qol)                | Intercepts the addiction save dialog and drives the save workflow          | **Yes**   |
+| [Token Magic FX](https://foundryvtt.com/packages/tokenmagic)        | Visual overlays on substance benefit AEs (`Altered by *`)                  | **Yes**   |
 
 Foundry refuses to activate the module without DAE, Midi-QoL, and Token Magic FX
 installed and active.

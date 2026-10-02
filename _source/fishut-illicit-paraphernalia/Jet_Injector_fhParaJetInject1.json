@@ -26,9 +26,7 @@
       "kind": "paraphernalia",
       "setting": "sciFi",
       "subtype": "syringe",
-      "appliesTo": [
-        "injury"
-      ],
+      "appliesTo": ["injury"],
       "schemaVersion": 7
     }
   },

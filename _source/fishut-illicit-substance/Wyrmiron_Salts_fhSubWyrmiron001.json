@@ -177,9 +177,7 @@
           "identifier": ""
         },
         "save": {
-          "ability": [
-            "con"
-          ],
+          "ability": ["con"],
           "dc": {
             "calculation": "",
             "formula": "14"
@@ -204,9 +202,7 @@
           "ability": "con",
           "dc": 14
         },
-        "addictionEffectIds": [
-          "fhAEWyrmironAdc1"
-        ]
+        "addictionEffectIds": ["fhAEWyrmironAdc1"]
       },
       "withdrawal": {
         "enabled": true,
@@ -219,17 +215,13 @@
           "value": 3,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEWyrmironWit1"
-        ]
+        "effectIds": ["fhAEWyrmironWit1"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Wyrmiron Salts: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
-        "effectIds": [
-          "fhAEWyrmironOvd1"
-        ],
+        "effectIds": ["fhAEWyrmironOvd1"],
         "damage": {
           "formula": "2d8",
           "type": "poison"
@@ -279,9 +271,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Dexterity (Stealth) checks.</p>",
       "system": {
@@ -356,10 +346,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned",
-        "incapacitated"
-      ],
+      "statuses": ["poisoned", "incapacitated"],
       "duration": {
         "value": 60,
         "units": "seconds"

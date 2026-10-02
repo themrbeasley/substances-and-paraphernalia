@@ -196,9 +196,7 @@
           "ability": "con",
           "dc": 12
         },
-        "addictionEffectIds": [
-          "fhAEVoltBeansAdc"
-        ]
+        "addictionEffectIds": ["fhAEVoltBeansAdc"]
       },
       "withdrawal": {
         "enabled": true,
@@ -211,17 +209,13 @@
           "value": 1,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEVoltBeansWit"
-        ]
+        "effectIds": ["fhAEVoltBeansWit"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 15,
         "description": "Too much Voltbeans: 2d6 poison damage and Poisoned for 1 minute.",
-        "effectIds": [
-          "fhAEVoltBeansOvd"
-        ],
+        "effectIds": ["fhAEVoltBeansOvd"],
         "damage": {
           "formula": "2d6",
           "type": "poison"
@@ -277,9 +271,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Constitution saving throws to maintain concentration.</p>",
       "system": {
@@ -348,9 +340,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {
         "value": 60,
         "units": "seconds"

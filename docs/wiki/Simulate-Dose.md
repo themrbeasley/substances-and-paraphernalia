@@ -1,6 +1,6 @@
 # Simulate Dose
 
-Authoring a substance is iterative: you tweak DCs, refine the high, the withdrawal or the overdose, and you want to see what a dose does *without* touching a real character. The **Simulate dose…** entry on the substance item sheet's 3-dot menu runs one dose on a throwaway actor, captures the chat output, and cleans up.
+Authoring a substance is iterative: you tweak DCs, refine the high, the withdrawal or the overdose, and you want to see what a dose does _without_ touching a real character. The **Simulate dose…** entry on the substance item sheet's 3-dot menu runs one dose on a throwaway actor, captures the chat output, and cleans up.
 
 ## Where it lives
 
@@ -19,7 +19,7 @@ Click **Simulate** to run.
 
 ## What runs
 
-Simulate creates a throwaway actor named `__fishut-test-<uuid>__<original-name>`, copies the substance onto it (with the copy's effect lists pointing at its own effects, so the drug's authored withdrawal and overdose effects are the ones used), sets up the addiction state, and runs the same dose pipeline a real use runs (see *Mechanics*, "One dose"):
+Simulate creates a throwaway actor named `__fishut-test-<uuid>__<original-name>`, copies the substance onto it (with the copy's effect lists pointing at its own effects, so the drug's authored withdrawal and overdose effects are the ones used), sets up the addiction state, and runs the same dose pipeline a real use runs (see _Mechanics_, "One dose"):
 
 1. Relapse check (a dose in withdrawal ends the withdrawal).
 2. Addiction save, with any paraphernalia bypass on the actor (the test actor has none).

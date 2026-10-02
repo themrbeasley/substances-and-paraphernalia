@@ -39,9 +39,7 @@
       "kind": "paraphernalia",
       "setting": "fantasy",
       "subtype": "tincture-dropper",
-      "appliesTo": [
-        "ingested"
-      ],
+      "appliesTo": ["ingested"],
       "schemaVersion": 7
     }
   },
@@ -63,9 +61,7 @@
           "modifier": {
             "kind": "bypass",
             "type": "reroll-on-fail",
-            "appliesTo": [
-              "ingested"
-            ],
+            "appliesTo": ["ingested"],
             "usesPerDay": "1"
           }
         }

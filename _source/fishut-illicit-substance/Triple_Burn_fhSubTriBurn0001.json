@@ -178,9 +178,7 @@
         },
         "name": "Blow into a face",
         "save": {
-          "ability": [
-            "con"
-          ],
+          "ability": ["con"],
           "dc": {
             "calculation": "",
             "formula": "13"
@@ -204,9 +202,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectIds": [
-          "fhAETriBurnAdc01"
-        ]
+        "addictionEffectIds": ["fhAETriBurnAdc01"]
       },
       "withdrawal": {
         "enabled": true,
@@ -219,17 +215,13 @@
           "value": 1,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAETriBurnWit01"
-        ]
+        "effectIds": ["fhAETriBurnWit01"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 15,
         "description": "Too much Triple-Burn: 2d6 poison damage and Poisoned for 1 minute.",
-        "effectIds": [
-          "fhAETriBurnOvd01"
-        ],
+        "effectIds": ["fhAETriBurnOvd01"],
         "damage": {
           "formula": "2d6",
           "type": "poison"
@@ -285,9 +277,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Charisma checks.</p>",
       "system": {
@@ -356,9 +346,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {
         "value": 60,
         "units": "seconds"

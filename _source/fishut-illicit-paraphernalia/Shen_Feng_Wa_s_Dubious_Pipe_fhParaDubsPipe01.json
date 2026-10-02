@@ -39,9 +39,7 @@
       "kind": "paraphernalia",
       "setting": "fantasy",
       "subtype": "pipe",
-      "appliesTo": [
-        "inhaled"
-      ],
+      "appliesTo": ["inhaled"],
       "schemaVersion": 7
     }
   },
@@ -63,9 +61,7 @@
           "modifier": {
             "kind": "bypass",
             "type": "auto-pass",
-            "appliesTo": [
-              "inhaled"
-            ],
+            "appliesTo": ["inhaled"],
             "usesPerDay": "@prof"
           }
         }

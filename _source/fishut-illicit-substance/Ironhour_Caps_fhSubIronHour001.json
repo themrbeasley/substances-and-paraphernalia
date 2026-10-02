@@ -196,9 +196,7 @@
           "ability": "con",
           "dc": 13
         },
-        "addictionEffectIds": [
-          "fhAEIronHourAdc1"
-        ]
+        "addictionEffectIds": ["fhAEIronHourAdc1"]
       },
       "withdrawal": {
         "enabled": true,
@@ -211,17 +209,13 @@
           "value": 3,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEIronHourWit1"
-        ]
+        "effectIds": ["fhAEIronHourWit1"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Ironhour Caps: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
-        "effectIds": [
-          "fhAEIronHourOvd1"
-        ],
+        "effectIds": ["fhAEIronHourOvd1"],
         "damage": {
           "formula": "2d8",
           "type": "poison"
@@ -277,9 +271,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Dexterity saving throws.</p>",
       "system": {
@@ -354,10 +346,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned",
-        "incapacitated"
-      ],
+      "statuses": ["poisoned", "incapacitated"],
       "duration": {
         "value": 60,
         "units": "seconds"

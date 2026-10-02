@@ -207,9 +207,7 @@
           "ability": "con",
           "dc": 12
         },
-        "addictionEffectIds": [
-          "fhAEStmPatch01Ad"
-        ]
+        "addictionEffectIds": ["fhAEStmPatch01Ad"]
       },
       "withdrawal": {
         "enabled": true,
@@ -222,17 +220,13 @@
           "value": 1,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEStmPatch01Wt"
-        ]
+        "effectIds": ["fhAEStmPatch01Wt"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 15,
         "description": "Too much Spaceport Stim-Patch: 2d6 poison damage and Poisoned for 1 minute.",
-        "effectIds": [
-          "fhAEStmPatchOvd1"
-        ],
+        "effectIds": ["fhAEStmPatchOvd1"],
         "damage": {
           "formula": "2d6",
           "type": "poison"
@@ -288,9 +282,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom (Perception) checks.</p>",
       "system": {
@@ -359,9 +351,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {
         "value": 60,
         "units": "seconds"

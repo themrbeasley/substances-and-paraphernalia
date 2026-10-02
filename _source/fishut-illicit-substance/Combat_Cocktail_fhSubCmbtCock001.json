@@ -207,9 +207,7 @@
           "ability": "con",
           "dc": 14
         },
-        "addictionEffectIds": [
-          "fhAECmbtCockAdc1"
-        ]
+        "addictionEffectIds": ["fhAECmbtCockAdc1"]
       },
       "withdrawal": {
         "enabled": true,
@@ -222,17 +220,13 @@
           "value": 3,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAECmbtCockWit1"
-        ]
+        "effectIds": ["fhAECmbtCockWit1"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Combat Cocktail: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
-        "effectIds": [
-          "fhAECmbtCockOvd1"
-        ],
+        "effectIds": ["fhAECmbtCockOvd1"],
         "damage": {
           "formula": "2d8",
           "type": "poison"
@@ -300,9 +294,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Charisma saving throws.</p>",
       "system": {
@@ -377,10 +369,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned",
-        "incapacitated"
-      ],
+      "statuses": ["poisoned", "incapacitated"],
       "duration": {
         "value": 60,
         "units": "seconds"

@@ -4,12 +4,12 @@ Paraphernalia can grant the user help against a substance's addiction save. The 
 
 ## Tier order
 
-| Tier | Effect | Within-tier rule |
-|---|---|---|
-| `auto-pass` | The save automatically succeeds; no roll. | First match wins (deterministic by ascending AE id). |
-| `reroll-on-fail` | Roll once; if the roll fails the DC, roll a second time and use that result. No advantage / no bonus is layered. | First match wins. |
-| `advantage` | The save is rolled with advantage. | First match wins. |
-| `+N` | A flat numeric bonus is added to the save. | All matching `+N` bonuses **sum**. |
+| Tier             | Effect                                                                                                           | Within-tier rule                                     |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `auto-pass`      | The save automatically succeeds; no roll.                                                                        | First match wins (deterministic by ascending AE id). |
+| `reroll-on-fail` | Roll once; if the roll fails the DC, roll a second time and use that result. No advantage / no bonus is layered. | First match wins.                                    |
+| `advantage`      | The save is rolled with advantage.                                                                               | First match wins.                                    |
+| `+N`             | A flat numeric bonus is added to the save.                                                                       | All matching `+N` bonuses **sum**.                   |
 
 If any `auto-pass` is available, it takes priority over all other tiers. Otherwise, if any `reroll-on-fail` is available, it wins. Otherwise, if any `advantage` is available, it wins. Otherwise, all `+N` bonuses across all matching paraphernalia AEs are summed and added to the roll.
 
@@ -19,7 +19,7 @@ For a flat d20 vs a flat DC, `reroll-on-fail` and `advantage` are statistically 
 
 ### Single `+N` paraphernalia
 
-The actor wears a *Calibrated Inhaler* (`type: "+N"`, `bonus: 2`, `appliesTo: ["inhaled"]`) and uses an inhaled substance. The save is rolled with `+2`.
+The actor wears a _Calibrated Inhaler_ (`type: "+N"`, `bonus: 2`, `appliesTo: ["inhaled"]`) and uses an inhaled substance. The save is rolled with `+2`.
 
 ### Two stacking `+N`s
 
@@ -31,7 +31,7 @@ The actor has both a `+N: 2` inhaler and an `advantage` bypass paraphernalia for
 
 ### Reroll-on-fail in action
 
-The actor has a `reroll-on-fail` paraphernalia (`appliesTo: ["ingested"]`) and ingests a poison. The first save is rolled. If the roll meets or beats the DC, that's the canonical result. If it fails, a second save is rolled with the same clean configuration (no advantage, no bonus) and *that* result is canonical. A reroll-on-fail paraphernalia with `usesPerDay: 1` consumes its single daily use whether the first roll succeeded or failed; both dice ride on the same charge.
+The actor has a `reroll-on-fail` paraphernalia (`appliesTo: ["ingested"]`) and ingests a poison. The first save is rolled. If the roll meets or beats the DC, that's the canonical result. If it fails, a second save is rolled with the same clean configuration (no advantage, no bonus) and _that_ result is canonical. A reroll-on-fail paraphernalia with `usesPerDay: 1` consumes its single daily use whether the first roll succeeded or failed; both dice ride on the same charge.
 
 ### `auto-pass` trumps everything
 
@@ -45,9 +45,9 @@ On the paraphernalia's Active Effects tab, add a `transfer: true` AE with the mo
 flags["substances-and-paraphernalia"].modifier = {
   kind: "bypass",
   type: "+N",
-  bonus: 2,                       // required, non-zero
-  appliesTo: ["inhaled"],         // administration ids the bypass covers
-  usesPerDay: "@prof"             // optional; rides on system.uses
+  bonus: 2, // required, non-zero
+  appliesTo: ["inhaled"], // administration ids the bypass covers
+  usesPerDay: "@prof", // optional; rides on system.uses
 };
 ```
 
@@ -62,15 +62,15 @@ flags["substances-and-paraphernalia"].modifier = {
   kind: "bypass",
   type: "reroll-on-fail",
   appliesTo: ["ingested"],
-  usesPerDay: "1"                 // optional; rides on system.uses
+  usesPerDay: "1", // optional; rides on system.uses
 };
 ```
 
-The reroll fires once per consumption attempt. The use is consumed when the bypass wins resolution, *before* either die is rolled, so the second die does not double-decrement.
+The reroll fires once per consumption attempt. The use is consumed when the bypass wins resolution, _before_ either die is rolled, so the second die does not double-decrement.
 
 ## Bypass gear is for your own use
 
-Bypass gear models careful use with your own kit. When someone else doses a character (see *Dosing someone else* on the Mechanics page), the dosed character's own bypass gear doesn't apply to the addiction save, and none of it is spent.
+Bypass gear models careful use with your own kit. When someone else doses a character (see _Dosing someone else_ on the Mechanics page), the dosed character's own bypass gear doesn't apply to the addiction save, and none of it is spent.
 
 ## Bypass paraphernalia must satisfy the gate
 

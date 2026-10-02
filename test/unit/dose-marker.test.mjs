@@ -39,27 +39,37 @@ describe("dose marker", () => {
 
 describe("spendsDrug", () => {
   it("a use that spends this item's uses spends the drug", () => {
-    assert.equal(spendsDrug({ consumption: { targets: [{ type: "itemUses", target: "" }] } }), true);
+    assert.equal(
+      spendsDrug({ consumption: { targets: [{ type: "itemUses", target: "" }] } }),
+      true,
+    );
   });
   it("a cloud tick spends nothing", () => {
     assert.equal(spendsDrug({ consumption: { targets: [] } }), false);
     assert.equal(spendsDrug({}), false);
   });
   it("spending another item's uses doesn't spend the drug", () => {
-    assert.equal(spendsDrug({ consumption: { targets: [{ type: "itemUses", target: "abc" }] } }), false);
+    assert.equal(
+      spendsDrug({ consumption: { targets: [{ type: "itemUses", target: "abc" }] } }),
+      false,
+    );
   });
 });
 
 describe("drugUuidFrom", () => {
   it("reads the drug from the activity Midi records", () => {
     assert.equal(
-      drugUuidFrom({ activityUuid: "Actor.aaaaaaaaaaaaaaaa.Item.fhSubVoltBeans01.Activity.fhActVoltBeans02" }),
+      drugUuidFrom({
+        activityUuid: "Actor.aaaaaaaaaaaaaaaa.Item.fhSubVoltBeans01.Activity.fhActVoltBeans02",
+      }),
       "Actor.aaaaaaaaaaaaaaaa.Item.fhSubVoltBeans01",
     );
   });
   it("falls back to the origin, including token actors", () => {
     assert.equal(
-      drugUuidFrom({ origin: "Scene.s.Token.t.Actor.a.Item.fhSubVoltBeans01.ActiveEffect.fhAEVoltBeansDos" }),
+      drugUuidFrom({
+        origin: "Scene.s.Token.t.Actor.a.Item.fhSubVoltBeans01.ActiveEffect.fhAEVoltBeansDos",
+      }),
       "Scene.s.Token.t.Actor.a.Item.fhSubVoltBeans01",
     );
   });
@@ -71,7 +81,10 @@ describe("drugUuidFrom", () => {
   });
   it("skips an activity uuid that names no drug and reads the origin", () => {
     assert.equal(
-      drugUuidFrom({ activityUuid: "junk", origin: "Item.fhSubVoltBeans01.ActiveEffect.fhAEVoltBeansDos" }),
+      drugUuidFrom({
+        activityUuid: "junk",
+        origin: "Item.fhSubVoltBeans01.ActiveEffect.fhAEVoltBeansDos",
+      }),
       "Item.fhSubVoltBeans01",
     );
   });
@@ -106,7 +119,14 @@ describe("findOwnCopy", () => {
 
 describe("emptyCopyData", () => {
   it("makes a 0-dose copy and leaves the source alone", () => {
-    const src = { _id: "fhSubVoltBeans01", name: "Voltbeans", folder: "f", sort: 5, ownership: {}, system: { quantity: 3, uses: { spent: 1, max: "1" } } };
+    const src = {
+      _id: "fhSubVoltBeans01",
+      name: "Voltbeans",
+      folder: "f",
+      sort: 5,
+      ownership: {},
+      system: { quantity: 3, uses: { spent: 1, max: "1" } },
+    };
     const copy = emptyCopyData(src);
     assert.equal(copy.system.quantity, 0);
     assert.equal(copy.system.uses.spent, 0);
@@ -116,7 +136,14 @@ describe("emptyCopyData", () => {
     assert.equal(src.system.uses.spent, 1);
   });
   it("drops what ties the copy to the source's place, keeps its id and effects", () => {
-    const src = { _id: "fhSubVoltBeans01", sort: 5, ownership: { default: 3 }, _stats: { coreVersion: "14" }, effects: [{ _id: "fhAEVoltBeansDos" }], system: {} };
+    const src = {
+      _id: "fhSubVoltBeans01",
+      sort: 5,
+      ownership: { default: 3 },
+      _stats: { coreVersion: "14" },
+      effects: [{ _id: "fhAEVoltBeansDos" }],
+      system: {},
+    };
     const copy = emptyCopyData(src);
     assert.equal(copy.sort, undefined);
     assert.equal(copy.ownership, undefined);

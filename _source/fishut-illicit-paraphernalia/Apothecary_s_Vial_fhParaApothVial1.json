@@ -26,9 +26,7 @@
       "kind": "paraphernalia",
       "setting": "fantasy",
       "subtype": "vial",
-      "appliesTo": [
-        "ingested"
-      ],
+      "appliesTo": ["ingested"],
       "schemaVersion": 7
     }
   },

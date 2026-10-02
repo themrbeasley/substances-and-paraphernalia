@@ -228,7 +228,10 @@ function scanSourceForPhrasing() {
     }
     for (const effect of data.effects ?? []) {
       if (typeof effect.description !== "string") continue;
-      reportPhrasing(stripHtml(effect.description), `${relPath}:effects["${effect.name}"].description`);
+      reportPhrasing(
+        stripHtml(effect.description),
+        `${relPath}:effects["${effect.name}"].description`,
+      );
     }
   }
   for (const file of journalFiles) {

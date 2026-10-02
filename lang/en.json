@@ -185,7 +185,6 @@
   "FISHUT.SimulateDose.Result.AEsHeader": "Final Active Effects",
   "FISHUT.SimulateDose.Result.Ok": "Close",
 
-
   "FISHUT.Phase2.Dialog.Title": "Withdrawal Choices",
   "FISHUT.Phase2.Dialog.Intro": "You are addicted to the following substances and will automatically consume one dose during the Long Rest unless you specifically choose to abstain. Select all that apply; unselected substances will be consumed as normal. Taking a dose during withdrawal ends the withdrawal, but not the addiction.",
   "FISHUT.Phase2.Dialog.Confirm": "Confirm",

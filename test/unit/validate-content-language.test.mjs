@@ -25,26 +25,36 @@ describe("checkLanguagePhrasing", () => {
   });
 
   it("flags 'become invisible' / 'become poisoned' as wrong verb", () => {
-    const a = checkLanguagePhrasing("The creature becomes invisible until end of turn.", { mode: "text-content-only" });
-    const b = checkLanguagePhrasing("On a failed save, become poisoned.", { mode: "text-content-only" });
+    const a = checkLanguagePhrasing("The creature becomes invisible until end of turn.", {
+      mode: "text-content-only",
+    });
+    const b = checkLanguagePhrasing("On a failed save, become poisoned.", {
+      mode: "text-content-only",
+    });
     assert.ok(a.some((f) => f.ruleId === "become-condition"));
     assert.ok(b.some((f) => f.ruleId === "become-condition"));
   });
 
   it("flags 'roll a Constitution save'", () => {
-    const findings = checkLanguagePhrasing("Roll a Constitution save against DC 14.", { mode: "text-content-only" });
+    const findings = checkLanguagePhrasing("Roll a Constitution save against DC 14.", {
+      mode: "text-content-only",
+    });
     assert.ok(findings.some((f) => f.ruleId === "roll-a-save"));
   });
 
   it("flags 'restore N hit points' and 'recover N hit points'", () => {
     const a = checkLanguagePhrasing("Restores 1d4 hit points.", { mode: "text-content-only" });
-    const b = checkLanguagePhrasing("Recover 5 hit points overnight.", { mode: "text-content-only" });
+    const b = checkLanguagePhrasing("Recover 5 hit points overnight.", {
+      mode: "text-content-only",
+    });
     assert.ok(a.some((f) => f.ruleId === "restore-hp"));
     assert.ok(b.some((f) => f.ruleId === "recover-hp"));
   });
 
   it("flags lowercase condition names in prose", () => {
-    const findings = checkLanguagePhrasing("The target is poisoned.", { mode: "text-content-only" });
+    const findings = checkLanguagePhrasing("The target is poisoned.", {
+      mode: "text-content-only",
+    });
     assert.ok(findings.some((f) => f.ruleId === "lowercase-condition"));
   });
 
@@ -54,12 +64,16 @@ describe("checkLanguagePhrasing", () => {
   });
 
   it("flags 'long rest' uncapitalized", () => {
-    const findings = checkLanguagePhrasing("Recovers after a long rest.", { mode: "text-content-only" });
+    const findings = checkLanguagePhrasing("Recovers after a long rest.", {
+      mode: "text-content-only",
+    });
     assert.ok(findings.some((f) => f.ruleId === "rest-not-capitalized"));
   });
 
   it("flags damage type names in prose when capitalized", () => {
-    const findings = checkLanguagePhrasing("Deals 2d6 Fire damage on impact.", { mode: "text-content-only" });
+    const findings = checkLanguagePhrasing("Deals 2d6 Fire damage on impact.", {
+      mode: "text-content-only",
+    });
     assert.ok(findings.some((f) => f.ruleId === "uppercase-damage-type"));
   });
 

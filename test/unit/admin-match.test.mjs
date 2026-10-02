@@ -82,5 +82,8 @@ test("a consumable with uses is ready until they are spent (max may be a string)
   assert.equal(inspectParaphernaliaItem(gear({ max: "50", spent: 50 })).ready, false);
   assert.equal(inspectParaphernaliaItem(gear({ max: "50", spent: 50 })).reason, "missing");
   assert.equal(inspectParaphernaliaItem(gear({ max: "", spent: 0 })).ready, true);
-  assert.equal(inspectParaphernaliaItem({ type: "consumable", system: { quantity: 0 } }).ready, false);
+  assert.equal(
+    inspectParaphernaliaItem({ type: "consumable", system: { quantity: 0 } }).ready,
+    false,
+  );
 });

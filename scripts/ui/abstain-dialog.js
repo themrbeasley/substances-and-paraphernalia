@@ -31,8 +31,7 @@ export async function openAbstainDialog(actor, rows) {
   const title = game.i18n.localize("FISHUT.Phase2.Dialog.Title");
   const intro = game.i18n.localize("FISHUT.Phase2.Dialog.Intro");
   const confirmLabel = game.i18n.localize("FISHUT.Phase2.Dialog.Confirm");
-  const dosesLeftLabel = (n) =>
-    game.i18n.format("FISHUT.Phase2.Dialog.DosesRemaining", { n });
+  const dosesLeftLabel = (n) => game.i18n.format("FISHUT.Phase2.Dialog.DosesRemaining", { n });
   const tolLabel = (count, max) =>
     game.i18n.format("FISHUT.Phase2.Dialog.Tolerance", { count, max });
   const forcedLabel = game.i18n.localize("FISHUT.Phase2.Dialog.ForcedAbstain");

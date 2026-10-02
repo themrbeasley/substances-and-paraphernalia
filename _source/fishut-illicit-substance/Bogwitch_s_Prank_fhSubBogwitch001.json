@@ -196,9 +196,7 @@
           "ability": "wis",
           "dc": 12
         },
-        "addictionEffectIds": [
-          "fhAEBogwitchAdc1"
-        ]
+        "addictionEffectIds": ["fhAEBogwitchAdc1"]
       },
       "withdrawal": {
         "enabled": true,
@@ -211,17 +209,13 @@
           "value": 4,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEBogwitchWit1"
-        ]
+        "effectIds": ["fhAEBogwitchWit1"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Bogwitch's Prank: 2d6 psychic damage and Incapacitated for 1 round.",
-        "effectIds": [
-          "fhAEBogwitchOvd1"
-        ],
+        "effectIds": ["fhAEBogwitchOvd1"],
         "damage": {
           "formula": "2d6",
           "type": "psychic"
@@ -277,9 +271,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Wisdom (Perception) checks.</p>",
       "system": {
@@ -348,9 +340,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "incapacitated"
-      ],
+      "statuses": ["incapacitated"],
       "duration": {
         "value": 1,
         "units": "rounds"

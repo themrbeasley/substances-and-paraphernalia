@@ -37,7 +37,8 @@ export function onPreCreateDoseMarker(effect, _data, _options, _userId) {
   const uuid = drugUuidFrom({ activityUuid, origin: effect.origin });
   // Only a cloud tick (an activity that spends nothing) is limited (spec D2): the entry tick
   // Foundry fires when Midi adds the cloud's behavior lands in the same turn as the burst.
-  const activityId = typeof activityUuid === "string" ? activityUuid.split(".Activity.")[1] : undefined;
+  const activityId =
+    typeof activityUuid === "string" ? activityUuid.split(".Activity.")[1] : undefined;
   const activity = activityId
     ? fromUuidSync(uuid, { strict: false })?.system?.activities?.get(activityId)
     : undefined;

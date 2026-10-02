@@ -20,10 +20,7 @@ export function actorSatisfiesAdmin(ownedParaphernalia, admin) {
   if (!Array.isArray(ownedParaphernalia)) return false;
   if (typeof admin !== "string" || admin.length === 0) return false;
   return ownedParaphernalia.some(
-    (p) =>
-      p?.usable === true &&
-      Array.isArray(p?.appliesTo) &&
-      p.appliesTo.includes(admin),
+    (p) => p?.usable === true && Array.isArray(p?.appliesTo) && p.appliesTo.includes(admin),
   );
 }
 

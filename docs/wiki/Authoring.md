@@ -11,30 +11,32 @@ flags["substances-and-paraphernalia"] = {
   setting: "fantasy" | "sciFi" | "modern",
   addiction: {
     enabled: true,
-    save: { ability: "con", dc: 13 },         // rolled after each use, unless the character is already addicted
-    addictionEffectIds: ["<ae._id>"]          // addiction AE templates on this item
+    save: { ability: "con", dc: 13 }, // rolled after each use, unless the character is already addicted
+    addictionEffectIds: ["<ae._id>"], // addiction AE templates on this item
   },
   withdrawal: {
     enabled: true,
-    dc: 15,                                   // Constitution save: pass = half the length, fail = full length
-    abstain: { ability: "wis", dc: 11 },      // Abstain Check at each Long Rest
-    duration: { value: 3, unit: "days" },     // the full length; minutes | hours | days | weeks | months
-    effectIds: ["<ae._id>"]                   // withdrawal AE templates on this item
+    dc: 15, // Constitution save: pass = half the length, fail = full length
+    abstain: { ability: "wis", dc: 11 }, // Abstain Check at each Long Rest
+    duration: { value: 3, unit: "days" }, // the full length; minutes | hours | days | weeks | months
+    effectIds: ["<ae._id>"], // withdrawal AE templates on this item
   },
-  tolerance: {                                // optional; defaults shown
+  tolerance: {
+    // optional; defaults shown
     enabled: true,
-    decay: 1,                                 // count lost at each Long Rest without a dose
+    decay: 1, // count lost at each Long Rest without a dose
     attenuationCurve: [1, 0.5, 0.25, 0.125, 0],
-    effectIds: ["<ae._id>"]                   // optional tolerance marker template
+    effectIds: ["<ae._id>"], // optional tolerance marker template
   },
-  overdose: {                                 // optional
+  overdose: {
+    // optional
     enabled: true,
     chancePercent: 10,
     damage: { formula: "2d8", type: "poison" }, // optional; a blank formula means no damage
     description: "<description shown on the overdose effect>",
-    effectIds: ["<ae._id>"]                   // overdose AE templates on this item
+    effectIds: ["<ae._id>"], // overdose AE templates on this item
   },
-  schemaVersion: 7
+  schemaVersion: 7,
 };
 ```
 
@@ -44,7 +46,7 @@ A blank DC means "no roll", never DC 0: a blank Abstain DC skips the Wisdom chec
 
 `system.type.value` must be `"poison"` and `system.type.subtype` must be one of `contact`, `ingested`, `inhaled`, `injury`; that's the administration channel the gate and bypass logic key on. (The legacy per-substance `requiredSubtypes` callout was removed in v0.5; gating now keys on this admin type matched against a paraphernalia-side `appliesTo` admin list.)
 
-`system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type *Item Uses* with value 1, so each use spends one dose from the quantity. When the last dose goes, the module keeps the substance at 0 instead of letting dnd5e delete it, so the Long Rest can still list it. Don't add Altered effects to the activity's effect list: the module applies them itself, scaled by tolerance, and blocks the copy Midi-QoL or the chat card would add, so listing them only leaves a dead apply button.
+`system.uses` should be `{ max: "1", autoDestroy: true }`; the activity should have a Consumption target of type _Item Uses_ with value 1, so each use spends one dose from the quantity. When the last dose goes, the module keeps the substance at 0 instead of letting dnd5e delete it, so the Long Rest can still list it. Don't add Altered effects to the activity's effect list: the module applies them itself, scaled by tolerance, and blocks the copy Midi-QoL or the chat card would add, so listing them only leaves a dead apply button.
 
 ## The dose marker and dose-others activities
 
@@ -59,7 +61,7 @@ Whatever puts the marker on a creature (Midi-QoL after a failed save, a hit or a
 
 **A dose-others activity** lists the marker as its effect. Rules:
 
-- It spends one dose (Consumption target *Item Uses*, value 1), like the drug's own "Use".
+- It spends one dose (Consumption target _Item Uses_, value 1), like the drug's own "Use".
 - It targets creatures, not the user. An activity that lists the marker doses its targets and **not its user**: the module skips the user's own dose for it. The gear check doesn't apply to it either, but the empty-drug block does (it spends the drug).
 - A save activity (inhaled drugs: "Blow into a face") lists the marker with `onSave: false`, so the dose lands on a failed save.
 - An attack activity (injury and contact drugs: "Jab with the needle", "Slap on a patch", "Fire a dart") **must set `otherActivityId: "none"`**. Midi-QoL pairs an attack whose `otherActivityId` is unset with the drug's own "Use" activity, and a hit would then dose the thrower too. `npm run validate` errors without it.
@@ -77,8 +79,8 @@ Two settings keep the thrower out of their own cloud and the ticks quiet. Withou
 
 A withdrawal effect can deal damage in combat with a Midi-QoL `flags.midi-qol.OverTime` Change row. The shipped rows are damage only, with no save:
 
-| key | type | value |
-|---|---|---|
+| key                       | type     | value                                                           |
+| ------------------------- | -------- | --------------------------------------------------------------- |
 | `flags.midi-qol.OverTime` | `custom` | `turn=start,damageRoll=1d4,damageType=psychic,label=Withdrawal` |
 
 Midi runs it on the GM's client at the start of the character's turn, in combat only.
@@ -96,13 +98,13 @@ If you really want a save on a withdrawal tick, set `saveCount` (or `failCount`)
 
 The rows the shipped drugs use, all with `priority: 20` and string values:
 
-| Meaning | key | type | value |
-|---|---|---|---|
-| Advantage (disadvantage) on a skill | `system.skills.<id>.roll.mode` | `add` | `1` (`-1`) |
-| Advantage on an ability's saves | `system.abilities.<abl>.save.roll.mode` | `add` | `1` (`-1`) |
-| +2 to a skill | `system.skills.<id>.bonuses.check` | `add` | `+2` |
-| +2 passive Perception | `system.skills.prc.bonuses.passive` | `add` | `+2` |
-| Advantage on saves against being frightened | `flags.midi-qol.advantage.save.all` | `override` | `riderStatuses.frightened` |
+| Meaning                                     | key                                     | type       | value                      |
+| ------------------------------------------- | --------------------------------------- | ---------- | -------------------------- |
+| Advantage (disadvantage) on a skill         | `system.skills.<id>.roll.mode`          | `add`      | `1` (`-1`)                 |
+| Advantage on an ability's saves             | `system.abilities.<abl>.save.roll.mode` | `add`      | `1` (`-1`)                 |
+| +2 to a skill                               | `system.skills.<id>.bonuses.check`      | `add`      | `+2`                       |
+| +2 passive Perception                       | `system.skills.prc.bonuses.passive`     | `add`      | `+2`                       |
+| Advantage on saves against being frightened | `flags.midi-qol.advantage.save.all`     | `override` | `riderStatuses.frightened` |
 
 dnd5e reads a roll mode of `1` or `-1` and ignores any other value. Tolerance rules for each kind of row:
 
@@ -123,8 +125,8 @@ A Change row can't add a level of Exhaustion: it does nothing (true in every dnd
 flags["substances-and-paraphernalia"] = {
   kind: "paraphernalia",
   setting: "fantasy" | "sciFi" | "modern",
-  subtype: "snuff-horn",                      // built-in or custom (see Subtype Manager)
-  schemaVersion: 3
+  subtype: "snuff-horn", // built-in or custom (see Subtype Manager)
+  schemaVersion: 3,
 };
 ```
 
@@ -148,32 +150,32 @@ shipped mind-altering substance follows the convention.
 
 ## Active Effect name contracts
 
-The module prefers the `flags.substances-and-paraphernalia.aeRole` flag (see *AE Conventions* below); substring matching against the AE name is a warn-logged fallback for hand-authored AEs without the flag. Names are case-insensitive.
+The module prefers the `flags.substances-and-paraphernalia.aeRole` flag (see _AE Conventions_ below); substring matching against the AE name is a warn-logged fallback for hand-authored AEs without the flag. Names are case-insensitive.
 
-| AE role | Required substring | Notes |
-|---|---|---|
-| Addiction | `addict` | Pointed-to by `addiction.addictionEffectIds`. |
-| Benefit (altered) | `altered` | Convention: `Altered by {Substance}`. An untagged effect named this way is treated as the high. |
-| Withdrawal | `withdraw` | Pointed-to by `withdrawal.effectIds`. Validator warns if it imposes disadvantage on attacks/checks (duplicates *poisoned*), and errors if it could remove itself (see *Withdrawal effects that hurt*). |
-| Tolerance | `tolerance` | Optional marker template on the substance (`tolerance.effectIds`); without one the module shows a plain "Tolerance to X (n)" marker. Tolerance itself is a count on the actor (see Mechanics). |
-| Overdose | `overdose` | Pointed-to by `overdose.effectIds`; applied when the overdose roll hits. |
-| Dose marker | (no name fallback) | Needs `aeRole: "dose"`. The empty effect a dose-others activity lists; see *The dose marker and dose-others activities*. |
-| Bypass (paraphernalia) | (no contract) | Lives on the paraphernalia as a `transfer: true` AE with the `bypass` modifier flag block. |
+| AE role                | Required substring | Notes                                                                                                                                                                                                  |
+| ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Addiction              | `addict`           | Pointed-to by `addiction.addictionEffectIds`.                                                                                                                                                          |
+| Benefit (altered)      | `altered`          | Convention: `Altered by {Substance}`. An untagged effect named this way is treated as the high.                                                                                                        |
+| Withdrawal             | `withdraw`         | Pointed-to by `withdrawal.effectIds`. Validator warns if it imposes disadvantage on attacks/checks (duplicates _poisoned_), and errors if it could remove itself (see _Withdrawal effects that hurt_). |
+| Tolerance              | `tolerance`        | Optional marker template on the substance (`tolerance.effectIds`); without one the module shows a plain "Tolerance to X (n)" marker. Tolerance itself is a count on the actor (see Mechanics).         |
+| Overdose               | `overdose`         | Pointed-to by `overdose.effectIds`; applied when the overdose roll hits.                                                                                                                               |
+| Dose marker            | (no name fallback) | Needs `aeRole: "dose"`. The empty effect a dose-others activity lists; see _The dose marker and dose-others activities_.                                                                               |
+| Bypass (paraphernalia) | (no contract)      | Lives on the paraphernalia as a `transfer: true` AE with the `bypass` modifier flag block.                                                                                                             |
 
 ## AE Conventions: the `aeRole` flag
 
 Every module-created Active Effect carries a flag at
 `flags.substances-and-paraphernalia.aeRole`. Values:
 
-| `aeRole`     | Used for                                         |
-|--------------|--------------------------------------------------|
-| `addiction`  | The persistent addiction AE on an addicted actor |
+| `aeRole`     | Used for                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `addiction`  | The persistent addiction AE on an addicted actor                                                                                                 |
 | `withdrawal` | The withdrawal AE, applied when a character abstains at a Long Rest (the Constitution save sets its length); when it ends, so does the addiction |
-| `altered`    | The benefit AEs (the high) applied by each dose  |
-| `tolerance`  | Tolerance marker (the drug's template or a plain one); the count lives on the actor |
-| `overdose`   | Overdose marker AE                               |
-| `dose`       | The dose marker; the module cancels it and doses the creature instead |
-| `bypass`     | Paraphernalia bypass AE                          |
+| `altered`    | The benefit AEs (the high) applied by each dose                                                                                                  |
+| `tolerance`  | Tolerance marker (the drug's template or a plain one); the count lives on the actor                                                              |
+| `overdose`   | Overdose marker AE                                                                                                                               |
+| `dose`       | The dose marker; the module cancels it and doses the creature instead                                                                            |
+| `bypass`     | Paraphernalia bypass AE                                                                                                                          |
 
 **Why:** AE name strings vary by locale and author preference. Reading the
 role from a flag is locale-independent. Substring matching against the AE
@@ -195,9 +197,9 @@ Remove-X macros and the modifier pipeline both prefer the flag.
 flags["substances-and-paraphernalia"].modifier = {
   kind: "bypass",
   type: "auto-pass" | "reroll-on-fail" | "advantage" | "+N",
-  bonus: 2,                                   // required when type === "+N"
-  appliesTo: ["inhaled"],                     // administration ids the bypass covers
-  usesPerDay: "@prof"                         // optional; rides on system.uses
+  bonus: 2, // required when type === "+N"
+  appliesTo: ["inhaled"], // administration ids the bypass covers
+  usesPerDay: "@prof", // optional; rides on system.uses
 };
 ```
 
@@ -231,12 +233,12 @@ enhancers.
 **Picking a value:** choose a unit that matches the narrative weight of the
 substance and the table's expected pacing.
 
-| Substance feel | Suggested duration |
-|---|---|
-| Casual recreational | 1 to 6 hours |
-| Hard street drug | 1 to 3 days |
-| Magical or alien narcotic | 1 to 2 weeks |
-| Setpiece, plot-relevant addiction | 1 to 3 months |
+| Substance feel                    | Suggested duration |
+| --------------------------------- | ------------------ |
+| Casual recreational               | 1 to 6 hours       |
+| Hard street drug                  | 1 to 3 days        |
+| Magical or alien narcotic         | 1 to 2 weeks       |
+| Setpiece, plot-relevant addiction | 1 to 3 months      |
 
 Avoid mixing minutes with months on the same campaign: pick a unit family
 that fits the table's clock so players can plan around it. If a substance
@@ -253,17 +255,17 @@ v0.10.0 also the shipped text: drug and gear descriptions, effect descriptions
 and the guide page. Every rule blocks a release except `lowercase-condition`,
 which stays a warning ("poisoned" and "frightened" are also everyday words).
 
-| Anti-pattern | Use instead |
-|---|---|
-| "becomes poisoned" | "gains the Poisoned condition" |
-| "roll a Constitution save" | "make a Constitution saving throw" |
-| "make a Con save" (bare) | "make a Constitution saving throw" |
-| "restores 1d4 hit points" | "regains 1d4 hit points" |
-| "recovers 5 hit points" | "regains 5 hit points" |
-| "once per day" | "regains all expended uses at dawn" *or* "can't use this again until you finish a Long Rest" |
-| "long rest" / "short rest" (lower) | "Long Rest" / "Short Rest" |
-| "poisoned" as a condition reference | "Poisoned" (capitalize condition names) |
-| "Fire damage" / "Cold damage" in prose | "fire damage" / "cold damage" (lowercase damage types in prose) |
+| Anti-pattern                           | Use instead                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| "becomes poisoned"                     | "gains the Poisoned condition"                                                               |
+| "roll a Constitution save"             | "make a Constitution saving throw"                                                           |
+| "make a Con save" (bare)               | "make a Constitution saving throw"                                                           |
+| "restores 1d4 hit points"              | "regains 1d4 hit points"                                                                     |
+| "recovers 5 hit points"                | "regains 5 hit points"                                                                       |
+| "once per day"                         | "regains all expended uses at dawn" _or_ "can't use this again until you finish a Long Rest" |
+| "long rest" / "short rest" (lower)     | "Long Rest" / "Short Rest"                                                                   |
+| "poisoned" as a condition reference    | "Poisoned" (capitalize condition names)                                                      |
+| "Fire damage" / "Cold damage" in prose | "fire damage" / "cold damage" (lowercase damage types in prose)                              |
 
 The validator only flags damage types and condition names as drift in **prose
 context** (lang/en.json strings, .hbs templates, and the shipped descriptions).

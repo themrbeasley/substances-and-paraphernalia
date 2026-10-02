@@ -182,9 +182,7 @@
           "parts": []
         },
         "save": {
-          "ability": [
-            "con"
-          ],
+          "ability": ["con"],
           "dc": {
             "calculation": "",
             "formula": "12"
@@ -204,9 +202,7 @@
           "ability": "wis",
           "dc": 12
         },
-        "addictionEffectIds": [
-          "fhAEEmbergrssAdc"
-        ]
+        "addictionEffectIds": ["fhAEEmbergrssAdc"]
       },
       "withdrawal": {
         "enabled": true,
@@ -219,17 +215,13 @@
           "value": 4,
           "unit": "days"
         },
-        "effectIds": [
-          "fhAEEmbergrssWit"
-        ]
+        "effectIds": ["fhAEEmbergrssWit"]
       },
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
         "description": "Too much Embergrass: 2d6 psychic damage and Incapacitated for 1 round.",
-        "effectIds": [
-          "fhAEEmbergrssOvd"
-        ],
+        "effectIds": ["fhAEEmbergrssOvd"],
         "damage": {
           "formula": "2d6",
           "type": "psychic"
@@ -285,9 +277,7 @@
       "img": "icons/svg/poison.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "poisoned"
-      ],
+      "statuses": ["poisoned"],
       "duration": {},
       "description": "<p>Poisoned. Disadvantage on Intelligence checks.</p>",
       "system": {
@@ -356,9 +346,7 @@
       "img": "icons/svg/skull.svg",
       "transfer": false,
       "disabled": false,
-      "statuses": [
-        "incapacitated"
-      ],
+      "statuses": ["incapacitated"],
       "duration": {
         "value": 1,
         "units": "rounds"
