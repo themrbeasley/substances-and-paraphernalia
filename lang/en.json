@@ -24,6 +24,7 @@
   "FISHUT.AERole.Tolerance": "Tolerance",
   "FISHUT.AERole.Overdose": "Overdose",
   "FISHUT.AERole.Bypass": "Bypass",
+  "FISHUT.AERole.Dose": "Dose marker",
 
   "FISHUT.ParaphernaliaSubtype.Pipe": "Pipe",
   "FISHUT.ParaphernaliaSubtype.SnuffHorn": "Snuff Horn",
