@@ -27,7 +27,8 @@
  *   - addiction.addictionEffectIds points to AEs on the same item whose names
  *     contain /addict/i
  *   - flags[…].overdose: when `enabled`, requires integer chancePercent 1..100
- *     and non-empty `description`
+ *     and non-empty `description`; a blank `damage.formula` means no damage,
+ *     otherwise it must be plain dice with a known `damage.type`
  *   - flags[…].withdrawal.effectIds (if set): must resolve to AEs on the same
  *     item; AE names must contain /withdraw/i; warn on
  *     disadvantage-on-attack/check or statuses:["poisoned"] (don't duplicate
@@ -74,7 +75,7 @@ import {
   checkDocumentIds,
   checkGearCoverage,
 } from "./validate-content-checks.mjs";
-import { checkLanguagePhrasing } from "./validate-content-language.mjs";
+import { checkLanguagePhrasing, isBlockingRule } from "./validate-content-language.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const ROOT = resolve(dirname(__filename), "..");
@@ -158,7 +159,20 @@ for (const file of [...substanceFiles, ...paraphernaliaFiles, ...macroFiles, ...
   if (!file.parseError) errors.push(...checkDocumentIds(file).errors);
 }
 
-// 2024 language audit (warn-only in v0.8; flips to error-blocking in v0.9).
+// 2024 language audit (spec D15): every rule blocks a release except
+// `lowercase-condition`, which stays a warning. Lang strings, templates and the
+// shipped text (descriptions, effect descriptions, the guide page) all route
+// their findings the same way.
+function reportPhrasing(text, sourcePath) {
+  const findings = checkLanguagePhrasing(text, { mode: "text-content-only", sourcePath });
+  for (const f of findings) {
+    const line = `${f.sourcePath} [${f.ruleId}]: "${f.match}": ${f.message}`;
+    (isBlockingRule(f.ruleId) ? errors : warnings).push(line);
+  }
+}
+
+const stripHtml = (html) => html.replace(/<[^>]+>/g, " ");
+
 async function scanLangStringsForPhrasing() {
   const path = resolve(ROOT, "lang/en.json");
   let json;
@@ -171,13 +185,7 @@ async function scanLangStringsForPhrasing() {
   }
   for (const [key, value] of Object.entries(json)) {
     if (typeof value !== "string") continue;
-    const findings = checkLanguagePhrasing(value, {
-      mode: "text-content-only",
-      sourcePath: `lang/en.json:${key}`,
-    });
-    for (const f of findings) {
-      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}": ${f.message}`);
-    }
+    reportPhrasing(value, `lang/en.json:${key}`);
   }
 }
 
@@ -203,20 +211,39 @@ async function scanTemplatesForPhrasing() {
     }
     // Strip Handlebars expressions {{...}} so we don't flag inner syntax.
     const stripped = raw.replace(/{{[\s\S]*?}}/g, " ");
-    // Strip HTML tags so we scan visible text only (coarse but warn-only).
-    const visible = stripped.replace(/<[^>]+>/g, " ");
-    const findings = checkLanguagePhrasing(visible, {
-      mode: "text-content-only",
-      sourcePath: relPath,
-    });
-    for (const f of findings) {
-      warnings.push(`${f.sourcePath} [${f.ruleId}]: "${f.match}": ${f.message}`);
+    // Strip HTML tags so we scan visible text only.
+    reportPhrasing(stripHtml(stripped), relPath);
+  }
+}
+
+// Shipped text: drug and gear descriptions, embedded effect descriptions and
+// the guide page. Tags are stripped first so only the visible words are scanned.
+function scanSourceForPhrasing() {
+  for (const file of [...substanceFiles, ...paraphernaliaFiles]) {
+    if (file.parseError) continue;
+    const { relPath, data } = file;
+    const description = data.system?.description?.value;
+    if (typeof description === "string") {
+      reportPhrasing(stripHtml(description), `${relPath}:system.description.value`);
+    }
+    for (const effect of data.effects ?? []) {
+      if (typeof effect.description !== "string") continue;
+      reportPhrasing(stripHtml(effect.description), `${relPath}:effects["${effect.name}"].description`);
+    }
+  }
+  for (const file of journalFiles) {
+    if (file.parseError) continue;
+    for (const page of file.data.pages ?? []) {
+      const content = page.text?.content;
+      if (typeof content !== "string") continue;
+      reportPhrasing(stripHtml(content), `${file.relPath}:pages["${page.name}"].text.content`);
     }
   }
 }
 
 await scanLangStringsForPhrasing();
 await scanTemplatesForPhrasing();
+scanSourceForPhrasing();
 
 const checked =
   substanceFiles.length + paraphernaliaFiles.length + macroFiles.length + journalFiles.length;
