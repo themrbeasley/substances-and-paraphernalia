@@ -256,6 +256,51 @@ describe("checkSubstance: overdose flag (v0.4)", () => {
       true,
     );
   });
+
+  it("accepts overdose damage that is plain dice with a known type", () => {
+    const file = baseSubstance();
+    file.data.flags[SCOPE].overdose = {
+      enabled: true,
+      chancePercent: 10,
+      description: "x",
+      damage: { formula: "2d8", type: "poison" },
+    };
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
+  });
+
+  it("errors when overdose damage is malformed or has an unknown type", () => {
+    for (const damage of [
+      { formula: "2d", type: "poison" },
+      { formula: "2d6", type: "pain" },
+    ]) {
+      const file = baseSubstance();
+      file.data.flags[SCOPE].overdose = {
+        enabled: true,
+        chancePercent: 10,
+        description: "x",
+        damage,
+      };
+      const { errors } = checkSubstance(file);
+      assert.equal(
+        errors.some((e) => /overdose\.damage must be plain dice/.test(e)),
+        true,
+        JSON.stringify(damage),
+      );
+    }
+  });
+
+  it("accepts a blank overdose damage formula as no damage", () => {
+    const file = baseSubstance();
+    file.data.flags[SCOPE].overdose = {
+      enabled: true,
+      chancePercent: 10,
+      description: "x",
+      damage: { formula: "", type: "" },
+    };
+    const { errors } = checkSubstance(file);
+    assert.deepEqual(errors, []);
+  });
 });
 
 describe("checkSubstance: withdrawal.effectId (v0.4)", () => {

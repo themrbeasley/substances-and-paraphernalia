@@ -243,6 +243,9 @@ export const setWithdrawalEffectId = (item, value) =>
  * @property {boolean} enabled
  * @property {number}  chancePercent  Integer 1–100; per-consumption d100 chance.
  * @property {string}  description    Free-text shown in the chat card on hit.
+ * @property {{ formula?: string, type?: string }} [damage]
+ *   Damage dealt on a hit (spec D3): plain dice ("2d8", "1d6 + 2", "5") and a dnd5e
+ *   damage type id. A blank formula means no damage.
  * @property {string[]} [effectIds]
  *   v0.4 canonical: ids of overdose marker AE templates on the same item; ALL
  *   are cloned onto the actor when overdose fires. If empty, a minimal marker
