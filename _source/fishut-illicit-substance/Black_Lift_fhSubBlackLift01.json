@@ -6,7 +6,7 @@
   "folder": "fhSubModern00001",
   "system": {
     "description": {
-      "value": "<p>An oil-based stack of underground origin. Used responsibly it produces a measurable strength gain; used carelessly it produces a coroner's report. Discipline is the difference, and discipline is written down.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +2 bonus to Strength (Athletics) checks, a +1 bonus to Strength-based weapon attack rolls, and your walking speed increases by 5 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Black Lift (see below).</p><p><strong><em>Addicted from Black Lift.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on Constitution saving throws, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 14 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, make a DC 30 Constitution saving throw; on a failed save, you suffer withdrawal for 3 days. If you have no doses left, skip the Wisdom check and make the saving throw. While in withdrawal, abstaining takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as a Tincture Dropper or an Athlete's Logbook.</em></p>"
+      "value": "<p>An oil-based stack of underground origin. Used responsibly it produces a measurable strength gain; used carelessly it produces a coroner's report. Discipline is the difference, and discipline is written down.</p><p><strong><em>Desired effects on use.</em></strong> For 10 minutes you gain a +2 bonus to Strength (Athletics) checks and melee weapon attack rolls, and your walking speed increases by 10 feet.</p><p><strong><em>On use, save against addiction.</em></strong> Make a DC 15 Constitution saving throw. On a failed save, you gain the Addicted condition from Black Lift (see below).</p><p><strong><em>Addicted from Black Lift.</em></strong> While you have this Addicted condition, you are also Poisoned, have disadvantage on Constitution saving throws, and your walking speed is reduced by 5 feet.</p><p><strong><em>Withdrawal.</em></strong> At the end of each Long Rest while addicted, you either take another dose or abstain. If you abstain, make a DC 13 Wisdom check to resist the craving; on a failure, you give in and take a dose. On a success, you go into withdrawal for 4 days, or half that if you succeed on a DC 18 Constitution saving throw. If you have no doses left, skip the Wisdom check. While in withdrawal all your speeds are reduced by 10 feet, you have disadvantage on Strength and Constitution saving throws, and in combat you take 1d4 poison damage at the start of each of your turns. Abstaining then takes only the Wisdom check, and taking any dose ends the withdrawal but not the addiction. When the withdrawal ends, so does the addiction.</p><p><strong><em>Overdose.</em></strong> If you take a dose while still under its effects, or once your tolerance is at its limit, there is a 10% chance you overdose: you take 2d8 poison damage and have the Poisoned and Incapacitated conditions for 1 minute.</p><p><strong><em>Dosing others.</em></strong> As an action, you can slip a dose into food or drink within 5 feet. A creature that consumes it is dosed.</p><p><em>Requires ready paraphernalia that applies to ingested substances, such as a Pill Cutter, a Tincture Dropper or an Athlete's Logbook.</em></p>"
     },
     "type": {
       "value": "poison",
@@ -101,6 +101,87 @@
           "name": ""
         },
         "name": ""
+      },
+      "fhActBlackLift02": {
+        "type": "utility",
+        "_id": "fhActBlackLift02",
+        "sort": 100000,
+        "activation": {
+          "type": "action",
+          "override": false,
+          "condition": ""
+        },
+        "consumption": {
+          "scaling": {
+            "allowed": false
+          },
+          "spellSlot": true,
+          "targets": [
+            {
+              "type": "itemUses",
+              "value": "1",
+              "target": "",
+              "scaling": {}
+            }
+          ]
+        },
+        "description": {
+          "chatFlavor": ""
+        },
+        "duration": {
+          "units": "inst",
+          "value": "",
+          "concentration": false,
+          "override": false
+        },
+        "effects": [
+          {
+            "_id": "fhAEBlackLiftDos"
+          }
+        ],
+        "flags": {},
+        "range": {
+          "units": "ft",
+          "value": "5",
+          "override": false,
+          "special": ""
+        },
+        "target": {
+          "template": {
+            "contiguous": false,
+            "units": "ft",
+            "type": ""
+          },
+          "affects": {
+            "type": "creature",
+            "count": "1",
+            "choice": false
+          },
+          "override": false,
+          "prompt": true
+        },
+        "uses": {
+          "spent": 0,
+          "recovery": [],
+          "max": ""
+        },
+        "visibility": {
+          "level": {
+            "min": null,
+            "max": null
+          },
+          "requireAttunement": false,
+          "requireIdentification": false,
+          "requireMagic": false,
+          "identifier": ""
+        },
+        "roll": {
+          "prompt": false,
+          "visible": false,
+          "formula": "",
+          "name": ""
+        },
+        "name": "Slip into food or drink"
       }
     }
   },
@@ -121,13 +202,13 @@
       },
       "withdrawal": {
         "enabled": true,
-        "dc": 30,
+        "dc": 18,
         "abstain": {
           "ability": "wis",
-          "dc": 14
+          "dc": 13
         },
         "duration": {
-          "value": 3,
+          "value": 4,
           "unit": "days"
         },
         "effectIds": [
@@ -137,10 +218,14 @@
       "overdose": {
         "enabled": true,
         "chancePercent": 10,
-        "description": "Too much Black Lift overwhelms the body: Poisoned and Incapacitated for 1 minute.",
+        "description": "Too much Black Lift: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.",
         "effectIds": [
           "fhAEBlackLiftOvd"
-        ]
+        ],
+        "damage": {
+          "formula": "2d8",
+          "type": "poison"
+        }
       },
       "schemaVersion": 7
     }
@@ -156,7 +241,7 @@
         "value": 600,
         "units": "seconds"
       },
-      "description": "<p>+2 to Strength (Athletics) checks. +1 to Strength-based weapon attack rolls. Walking speed +5 ft.</p>",
+      "description": "<p>+2 to Strength (Athletics) checks and melee weapon attack rolls. Walking speed +10 ft.</p>",
       "system": {
         "changes": [
           {
@@ -167,13 +252,13 @@
           },
           {
             "key": "system.bonuses.mwak.attack",
-            "value": "+1",
+            "value": "+2",
             "priority": 20,
             "type": "add"
           },
           {
             "key": "system.attributes.movement.walk",
-            "value": "+5",
+            "value": "10",
             "priority": 20,
             "type": "add"
           },
@@ -202,9 +287,15 @@
         "poisoned"
       ],
       "duration": {},
-      "description": "<p>Poisoned. Disadvantage on Constitution saving throws. Walking speed −5 ft.</p>",
+      "description": "<p>Poisoned. Disadvantage on Constitution saving throws. Walking speed reduced by 5 ft.</p>",
       "system": {
         "changes": [
+          {
+            "key": "system.abilities.con.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
           {
             "key": "system.attributes.movement.walk",
             "value": "-5",
@@ -227,7 +318,7 @@
       "transfer": false,
       "disabled": false,
       "duration": {},
-      "description": "<p>Withdrawal symptoms last until the withdrawal period ends.</p>",
+      "description": "<p>While in withdrawal: all speeds reduced by 10 feet, disadvantage on Strength and Constitution saving throws, and in combat 1d4 poison damage at the start of each of your turns.</p>",
       "system": {
         "changes": [
           {
@@ -235,6 +326,30 @@
             "value": "#8a1a1a",
             "priority": 20,
             "type": "override"
+          },
+          {
+            "key": "system.attributes.movement.bonus",
+            "value": "-10",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.str.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "system.abilities.con.save.roll.mode",
+            "value": "-1",
+            "priority": 20,
+            "type": "add"
+          },
+          {
+            "key": "flags.midi-qol.OverTime",
+            "value": "turn=start,damageRoll=1d4,damageType=poison,label=Withdrawal",
+            "priority": 20,
+            "type": "custom"
           }
         ]
       },
@@ -259,7 +374,7 @@
         "value": 60,
         "units": "seconds"
       },
-      "description": "<p>Too much Black Lift overwhelms the body: Poisoned and Incapacitated for 1 minute.</p>",
+      "description": "<p>Too much Black Lift: 2d8 poison damage, and the Poisoned and Incapacitated conditions for 1 minute.</p>",
       "system": {
         "changes": []
       },
@@ -269,6 +384,25 @@
         }
       },
       "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftOvd"
+    },
+    {
+      "_id": "fhAEBlackLiftDos",
+      "name": "Dosed with Black Lift",
+      "img": "icons/svg/item-bag.svg",
+      "transfer": false,
+      "disabled": false,
+      "duration": {},
+      "description": "",
+      "statuses": [],
+      "system": {
+        "changes": []
+      },
+      "flags": {
+        "substances-and-paraphernalia": {
+          "aeRole": "dose"
+        }
+      },
+      "_key": "!items.effects!fhSubBlackLift01.fhAEBlackLiftDos"
     }
   ],
   "ownership": {
