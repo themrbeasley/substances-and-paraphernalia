@@ -25,6 +25,7 @@
   "FISHUT.AERole.Overdose": "Overdose",
   "FISHUT.AERole.Bypass": "Bypass",
   "FISHUT.AERole.Dose": "Dose marker",
+  "FISHUT.Dose.Landed": "{target} is dosed with {item}.",
 
   "FISHUT.ParaphernaliaSubtype.Pipe": "Pipe",
   "FISHUT.ParaphernaliaSubtype.SnuffHorn": "Snuff Horn",

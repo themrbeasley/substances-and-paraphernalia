@@ -17,6 +17,7 @@ import {
   onPreDeleteActiveEffect,
   onPreCreateActiveEffect,
 } from "./hooks/addiction.js";
+import { registerDoseOthers, doseCreature } from "./hooks/dose-others.js";
 import { rollOverdoseAndApply } from "./hooks/overdose.js";
 import { registerDragToInventory } from "./hooks/drag-to-inventory.js";
 import { registerLongRestAbstain } from "./hooks/long-rest-abstain.js";
@@ -43,6 +44,7 @@ Hooks.once("init", () => {
   registerSettings();
   registerActivityGating();
   registerAddictionHooks();
+  registerDoseOthers();
   registerDragToInventory();
   registerLongRestAbstain();
   registerToleranceDecay();
@@ -72,6 +74,7 @@ Hooks.once("ready", async () => {
         onPreDeleteActiveEffect,
         onPreCreateActiveEffect,
       },
+      dose: { doseCreature },
       overdose: { rollOverdoseAndApply },
       saveBypass: { consumeBypassIfAvailable },
       tolerance: { applyToleranceDecay },
