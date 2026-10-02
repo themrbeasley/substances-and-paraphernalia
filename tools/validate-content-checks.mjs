@@ -56,6 +56,7 @@ const ROLE_PATTERNS = {
   altered: /altered/i,
   tolerance: /tolerance/i,
   overdose: /overdose/i,
+  dose: /\bdosed?\b/i,
   bypass: /bypass/i,
 };
 
@@ -136,6 +137,9 @@ function findEffect(data, id) {
  *     on disadvantage-on-attack/check or statuses:["poisoned"]
  *   - any modifier-bearing AE with kind="bypass" type="+N" requires non-zero
  *     numeric bonus
+ *   - dose marker (aeRole "dose"): no statuses, no changes, transfer false, no
+ *     sourceSubstanceId; activities listing it target others (attacks set
+ *     otherActivityId "none") and at least one activity still doses the user
  *
  * @param {{relPath: string, data: object}} file
  * @returns {{errors: string[], warnings: string[]}}
@@ -374,6 +378,40 @@ export function checkSubstance(file) {
         );
       }
     }
+  }
+
+  // v0.10.0 (D1): the dose marker is a bare flag. A listener turns a landed
+  // marker into a dose on that creature, so it must carry nothing else, and an
+  // activity that lists it must hit others, not the user.
+  const markers = effectsOf(data).filter((e) => e?.flags?.[FLAG_SCOPE]?.aeRole === "dose");
+  const markerIds = markers.map((m) => m._id);
+  for (const m of markers) {
+    if ((m.statuses ?? []).length) err(`dose marker "${m.name}" must have no statuses`);
+    if ((m.system?.changes ?? []).length) err(`dose marker "${m.name}" must have no changes`);
+    if (m.transfer !== false) err(`dose marker "${m.name}" must have transfer: false`);
+    if (m.flags?.[FLAG_SCOPE]?.sourceSubstanceId) {
+      err(`dose marker "${m.name}" must not carry sourceSubstanceId`);
+    }
+  }
+  const activities = Object.values(data?.system?.activities ?? {});
+  const others = activities.filter((a) =>
+    (a?.effects ?? []).some((r) => markerIds.includes(r?._id)),
+  );
+  for (const a of others) {
+    const label = a.name || a._id;
+    if (a.target?.affects?.type === "self") {
+      err(`activity "${label}" doses others but targets self`);
+    }
+    // Midi pairs an attack whose otherActivityId is unset with the item's sole
+    // other activity (the drug's "Use"), so a hit would run the self-dose too.
+    if (a.type === "attack" && a.otherActivityId !== "none") {
+      err(
+        `activity "${label}" doses others by attack and must set otherActivityId: "none" (Midi would pair it with the self-dose)`,
+      );
+    }
+  }
+  if (activities.length > 0 && others.length === activities.length) {
+    err(`needs an activity that doses the user, for the Long Rest relapse`);
   }
 
   return { errors, warnings };

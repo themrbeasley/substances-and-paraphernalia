@@ -949,3 +949,124 @@ describe("checkSubstance: withdrawal effects can't remove themselves (v0.10.0)",
     assert.deepEqual(errors, []);
   });
 });
+
+describe("checkSubstance: dose marker and dose-others activities (v0.10.0)", () => {
+  const marker = (extra = {}) => ({
+    _id: "ae-dose-001",
+    name: "Dosed with Test Substance",
+    transfer: false,
+    statuses: [],
+    system: { changes: [] },
+    flags: { [SCOPE]: { aeRole: "dose" } },
+    ...extra,
+  });
+
+  // The drug's own "Use" plus a dose-others activity that lists the marker.
+  function withMarker({ markerExtra, others = {} } = {}) {
+    const file = makeValidSubstance();
+    file.data.effects.push(marker(markerExtra));
+    file.data.system.activities = {
+      act1: { _id: "act1", name: "Use", type: "utility", effects: [] },
+      act2: {
+        _id: "act2",
+        name: "Dose another",
+        type: "save",
+        target: { affects: { type: "creature" } },
+        effects: [{ _id: "ae-dose-001" }],
+        ...others,
+      },
+    };
+    return file;
+  }
+
+  it("accepts a clean marker and a dose-others activity", () => {
+    assert.deepEqual(checkSubstance(withMarker()).errors, []);
+  });
+
+  it("errors on a marker with a status", () => {
+    const { errors } = checkSubstance(withMarker({ markerExtra: { statuses: ["poisoned"] } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /dose marker "Dosed with Test Substance" must have no statuses/);
+  });
+
+  it("errors on a marker with a change row", () => {
+    const row = { key: "system.attributes.ac.bonus", type: "add", value: "1", priority: 20 };
+    const { errors } = checkSubstance(withMarker({ markerExtra: { system: { changes: [row] } } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /must have no changes/);
+  });
+
+  it("errors on a transferred marker", () => {
+    const { errors } = checkSubstance(withMarker({ markerExtra: { transfer: true } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /must have transfer: false/);
+  });
+
+  it("errors on a marker that carries sourceSubstanceId", () => {
+    const flags = { [SCOPE]: { aeRole: "dose", sourceSubstanceId: "abc" } };
+    const { errors } = checkSubstance(withMarker({ markerExtra: { flags } }));
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /must not carry sourceSubstanceId/);
+  });
+
+  it("errors on an activity that lists the marker but targets self", () => {
+    const { errors } = checkSubstance(
+      withMarker({ others: { target: { affects: { type: "self" } } } }),
+    );
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /activity "Dose another" doses others but targets self/);
+  });
+
+  it("errors when every activity lists the marker", () => {
+    const file = withMarker();
+    file.data.system.activities.act1.effects = [{ _id: "ae-dose-001" }];
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /needs an activity that doses the user, for the Long Rest relapse/);
+  });
+
+  it("errors on a dose-named effect with no aeRole", () => {
+    const file = makeValidSubstance();
+    file.data.effects.push({
+      _id: "ae-dose-001",
+      name: "Dosed with Voltbeans",
+      system: { changes: [] },
+    });
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /matches role "dose" by name but aeRole flag is missing/);
+  });
+
+  it("keeps an Overdose effect an overdose, not a dose", () => {
+    const file = makeValidSubstance();
+    file.data.effects.push({
+      _id: "ae-over-001",
+      name: "Black Lift Overdose",
+      system: { changes: [] },
+    });
+    const { errors } = checkSubstance(file);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /matches role "overdose" by name/);
+  });
+
+  it("errors on an attack that doses others without otherActivityId none", () => {
+    for (const other of [undefined, null, "", "someOtherId"]) {
+      const file = withMarker({ others: { type: "attack", otherActivityId: other } });
+      const { errors } = checkSubstance(file);
+      assert.equal(errors.length, 1, String(other));
+      assert.match(
+        errors[0],
+        /activity "Dose another" doses others by attack and must set otherActivityId: "none" \(Midi would pair it with the self-dose\)/,
+      );
+    }
+  });
+
+  it("accepts an attack that doses others with otherActivityId none", () => {
+    const file = withMarker({ others: { type: "attack", otherActivityId: "none" } });
+    assert.deepEqual(checkSubstance(file).errors, []);
+  });
+
+  it("does not ask a save activity for otherActivityId", () => {
+    assert.deepEqual(checkSubstance(withMarker({ others: { type: "save" } })).errors, []);
+  });
+});
